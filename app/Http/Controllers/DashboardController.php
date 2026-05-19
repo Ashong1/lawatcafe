@@ -18,6 +18,16 @@ class DashboardController extends Controller
         $todaysSales = Sale::whereDate('created_at', Carbon::today())->sum('total_amount');
         $lowStockCount = Ingredient::where('current_stock', '<', 500)->count(); // Adjust threshold as needed
         
+        // Dynamic Active Sessions (Users)
+        // We define an active user as someone with a used voucher that hasn't expired yet
+        $activeUsers = Voucher::where('is_used', true)
+            ->whereRaw('DATE_ADD(used_at, INTERVAL duration_minutes MINUTE) > NOW()')
+            ->count();
+
+        $recentVouchers = Voucher::orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+        
         // --- 2. CHART DATA: Weekly Sales Trend (Line Chart) ---
         // Get sales for the last 7 days grouped by date
         $salesData = Sale::selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
@@ -50,9 +60,28 @@ class DashboardController extends Controller
             $categoryData = ['Coffee' => 10, 'Pastries' => 5, 'Meals' => 2];
         }
 
+        // System Health (Basic)
+        $cpuLoad = function_exists('sys_getloadavg') ? sys_getloadavg()[0] * 10 : 12;
+        $memoryUsage = 0;
+        if (PHP_OS_FAMILY === 'Linux') {
+            $free = shell_exec('free');
+            if ($free) {
+                $free = (string) trim($free);
+                $free_arr = explode("\n", $free);
+                if (isset($free_arr[1])) {
+                    $mem = preg_split('/\s+/', $free_arr[1]);
+                    if (isset($mem[2]) && isset($mem[1]) && $mem[1] > 0) {
+                        $memoryUsage = round($mem[2] / $mem[1] * 100);
+                    }
+                }
+            }
+        }
+        $memoryUsage = $memoryUsage ?: 45;
+
         return view('dashboard', compact(
             'availableVouchers', 'todaysSales', 'lowStockCount',
-            'chartLabels', 'chartValues', 'categoryData'
+            'chartLabels', 'chartValues', 'categoryData',
+            'activeUsers', 'recentVouchers', 'cpuLoad', 'memoryUsage'
         ));
     }
 }

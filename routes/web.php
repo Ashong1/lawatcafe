@@ -16,14 +16,15 @@ use App\Http\Middleware\RoleMiddleware;
 // ==========================================
 // PUBLIC CAPTIVE PORTAL ROUTES
 // ==========================================
-// Initial Redirect - Send guests to the captive portal by default
+// Initial Redirect - Send guests to the login page by default
 Route::get('/', function () {
-    return redirect()->route('portal.index');
+    return redirect()->route('login');
 });
 
 Route::prefix('portal')->name('portal.')->group(function () {
     Route::get('/', [CaptivePortalController::class, 'index'])->name('index');
     Route::post('/authenticate', [CaptivePortalController::class, 'authenticate'])->name('authenticate');
+    Route::post('/verify-payment', [CaptivePortalController::class, 'verifyPayment'])->name('verify-payment');
     Route::post('/upload', [CaptivePortalController::class, 'uploadReceipt'])->name('upload');
     Route::get('/success', [CaptivePortalController::class, 'success'])->name('success');
 });
@@ -60,7 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Network & Voucher Management
         Route::prefix('network')->name('network.')->group(function () {
-            Route::get('/sessions', function () { return view('network.sessions'); })->name('sessions');
+            Route::get('/sessions', [VoucherController::class, 'sessions'])->name('sessions');
             
             Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
             Route::post('/vouchers/generate', [VoucherController::class, 'generateBatch'])->name('vouchers.generate');
@@ -74,6 +75,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // System Accounts
         Route::resource('accounts', AccountController::class)->except(['create', 'show', 'edit']);
+
+        // Payment & IMAP Settings
+        Route::get('/settings/payment', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.settings.payment');
+        Route::post('/settings/payment', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.settings.payment.update');
     });
 
     // ==========================================

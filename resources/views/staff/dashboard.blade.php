@@ -6,15 +6,15 @@
     
     <div class="mb-8 border-b border-[#E6D5C3] pb-6">
         <h2 class="flex items-center gap-3 text-[#3E2723]">
-            <span class="text-6xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-            <span class="text-2xl font-bold tracking-[0.2em] uppercase mt-4">Staff Hub</span>
+            <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+            <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Staff Hub</span>
         </h2>
         <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Welcome back! Here is your shift overview.</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
         <a href="{{ route('pos') }}" class="bg-[#3E2723] hover:bg-[#271815] text-white p-8 rounded-2xl shadow-sm transition-all duration-300 flex flex-col items-center justify-center group">
-            <span class="text-5xl mb-4 group-hover:scale-110 transition">🛒</span>
+            <x-lucide-shopping-cart class="w-16 h-16 mb-4 text-amber-500 group-hover:scale-110 transition duration-300" />
             <h3 class="text-xl font-bold uppercase tracking-widest">Open POS Register</h3>
         </a>
 

@@ -17,27 +17,27 @@
 <body x-data="{ sidebarOpen: true }" class="bg-[#FDF8F5] text-[#4A3B32] flex h-screen overflow-hidden font-sans" style="font-family: 'Montserrat', sans-serif;">
 
     <aside 
-        x-show="sidebarOpen" 
-        x-transition:enter="transition-all ease-out duration-300" 
-        x-transition:enter-start="-ml-64" 
-        x-transition:enter-end="ml-0" 
-        x-transition:leave="transition-all ease-in duration-300" 
-        x-transition:leave-start="ml-0" 
-        x-transition:leave-end="-ml-64" 
-        class="w-64 bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl z-20">
+        :class="sidebarOpen ? 'w-64' : 'w-20'"
+        class="bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out shrink-0 relative">
         
-        <div class="h-20 flex items-center px-6 border-b border-[#5D4037] shrink-0">
-            <span class="text-amber-500 mr-2 text-xl">☕</span>
-            <div class="flex items-baseline">
+        <div class="h-20 flex items-center px-6 border-b border-[#5D4037] shrink-0 overflow-hidden relative">
+            <x-lucide-coffee class="w-8 h-8 text-amber-500 mr-2 shrink-0 absolute left-6" />
+            <div class="flex items-baseline whitespace-nowrap ml-10 transition-opacity duration-300" :class="sidebarOpen ? 'opacity-100' : 'opacity-0 invisible'">
                 <span class="text-3xl font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-xs font-bold tracking-[0.2em] uppercase opacity-90">Cafe</span>
             </div>
         </div>
 
-        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-            <a href="{{ route('staff.dashboard') }}" class="block px-4 py-2 rounded {{ request()->routeIs('staff.dashboard') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}">Staff Hub</a>
+        <nav class="flex-1 px-3 py-6 space-y-2 overflow-y-auto overflow-x-hidden">
+            <a href="{{ route('staff.dashboard') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('staff.dashboard') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Staff Hub">
+                <x-lucide-layout-dashboard class="w-6 h-6 shrink-0 {{ request()->routeIs('staff.dashboard') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
+                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">Staff Hub</span>
+            </a>
             
-            <a href="/pos" class="block px-4 py-2 rounded {{ request()->is('pos') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}">POS Register</a>
+            <a href="/pos" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('pos') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="POS Register">
+                <x-lucide-calculator class="w-6 h-6 shrink-0 {{ request()->is('pos') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
+                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">POS Register</span>
+            </a>
             
             </nav>
     </aside>
@@ -47,16 +47,14 @@
         <header class="h-14 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center justify-between px-6 z-10 shrink-0">
             
             <button @click="sidebarOpen = !sidebarOpen" class="text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none flex items-center justify-center">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                </svg>
+                <x-lucide-menu class="w-6 h-6" />
             </button>
             
             <div class="flex items-center space-x-6">
-                <div class="flex items-center gap-2">
-                    <span class="text-[11px] uppercase tracking-widest text-[#A1887F] font-bold">Staff Status:</span>
-                    <span class="text-sm font-bold text-[#3E2723]">{{ Auth::user()->name }}</span>
-                </div>
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group cursor-pointer">
+                    <span class="text-[11px] uppercase tracking-widest text-[#A1887F] group-hover:text-[#3E2723] transition font-bold">Staff Status:</span>
+                    <span class="text-sm font-bold text-[#3E2723] group-hover:text-amber-700 transition">{{ Auth::user()->name }}</span>
+                </a>
 
                 <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
 

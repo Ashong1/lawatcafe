@@ -62,4 +62,27 @@ class VoucherController extends Controller
 
         return redirect()->back()->with('success', 'Voucher removed from the system.');
     }
+
+    /**
+     * Display active network sessions.
+     */
+    public function sessions()
+    {
+        // Define active sessions as used vouchers that haven't expired
+        $sessions = Voucher::where('is_used', true)
+            ->whereNotNull('used_at')
+            ->get()
+            ->filter(function($voucher) {
+                $expiryTime = $voucher->used_at->addMinutes($voucher->duration_minutes);
+                return $expiryTime->isFuture();
+            })
+            ->map(function($voucher) {
+                $expiryTime = $voucher->used_at->addMinutes($voucher->duration_minutes);
+                $voucher->timeLeft = $expiryTime->diffInMinutes(now());
+                $voucher->progress = ($voucher->timeLeft / $voucher->duration_minutes) * 100;
+                return $voucher;
+            });
+
+        return view('network.sessions', compact('sessions'));
+    }
 }

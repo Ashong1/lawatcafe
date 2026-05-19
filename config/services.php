@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'opnsense' => [
+        'url' => env('OPNSENSE_API_URL', 'https://192.168.2.251'),
+        'key' => env('OPNSENSE_API_KEY'),
+        'secret' => env('OPNSENSE_API_SECRET'),
+        'zone' => env('OPNSENSE_ZONE', 0),
+    ],
+
 ];

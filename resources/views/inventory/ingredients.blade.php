@@ -7,14 +7,14 @@
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
-                <span class="text-5xl md:text-6xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-xl md:text-2xl font-bold tracking-[0.2em] uppercase mt-4">Ingredient Inventory</span>
+                <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Ingredient Inventory</span>
             </h2>
             <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Track and manage raw materials, stock levels, and supply adjustments.</p>
         </div>
     </div>
 
-    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
@@ -67,8 +67,8 @@
                     @empty
                     <tr>
                         <td colspan="5" class="py-16 text-center">
-                            <div class="flex flex-col items-center opacity-40">
-                                <span class="text-4xl mb-3">🌾</span>
+                            <div class="flex flex-col items-center opacity-30">
+                                <x-lucide-flask-conical class="w-10 h-10 mb-3" />
                                 <p class="text-[#A1887F] text-sm font-medium">No ingredients found. Click "Add New Ingredient" to start.</p>
                             </div>
                         </td>
@@ -80,7 +80,7 @@
     </div>
 
     <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl p-8 w-full max-w-md border-t-8 border-[#3E2723]">
+        <div @click.away="closeModal()" class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md border-t-8 border-[#3E2723]">
             <h2 class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-widest" x-text="modalTitle"></h2>
             
             <form :action="formAction" method="POST">

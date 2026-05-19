@@ -6,8 +6,8 @@
     
     <div class="mb-8 border-b border-[#E6D5C3] pb-4">
         <h2 class="flex items-center gap-3 text-[#3E2723]">
-            <span class="text-5xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-            <span class="text-2xl font-bold tracking-[0.2em] uppercase mt-3">Staff Management</span>
+            <span class="text-3xl font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+            <span class="text-lg font-bold tracking-[0.2em] uppercase mt-1">Staff Management</span>
         </h2>
         <p class="text-sm text-[#8D6E63] mt-2 font-medium">Control system access, add new baristas, or edit admin accounts.</p>
     </div>

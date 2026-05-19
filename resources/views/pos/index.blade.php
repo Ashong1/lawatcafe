@@ -6,18 +6,18 @@
 @section('content')
 <div x-data="posSystem()" class="bg-[#FDF8F5] -m-6 p-6 min-h-screen flex items-start gap-6 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
 
-    <div class="flex-1 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm flex flex-col h-[calc(100vh-3rem)] overflow-hidden border border-[#F0E6D2]">
+    <div class="flex-1 bg-white p-6 md:p-8 rounded-2xl shadow-sm flex flex-col h-[calc(100vh-3rem)] overflow-hidden border border-[#F0E6D2]">
         
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 shrink-0">
             
             <div class="flex items-center gap-3 text-[#3E2723] hidden lg:flex shrink-0">
-                <span class="text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg font-bold tracking-[0.2em] uppercase mt-2">POS</span>
+                <span class="text-3xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                <span class="text-base font-bold tracking-[0.2em] uppercase mt-1">POS</span>
             </div>
 
             <div class="relative w-full max-w-md">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#8D6E63]">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <x-lucide-search class="w-5 h-5 text-gray-400" />
                 </div>
                 <input type="text" x-model="searchQuery" placeholder="Search menu..." class="w-full pl-11 pr-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full focus:outline-none focus:ring-2 focus:ring-[#3E2723] transition-all text-sm font-medium placeholder-[#A1887F] text-[#3E2723]">
             </div>
@@ -49,10 +49,18 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto pb-6 pr-2">
             <template x-for="item in filteredProducts" :key="item.id">
-                <div class="bg-white p-5 rounded-[2rem] border border-[#F0E6D2] shadow-sm hover:shadow-md hover:border-[#D7CCC8] transition-all flex flex-col group h-full">
+                <div class="bg-white p-5 rounded-2xl border border-[#F0E6D2] shadow-sm hover:shadow-md hover:border-[#D7CCC8] transition-all flex flex-col group h-full">
                     
-                    <div class="h-32 w-full bg-[#FDF8F5] rounded-2xl mb-4 flex items-center justify-center text-4xl group-hover:scale-105 transition-transform duration-300 border border-[#F0E6D2] shrink-0">
-                        <span x-text="item.type === 'wifi' ? '📶' : (item.category === 'Pastries' ? '🥐' : '☕')"></span>
+                    <div class="h-24 w-full bg-[#FDF8F5] rounded-xl mb-4 flex items-center justify-center group-hover:bg-white transition-colors duration-300 border border-[#F0E6D2] shrink-0">
+                        <template x-if="item.type === 'wifi'">
+                            <x-lucide-wifi class="w-8 h-8 text-amber-800/20" />
+                        </template>
+                        <template x-if="item.type !== 'wifi' && item.category === 'Pastries'">
+                            <x-lucide-cookie class="w-8 h-8 text-amber-800/20" />
+                        </template>
+                        <template x-if="item.type !== 'wifi' && item.category !== 'Pastries'">
+                            <x-lucide-coffee class="w-8 h-8 text-amber-800/20" />
+                        </template>
                     </div>
 
                     <div class="flex justify-between items-start mb-1 shrink-0">
@@ -77,7 +85,7 @@
         </div>
     </div>
 
-    <div class="w-96 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col sticky top-6 h-[calc(100vh-3rem)] shrink-0">
+    <div class="w-96 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col sticky top-6 h-[calc(100vh-3rem)] shrink-0">
         
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-2xl font-bold text-[#3E2723]">Cart</h3>
@@ -92,8 +100,13 @@
         <div class="flex-1 overflow-y-auto space-y-4 pr-2 mb-6">
             <template x-for="(cartItem, index) in cart" :key="cartItem.id + '-' + index">
                 <div class="flex gap-4 items-center bg-white group">
-                    <div class="w-12 h-12 bg-[#FDF8F5] border border-[#F0E6D2] rounded-xl flex items-center justify-center text-xl shrink-0">
-                        <span x-text="cartItem.type === 'wifi' ? '📶' : '☕'"></span>
+                    <div class="w-12 h-12 bg-[#FDF8F5] border border-[#F0E6D2] rounded-xl flex items-center justify-center shrink-0">
+                        <template x-if="cartItem.type === 'wifi'">
+                            <x-lucide-wifi class="w-6 h-6 text-amber-800/30" />
+                        </template>
+                        <template x-if="cartItem.type !== 'wifi'">
+                            <x-lucide-coffee class="w-6 h-6 text-amber-800/30" />
+                        </template>
                     </div>
                     
                     <div class="flex-1">
@@ -112,7 +125,7 @@
             </template>
             
             <div x-show="cart.length === 0" class="flex flex-col items-center justify-center h-full text-[#A1887F] text-sm font-medium">
-                <span class="text-5xl mb-4 opacity-30">🛒</span>
+                <x-lucide-shopping-cart class="w-12 h-12 mb-4 opacity-20" />
                 Your cart is empty.
             </div>
         </div>
@@ -140,9 +153,9 @@
     </div>
 
     <div x-show="showModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" style="display: none;">
-        <div @click.away="resetCart()" class="bg-white rounded-[2rem] shadow-2xl p-8 max-w-sm w-full text-center border-t-8 border-[#3E2723]">
+        <div @click.away="resetCart()" class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center border-t-8 border-[#3E2723]">
             <div class="w-20 h-20 bg-[#E8F5E9] rounded-full flex items-center justify-center mx-auto mb-6 text-[#2E7D32]">
-                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                <x-lucide-check class="w-10 h-10" />
             </div>
             
             <h2 class="text-2xl font-bold text-[#3E2723] mb-2">Order Placed!</h2>

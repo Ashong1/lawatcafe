@@ -7,14 +7,14 @@
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
-                <span class="text-5xl md:text-6xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-xl md:text-2xl font-bold tracking-[0.2em] uppercase mt-4">Active Sessions</span>
+                <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Active Sessions</span>
             </h2>
             <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Monitor and manage live customer network connections.</p>
         </div>
     </div>
 
-    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
@@ -40,17 +40,17 @@
                     </tr>
                 </thead>
                 <tbody class="text-sm">
-                    
+                    @forelse($sessions as $session)
                     <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
-                        <td class="py-4 font-extrabold text-[#3E2723] text-base font-mono">192.168.10.54</td>
-                        <td class="py-4 text-[#8D6E63] font-mono text-xs">00:1A:2B:3C:4D:5E</td>
-                        <td class="py-4 font-bold text-amber-700 tracking-widest font-mono">LAWA-X7B</td>
+                        <td class="py-4 font-extrabold text-[#3E2723] text-base font-mono">{{ $session->ip_address ?? '0.0.0.0' }}</td>
+                        <td class="py-4 text-[#8D6E63] font-mono text-xs">{{ $session->mac_address ?? 'UNKNOWN' }}</td>
+                        <td class="py-4 font-bold text-amber-700 tracking-widest font-mono">{{ $session->code }}</td>
                         <td class="py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-full bg-[#FDF8F5] border border-[#F0E6D2] rounded-full h-2.5 max-w-[100px] overflow-hidden">
-                                    <div class="bg-amber-600 h-full rounded-full transition-all duration-500" style="width: 70%"></div>
+                                    <div class="bg-amber-600 h-full rounded-full transition-all duration-500" style="width: {{ $session->progress }}%"></div>
                                 </div>
-                                <span class="text-xs font-bold text-[#3E2723]">42m left</span>
+                                <span class="text-xs font-bold text-[#3E2723]">{{ $session->timeLeft }}m left</span>
                             </div>
                         </td>
                         <td class="py-4 text-right">
@@ -59,8 +59,17 @@
                             </button>
                         </td>
                     </tr>
-
-                    </tbody>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="py-16 text-center">
+                            <div class="flex flex-col items-center opacity-30">
+                                <x-lucide-wifi-off class="w-10 h-10 mb-3" />
+                                <p class="text-[#A1887F] text-sm font-medium">No active network sessions.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
             </table>
         </div>
         

@@ -12,6 +12,13 @@ class Voucher extends Model
         'code',
         'duration_minutes',
         'is_used',
-        'used_at'
+        'used_at',
+        'ip_address',
+        'mac_address',
+    ];
+
+    protected $casts = [
+        'used_at' => 'datetime',
+        'is_used' => 'boolean',
     ];
 }

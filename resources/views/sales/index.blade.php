@@ -8,8 +8,8 @@
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex justify-between items-end">
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
-                <span class="text-6xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-2xl font-bold tracking-[0.2em] uppercase mt-4">Sales Reports</span>
+                <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Sales Reports</span>
             </h2>
             <p class="text-sm text-[#8D6E63] mt-2 font-medium">Track your daily revenue and transaction history.</p>
         </div>
@@ -24,7 +24,7 @@
         
         <!-- Today's Revenue Card with Sparkline -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
+            <div class="absolute -right-4 -top-4 w-16 h-16 bg-green-50 rounded-full z-0 group-hover:scale-150 transition duration-500"></div>
             <div class="relative z-10 flex justify-between items-center">
                 <div>
                     <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em] mb-1">Today's Revenue</h3>
@@ -39,7 +39,7 @@
         
         <!-- Total Lifetime Sales Card with Sparkline -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
+            <div class="absolute -right-4 -top-4 w-16 h-16 bg-amber-50 rounded-full z-0 group-hover:scale-150 transition duration-500"></div>
             <div class="relative z-10 flex justify-between items-center">
                 <div>
                     <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em] mb-1">Total Lifetime Sales</h3>
@@ -92,9 +92,9 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="py-20 text-center opacity-40 italic">
-                                <div class="flex flex-col items-center">
-                                    <span class="text-4xl mb-2">🧾</span>
+                            <td colspan="4" class="py-20 text-center">
+                                <div class="flex flex-col items-center opacity-30">
+                                    <x-lucide-receipt class="w-10 h-10 mb-2" />
                                     <p class="text-[#A1887F] text-sm font-medium">No sales recorded yet.</p>
                                 </div>
                             </td>
