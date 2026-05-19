@@ -111,6 +111,7 @@ class OpnSenseService
     public function disconnectDevice($sessionId)
     {
         if (empty($this->apiKey) || empty($this->apiSecret)) {
+            Log::warning("OPNsense Disconnect: API credentials missing.");
             return false;
         }
 
@@ -118,13 +119,28 @@ class OpnSenseService
             $zone = session('zone', $this->zone);
             $url = "{$this->baseUrl}/api/captiveportal/session/disconnect/{$zone}/";
             
+            // We send both camelCase and lowercase to be safe across OPNsense versions
             $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
                 ->withoutVerifying()
                 ->post($url, [
-                    'sessionId' => $sessionId
+                    'sessionId' => $sessionId,
+                    'sessionid' => $sessionId 
                 ]);
 
-            return $response->successful();
+            $data = $response->json();
+
+            if ($response->successful()) {
+                Log::info("OPNsense: Disconnect request sent for session {$sessionId}. Response: " . json_encode($data));
+                
+                // If the session was deleted or returned successfully
+                return true;
+            }
+
+            Log::error("OPNsense: Failed to disconnect session {$sessionId}", [
+                'status' => $response->status(),
+                'response' => $data
+            ]);
+            return false;
         } catch (\Exception $e) {
             Log::error("OPNsense: Exception disconnecting session {$sessionId}: " . $e->getMessage());
             return false;

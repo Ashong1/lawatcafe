@@ -11,7 +11,8 @@ class ProductController extends Controller
     public function index()
     {
         $products = Product::all();
-        return view('inventory.products', compact('products'));
+        $categories = \App\Models\Category::orderBy('name')->get();
+        return view('inventory.products', compact('products', 'categories'));
     }
 
     // 2. Save a brand new product to the database

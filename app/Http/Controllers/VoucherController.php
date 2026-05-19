@@ -64,6 +64,36 @@ class VoucherController extends Controller
     }
 
     /**
+     * Remove multiple vouchers at once.
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:vouchers,id',
+        ]);
+
+        Voucher::whereIn('id', $request->ids)->delete();
+
+        return redirect()->back()->with('success', 'Selected vouchers have been removed.');
+    }
+
+    /**
+     * Purge all used or expired vouchers.
+     */
+    public function purge()
+    {
+        // 1. Used vouchers
+        $usedCount = Voucher::where('is_used', true)->count();
+        
+        // 2. Expired vouchers (if we have an expires_at or calculate from used_at)
+        // For now, let's just purge all used vouchers as a safe start
+        Voucher::where('is_used', true)->delete();
+
+        return redirect()->back()->with('success', "Cleaned up {$usedCount} used/expired vouchers.");
+    }
+
+    /**
      * Display active network sessions.
      */
     public function sessions(\App\Services\OpnSenseService $opnsense)

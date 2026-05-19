@@ -105,10 +105,10 @@
                 <div class="mb-4">
                     <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Category</label>
                     <select name="category" x-model="formData.category" required class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
-                        <option value="Coffee">Coffee</option>
-                        <option value="Pastries">Pastries</option>
-                        <option value="Meals">Meals</option>
-                        <option value="Add-ons">Add-ons</option>
+                        <option value="">Select Category</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->name }}">{{ $category->name }}</option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -146,7 +146,7 @@
             formData: {
                 id: null,
                 name: '',
-                category: 'Coffee',
+                category: '',
                 price: '',
                 status: 'Active'
             },
@@ -155,7 +155,7 @@
                 this.isEditing = false;
                 this.modalTitle = 'Add New Product';
                 this.formAction = '{{ route('inventory.products.store') }}';
-                this.formData = { id: null, name: '', category: 'Coffee', price: '', status: 'Active' };
+                this.formData = { id: null, name: '', category: '', price: '', status: 'Active' };
                 this.isModalOpen = true;
             },
 

@@ -45,6 +45,10 @@
                 <x-lucide-package class="w-6 h-6 shrink-0 {{ request()->is('inventory/products') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">Products</span>
             </a>
+            <a href="/inventory/categories" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('inventory/categories') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Categories">
+                <x-lucide-layers class="w-6 h-6 shrink-0 {{ request()->is('inventory/categories') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
+                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">Categories</span>
+            </a>
             <a href="/inventory/ingredients" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('inventory/ingredients') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Ingredients">
                 <x-lucide-flask-conical class="w-6 h-6 shrink-0 {{ request()->is('inventory/ingredients') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">Ingredients</span>

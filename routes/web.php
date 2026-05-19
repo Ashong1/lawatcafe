@@ -55,6 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Inventory Management
         Route::prefix('inventory')->name('inventory.')->group(function () {
+            Route::resource('categories', \App\Http\Controllers\CategoryController::class)->except(['create', 'show', 'edit']);
             Route::resource('products', ProductController::class)->except(['create', 'show', 'edit']);
             Route::resource('ingredients', IngredientController::class)->except(['create', 'show', 'edit']);
         });
@@ -66,6 +67,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             
             Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
             Route::post('/vouchers/generate', [VoucherController::class, 'generateBatch'])->name('vouchers.generate');
+            Route::post('/vouchers/bulk-delete', [VoucherController::class, 'bulkDestroy'])->name('vouchers.bulk-delete');
+            Route::post('/vouchers/purge', [VoucherController::class, 'purge'])->name('vouchers.purge');
             Route::get('/vouchers/{voucher}/print', [VoucherController::class, 'print'])->name('vouchers.print');
             Route::delete('/vouchers/{voucher}', [VoucherController::class, 'destroy'])->name('vouchers.destroy');
         });
