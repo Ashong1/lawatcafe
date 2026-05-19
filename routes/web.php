@@ -26,6 +26,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::post('/authenticate', [CaptivePortalController::class, 'authenticate'])->name('authenticate');
     Route::post('/verify-payment', [CaptivePortalController::class, 'verifyPayment'])->name('verify-payment');
     Route::post('/upload', [CaptivePortalController::class, 'uploadReceipt'])->name('upload');
+    Route::post('/chat', [CaptivePortalController::class, 'chat'])->name('chat');
     Route::get('/success', [CaptivePortalController::class, 'success'])->name('success');
 });
 

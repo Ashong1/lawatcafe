@@ -117,15 +117,39 @@ class CaptivePortalController extends Controller
     }
 
     // Handle e-wallet receipt uploads
-    public function uploadReceipt(Request $request)
+    public function uploadReceipt(Request $request, \App\Services\AIService $ai)
     {
         $request->validate([
             'receipt' => 'required|image|max:5120', // Max 5MB
         ]);
 
-        // TODO: In the next phase, we will send this image to Gemini Vision AI for OCR.
+        // Store the image temporarily
+        $path = $request->file('receipt')->store('temp_receipts', 'local');
+
+        // Pass this image to the Gemini/OpenRouter API for OCR.
+        $aiResult = $ai->extractPaymentDetails($path);
         
-        return back()->with('message', 'Receipt uploaded! Verifying with AI...');
+        // Cleanup temp file
+        \Illuminate\Support\Facades\Storage::disk('local')->delete($path);
+
+        if ($aiResult && !empty($aiResult['reference_number'])) {
+            // Found a ref number, store it in session so the view can populate it
+            session()->flash('ai_ref', $aiResult['reference_number']);
+            return back()->with('message', 'Receipt parsed! Please confirm the reference number and verify.');
+        }
+        
+        return back()->with('error', 'Could not clearly read the reference number from the receipt. Please enter it manually.');
+    }
+
+    public function chat(Request $request, \App\Services\AIService $ai)
+    {
+        $request->validate([
+            'message' => 'required|string|max:500',
+            'history' => 'nullable|array'
+        ]);
+
+        $reply = $ai->chat($request->message, $request->history ?? []);
+        return response()->json(['reply' => $reply]);
     }
 
     // Show the success page after connection

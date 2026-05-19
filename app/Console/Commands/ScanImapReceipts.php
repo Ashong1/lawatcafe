@@ -93,8 +93,20 @@ class ScanImapReceipts extends Command
                 }
 
                 if ($refNumber && $amount) {
-                    $this->info("Extracted: Ref #$refNumber, Amount: $amount");
+                    $this->info("Extracted (Regex): Ref #$refNumber, Amount: $amount");
+                } else {
+                    $this->info("Regex failed, falling back to AI extraction...");
+                    $ai = new \App\Services\AIService();
+                    $aiResult = $ai->extractPaymentDetails($body);
+                    
+                    if ($aiResult) {
+                        $refNumber = $aiResult['reference_number'];
+                        $amount = $aiResult['amount'];
+                        $this->info("Extracted (AI): Ref #$refNumber, Amount: $amount");
+                    }
+                }
 
+                if ($refNumber && $amount) {
                     EwalletPayment::updateOrCreate(
                         ['reference_number' => $refNumber],
                         [
