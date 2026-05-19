@@ -55,10 +55,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Inventory Management
         Route::prefix('inventory')->name('inventory.')->group(function () {
+            Route::get('/logs', function() {
+                return view('inventory.logs', ['logs' => \App\Models\InventoryLog::with(['ingredient', 'user'])->latest()->get()]);
+            })->name('logs');
             Route::resource('categories', \App\Http\Controllers\CategoryController::class)->except(['create', 'show', 'edit']);
             Route::resource('products', ProductController::class)->except(['create', 'show', 'edit']);
             Route::resource('ingredients', IngredientController::class)->except(['create', 'show', 'edit']);
         });
+
+        // Kitchen Display System
+        Route::get('/kds', [\App\Http\Controllers\KdsController::class, 'index'])->name('kds.index');
+        Route::post('/kds/{sale}/status', [\App\Http\Controllers\KdsController::class, 'updateStatus'])->name('kds.update');
 
         // Network & Voucher Management
         Route::prefix('network')->name('network.')->group(function () {

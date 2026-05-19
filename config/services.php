@@ -41,6 +41,8 @@ return [
         'key' => env('OPNSENSE_API_KEY'),
         'secret' => env('OPNSENSE_API_SECRET'),
         'zone' => env('OPNSENSE_ZONE', 0),
+        'guest_user' => env('OPNSENSE_GUEST_USER', 'laravel_guest'),
+        'guest_pass' => env('OPNSENSE_GUEST_PASS', 'Laravel123'),
     ],
 
 ];

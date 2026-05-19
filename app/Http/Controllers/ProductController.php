@@ -10,45 +10,71 @@ class ProductController extends Controller
     // 1. Display the products on the page
     public function index()
     {
-        $products = Product::all();
+        $products = Product::with('ingredients')->get();
         $categories = \App\Models\Category::orderBy('name')->get();
-        return view('inventory.products', compact('products', 'categories'));
+        $ingredients = \App\Models\Ingredient::orderBy('name')->get();
+        return view('inventory.products', compact('products', 'categories', 'ingredients'));
     }
 
     // 2. Save a brand new product to the database
     public function store(Request $request)
     {
         // Validate the incoming data so we don't save blank/bad info
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'status' => 'required|string',
+            'ingredients' => 'nullable|array',
+            'ingredients.*.id' => 'exists:ingredients,id',
+            'ingredients.*.quantity' => 'numeric|min:0',
         ]);
 
         // Create it in the database
-        Product::create($request->all());
+        $product = Product::create($validated);
+
+        if (!empty($request->ingredients)) {
+            foreach ($request->ingredients as $ing) {
+                if ($ing['quantity'] > 0) {
+                    $product->ingredients()->attach($ing['id'], ['quantity' => $ing['quantity']]);
+                }
+            }
+        }
         
         // Refresh the page
-        return redirect()->route('inventory.products.index')->with('success', 'Product added successfully!');
+        return redirect()->route('inventory.products.index')->with('success', 'Product and Recipe added successfully!');
     }
 
     // 3. Update an existing product
     public function update(Request $request, Product $product)
     {
         // Validate the new data
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'status' => 'required|string',
+            'ingredients' => 'nullable|array',
+            'ingredients.*.id' => 'exists:ingredients,id',
+            'ingredients.*.quantity' => 'numeric|min:0',
         ]);
 
         // Update the specific product in the database
-        $product->update($request->all());
+        $product->update($validated);
+
+        // Sync ingredients for the recipe
+        $syncData = [];
+        if (!empty($request->ingredients)) {
+            foreach ($request->ingredients as $ing) {
+                if ($ing['quantity'] > 0) {
+                    $syncData[$ing['id']] = ['quantity' => $ing['quantity']];
+                }
+            }
+        }
+        $product->ingredients()->sync($syncData);
         
         // Refresh the page
-        return redirect()->route('inventory.products.index')->with('success', 'Product updated successfully!');
+        return redirect()->route('inventory.products.index')->with('success', 'Product and Recipe updated successfully!');
     }
 
     // 4. Delete a product permanently

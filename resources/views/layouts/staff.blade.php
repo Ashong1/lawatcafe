@@ -38,6 +38,11 @@
                 <x-lucide-calculator class="w-6 h-6 shrink-0 {{ request()->is('pos') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">POS Register</span>
             </a>
+
+            <a href="/kds" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('kds') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Kitchen Display">
+                <x-lucide-chef-hat class="w-6 h-6 shrink-0 {{ request()->is('kds') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
+                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">Kitchen Display</span>
+            </a>
             
             </nav>
     </aside>

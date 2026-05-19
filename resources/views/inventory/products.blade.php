@@ -112,6 +112,36 @@
                     </select>
                 </div>
 
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest">Recipe / Ingredients</label>
+                        <button type="button" @click="addIngredientRow()" class="text-[10px] font-bold text-amber-700 uppercase hover:underline">+ Add Ingredient</button>
+                    </div>
+                    <div class="space-y-3 bg-[#FAFAFA] p-4 rounded-xl border border-[#F0E6D2]">
+                        <template x-for="(ing, index) in formData.recipe" :key="index">
+                            <div class="flex gap-2 items-end">
+                                <div class="flex-[2]">
+                                    <label class="block text-[9px] text-[#A1887F] uppercase mb-1">Ingredient</label>
+                                    <select :name="'ingredients['+index+'][id]'" x-model="ing.id" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs bg-white">
+                                        <option value="">Select...</option>
+                                        @foreach($ingredients as $ingredient)
+                                            <option value="{{ $ingredient->id }}">{{ $ingredient->name }} ({{ $ingredient->unit }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-[9px] text-[#A1887F] uppercase mb-1">Qty</label>
+                                    <input type="number" :name="'ingredients['+index+'][quantity]'" x-model="ing.quantity" step="0.01" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs">
+                                </div>
+                                <button type="button" @click="removeIngredientRow(index)" class="p-2 text-red-400 hover:text-red-600">&times;</button>
+                            </div>
+                        </template>
+                        <template x-if="formData.recipe.length === 0">
+                            <p class="text-[10px] text-[#A1887F] text-center italic py-2">No ingredients linked yet.</p>
+                        </template>
+                    </div>
+                </div>
+
                 <div class="flex gap-4 mb-8">
                     <div class="flex-1">
                         <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Price (₱)</label>
@@ -148,14 +178,15 @@
                 name: '',
                 category: '',
                 price: '',
-                status: 'Active'
+                status: 'Active',
+                recipe: []
             },
 
             openAddModal() {
                 this.isEditing = false;
                 this.modalTitle = 'Add New Product';
                 this.formAction = '{{ route('inventory.products.store') }}';
-                this.formData = { id: null, name: '', category: '', price: '', status: 'Active' };
+                this.formData = { id: null, name: '', category: '', price: '', status: 'Active', recipe: [] };
                 this.isModalOpen = true;
             },
 
@@ -163,8 +194,23 @@
                 this.isEditing = true;
                 this.modalTitle = 'Edit Product';
                 this.formAction = `/inventory/products/${product.id}`;
-                this.formData = { ...product }; 
+                
+                // Map existing ingredients to the Alpine format
+                const recipe = (product.ingredients || []).map(ing => ({
+                    id: ing.id,
+                    quantity: ing.pivot.quantity
+                }));
+
+                this.formData = { ...product, recipe }; 
                 this.isModalOpen = true;
+            },
+
+            addIngredientRow() {
+                this.formData.recipe.push({ id: '', quantity: 0 });
+            },
+
+            removeIngredientRow(index) {
+                this.formData.recipe.splice(index, 1);
             },
 
             closeModal() {

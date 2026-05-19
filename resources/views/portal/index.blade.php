@@ -56,7 +56,7 @@
 
                 <form action="{{ route('portal.authenticate') }}" method="POST" id="lawat-login-form" class="mt-auto">
                     @csrf
-                    <input type="hidden" name="zone" value="0">
+                    <input type="hidden" name="zone" value="{{ \App\Models\Setting::get('opnsense_zone', '0') }}">
                     <div class="mb-6 group">
                         <label class="block text-[10px] font-black text-[#A1887F] uppercase tracking-widest mb-3 ml-1">Voucher Passcode</label>
                         <div class="relative">
@@ -102,7 +102,7 @@
 
                     <form action="{{ route('portal.verify-payment') }}" method="POST" id="lawat-payment-form" class="space-y-4">
                         @csrf
-                        <input type="hidden" name="zone" value="0">
+                        <input type="hidden" name="zone" value="{{ \App\Models\Setting::get('opnsense_zone', '0') }}">
                         <div>
                             <label class="block text-[10px] font-black text-[#A1887F] uppercase tracking-widest mb-2.5 ml-1">Reference Number</label>
                             <input type="text" name="reference_number" required placeholder="Enter Ref # from G-Cash" 

@@ -21,7 +21,7 @@ class CaptivePortalController extends Controller
     }
 
     // Handle e-wallet reference number verification
-    public function verifyPayment(Request $request)
+    public function verifyPayment(Request $request, \App\Services\OpnSenseService $opnsense)
     {
         $request->validate([
             'reference_number' => 'required|string',
@@ -33,6 +33,24 @@ class CaptivePortalController extends Controller
 
         if (!$payment) {
             return back()->with('error', 'Payment not found or already verified. If you just paid, please wait a minute for the system to process the email.');
+        }
+
+        // Determine duration based on amount from dynamic settings
+        $durations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
+        $amount = (float) $payment->amount;
+        $duration = 0;
+
+        // Sort keys descending to find the highest matching tier
+        krsort($durations);
+        foreach ($durations as $minAmount => $mins) {
+            if ($amount >= (float)$minAmount) {
+                $duration = (int)$mins;
+                break;
+            }
+        }
+
+        if ($duration === 0) {
+            return back()->with('error', 'Insufficient amount for a Wi-Fi voucher. Minimum is ₱20.00.');
         }
 
         // Authorize device on OPNsense

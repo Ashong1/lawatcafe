@@ -187,12 +187,7 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('posSystem', () => ({
             menuItems: {!! json_encode($products ?? []) !!},
-            
-            wifiAddons: [
-                { id: 'w1', name: '1 Hour Wi-Fi', price: 20.00, type: 'wifi', category: 'Wi-Fi', duration: 60 },
-                { id: 'w2', name: '3 Hours Wi-Fi', price: 50.00, type: 'wifi', category: 'Wi-Fi', duration: 180 },
-                { id: 'w3', name: 'Whole Day Wi-Fi', price: 100.00, type: 'wifi', category: 'Wi-Fi', duration: 1440 }
-            ],
+            wifiAddons: {!! json_encode($wifiOptions ?? []) !!},
             
             cart: [],
             showModal: false,

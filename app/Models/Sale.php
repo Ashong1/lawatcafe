@@ -13,6 +13,7 @@ class Sale extends Model
     protected $fillable = [
         'transaction_number',
         'total_amount',
+        'status',
         'payment_method',
         'user_id'
     ];
@@ -21,5 +22,10 @@ class Sale extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(SaleItem::class);
     }
 }

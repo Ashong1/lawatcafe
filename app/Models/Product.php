@@ -15,4 +15,11 @@ class Product extends Model
         'price',
         'status',
     ];
+
+    public function ingredients()
+    {
+        return $this->belongsToMany(Ingredient::class, 'product_ingredients')
+                    ->withPivot('quantity')
+                    ->withTimestamps();
+    }
 }

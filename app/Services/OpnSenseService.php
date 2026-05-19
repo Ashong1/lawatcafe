@@ -42,11 +42,14 @@ class OpnSenseService
             // This endpoint is used to manually authorize an IP session in a specific zone.
             $url = "{$this->baseUrl}/api/captiveportal/session/connect/{$zone}/";
             
+            Log::info("OPNsense Request URL: " . $url);
+            Log::info("OPNsense API Key Length: " . strlen($this->apiKey));
+            
             $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
                 ->withoutVerifying() 
                 ->post($url, [
-                    'user' => 'laravel_guest', // The dedicated user created in OPNsense
-                    'password' => 'Laravel123',
+                    'user' => config('services.opnsense.guest_user'), 
+                    'password' => config('services.opnsense.guest_pass'),
                     'ip' => $ip,
                 ]);
 

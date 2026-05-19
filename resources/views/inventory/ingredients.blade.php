@@ -46,7 +46,7 @@
                     @forelse($ingredients as $ingredient)
                     <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                         <td class="py-4 font-bold text-[#3E2723] text-base">{{ $ingredient->name }}</td>
-                        <td class="py-4 font-extrabold text-base" :class="parseFloat('{{ $ingredient->current_stock }}') < 500 ? 'text-[#C62828]' : 'text-[#3E2723]'">
+                        <td class="py-4 font-extrabold text-base" :class="parseFloat('{{ $ingredient->current_stock }}') < {{ $lowStockThreshold }} ? 'text-[#C62828]' : 'text-[#3E2723]'">
                             {{ number_format($ingredient->current_stock) }}
                         </td>
                         <td class="py-4 text-[#8D6E63] font-medium">{{ $ingredient->unit }}</td>

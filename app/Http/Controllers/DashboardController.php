@@ -16,17 +16,27 @@ class DashboardController extends Controller
         // 1. Basic Stats for the Top Cards
         $availableVouchers = Voucher::where('is_used', false)->count();
         $todaysSales = Sale::whereDate('created_at', Carbon::today())->sum('total_amount');
-        $lowStockCount = Ingredient::where('current_stock', '<', 500)->count(); // Adjust threshold as needed
+        
+        $lowStockThreshold = (int) \App\Models\Setting::get('low_stock_threshold', 500);
+        $lowStockCount = Ingredient::where('current_stock', '<', $lowStockThreshold)->count(); 
         
         // Dynamic Active Sessions (Users) - Synced with OPNsense
         $opnSessions = $opnsense->listSessions();
         $activeUsers = collect($opnSessions)->filter(function($session) {
             $ip = str_replace('/32', '', $session['ipAddress']);
-            $ignoredIps = ['192.168.2.251', '192.168.2.100', '192.168.2.5', '192.168.2.4']; 
+            $ignoredIpsStr = \App\Models\Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.100,192.168.2.5,192.168.2.4');
+            $ignoredIps = explode(',', $ignoredIpsStr);
             return !in_array($ip, $ignoredIps);
         })->count();
 
         $recentVouchers = Voucher::orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        // Top Selling Products (NEW)
+        $topProducts = \App\Models\SaleItem::select('item_name', \DB::raw('SUM(quantity) as total_qty'))
+            ->groupBy('item_name')
+            ->orderByDesc('total_qty')
             ->take(5)
             ->get();
         
@@ -59,7 +69,9 @@ class DashboardController extends Controller
             
         // Fallback if empty
         if (empty($categoryData)) {
-            $categoryData = ['Coffee' => 10, 'Pastries' => 5, 'Meals' => 2];
+            $categoryData = \App\Models\Category::pluck('name')->mapWithKeys(function($name) {
+                return [$name => 0];
+            })->toArray();
         }
 
         // System Health (Basic)
@@ -83,7 +95,8 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'availableVouchers', 'todaysSales', 'lowStockCount',
             'chartLabels', 'chartValues', 'categoryData',
-            'activeUsers', 'recentVouchers', 'cpuLoad', 'memoryUsage'
+            'activeUsers', 'recentVouchers', 'cpuLoad', 'memoryUsage',
+            'topProducts'
         ));
     }
 }

@@ -15,4 +15,9 @@ class Ingredient extends Model
         'unit',
         'status',
     ];
+
+    public function logs()
+    {
+        return $this->hasMany(InventoryLog::class);
+    }
 }

@@ -27,6 +27,11 @@ class VoucherController extends Controller
         $vouchersCreated = 0;
         $batchSize = 5;
 
+        // Get default duration from lowest tier in settings
+        $durations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
+        asort($durations);
+        $defaultDuration = !empty($durations) ? reset($durations) : 60;
+
         // Loop until we successfully create 5 unique vouchers
         while ($vouchersCreated < $batchSize) {
             $code = 'LAWA-' . strtoupper(Str::random(4));
@@ -35,7 +40,7 @@ class VoucherController extends Controller
             if (!Voucher::where('code', $code)->exists()) {
                 Voucher::create([
                     'code' => $code,
-                    'duration_minutes' => 60, // Default 1 hour
+                    'duration_minutes' => $defaultDuration,
                     'is_used' => false,
                 ]);
                 $vouchersCreated++;
@@ -130,9 +135,12 @@ class VoucherController extends Controller
             }
 
             // Calculate time remaining based on our database
-            $expiryTime = $voucher->used_at->addMinutes($voucher->duration_minutes);
-            $timeLeft = max(0, (int) $expiryTime->diffInMinutes(now()));
-            $progress = ($timeLeft / $voucher->duration_minutes) * 100;
+            $usedAt = $voucher->used_at;
+            $expiryTime = $usedAt->copy()->addMinutes($voucher->duration_minutes);
+            $now = now();
+            
+            $timeLeft = $now->greaterThan($expiryTime) ? 0 : (int) $now->diffInMinutes($expiryTime);
+            $progress = $voucher->duration_minutes > 0 ? ($timeLeft / $voucher->duration_minutes) * 100 : 0;
 
             return (object) [
                 'sessionId' => $raw['sessionId'],
@@ -144,8 +152,9 @@ class VoucherController extends Controller
                 'is_system' => false
             ];
         })->filter(function($session) {
-            // Filter out infrastructure devices
-            $ignoredIps = ['192.168.2.251', '192.168.2.100', '192.168.2.5', '192.168.2.4'];
+            // Filter out infrastructure devices from dynamic settings
+            $ignoredIpsStr = \App\Models\Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.100,192.168.2.5,192.168.2.4');
+            $ignoredIps = explode(',', $ignoredIpsStr);
             return !in_array($session->ip_address, $ignoredIps);
         });
 

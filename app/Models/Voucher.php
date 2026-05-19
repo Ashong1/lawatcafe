@@ -21,4 +21,9 @@ class Voucher extends Model
         'used_at' => 'datetime',
         'is_used' => 'boolean',
     ];
+
+    public function sale()
+    {
+        return $this->belongsTo(Sale::class);
+    }
 }

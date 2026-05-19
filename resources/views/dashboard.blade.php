@@ -161,36 +161,65 @@
             @endif
         </div>
 
-        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col">
-            <h3 class="text-sm font-bold text-[#3E2723] mb-8 uppercase tracking-widest">System Health</h3>
-            
-            <div class="space-y-8 flex-1">
-                <div class="group">
-                    <div class="flex justify-between text-[11px] mb-3 font-bold uppercase tracking-widest text-[#4A3B32]">
-                        <span>CPU Load</span>
-                        <span class="text-amber-700">{{ number_format($cpuLoad, 0) }}%</span>
+        <div class="space-y-6">
+            <!-- Top Selling Items (NEW) -->
+            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="p-2 bg-amber-50 rounded-lg">
+                        <x-lucide-award class="w-5 h-5 text-amber-700" />
                     </div>
-                    <div class="w-full bg-[#FDF8F5] rounded-full h-3 overflow-hidden">
-                        <div class="bg-amber-600 h-full rounded-full transition-all duration-500 ease-out" style="width: {{ $cpuLoad }}%"></div>
-                    </div>
-                    <p class="text-[10px] text-[#A1887F] mt-2 font-medium">Optimized processing</p>
+                    <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Top Selling</h3>
                 </div>
-                
-                <div class="group">
-                    <div class="flex justify-between text-[11px] mb-3 font-bold uppercase tracking-widest text-[#4A3B32]">
-                        <span>Memory</span>
-                        <span class="text-amber-700">{{ number_format($memoryUsage, 0) }}%</span>
-                    </div>
-                    <div class="w-full bg-[#FDF8F5] rounded-full h-3 overflow-hidden">
-                        <div class="bg-amber-600 h-full rounded-full transition-all duration-500 ease-out" style="width: {{ $memoryUsage }}%"></div>
-                    </div>
-                    <p class="text-[10px] text-[#A1887F] mt-2 font-medium">Stable allocation</p>
+
+                <div class="space-y-4">
+                    @forelse($topProducts ?? [] as $item)
+                        <div class="flex items-center justify-between group">
+                            <div class="flex items-center gap-3">
+                                <span class="text-[10px] font-black text-[#A1887F] opacity-50 w-4">0{{ $loop->iteration }}</span>
+                                <span class="text-sm font-bold text-[#3E2723] group-hover:text-amber-700 transition-colors capitalize">{{ $item->item_name }}</span>
+                            </div>
+                            <span class="text-xs font-black text-[#8D6E63] bg-[#FAFAFA] px-2 py-1 rounded border border-[#F0E6D2]">
+                                {{ (int)$item->total_qty }}
+                            </span>
+                        </div>
+                    @empty
+                        <p class="text-xs text-[#A1887F] text-center italic py-4">No sales data yet.</p>
+                    @endforelse
                 </div>
             </div>
 
-            <div class="mt-8 pt-6 border-t border-[#FDF8F5] flex items-center gap-3 opacity-60">
-                <div class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-[#8D6E63]">All Systems Online</span>
+            <!-- System Health -->
+            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col">
+                <h3 class="text-sm font-bold text-[#3E2723] mb-8 uppercase tracking-widest">System Health</h3>
+                
+                <div class="space-y-8 flex-1">
+                    <div class="group">
+                        <div class="flex justify-between text-[11px] mb-3 font-bold uppercase tracking-widest text-[#4A3B32]">
+                            <span>CPU Load</span>
+                            <span class="text-amber-700">{{ number_format($cpuLoad, 0) }}%</span>
+                        </div>
+                        <div class="w-full bg-[#FDF8F5] rounded-full h-3 overflow-hidden">
+                            <div class="bg-amber-600 h-full rounded-full transition-all duration-500 ease-out" style="width: {{ $cpuLoad }}%"></div>
+                        </div>
+                        <p class="text-[10px] text-[#A1887F] mt-2 font-medium">Optimized processing</p>
+                    </div>
+                    
+                    <div class="group">
+                        <div class="flex justify-between text-[11px] mb-3 font-bold uppercase tracking-widest text-[#4A3B32]">
+                            <span>Memory</span>
+                            <span class="text-amber-700">{{ number_format($memoryUsage, 0) }}%</span>
+                        </div>
+                        <div class="w-full bg-[#FDF8F5] rounded-full h-3 overflow-hidden">
+                            <div class="bg-amber-600 h-full rounded-full transition-all duration-500 ease-out" style="width: {{ $memoryUsage }}%"></div>
+                        </div>
+                        <p class="text-[10px] text-[#A1887F] mt-2 font-medium">Stable allocation</p>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-[#FDF8F5] flex items-center gap-3 opacity-60">
+                    <div class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-[#8D6E63]">All Systems Online</span>
+                </div>
             </div>
         </div>
 

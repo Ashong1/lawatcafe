@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\Voucher;
 use App\Models\Product;
 use Illuminate\Support\Str;
@@ -18,44 +19,97 @@ class PosController extends Controller
                 'id' => $product->id,
                 'name' => $product->name,
                 'price' => (float) $product->price, // Ensure it's a number for JS math
+                'category' => $product->category,
                 'type' => 'product' // Distinguishes it from Wi-Fi add-ons
             ];
         });
 
-        return view('pos.index', compact('products'));
+        // Load Wi-Fi options from dynamic settings
+        $durations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
+        $wifiOptions = [];
+        $index = 1;
+        foreach ($durations as $price => $mins) {
+            $mins = (int) $mins;
+            $name = $mins >= 1440 ? 'Whole Day Wi-Fi' : ($mins >= 60 ? ($mins/60) . ' Hour(s) Wi-Fi' : $mins . ' Mins Wi-Fi');
+            $wifiOptions[] = [
+                'id' => 'w' . $index++,
+                'name' => $name,
+                'price' => (float) $price,
+                'type' => 'wifi',
+                'category' => 'Wi-Fi',
+                'duration' => $mins
+            ];
+        }
+
+        return view('pos.index', compact('products', 'wifiOptions'));
     }
+
     public function checkout(Request $request)
     {
         // 1. Validate the incoming request from Alpine.js
         $request->validate([
             'total_amount' => 'required|numeric',
             'cart' => 'required|array',
+            'payment_method' => 'nullable|string|max:50',
         ]);
 
         // 2. Create the Sales Record in the database
         $sale = Sale::create([
             'transaction_number' => 'TRN-' . strtoupper(Str::random(8)),
             'total_amount' => $request->total_amount,
-            'payment_method' => 'Cash', // Default to cash for now
-            'user_id' => auth()->id(),  // Associates sale with the logged-in admin
+            'status' => 'pending',
+            'payment_method' => $request->payment_method ?? 'Cash', 
+            'user_id' => auth()->id(),  // Associates sale with the logged-in user
         ]);
 
         $generatedCode = null;
         $hasWifi = false;
 
-        // 3. Loop through the cart to check for Wi-Fi purchases
+        // 3. Loop through the cart to check for Wi-Fi purchases and deduct stock
         foreach ($request->cart as $item) {
+            // Save each item to the sale_items table
+            SaleItem::create([
+                'sale_id' => $sale->id,
+                'product_id' => $item['type'] === 'product' ? $item['id'] : null,
+                'quantity' => $item['quantity'],
+                'price' => $item['price'],
+                'kds_status' => 'pending'
+            ]);
+
+            // A. Handle Wi-Fi
             if (isset($item['type']) && $item['type'] === 'wifi') {
                 $hasWifi = true;
-                
-                // Actually generate and save the voucher in the database!
                 $generatedCode = 'LAWA-' . strtoupper(Str::random(4));
                 
                 Voucher::create([
                     'code' => $generatedCode,
                     'duration_minutes' => $item['duration'] ?? 60,
                     'is_used' => false,
+                    'sale_id' => $sale->id,
                 ]);
+            }
+
+            // B. Handle Stock Deduction for Products
+            if (isset($item['type']) && $item['type'] === 'product') {
+                $product = Product::with('ingredients')->find($item['id']);
+                if ($product) {
+                    foreach ($product->ingredients as $ingredient) {
+                        $quantityToDeduct = $ingredient->pivot->quantity * $item['quantity'];
+                        
+                        // Deduct from stock
+                        $ingredient->current_stock -= $quantityToDeduct;
+                        $ingredient->save();
+
+                        // Log the deduction
+                        \App\Models\InventoryLog::create([
+                            'ingredient_id' => $ingredient->id,
+                            'change_amount' => -$quantityToDeduct,
+                            'after_amount' => $ingredient->current_stock,
+                            'reason' => 'Sale: ' . $product->name . ' (#' . substr($sale->transaction_number, -4) . ')',
+                            'user_id' => auth()->id()
+                        ]);
+                    }
+                }
             }
         }
 
@@ -66,5 +120,4 @@ class PosController extends Controller
             'generatedCode' => $generatedCode,
         ]);
     }
-
 }
