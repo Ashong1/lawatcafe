@@ -41,7 +41,10 @@ class PosController extends Controller
             ];
         }
 
-        return view('pos.index', compact('products', 'wifiOptions'));
+        // Check for active shift
+        $activeShift = \App\Models\Shift::where('user_id', auth()->id())->where('status', 'open')->latest()->first();
+
+        return view('pos.index', compact('products', 'wifiOptions', 'activeShift'));
     }
 
     public function checkout(Request $request)
@@ -49,17 +52,27 @@ class PosController extends Controller
         // 1. Validate the incoming request from Alpine.js
         $request->validate([
             'total_amount' => 'required|numeric',
+            'amount_received' => 'required|numeric',
             'cart' => 'required|array',
             'payment_method' => 'nullable|string|max:50',
+            'order_type' => 'required|in:dine_in,takeaway',
+            'discount_type' => 'nullable|string|max:50',
+            'discount_amount' => 'nullable|numeric',
+            'shift_id' => 'required|exists:shifts,id'
         ]);
 
         // 2. Create the Sales Record in the database
         $sale = Sale::create([
             'transaction_number' => 'TRN-' . strtoupper(Str::random(8)),
             'total_amount' => $request->total_amount,
+            'amount_received' => $request->amount_received,
             'status' => 'pending',
             'payment_method' => $request->payment_method ?? 'Cash', 
-            'user_id' => auth()->id(),  // Associates sale with the logged-in user
+            'order_type' => $request->order_type,
+            'discount_type' => $request->discount_type,
+            'discount_amount' => $request->discount_amount ?? 0,
+            'user_id' => auth()->id(),
+            'shift_id' => $request->shift_id,
         ]);
 
         $generatedCode = null;
@@ -71,8 +84,10 @@ class PosController extends Controller
             SaleItem::create([
                 'sale_id' => $sale->id,
                 'product_id' => $item['type'] === 'product' ? $item['id'] : null,
+                'item_name' => $item['name'], // Important in case product is deleted later
                 'quantity' => $item['quantity'],
                 'price' => $item['price'],
+                'type' => $item['type'],
                 'kds_status' => 'pending'
             ]);
 
@@ -118,6 +133,13 @@ class PosController extends Controller
             'success' => true,
             'hasWifi' => $hasWifi,
             'generatedCode' => $generatedCode,
+            'sale_id' => $sale->id, // Pass back sale ID for receipt printing
         ]);
+    }
+
+    public function receipt(Sale $sale)
+    {
+        $sale->load(['items', 'user']);
+        return view('pos.receipt', compact('sale'));
     }
 }

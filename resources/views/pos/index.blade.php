@@ -33,6 +33,18 @@
                 </a>
             </div>
             @endif
+
+            @if($activeShift)
+            <div class="flex gap-3 shrink-0">
+                <form action="{{ route('shift.end', $activeShift->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Close your shift? Make sure you have counted the drawer.');">
+                    @csrf
+                    <input type="hidden" name="ending_cash" id="ending_cash_input" value="0">
+                    <button type="button" onclick="let cash = prompt('Enter ending cash amount in drawer:'); if(cash !== null) { document.getElementById('ending_cash_input').value = cash; this.closest('form').submit(); }" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wider inline-flex items-center">
+                        Close Shift
+                    </button>
+                </form>
+            </div>
+            @endif
         </div>
 
         <div class="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide shrink-0">
@@ -131,35 +143,59 @@
         </div>
 
         <div class="pt-4 border-t border-[#F0E6D2] mt-auto">
-            <div class="space-y-3 mb-6">
-                <div class="flex justify-between text-sm text-[#8D6E63] font-medium">
-                    <span>Items</span>
-                    <span x-text="'₱' + total.toFixed(2)"></span>
-                </div>
-                <div class="flex justify-between text-sm text-[#8D6E63] font-medium">
-                    <span>Discounts</span>
-                    <span>- ₱0.00</span>
-                </div>
-                <div class="flex justify-between text-xl font-bold text-[#3E2723] pt-2 border-t border-[#FDF8F5]">
-                    <span>Total</span>
-                    <span x-text="'₱' + total.toFixed(2)"></span>
+            
+            <div class="mb-4">
+                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-2">Discount</label>
+                <div class="flex gap-2">
+                    <button type="button" @click="discountType = 'none'; discountAmount = 0" class="flex-1 py-2 rounded-lg text-xs font-bold transition border" :class="discountType === 'none' ? 'bg-[#3E2723] text-white border-[#3E2723]' : 'bg-[#FAFAFA] text-[#8D6E63] border-[#F0E6D2] hover:bg-[#FDF8F5]'">None</button>
+                    <button type="button" @click="discountType = 'senior'; discountAmount = 0.20" class="flex-1 py-2 rounded-lg text-xs font-bold transition border" :class="discountType === 'senior' ? 'bg-[#3E2723] text-white border-[#3E2723]' : 'bg-[#FAFAFA] text-[#8D6E63] border-[#F0E6D2] hover:bg-[#FDF8F5]'">Senior/PWD (20%)</button>
                 </div>
             </div>
 
-            <button type="button" @click="submitCheckout()" :disabled="cart.length === 0 || isProcessing" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-full font-bold uppercase tracking-widest transition shadow-lg shadow-[#3E2723]/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center text-sm">
-                <span x-text="isProcessing ? 'Processing...' : 'Place Order'" :class="{ 'animate-pulse': isProcessing }"></span>
+            <div class="mb-4">
+                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-2">Amount Tendered (₱)</label>
+                <input type="number" x-model.number="amountTendered" class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-sm font-bold text-[#3E2723]" placeholder="Enter amount">
+            </div>
+
+            <div class="space-y-3 mb-6">
+                <div class="flex justify-between text-sm text-[#8D6E63] font-medium">
+                    <span>Subtotal</span>
+                    <span x-text="'₱' + subtotal.toFixed(2)"></span>
+                </div>
+                <div class="flex justify-between text-sm text-[#8D6E63] font-medium">
+                    <span>Discount</span>
+                    <span class="text-red-500" x-text="'- ₱' + calculatedDiscount.toFixed(2)"></span>
+                </div>
+                <div class="flex justify-between text-sm text-[#8D6E63] font-medium">
+                    <span>VAT (12% inc)</span>
+                    <span x-text="'₱' + vatAmount.toFixed(2)"></span>
+                </div>
+                <div class="flex justify-between text-xl font-bold text-[#3E2723] pt-2 border-t border-[#FDF8F5]">
+                    <span>Total</span>
+                    <span x-text="'₱' + grandTotal.toFixed(2)"></span>
+                </div>
+                <div class="flex justify-between text-sm font-bold text-green-600 pt-2 border-t border-[#FDF8F5]" x-show="amountTendered > 0">
+                    <span>Change</span>
+                    <span x-text="'₱' + Math.max(0, amountTendered - grandTotal).toFixed(2)"></span>
+                </div>
+            </div>
+
+            <button type="button" @click="submitCheckout()" :disabled="cart.length === 0 || isProcessing || (amountTendered > 0 && amountTendered < grandTotal)" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-full font-bold uppercase tracking-widest transition shadow-lg shadow-[#3E2723]/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center text-sm">
+                <span x-text="isProcessing ? 'Processing...' : (amountTendered > 0 && amountTendered < grandTotal ? 'Insufficient Funds' : 'Place Order')" :class="{ 'animate-pulse': isProcessing }"></span>
             </button>
         </div>
     </div>
 
-    <div x-show="showModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50" style="display: none;">
+    <!-- Success Modal -->
+    <div x-show="showModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60]" style="display: none;">
         <div @click.away="resetCart()" class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center border-t-8 border-[#3E2723]">
             <div class="w-20 h-20 bg-[#E8F5E9] rounded-full flex items-center justify-center mx-auto mb-6 text-[#2E7D32]">
                 <x-lucide-check class="w-10 h-10" />
             </div>
             
             <h2 class="text-2xl font-bold text-[#3E2723] mb-2">Order Placed!</h2>
-            <p class="text-sm text-[#8D6E63] mb-8">Payment completed for ₱<span x-text="total.toFixed(2)"></span>.</p>
+            <p class="text-sm text-[#8D6E63] mb-2">Payment completed for ₱<span x-text="grandTotal.toFixed(2)"></span>.</p>
+            <p class="text-sm font-bold text-green-600 mb-8" x-show="amountTendered > 0">Change: ₱<span x-text="Math.max(0, amountTendered - grandTotal).toFixed(2)"></span></p>
 
             <template x-if="hasWifi">
                 <div class="border border-[#E3F2FD] rounded-2xl p-6 mb-8 bg-[#F3F9FF]">
@@ -177,10 +213,33 @@
 
             <div class="flex gap-4">
                 <button type="button" @click="resetCart()" class="flex-1 py-4 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#8D6E63] hover:bg-[#FDF8F5] font-bold transition">New Order</button>
-                <button type="button" class="flex-1 py-4 bg-[#3E2723] text-white rounded-full hover:bg-[#271815] font-bold transition shadow-md">Print Receipt</button>
+                <a :href="'/pos/receipt/' + saleId" target="_blank" class="flex-1 py-4 bg-[#3E2723] text-white rounded-full hover:bg-[#271815] font-bold transition shadow-md flex items-center justify-center">Print Receipt</a>
             </div>
         </div>
     </div>
+
+    <!-- Shift Modal -->
+    @if(!$activeShift)
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[70]">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full border-t-8 border-amber-600">
+            <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6 text-amber-700">
+                <x-lucide-lock class="w-8 h-8" />
+            </div>
+            
+            <h2 class="text-2xl font-bold text-[#3E2723] mb-2 text-center">Shift Closed</h2>
+            <p class="text-sm text-[#8D6E63] mb-8 text-center">You must open a cash drawer shift to process transactions.</p>
+
+            <form action="{{ route('shift.start') }}" method="POST">
+                @csrf
+                <div class="mb-6">
+                    <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-2 text-center">Starting Float / Cash</label>
+                    <input type="number" name="starting_cash" required min="0" step="0.01" class="w-full p-4 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-amber-600 bg-[#FAFAFA] transition-all text-center text-2xl font-bold text-[#3E2723]" placeholder="0.00">
+                </div>
+                <button type="submit" class="w-full py-4 bg-amber-600 text-white rounded-full hover:bg-amber-700 font-bold uppercase tracking-widest transition shadow-lg text-xs">Open Shift</button>
+            </form>
+        </div>
+    </div>
+    @endif
 </div>
 
 <script>
@@ -188,14 +247,20 @@
         Alpine.data('posSystem', () => ({
             menuItems: {!! json_encode($products ?? []) !!},
             wifiAddons: {!! json_encode($wifiOptions ?? []) !!},
+            activeShiftId: {{ $activeShift ? $activeShift->id : 'null' }},
             
             cart: [],
             showModal: false,
             isProcessing: false,
             generatedCode: '',
+            saleId: null,
             
             searchQuery: '',
             selectedCategory: 'All',
+            orderType: 'dine_in',
+            discountType: 'none',
+            discountAmount: 0,
+            amountTendered: null,
             
             get categories() {
                 let cats = ['All'];
@@ -216,8 +281,21 @@
                 });
             },
 
-            get total() {
+            get subtotal() {
                 return this.cart.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+            },
+
+            get calculatedDiscount() {
+                return this.subtotal * this.discountAmount;
+            },
+
+            get grandTotal() {
+                return this.subtotal - this.calculatedDiscount;
+            },
+
+            get vatAmount() {
+                // Assuming 12% inclusive VAT
+                return this.grandTotal - (this.grandTotal / 1.12);
             },
 
             get hasWifi() {
@@ -242,6 +320,8 @@
             },
 
             async submitCheckout() {
+                if (this.amountTendered > 0 && this.amountTendered < this.grandTotal) return;
+                
                 this.isProcessing = true;
 
                 try {
@@ -253,8 +333,13 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}' 
                         },
                         body: JSON.stringify({
-                            total_amount: this.total,
-                            cart: this.cart
+                            total_amount: this.grandTotal.toFixed(2),
+                            amount_received: this.amountTendered || this.grandTotal.toFixed(2),
+                            cart: this.cart,
+                            order_type: this.orderType,
+                            discount_type: this.discountType,
+                            discount_amount: this.calculatedDiscount.toFixed(2),
+                            shift_id: this.activeShiftId
                         })
                     });
 
@@ -269,6 +354,7 @@
 
                     if (data.success) {
                         this.generatedCode = data.hasWifi ? data.generatedCode : '';
+                        this.saleId = data.sale_id;
                         this.showModal = true;
                     } else {
                         alert('Transaction failed. Please try again.');
@@ -285,6 +371,10 @@
                 this.showModal = false;
                 this.generatedCode = '';
                 this.searchQuery = '';
+                this.discountType = 'none';
+                this.discountAmount = 0;
+                this.amountTendered = null;
+                this.saleId = null;
             }
         }))
     })

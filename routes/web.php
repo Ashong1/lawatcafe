@@ -37,6 +37,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Shared POS Access
     Route::get('/pos', [PosController::class, 'index'])->name('pos');
     Route::post('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
+    Route::get('/pos/receipt/{sale}', [PosController::class, 'receipt'])->name('pos.receipt');
+
+    // Shift Management
+    Route::post('/shift/start', [\App\Http\Controllers\ShiftController::class, 'start'])->name('shift.start');
+    Route::post('/shift/end/{shift}', [\App\Http\Controllers\ShiftController::class, 'end'])->name('shift.end');
 
     // Shared Profile Management
     Route::controller(ProfileController::class)->group(function () {
