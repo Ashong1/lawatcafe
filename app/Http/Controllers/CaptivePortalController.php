@@ -21,7 +21,7 @@ class CaptivePortalController extends Controller
     }
 
     // Handle e-wallet reference number verification
-    public function verifyPayment(Request $request, \App\Services\OpnSenseService $opnsense)
+    public function verifyPayment(Request $request)
     {
         $request->validate([
             'reference_number' => 'required|string',
@@ -49,63 +49,59 @@ class CaptivePortalController extends Controller
             return back()->with('error', 'Insufficient amount for a Wi-Fi voucher. Minimum is ₱20.00.');
         }
 
-        // Authorize device on OPNsense
-        $ip = session('clientIp', $request->ip());
-        $mac = session('clientMac', $request->query('clientMac') ?? $request->input('mac'));
-        
         // Generate the voucher
         $code = 'LAWA-' . strtoupper(\Illuminate\Support\Str::random(4));
         
-        Voucher::create([
+        \App\Models\Voucher::create([
             'code' => $code,
             'duration_minutes' => $duration,
             'is_used' => true,
             'used_at' => now(),
-            'ip_address' => $ip,
-            'mac_address' => $mac,
+            'ip_address' => session('clientIp', $request->ip()),
+            'mac_address' => session('clientMac'),
         ]);
 
         // Mark payment as used
         $payment->update(['is_used' => true]);
 
-        // Authorize device on OPNsense
-        $opnsense->authorizeDevice($ip, $code);
-
-        return redirect()->route('portal.success')->with('passcode', $code);
+        // Serve the Auto-Unlock view to the phone
+        return view('network.opnsense_unlock', [
+            'opnsenseIp' => '192.168.2.251',
+            'zone' => '0'
+        ]);
     }
 
     // Handle standard passcode entry
-    public function authenticate(Request $request, \App\Services\OpnSenseService $opnsense)
+    public function authenticate(Request $request)
     {
         $request->validate([
             'passcode' => 'required|string',
         ]);
 
-        // Find the voucher
-        $voucher = Voucher::where('code', $request->passcode)
+        // 1. Verify the Lawa't Voucher in your Database
+        $voucher = \App\Models\Voucher::where('code', $request->passcode)
                           ->where('is_used', false)
                           ->first();
 
+        // If the voucher is wrong, we send them back with the red error
         if (!$voucher) {
-            return back()->with('error', 'Invalid or expired passcode. Please try again.');
+            return back()->with('error', 'Invalid or expired voucher code.');
         }
 
-        // Authorize device on OPNsense before marking voucher as used
-        $ip = session('clientIp', $request->ip());
-        $authorized = $opnsense->authorizeDevice($ip, $voucher->code);
-
-        if (!$authorized) {
-            return back()->with('error', 'Failed to connect to the network. Please contact staff.');
-        }
-
+        // 2. Mark voucher as used in the database
         $voucher->update([
             'is_used' => true,
             'used_at' => now(),
-            'ip_address' => $ip,
-            'mac_address' => session('clientMac', $request->query('clientMac') ?? $request->input('mac')),
+            'ip_address' => session('clientIp', $request->ip()),
+            'mac_address' => session('clientMac'),
         ]);
 
-        return redirect()->route('portal.success');
+        // 3. STOP trying to use the API here! 
+        // Instead, serve the new view that forces the phone to unlock itself.
+        return view('network.opnsense_unlock', [
+            'opnsenseIp' => '192.168.2.251',
+            'zone' => '0' 
+        ]);
     }
 
     // Handle e-wallet receipt uploads

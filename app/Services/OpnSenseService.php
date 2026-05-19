@@ -37,33 +37,31 @@ class OpnSenseService
         try {
             // Use zone from session if available (captured from redirect), otherwise use config default
             $zone = session('zone', $this->zone);
-            $url = "{$this->baseUrl}/api/captiveportal/access/logon/{$zone}/";
             
-            // We use the 'laravel_guest' credentials provided by the user for the CP logon
-            // while using the API Key/Secret for the HTTP Basic Auth header.
+            // Following the 'Direct Post' approach via the session/connect API
+            // This endpoint is used to manually authorize an IP session in a specific zone.
+            $url = "{$this->baseUrl}/api/captiveportal/session/connect/{$zone}/";
+            
             $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
                 ->withoutVerifying() 
-                ->asForm()
                 ->post($url, [
-                    'user' => 'laravel_guest',
-                    'password' => 'Laravel123', 
+                    'user' => 'laravel_guest', // The dedicated user created in OPNsense
+                    'password' => 'Laravel123',
                     'ip' => $ip,
                 ]);
 
             $data = $response->json();
 
             if ($response->successful()) {
-                // If we get UNKNOWN but the IP matches, it often means the login was accepted
-                // but OPNsense hasn't updated the state in the immediate response.
-                if (isset($data['clientState']) && in_array($data['clientState'], ['AUTHORIZED', 'ALREADY_AUTHORIZED', 'UNKNOWN'])) {
-                    Log::info("OPNsense: Authorization attempt for IP {$ip} (Voucher: {$voucherCode}). Response state: {$data['clientState']}");
+                // If we get a sessionId or a successful state, the device is authorized
+                if (isset($data['sessionId']) || (isset($data['clientState']) && in_array($data['clientState'], ['AUTHORIZED', 'CONNECTED', 'ALREADY_AUTHORIZED']))) {
+                    Log::info("OPNsense: Successfully authorized IP {$ip} via session/connect. Session: " . ($data['sessionId'] ?? 'N/A'));
                     return true;
                 }
             }
 
-            Log::error("OPNsense: Failed to authorize IP {$ip}", [
+            Log::error("OPNsense: Failed to authorize IP {$ip} via session/connect", [
                 'status' => $response->status(),
-                'body' => $response->body(),
                 'response' => $data
             ]);
             return false;

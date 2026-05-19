@@ -44,15 +44,28 @@
             @endif
 
             <div class="space-y-5">
-                <a href="/" class="block w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-amber-900/20 active:scale-95 text-sm">
-                    Back to Home
+                <a href="http://neverssl.com" class="block w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-amber-900/20 active:scale-95 text-sm">
+                    Start Browsing
                 </a>
                 <div class="pt-4">
-                    <p class="text-[10px] text-[#A1887F] font-black uppercase tracking-[0.3em]">Enjoy your stay at Lawa't Cafe!</p>
+                    <p id="redirect-timer" class="text-[9px] text-[#A1887F] font-black uppercase tracking-[0.3em]">Redirecting in 5s...</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        let timeLeft = 5;
+        const timer = document.getElementById('redirect-timer');
+        const interval = setInterval(() => {
+            timeLeft--;
+            timer.innerText = `Redirecting in ${timeLeft}s...`;
+            if (timeLeft <= 0) {
+                clearInterval(interval);
+                window.location.href = "http://neverssl.com";
+            }
+        }, 1000);
+    </script>
 
 </body>
 </html>
