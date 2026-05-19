@@ -14,16 +14,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body x-data="{ 
-    sidebarOpen: true, 
-    menus: {
-        inventory: {{ request()->is('inventory*') ? 'true' : 'false' }},
-        network: {{ request()->is('network*') ? 'true' : 'false' }},
-        system: {{ request()->is('accounts*') ? 'true' : 'false' }},
-        finance: {{ request()->is('sales*') ? 'true' : 'false' }},
-        settings: {{ request()->routeIs('admin.settings*') ? 'true' : 'false' }}
-    }
-}" class="bg-[#FDF8F5] text-[#4A3B32] flex h-screen overflow-hidden font-sans" style="font-family: 'Montserrat', sans-serif;">
+<body x-data="adminLayout()" class="bg-[#FDF8F5] text-[#4A3B32] flex h-screen overflow-hidden font-sans" style="font-family: 'Montserrat', sans-serif;">
 
     <aside 
         :class="sidebarOpen ? 'w-64' : 'w-20'"
@@ -56,7 +47,7 @@
                         <x-lucide-package class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
                         <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Inventory</span>
                     </div>
-                    <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" :class="menus.inventory ? 'rotate-180' : ''" />
+                    <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" x-bind:class="menus.inventory ? 'rotate-180' : ''" />
                 </button>
                 <div x-show="menus.inventory && sidebarOpen" x-transition class="pl-11 space-y-1">
                     <a href="/inventory/products" class="block py-2 text-xs {{ request()->is('inventory/products') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Products</a>
@@ -74,7 +65,7 @@
                         <x-lucide-wifi class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
                         <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Network</span>
                     </div>
-                    <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" :class="menus.network ? 'rotate-180' : ''" />
+                    <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" x-bind:class="menus.network ? 'rotate-180' : ''" />
                 </button>
                 <div x-show="menus.network && sidebarOpen" x-transition class="pl-11 space-y-1">
                     <a href="/network/sessions" class="block py-2 text-xs {{ request()->is('network/sessions') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Active Sessions</a>
@@ -91,7 +82,7 @@
                         <x-lucide-users class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
                         <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">System</span>
                     </div>
-                    <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" :class="menus.system ? 'rotate-180' : ''" />
+                    <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" x-bind:class="menus.system ? 'rotate-180' : ''" />
                 </button>
                 <div x-show="menus.system && sidebarOpen" x-transition class="pl-11 space-y-1">
                     <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Staff Accounts</a>
@@ -107,7 +98,7 @@
                         <x-lucide-bar-chart-3 class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
                         <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Finance</span>
                     </div>
-                    <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" :class="menus.finance ? 'rotate-180' : ''" />
+                    <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" x-bind:class="menus.finance ? 'rotate-180' : ''" />
                 </button>
                 <div x-show="menus.finance && sidebarOpen" x-transition class="pl-11 space-y-1">
                     <a href="{{ route('sales.index') }}" class="block py-2 text-xs {{ request()->is('sales*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Sales Reports</a>
@@ -123,7 +114,7 @@
                         <x-lucide-settings-2 class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
                         <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Settings</span>
                     </div>
-                    <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" :class="menus.settings ? 'rotate-180' : ''" />
+                    <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" x-bind:class="menus.settings ? 'rotate-180' : ''" />
                 </button>
                 <div x-show="menus.settings && sidebarOpen" x-transition class="pl-11 space-y-1">
                     <a href="{{ route('admin.settings.payment') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.payment') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Payment Config</a>
@@ -162,5 +153,19 @@
         </main>
     </div>
 
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('adminLayout', () => ({
+                sidebarOpen: true,
+                menus: {
+                    inventory: {{ request()->is('inventory*') ? 'true' : 'false' }},
+                    network: {{ request()->is('network*') ? 'true' : 'false' }},
+                    system: {{ request()->is('accounts*') ? 'true' : 'false' }},
+                    finance: {{ request()->is('sales*') ? 'true' : 'false' }},
+                    settings: {{ request()->routeIs('admin.settings*') ? 'true' : 'false' }}
+                }
+            }))
+        })
+    </script>
 </body>
 </html>
