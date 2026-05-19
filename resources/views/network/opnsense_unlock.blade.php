@@ -35,11 +35,11 @@
     </div>
 
     <!-- The critical hidden form that tells OPNsense to unlock this specific device -->
-    <!-- Using port 8000 (standard for OPNsense redirect) or 8001/8002 as per your rules -->
-    <form id="unlock-form" action="http://{{ $opnsenseIp }}:8001/" method="POST" class="hidden">
+    <!-- OPNsense listens on port 8000 for standard HTTP captive portal authorization -->
+    <form id="unlock-form" action="http://{{ $opnsenseIp }}:8000/" method="POST" class="hidden">
         <input type="hidden" name="zone" value="{{ $zone }}">
         <input type="hidden" name="accept" value="Continue">
-        <input type="hidden" name="redirurl" value="{{ route('portal.success') }}">
+        <input type="hidden" name="redirurl" value="http://neverssl.com">
     </form>
 
 </body>
