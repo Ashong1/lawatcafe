@@ -66,23 +66,77 @@ class VoucherController extends Controller
     /**
      * Display active network sessions.
      */
-    public function sessions()
+    public function sessions(\App\Services\OpnSenseService $opnsense)
     {
-        // Define active sessions as used vouchers that haven't expired
-        $sessions = Voucher::where('is_used', true)
-            ->whereNotNull('used_at')
-            ->get()
-            ->filter(function($voucher) {
-                $expiryTime = $voucher->used_at->addMinutes($voucher->duration_minutes);
-                return $expiryTime->isFuture();
-            })
-            ->map(function($voucher) {
-                $expiryTime = $voucher->used_at->addMinutes($voucher->duration_minutes);
-                $voucher->timeLeft = $expiryTime->diffInMinutes(now());
-                $voucher->progress = ($voucher->timeLeft / $voucher->duration_minutes) * 100;
-                return $voucher;
-            });
+        // 1. Get real-time sessions from OPNsense
+        $opnSessions = $opnsense->listSessions();
+
+        // 2. Map and cross-reference with our database
+        $sessions = collect($opnSessions)->map(function($raw) {
+            $ip = str_replace('/32', '', $raw['ipAddress']);
+            
+            // Find the latest voucher used by this IP or MAC
+            $voucher = Voucher::where('is_used', true)
+                ->where(function($q) use ($ip, $raw) {
+                    $q->where('ip_address', $ip);
+                    if (!empty($raw['macAddress'])) {
+                        $q->orWhere('mac_address', $raw['macAddress']);
+                    }
+                })
+                ->latest('used_at')
+                ->first();
+
+            if (!$voucher) {
+                // If no voucher found, it might be a static/admin session
+                return (object) [
+                    'sessionId' => $raw['sessionId'],
+                    'ip_address' => $ip,
+                    'mac_address' => $raw['macAddress'] ?: 'N/A',
+                    'code' => 'SYSTEM/STATIC',
+                    'timeLeft' => '∞',
+                    'progress' => 100,
+                    'is_system' => true
+                ];
+            }
+
+            // Calculate time remaining based on our database
+            $expiryTime = $voucher->used_at->addMinutes($voucher->duration_minutes);
+            $timeLeft = max(0, (int) $expiryTime->diffInMinutes(now()));
+            $progress = ($timeLeft / $voucher->duration_minutes) * 100;
+
+            return (object) [
+                'sessionId' => $raw['sessionId'],
+                'ip_address' => $ip,
+                'mac_address' => $raw['macAddress'] ?: 'N/A',
+                'code' => $voucher->code,
+                'timeLeft' => $timeLeft,
+                'progress' => $progress,
+                'is_system' => false
+            ];
+        })->filter(function($session) {
+            // Filter out infrastructure devices
+            $ignoredIps = ['192.168.2.251', '192.168.2.100', '192.168.2.5', '192.168.2.4'];
+            return !in_array($session->ip_address, $ignoredIps);
+        });
 
         return view('network.sessions', compact('sessions'));
+    }
+
+    /**
+     * Terminate an active network session.
+     */
+    public function kick(Request $request, \App\Services\OpnSenseService $opnsense)
+    {
+        $request->validate([
+            'sessionId' => 'required|string'
+        ]);
+
+        $success = $opnsense->disconnectDevice($request->sessionId);
+
+        if ($success) {
+            return redirect()->back()->with('success', 'Device has been disconnected from the network.');
+        }
+
+        return redirect()->back()->with('error', 'Failed to disconnect device. It may have already timed out.');
     }
 }
