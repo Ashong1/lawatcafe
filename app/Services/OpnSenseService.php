@@ -96,6 +96,9 @@ class OpnSenseService
             }
 
             return [];
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception fetching sessions: " . $e->getMessage());
+            return [];
         }
     }
 
