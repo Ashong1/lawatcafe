@@ -62,6 +62,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Network & Voucher Management
         Route::prefix('network')->name('network.')->group(function () {
             Route::get('/sessions', [VoucherController::class, 'sessions'])->name('sessions');
+            Route::post('/sessions/kick', [VoucherController::class, 'kick'])->name('sessions.kick');
             
             Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
             Route::post('/vouchers/generate', [VoucherController::class, 'generateBatch'])->name('vouchers.generate');

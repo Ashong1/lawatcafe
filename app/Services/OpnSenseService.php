@@ -71,4 +71,60 @@ class OpnSenseService
             return false;
         }
     }
+
+    /**
+     * Get the list of active sessions from OPNsense.
+     *
+     * @return array
+     */
+    public function listSessions()
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return [];
+        }
+
+        try {
+            $zone = session('zone', $this->zone);
+            $url = "{$this->baseUrl}/api/captiveportal/session/list/{$zone}/";
+            
+            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
+                ->withoutVerifying()
+                ->get($url);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return [];
+        }
+    }
+
+    /**
+     * Terminate an active session on OPNsense.
+     *
+     * @param string $sessionId
+     * @return bool
+     */
+    public function disconnectDevice($sessionId)
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return false;
+        }
+
+        try {
+            $zone = session('zone', $this->zone);
+            $url = "{$this->baseUrl}/api/captiveportal/session/disconnect/{$zone}/";
+            
+            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
+                ->withoutVerifying()
+                ->post($url, [
+                    'sessionId' => $sessionId
+                ]);
+
+            return $response->successful();
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception disconnecting session {$sessionId}: " . $e->getMessage());
+            return false;
+        }
+    }
 }

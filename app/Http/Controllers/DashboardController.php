@@ -11,18 +11,20 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(\App\Services\OpnSenseService $opnsense)
     {
         // 1. Basic Stats for the Top Cards
         $availableVouchers = Voucher::where('is_used', false)->count();
         $todaysSales = Sale::whereDate('created_at', Carbon::today())->sum('total_amount');
         $lowStockCount = Ingredient::where('current_stock', '<', 500)->count(); // Adjust threshold as needed
         
-        // Dynamic Active Sessions (Users)
-        // We define an active user as someone with a used voucher that hasn't expired yet
-        $activeUsers = Voucher::where('is_used', true)
-            ->whereRaw('DATE_ADD(used_at, INTERVAL duration_minutes MINUTE) > NOW()')
-            ->count();
+        // Dynamic Active Sessions (Users) - Synced with OPNsense
+        $opnSessions = $opnsense->listSessions();
+        $activeUsers = collect($opnSessions)->filter(function($session) {
+            $ip = str_replace('/32', '', $session['ipAddress']);
+            $ignoredIps = ['192.168.2.251', '192.168.2.100', '192.168.2.5', '192.168.2.4']; 
+            return !in_array($ip, $ignoredIps);
+        })->count();
 
         $recentVouchers = Voucher::orderBy('created_at', 'desc')
             ->take(5)
