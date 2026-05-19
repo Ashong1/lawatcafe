@@ -4,33 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Authorizing - Lawa't Cafe</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        body { background-color: #FAF7F2; color: #4A3B32; font-family: sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .fixed-bg { position: fixed; inset: 0; z-index: 0; background: #3E2723; }
+        .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); }
+        .card { position: relative; z-index: 10; background: rgba(255,255,255,0.9); border-radius: 2.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.2); padding: 2.5rem; max-width: 24rem; width: 100%; text-align: center; }
+        .spinner-container { position: relative; width: 5rem; height: 5rem; margin: 0 auto 2rem; }
+        .spinner-bg { position: absolute; inset: 0; border: 4px solid #F0E6D2; border-radius: 9999px; }
+        .spinner-active { position: absolute; inset: 0; border: 4px solid #3E2723; border-radius: 9999px; border-top-color: transparent; animation: spin 1s linear infinite; }
+        .spinner-icon { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; opacity: 0.5; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        h2 { font-size: 1.5rem; font-weight: 900; color: #3E2723; margin: 0 0 0.75rem; letter-spacing: -0.025em; }
+        p { font-size: 0.875rem; color: #8D6E63; font-weight: 500; line-height: 1.625; margin: 0; }
+        .footer { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #F0E6D2; opacity: 0.5; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.3em; }
+        .hidden { display: none; }
+    </style>
 </head>
-<body class="bg-[#FAF7F2] min-h-screen flex items-center justify-center p-4 antialiased" 
-      style="font-family: 'Montserrat', sans-serif;"
-      onload="setTimeout(function(){ document.getElementById('unlock-form').submit(); }, 1500);">
+<body onload="setTimeout(function(){ document.getElementById('unlock-form').submit(); }, 1500);">
 
-    <!-- Background Image with Blur & Dark Overlay -->
-    <div class="fixed inset-0 z-0">
-        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('/images/lawat-bg.jpg');"></div>
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
+    <!-- Background Overlay -->
+    <div class="fixed-bg">
+        <div class="overlay"></div>
     </div>
 
-    <div class="relative z-10 bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/20 p-10 max-w-sm w-full text-center">
+    <div class="card">
         
-        <div class="relative w-20 h-20 mx-auto mb-8">
-            <div class="absolute inset-0 border-4 border-[#F0E6D2] rounded-full"></div>
-            <div class="absolute inset-0 border-4 border-[#3E2723] rounded-full border-t-transparent animate-spin"></div>
-            <div class="absolute inset-0 flex items-center justify-center">
-                <x-lucide-wifi class="w-6 h-6 text-[#8D6E63] animate-pulse" />
-            </div>
+        <div class="spinner-container">
+            <div class="spinner-bg"></div>
+            <div class="spinner-active"></div>
+            <div class="spinner-icon">📶</div>
         </div>
 
-        <h2 class="text-2xl font-black text-[#3E2723] mb-3 tracking-tight">Authenticating...</h2>
-        <p class="text-sm text-[#8D6E63] font-medium leading-relaxed">Verifying voucher and configuring firewall access for your device.</p>
+        <h2>Authenticating...</h2>
+        <p>Verifying voucher and configuring firewall access for your device.</p>
         
-        <div class="mt-8 pt-6 border-t border-[#F0E6D2] opacity-50">
-            <p class="text-[9px] font-black uppercase tracking-[0.3em]">Directing to Lawa't Core Gateway</p>
+        <div class="footer">
+            Directing to Lawa't Core Gateway
         </div>
     </div>
 
