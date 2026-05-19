@@ -35,20 +35,10 @@ class CaptivePortalController extends Controller
             return back()->with('error', 'Payment not found or already verified. If you just paid, please wait a minute for the system to process the email.');
         }
 
-        // Determine duration based on amount (matching POS logic)
-        $duration = 0;
-        $amount = (float) $payment->amount;
-
-        if ($amount >= 100) {
-            $duration = 1440; // 24 Hours
-        } elseif ($amount >= 50) {
-            $duration = 180;  // 3 Hours
-        } elseif ($amount >= 20) {
-            $duration = 60;   // 1 Hour
-        } else {
-            return back()->with('error', 'Insufficient amount for a Wi-Fi voucher. Minimum is ₱20.00.');
-        }
-
+        // Authorize device on OPNsense
+        $ip = session('clientIp', $request->ip());
+        $mac = session('clientMac', $request->query('clientMac') ?? $request->input('mac'));
+        
         // Generate the voucher
         $code = 'LAWA-' . strtoupper(\Illuminate\Support\Str::random(4));
         
@@ -57,22 +47,21 @@ class CaptivePortalController extends Controller
             'duration_minutes' => $duration,
             'is_used' => true,
             'used_at' => now(),
-            'ip_address' => session('clientIp', $request->ip()),
-            'mac_address' => session('clientMac'),
+            'ip_address' => $ip,
+            'mac_address' => $mac,
         ]);
 
         // Mark payment as used
         $payment->update(['is_used' => true]);
 
-        // Serve the Auto-Unlock view to the phone
-        return view('network.opnsense_unlock', [
-            'opnsenseIp' => '192.168.2.251',
-            'zone' => '0'
-        ]);
+        // Authorize device via backend API
+        $opnsense->authorizeDevice($ip, $code);
+
+        return redirect()->route('portal.success')->with('passcode', $code);
     }
 
     // Handle standard passcode entry
-    public function authenticate(Request $request)
+    public function authenticate(Request $request, \App\Services\OpnSenseService $opnsense)
     {
         $request->validate([
             'passcode' => 'required|string',
@@ -88,20 +77,25 @@ class CaptivePortalController extends Controller
             return back()->with('error', 'Invalid or expired voucher code.');
         }
 
-        // 2. Mark voucher as used in the database
+        $ip = session('clientIp', $request->ip());
+        $mac = session('clientMac', $request->query('clientMac') ?? $request->input('mac'));
+
+        // 2. Authorize via backend API first
+        $authorized = $opnsense->authorizeDevice($ip, $voucher->code);
+
+        if (!$authorized) {
+            return back()->with('error', 'Failed to communicate with the firewall. Please try again.');
+        }
+
+        // 3. Mark voucher as used in the database
         $voucher->update([
             'is_used' => true,
             'used_at' => now(),
-            'ip_address' => session('clientIp', $request->ip()),
-            'mac_address' => session('clientMac'),
+            'ip_address' => $ip,
+            'mac_address' => $mac,
         ]);
 
-        // 3. STOP trying to use the API here! 
-        // Instead, serve the new view that forces the phone to unlock itself.
-        return view('network.opnsense_unlock', [
-            'opnsenseIp' => '192.168.2.251',
-            'zone' => '0' 
-        ]);
+        return redirect()->route('portal.success');
     }
 
     // Handle e-wallet receipt uploads
