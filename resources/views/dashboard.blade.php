@@ -20,17 +20,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-             class="mb-8 p-4 bg-[#E8F5E9] text-[#2E7D32] rounded-2xl border border-green-200 text-sm font-bold flex justify-between items-center shadow-sm">
-            <div class="flex items-center gap-3">
-                <x-lucide-check class="w-5 h-5" />
-                <span>{{ session('success') }}</span>
-            </div>
-            <button @click="show = false" class="opacity-50 hover:opacity-100 text-xl">&times;</button>
-        </div>
-    @endif
-
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
         
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300">

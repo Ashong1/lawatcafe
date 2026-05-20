@@ -12,17 +12,6 @@
         <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Configure core system parameters, payment options, and network integrations.</p>
     </div>
 
-    @if(session('success'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-             class="mb-8 p-4 bg-[#E8F5E9] text-[#2E7D32] rounded-xl border border-green-200 text-sm font-bold flex justify-between items-center shadow-sm">
-            <div class="flex items-center gap-3">
-                <x-lucide-check class="w-5 h-5" />
-                <span>{{ session('success') }}</span>
-            </div>
-            <button @click="show = false" class="opacity-50 hover:opacity-100 text-xl">&times;</button>
-        </div>
-    @endif
-
     <form action="{{ route('admin.settings.payment.update') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">

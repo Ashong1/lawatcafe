@@ -4,9 +4,6 @@
         <p class="text-sm text-[#A1887F]" style="font-family: 'Montserrat', sans-serif;">Please login to your account</p>
     </x-slot>
 
-    <!-- Validation Errors -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
-
     <!-- Form -->
     <form method="POST" action="{{ route('login') }}" class="space-y-5 max-w-md mx-auto w-full">
         @csrf

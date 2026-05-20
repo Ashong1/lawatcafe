@@ -37,12 +37,6 @@
                             {{ __('Click here to re-send the verification email.') }}
                         </button>
                     </p>
-
-                    @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-bold text-sm text-green-600">
-                            {{ __('A new verification link has been sent to your email address.') }}
-                        </p>
-                    @endif
                 </div>
             @endif
         </div>
@@ -51,16 +45,6 @@
             <button type="submit" class="bg-[#3E2723] text-white px-6 py-3 rounded-full hover:bg-[#271815] font-bold transition shadow-md shadow-[#3E2723]/20 text-sm tracking-wide">
                 {{ __('Save Changes') }}
             </button>
-
-            @if (session('status') === 'profile-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm font-bold text-green-600"
-                >{{ __('Saved successfully.') }}</p>
-            @endif
         </div>
     </form>
 </section>

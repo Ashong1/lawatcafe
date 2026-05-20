@@ -14,17 +14,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-             class="mb-8 p-4 bg-[#E8F5E9] text-[#2E7D32] rounded-xl border border-green-200 text-sm font-bold flex justify-between items-center shadow-sm">
-            <div class="flex items-center gap-3">
-                <x-lucide-check class="w-5 h-5" />
-                <span>{{ session('success') }}</span>
-            </div>
-            <button @click="show = false" class="opacity-50 hover:opacity-100 text-xl">&times;</button>
-        </div>
-    @endif
-
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -60,10 +49,18 @@
                                     <x-lucide-pencil class="w-4 h-4" />
                                 </button>
                                 
-                                <form action="{{ route('inventory.categories.destroy', $category->id) }}" method="POST" onsubmit="return confirm('Are you sure? This will not delete products in this category but they will lose their link.');" class="inline">
+                                <form action="{{ route('inventory.categories.destroy', $category->id) }}" method="POST" id="delete-category-{{ $category->id }}" class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                    <button type="button" 
+                                            @click="window.confirmAction({
+                                                title: 'Delete Category?',
+                                                text: 'Are you sure? This will not delete products in this category but they will lose their link.',
+                                                icon: 'warning',
+                                                confirmText: 'Yes, Delete',
+                                                callback: () => document.getElementById('delete-category-{{ $category->id }}').submit()
+                                            })"
+                                            class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
                                         <x-lucide-trash-2 class="w-4 h-4" />
                                     </button>
                                 </form>

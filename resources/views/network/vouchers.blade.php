@@ -14,17 +14,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-             class="mb-8 p-4 bg-[#E8F5E9] text-[#2E7D32] rounded-xl border border-green-200 text-sm font-bold flex justify-between items-center shadow-sm">
-            <div class="flex items-center gap-3">
-                <x-lucide-check class="w-5 h-5" />
-                <span>{{ session('success') }}</span>
-            </div>
-            <button @click="show = false" class="opacity-50 hover:opacity-100 text-xl">&times;</button>
-        </div>
-    @endif
-
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -44,9 +33,17 @@
                 </button>
 
                 <!-- Auto Purge -->
-                <form action="{{ route('network.vouchers.purge') }}" method="POST" onsubmit="return confirm('Purge all used and expired vouchers? This will clean up your database.');">
+                <form action="{{ route('network.vouchers.purge') }}" method="POST" id="purge-form">
                     @csrf
-                    <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
+                    <button type="button" 
+                            @click="window.confirmAction({
+                                title: 'Purge Vouchers?',
+                                text: 'This will permanently remove all used and expired vouchers from your database.',
+                                icon: 'warning',
+                                confirmText: 'Yes, Purge Now',
+                                callback: () => document.getElementById('purge-form').submit()
+                            })"
+                            class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
                         <x-lucide-trash-2 class="w-3.5 h-3.5" />
                         Purge Used
                     </button>
@@ -107,11 +104,18 @@
                                         <x-lucide-printer class="w-4 h-4" />
                                     </a>
 
-                                    <form action="{{ route('network.vouchers.destroy', $voucher->id) }}" method="POST" 
-                                          onsubmit="return confirm('Delete this voucher forever? This cannot be undone.');">
+                                    <form action="{{ route('network.vouchers.destroy', $voucher->id) }}" method="POST" id="delete-voucher-{{ $voucher->id }}">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                        <button type="button" 
+                                                @click="window.confirmAction({
+                                                    title: 'Delete Voucher?',
+                                                    text: 'Delete this voucher forever? This cannot be undone.',
+                                                    icon: 'warning',
+                                                    confirmText: 'Yes, Delete',
+                                                    callback: () => document.getElementById('delete-voucher-{{ $voucher->id }}').submit()
+                                                })"
+                                                class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
                                             <x-lucide-trash-2 class="w-4 h-4" />
                                         </button>
                                     </form>
@@ -162,9 +166,13 @@
                 }
             },
             deleteSelected() {
-                if (confirm(`Are you sure you want to delete ${this.selectedVouchers.length} selected vouchers?`)) {
-                    document.getElementById('bulk-delete-form').submit();
-                }
+                window.confirmAction({
+                    title: 'Delete Selected?',
+                    text: `Are you sure you want to delete ${this.selectedVouchers.length} selected vouchers?`,
+                    icon: 'warning',
+                    confirmText: 'Yes, Delete All',
+                    callback: () => document.getElementById('bulk-delete-form').submit()
+                });
             }
         }
     }

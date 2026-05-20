@@ -12,19 +12,6 @@
         <p class="text-sm text-[#8D6E63] mt-2 font-medium">Control system access, add new baristas, or edit admin accounts.</p>
     </div>
 
-    @if(session('success'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" class="mb-6 p-4 bg-green-100 text-green-800 rounded-lg font-bold flex justify-between shadow-sm">
-            <span>{{ session('success') }}</span>
-            <button @click="show = false">&times;</button>
-        </div>
-    @endif
-    @if(session('error'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" class="mb-6 p-4 bg-red-100 text-red-800 rounded-lg font-bold flex justify-between shadow-sm">
-            <span>{{ session('error') }}</span>
-            <button @click="show = false">&times;</button>
-        </div>
-    @endif
-
     <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-[#F0E6D2]">
         
         <div class="flex justify-between items-center mb-6 border-b border-[#F0E6D2] pb-6">
@@ -64,10 +51,18 @@
                                         <x-lucide-pencil class="w-4 h-4" />
                                     </button>
                                     
-                                    <form action="{{ route('accounts.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove {{ $user->name }}\'s access?');" class="inline">
+                                    <form action="{{ route('accounts.destroy', $user->id) }}" method="POST" id="delete-form-{{ $user->id }}" class="inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition" {{ auth()->id() === $user->id ? 'disabled' : '' }} title="Remove">
+                                        <button type="button" 
+                                                @click="window.confirmAction({
+                                                    title: 'Remove Staff?',
+                                                    text: 'Are you sure you want to remove {{ $user->name }}\'s access?',
+                                                    icon: 'error',
+                                                    confirmText: 'Yes, Remove Access',
+                                                    callback: () => document.getElementById('delete-form-{{ $user->id }}').submit()
+                                                })"
+                                                class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition" {{ auth()->id() === $user->id ? 'disabled' : '' }} title="Remove">
                                             <x-lucide-trash-2 class="w-4 h-4" />
                                         </button>
                                     </form>

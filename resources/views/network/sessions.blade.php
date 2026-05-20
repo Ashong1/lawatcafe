@@ -14,19 +14,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="mb-6 p-4 bg-green-50 text-green-700 text-xs font-bold rounded-2xl border border-green-100 flex items-center gap-2">
-            <x-lucide-check-circle class="w-4 h-4" />
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
-    @if(session('error'))
-        <div class="mb-6 p-4 bg-red-50 text-red-700 text-xs font-bold rounded-2xl border border-red-100 flex items-center gap-2">
-            <x-lucide-alert-circle class="w-4 h-4" />
-            <span>{{ session('error') }}</span>
-        </div>
-    @endif
-
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -95,10 +82,18 @@
                             </div>
                         </td>
                         <td class="py-4 text-right">
-                            <form action="{{ route('network.sessions.kick') }}" method="POST" onsubmit="return confirm('Are you sure you want to disconnect this device?');">
+                            <form action="{{ route('network.sessions.kick') }}" method="POST" id="kick-form-{{ $session->sessionId }}">
                                 @csrf
                                 <input type="hidden" name="sessionId" value="{{ $session->sessionId }}">
-                                <button type="submit" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-95 group/btn">
+                                <button type="button" 
+                                        @click="window.confirmAction({
+                                            title: 'Disconnect Device?',
+                                            text: 'Are you sure you want to disconnect this device from the network?',
+                                            icon: 'warning',
+                                            confirmText: 'Yes, Disconnect',
+                                            callback: () => document.getElementById('kick-form-{{ $session->sessionId }}').submit()
+                                        })"
+                                        class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-95 group/btn">
                                     <x-lucide-log-out class="w-5 h-5" />
                                 </button>
                             </form>

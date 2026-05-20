@@ -4,9 +4,6 @@
         <p class="text-sm text-[#A1887F]" style="font-family: 'Montserrat', sans-serif;">Enter your email to receive a reset link</p>
     </x-slot>
 
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
-
     <form method="POST" action="{{ route('password.email') }}" class="space-y-5 max-w-md mx-auto w-full">
         @csrf
 

@@ -8,9 +8,48 @@
     <title>{{ config('app.name', "Lawa't Kape") }}</title>
 
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="antialiased min-h-screen flex items-center justify-center relative bg-[#271815]">
+<body class="antialiased min-h-screen flex items-center justify-center relative bg-[#271815]"
+      x-data="{}"
+      x-init="
+        @if(session('status'))
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: '{{ session('status') }}',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true,
+                background: '#E8F5E9',
+                color: '#2E7D32',
+                iconColor: '#2E7D32',
+                customClass: {
+                    popup: 'rounded-2xl border border-green-200 shadow-xl font-bold'
+                }
+            });
+        @endif
+        @if($errors->any())
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: 'Check Form',
+                text: '{{ $errors->first() }}',
+                showConfirmButton: false,
+                timer: 6000,
+                timerProgressBar: true,
+                background: '#FFEBEE',
+                color: '#C62828',
+                iconColor: '#C62828',
+                customClass: {
+                    popup: 'rounded-2xl border border-red-200 shadow-xl font-bold'
+                }
+            });
+        @endif
+      ">
 
     <!-- Blurred Background -->
     <div class="absolute inset-0 z-0 opacity-40 bg-cover bg-center" style="background-image: url('/images/lawat-bg.jpg'); filter: blur(8px);"></div>

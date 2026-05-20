@@ -19,8 +19,13 @@
   - Replaced native `prompt()` in the POS UI with an Alpine.js modal for closing shifts.
 - **Rule**: Never trust client-side prices in POS systems. Always recalculate totals server-side based on database records before processing transactions.
 
-### 2026-05-20 - Enhanced Agent System Setup
-- **Action**: Created `architect-fixer` subagent and `self-improvement` skill.
-- **Goal**: Enable super-efficient coding and self-improving capabilities.
-- **Outcome**: The agent now has a dedicated workflow for documenting successes and failures, ensuring the project's institutional knowledge grows over time.
-- **Tip**: Use `invoke_agent(agent_name="architect-fixer", ...)` for complex backend/frontend bugs.
+### 2026-05-20 - System-Wide Notification Standardized
+- **Action**: Centralized all success, error, and validation notifications into the main layouts (`admin`, `staff`, `guest`, `portal`) using SweetAlert2 toasts.
+- **Goal**: Eliminate redundant in-page alert blocks and provide a consistent, high-end notification experience.
+- **Outcome**: 
+  - Standardized success/error/status session handling in `layouts.admin` and `layouts.staff`.
+  - Added validation error handling to layouts via SweetAlert2, ensuring users see the first validation error immediately.
+  - Replaced native browser `alert()` and `confirm()` calls with stylized SweetAlert2 popups (e.g., in POS checkout and Voucher management).
+  - Modernized the Captive Portal (`portal/index.blade.php`) with SweetAlert2 toasts for a more professional guest experience.
+- **Rule**: Never use `@if(session('success'))` or `@if($errors->any())` directly in management views if they extend a standard layout. The layout now handles these globally via SweetAlert2 toasts.
+- **Rule**: Prefer `window.confirmAction({ ... })` for delete/critical actions to maintain a consistent UI across the application.

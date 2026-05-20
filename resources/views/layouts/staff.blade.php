@@ -10,11 +10,84 @@
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body x-data="{ sidebarOpen: true }" class="bg-[#FDF8F5] text-[#4A3B32] flex h-screen overflow-hidden font-sans" style="font-family: 'Montserrat', sans-serif;">
+<body x-data="{ sidebarOpen: true }" 
+      x-init="
+        @if(session('success'))
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: '{{ session('success') }}',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true,
+                background: '#E8F5E9',
+                color: '#2E7D32',
+                iconColor: '#2E7D32',
+                customClass: {
+                    popup: 'rounded-2xl border border-green-200 shadow-xl font-bold'
+                }
+            });
+        @endif
+        @if(session('error'))
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: '{{ session('error') }}',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true,
+                background: '#FFEBEE',
+                color: '#C62828',
+                iconColor: '#C62828',
+                customClass: {
+                    popup: 'rounded-2xl border border-red-200 shadow-xl font-bold'
+                }
+            });
+        @endif
+        @if(session('status'))
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'info',
+                title: '{{ session('status') === 'profile-updated' ? 'Profile Updated' : (session('status') === 'password-updated' ? 'Password Updated' : (session('status') === 'verification-link-sent' ? 'Verification Link Sent' : session('status'))) }}',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true,
+                background: '#E3F2FD',
+                color: '#1565C0',
+                iconColor: '#1565C0',
+                customClass: {
+                    popup: 'rounded-2xl border border-blue-200 shadow-xl font-bold'
+                }
+            });
+        @endif
+        @if($errors->any())
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: 'Validation Error',
+                text: '{{ $errors->first() }}',
+                showConfirmButton: false,
+                timer: 6000,
+                timerProgressBar: true,
+                background: '#FFF3E0',
+                color: '#E65100',
+                iconColor: '#E65100',
+                customClass: {
+                    popup: 'rounded-2xl border border-orange-200 shadow-xl font-bold'
+                }
+            });
+        @endif
+      "
+      class="bg-[#FDF8F5] text-[#4A3B32] flex h-screen overflow-hidden font-sans" style="font-family: 'Montserrat', sans-serif;">
 
     <aside 
         :class="sidebarOpen ? 'w-64' : 'w-20'"
@@ -77,5 +150,31 @@
         </main>
     </div>
 
+    <script>
+        // Global Confirmation Handler
+        window.confirmAction = function(options) {
+            Swal.fire({
+                title: options.title || 'Are you sure?',
+                text: options.text || "This action cannot be undone.",
+                icon: options.icon || 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3E2723',
+                cancelButtonColor: '#8D6E63',
+                confirmButtonText: options.confirmText || 'Yes, proceed',
+                cancelButtonText: options.cancelText || 'Cancel',
+                background: '#FDF8F5',
+                color: '#3E2723',
+                customClass: {
+                    popup: 'rounded-[2rem] border-t-8 border-[#3E2723] shadow-2xl',
+                    confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs',
+                    cancelButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs'
+                }
+            }).then((result) => {
+                if (result.isConfirmed && options.callback) {
+                    options.callback();
+                }
+            });
+        };
+    </script>
 </body>
 </html>

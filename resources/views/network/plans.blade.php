@@ -12,6 +12,16 @@
     input[type=number] {
         -moz-appearance: textfield;
     }
+    
+    /* 100% FOOLPROOF OVERRIDE FOR TAILWIND FORMS PLUGIN */
+    .modal-clean-input, .modal-clean-input:focus {
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        --tw-ring-color: transparent !important;
+        --tw-ring-shadow: 0 0 transparent !important;
+        --tw-border-opacity: 0 !important;
+    }
 </style>
 
 <div class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" 
@@ -27,17 +37,6 @@
             <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Configure pricing tiers and session durations for your guest network.</p>
         </div>
     </div>
-
-    @if(session('success'))
-        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
-             class="mb-8 p-4 bg-[#E8F5E9] text-[#2E7D32] rounded-xl border border-green-200 text-sm font-bold flex justify-between items-center shadow-sm">
-            <div class="flex items-center gap-3">
-                <x-lucide-check-circle class="w-5 h-5" />
-                <span>{{ session('success') }}</span>
-            </div>
-            <button @click="show = false" class="opacity-50 hover:opacity-100 text-xl">&times;</button>
-        </div>
-    @endif
 
     <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
         
@@ -158,7 +157,7 @@
          x-transition:leave-end="opacity-0"
          x-cloak>
          
-        <div class="bg-white rounded-[2rem] border-2 border-[#F0E6D2] shadow-2xl w-full max-w-md overflow-hidden transform transition-all"
+        <div class="bg-white rounded-[2rem] border border-[#F0E6D2] shadow-2xl w-full max-w-md overflow-hidden transform transition-all"
              @click.away="modalOpen = false">
             
             <div class="bg-[#FDF8F5] border-b border-[#F0E6D2] px-6 py-5 flex items-center justify-between">
@@ -174,19 +173,19 @@
             <div class="p-6 space-y-5">
                 <div>
                     <label class="block text-[10px] font-black text-[#A1887F] uppercase tracking-widest ml-1 mb-1.5">Price (PHP)</label>
-                    <div class="flex items-center bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-2xl focus-within:border-[#3E2723] focus-within:bg-white transition-all group">
-                        <span class="pl-5 pr-2 text-xl font-black text-[#A1887F] group-focus-within:text-[#3E2723] transition-colors select-none pointer-events-none">₱</span>
+                    <div class="flex items-center bg-[#FAFAFA] border border-gray-200 rounded-xl focus-within:border-[#3E2723] focus-within:ring-1 focus-within:ring-[#3E2723] transition-all group overflow-hidden">
+                        <span class="pl-4 pr-1 text-xl font-black text-[#A1887F] group-focus-within:text-[#3E2723] transition-colors select-none pointer-events-none">₱</span>
                         <input type="number" x-model="modalData.price" 
-                               class="flex-1 py-3.5 pr-4 pl-0 bg-transparent border-0 focus:border-transparent focus:ring-0 shadow-none text-xl font-black text-[#3E2723] outline-none" 
+                               class="modal-clean-input flex-1 py-3.5 pr-4 pl-0 bg-transparent text-xl font-black text-[#3E2723] w-full" 
                                placeholder="20">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-black text-[#A1887F] uppercase tracking-widest ml-1 mb-1.5">Duration</label>
-                    <div class="flex items-center bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-2xl focus-within:border-[#3E2723] focus-within:bg-white transition-all group">
+                    <div class="flex items-center bg-[#FAFAFA] border border-gray-200 rounded-xl focus-within:border-[#3E2723] focus-within:ring-1 focus-within:ring-[#3E2723] transition-all group overflow-hidden">
                         <input type="number" x-model="modalData.minutes" 
-                               class="flex-1 py-3.5 pl-5 pr-2 bg-transparent border-0 focus:border-transparent focus:ring-0 shadow-none text-xl font-black text-[#3E2723] outline-none" 
+                               class="modal-clean-input flex-1 py-3.5 pl-5 pr-2 bg-transparent text-xl font-black text-[#3E2723] w-full" 
                                placeholder="60">
                         <span class="pr-5 text-[10px] font-black text-[#A1887F] uppercase tracking-widest select-none pointer-events-none">Mins</span>
                     </div>

@@ -387,7 +387,18 @@
                     let errorData = response.ok ? null : await response.json();
                     
                     if (!response.ok) {
-                        alert('Server Error: ' + (errorData.message || 'Failed to process transaction.'));
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Server Error',
+                            text: errorData.message || 'Failed to process transaction.',
+                            confirmButtonColor: '#3E2723',
+                            background: '#FDF8F5',
+                            color: '#3E2723',
+                            customClass: {
+                                popup: 'rounded-[2rem] border-t-8 border-red-600 shadow-2xl',
+                                confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs'
+                            }
+                        });
                         return;
                     }
 
@@ -398,10 +409,32 @@
                         this.saleId = data.sale_id;
                         this.showModal = true;
                     } else {
-                        alert('Transaction failed. Please try again.');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Transaction Failed',
+                            text: 'Please try again.',
+                            confirmButtonColor: '#3E2723',
+                            background: '#FDF8F5',
+                            color: '#3E2723',
+                            customClass: {
+                                popup: 'rounded-[2rem] border-t-8 border-red-600 shadow-2xl',
+                                confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs'
+                            }
+                        });
                     }
                 } catch (error) {
-                    alert('Network error. Check console.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Network Error',
+                        text: 'Unable to connect to server. Check console for details.',
+                        confirmButtonColor: '#3E2723',
+                        background: '#FDF8F5',
+                        color: '#3E2723',
+                        customClass: {
+                            popup: 'rounded-[2rem] border-t-8 border-red-600 shadow-2xl',
+                            confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs'
+                        }
+                    });
                 } finally {
                     this.isProcessing = false;
                 }

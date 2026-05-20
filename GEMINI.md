@@ -8,6 +8,7 @@ This project is a Laravel-based Point of Sale (POS) and Captive Portal system.
 2. **Frontend**: Use Blade templates with Tailwind CSS. Some components may use React or Vue if specified.
 3. **Database**: Use Eloquent models and migrations. Ensure all foreign keys are indexed.
 4. **Testing**: Aim for high coverage with Pest or PHPUnit. Always write a test for new features or bug fixes.
+5. **Notifications**: Standardize on SweetAlert2 for all alerts, confirmations, and session messages. The `admin`, `staff`, `guest`, and `portal` layouts handle success/error sessions globally. Do not use in-page alert blocks in views that extend these layouts. Use `window.confirmAction()` for deletions.
 
 ## Enhanced Agent Capabilities
 

@@ -35,16 +35,6 @@
             <button type="submit" class="bg-[#3E2723] text-white px-6 py-3 rounded-full hover:bg-[#271815] font-bold transition shadow-md shadow-[#3E2723]/20 text-sm tracking-wide">
                 {{ __('Update Password') }}
             </button>
-
-            @if (session('status') === 'password-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm font-bold text-green-600"
-                >{{ __('Saved successfully.') }}</p>
-            @endif
         </div>
     </form>
 </section>

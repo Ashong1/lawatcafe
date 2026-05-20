@@ -4,9 +4,65 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Connect to Wi-Fi - Lawa't Cafe</title>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-[#3E2723] text-[#4A3B32] min-h-screen flex items-center justify-center p-4 antialiased selection:bg-amber-200" style="font-family: 'Montserrat', sans-serif;">
+<body class="bg-[#3E2723] text-[#4A3B32] min-h-screen flex items-center justify-center p-4 antialiased selection:bg-amber-200" style="font-family: 'Montserrat', sans-serif;"
+      x-data="portalSystem()"
+      x-init="
+        @if(session('message'))
+            Swal.fire({
+                toast: true,
+                position: 'top',
+                icon: 'success',
+                title: '{{ session('message') }}',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true,
+                background: '#E8F5E9',
+                color: '#2E7D32',
+                iconColor: '#2E7D32',
+                customClass: {
+                    popup: 'rounded-2xl border border-green-200 shadow-xl font-bold'
+                }
+            });
+        @endif
+        @if(session('error'))
+            Swal.fire({
+                toast: true,
+                position: 'top',
+                icon: 'error',
+                title: '{{ session('error') }}',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true,
+                background: '#FFEBEE',
+                color: '#C62828',
+                iconColor: '#C62828',
+                customClass: {
+                    popup: 'rounded-2xl border border-red-200 shadow-xl font-bold'
+                }
+            });
+        @endif
+        @if($errors->any())
+            Swal.fire({
+                toast: true,
+                position: 'top',
+                icon: 'error',
+                title: 'Wait!',
+                text: '{{ $errors->first() }}',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true,
+                background: '#FFF3E0',
+                color: '#E65100',
+                iconColor: '#E65100',
+                customClass: {
+                    popup: 'rounded-2xl border border-orange-200 shadow-xl font-bold'
+                }
+            });
+        @endif
+      ">
 
 <!-- Background Image with Blur & Dark Overlay -->
 <div class="fixed inset-0 z-0">
@@ -14,7 +70,7 @@
     <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
 </div>
 
-<div x-data="portalSystem()" class="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/20 overflow-hidden flex flex-col transition-all duration-500 hover:shadow-amber-900/20">
+<div class="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/20 overflow-hidden flex flex-col transition-all duration-500 hover:shadow-amber-900/20">
     
     <!-- Premium Header Area -->
     <div class="relative pt-10 pb-8 px-8 text-center overflow-hidden">
@@ -33,20 +89,6 @@
 
     <div class="px-8 pb-10 flex-1 relative min-h-[360px]">
         
-        <!-- Notification System -->
-        @if(session('error'))
-            <div x-data="{ show: true }" x-show="show" x-transition class="mb-6 p-4 bg-red-50 text-red-700 text-xs font-bold rounded-2xl text-center border border-red-100 flex items-center gap-2">
-                <x-lucide-alert-circle class="w-4 h-4 shrink-0" />
-                <span class="flex-1">{{ session('error') }}</span>
-            </div>
-        @endif
-        @if(session('message'))
-            <div x-data="{ show: true }" x-show="show" x-transition class="mb-6 p-4 bg-green-50 text-green-700 text-xs font-bold rounded-2xl text-center border border-green-100 flex items-center gap-2">
-                <x-lucide-check-circle class="w-4 h-4 shrink-0" />
-                <span class="flex-1">{{ session('message') }}</span>
-            </div>
-        @endif
-
         <!-- Tab: Voucher Code -->
         <div x-show="activeTab === 'code'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="flex flex-col h-full">
             <div class="text-center mb-8">
