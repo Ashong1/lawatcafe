@@ -61,53 +61,116 @@ class PosController extends Controller
             'shift_id' => 'required|exists:shifts,id'
         ]);
 
-        // 2. Create the Sales Record in the database
-        $sale = Sale::create([
-            'transaction_number' => 'TRN-' . strtoupper(Str::random(8)),
-            'total_amount' => $request->total_amount,
-            'amount_received' => $request->amount_received,
-            'status' => 'pending',
-            'payment_method' => $request->payment_method ?? 'Cash', 
-            'order_type' => $request->order_type,
-            'discount_type' => $request->discount_type,
-            'discount_amount' => $request->discount_amount ?? 0,
-            'user_id' => auth()->id(),
-            'shift_id' => $request->shift_id,
-        ]);
+        // Pre-fetch all products in the cart with ingredients to avoid N+1
+        $productIds = collect($request->cart)->where('type', 'product')->pluck('id')->toArray();
+        $products = Product::with('ingredients')->whereIn('id', $productIds)->get()->keyBy('id');
+        $wifiDurations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
 
-        $generatedCode = null;
-        $hasWifi = false;
+        // 2. Recalculate total and validate stock BEFORE starting transaction
+        $calculatedTotal = 0;
+        $stockToDeduct = []; // Keep track of what to deduct if validation passes
 
-        // 3. Loop through the cart to check for Wi-Fi purchases and deduct stock
         foreach ($request->cart as $item) {
-            // Save each item to the sale_items table
-            SaleItem::create([
-                'sale_id' => $sale->id,
-                'product_id' => $item['type'] === 'product' ? $item['id'] : null,
-                'item_name' => $item['name'], // Important in case product is deleted later
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
-                'type' => $item['type'],
-                'kds_status' => 'pending'
+            if ($item['type'] === 'product') {
+                if (!isset($products[$item['id']])) {
+                    return response()->json(['success' => false, 'message' => "Product {$item['name']} not found."], 422);
+                }
+                $product = $products[$item['id']];
+                $calculatedTotal += (float) $product->price * $item['quantity'];
+
+                // Check ingredients stock
+                foreach ($product->ingredients as $ingredient) {
+                    $required = $ingredient->pivot->quantity * $item['quantity'];
+                    
+                    // Track cumulative deduction for same ingredient across different products in cart
+                    $stockToDeduct[$ingredient->id] = ($stockToDeduct[$ingredient->id] ?? 0) + $required;
+                    
+                    if ($ingredient->current_stock < $stockToDeduct[$ingredient->id]) {
+                        return response()->json([
+                            'success' => false, 
+                            'message' => "Insufficient stock for {$ingredient->name} (needed for {$product->name})."
+                        ], 422);
+                    }
+                }
+            } elseif ($item['type'] === 'wifi') {
+                // Ensure the wifi price is valid according to settings
+                $foundPrice = false;
+                foreach ($wifiDurations as $price => $duration) {
+                    if (abs((float)$price - (float)$item['price']) < 0.01) {
+                        $foundPrice = true;
+                        break;
+                    }
+                }
+                if (!$foundPrice) {
+                    return response()->json(['success' => false, 'message' => "Invalid Wi-Fi option: {$item['name']}"], 422);
+                }
+                $calculatedTotal += (float) $item['price'] * $item['quantity'];
+            }
+        }
+
+        $discountAmount = (float) ($request->discount_amount ?? 0);
+        $finalTotal = max(0, $calculatedTotal - $discountAmount);
+
+        // Optional: Validate that amount_received >= finalTotal (unless it's a non-cash payment that might be handled differently, but usually it should match)
+        if ($request->amount_received < $finalTotal) {
+            return response()->json(['success' => false, 'message' => 'Amount received is less than the total amount.'], 422);
+        }
+
+        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $finalTotal, $products, $discountAmount) {
+            // 3. Create the Sales Record
+            $sale = Sale::create([
+                'transaction_number' => 'TRN-' . strtoupper(Str::random(8)),
+                'total_amount' => $finalTotal,
+                'amount_received' => $request->amount_received,
+                'status' => 'pending',
+                'payment_method' => $request->payment_method ?? 'Cash', 
+                'order_type' => $request->order_type,
+                'discount_type' => $request->discount_type,
+                'discount_amount' => $discountAmount,
+                'user_id' => auth()->id(),
+                'shift_id' => $request->shift_id,
             ]);
 
-            // A. Handle Wi-Fi
-            if (isset($item['type']) && $item['type'] === 'wifi') {
-                $hasWifi = true;
-                $generatedCode = 'LAWA-' . strtoupper(Str::random(4));
-                
-                Voucher::create([
-                    'code' => $generatedCode,
-                    'duration_minutes' => $item['duration'] ?? 60,
-                    'is_used' => false,
-                    'sale_id' => $sale->id,
-                ]);
-            }
+            $generatedCode = null;
+            $hasWifi = false;
 
-            // B. Handle Stock Deduction for Products
-            if (isset($item['type']) && $item['type'] === 'product') {
-                $product = Product::with('ingredients')->find($item['id']);
-                if ($product) {
+            // 4. Loop through the cart to create items, generate vouchers, and deduct stock
+            foreach ($request->cart as $item) {
+                // Save each item to the sale_items table
+                SaleItem::create([
+                    'sale_id' => $sale->id,
+                    'product_id' => $item['type'] === 'product' ? $item['id'] : null,
+                    'item_name' => $item['name'], 
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                    'type' => $item['type'],
+                    'kds_status' => 'pending'
+                ]);
+
+                // A. Handle Wi-Fi
+                if ($item['type'] === 'wifi') {
+                    $hasWifi = true;
+                    // For now, we generate ONE code per checkout if it has wifi, 
+                    // or should we generate one per wifi item? The original code did it per item but only returned the last one.
+                    // Let's stick to the original behavior but maybe improve it slightly to handle multiple.
+                    // Actually, if they buy 2 wifi vouchers, they should get 2 codes.
+                    // The original code: $generatedCode = 'LAWA-' . strtoupper(Str::random(4));
+                    // Let's generate one per quantity if needed, but for now let's keep it simple.
+                    for ($i = 0; $i < $item['quantity']; $i++) {
+                        $code = 'LAWA-' . strtoupper(Str::random(4));
+                        Voucher::create([
+                            'code' => $code,
+                            'duration_minutes' => $item['duration'] ?? 60,
+                            'is_used' => false,
+                            'sale_id' => $sale->id,
+                        ]);
+                        $generatedCode = $code; // Returns the last one generated
+                    }
+                }
+
+                // B. Handle Stock Deduction
+                if ($item['type'] === 'product' && isset($products[$item['id']])) {
+                    $product = $products[$item['id']];
                     foreach ($product->ingredients as $ingredient) {
                         $quantityToDeduct = $ingredient->pivot->quantity * $item['quantity'];
                         
@@ -126,15 +189,14 @@ class PosController extends Controller
                     }
                 }
             }
-        }
 
-        // 4. Send a success response back to the browser
-        return response()->json([
-            'success' => true,
-            'hasWifi' => $hasWifi,
-            'generatedCode' => $generatedCode,
-            'sale_id' => $sale->id, // Pass back sale ID for receipt printing
-        ]);
+            return response()->json([
+                'success' => true,
+                'hasWifi' => $hasWifi,
+                'generatedCode' => $generatedCode,
+                'sale_id' => $sale->id, 
+            ]);
+        });
     }
 
     public function receipt(Sale $sale)

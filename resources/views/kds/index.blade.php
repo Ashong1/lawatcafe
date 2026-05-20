@@ -51,18 +51,27 @@
                         <form action="{{ route('kds.update', $order->id) }}" method="POST" class="col-span-2">
                             @csrf
                             <input type="hidden" name="status" value="preparing">
-                            <button type="submit" class="w-full py-3 bg-[#3E2723] text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#271815] transition">Start Preparing</button>
+                            <button type="submit" class="w-full py-3 bg-[#3E2723] text-white rounded-xl font-bold transition flex items-center justify-center gap-2 hover:bg-[#271815]" title="Start Preparing">
+                                <x-lucide-play class="w-4 h-4" />
+                                <span class="text-[10px] uppercase tracking-widest">Start</span>
+                            </button>
                         </form>
                     @else
                         <form action="{{ route('kds.update', $order->id) }}" method="POST">
                             @csrf
                             <input type="hidden" name="status" value="completed">
-                            <button type="submit" class="w-full py-3 bg-green-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-green-700 transition">Complete</button>
+                            <button type="submit" class="w-full py-3 bg-green-600 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 hover:bg-green-700" title="Complete Order">
+                                <x-lucide-check-circle class="w-4 h-4" />
+                                <span class="text-[10px] uppercase tracking-widest">Done</span>
+                            </button>
                         </form>
                         <form action="{{ route('kds.update', $order->id) }}" method="POST">
                             @csrf
                             <input type="hidden" name="status" value="pending">
-                            <button type="submit" class="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-gray-200 transition">Back</button>
+                            <button type="submit" class="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-bold transition flex items-center justify-center gap-2 hover:bg-gray-200" title="Back to Pending">
+                                <x-lucide-undo-2 class="w-4 h-4" />
+                                <span class="text-[10px] uppercase tracking-widest">Back</span>
+                            </button>
                         </form>
                     @endif
                 </div>

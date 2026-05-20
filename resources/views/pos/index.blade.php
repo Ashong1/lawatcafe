@@ -25,24 +25,42 @@
             {{-- ONLY show these sensitive buttons if the user is an Admin --}}
             @if(auth()->user()->role === 'admin')
             <div class="flex gap-3 shrink-0">
-                <a href="{{ route('network.sessions') }}" class="bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#8D6E63] hover:text-[#3E2723] px-5 py-3 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center border border-[#F0E6D2]">
-                    Active Sessions
+                <a href="{{ route('network.sessions') }}" class="bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#8D6E63] hover:text-[#3E2723] px-5 py-3 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center border border-[#F0E6D2] gap-2" title="Active Sessions">
+                    <x-lucide-wifi class="w-4 h-4" />
+                    <span>Sessions</span>
                 </a>
-                <a href="{{ route('sales.export') }}" class="bg-[#3E2723] hover:bg-[#271815] text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center">
-                    Export Sales
+                <a href="{{ route('sales.export') }}" class="bg-[#3E2723] hover:bg-[#271815] text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center gap-2" title="Export Sales">
+                    <x-lucide-download class="w-4 h-4" />
+                    <span>Export</span>
                 </a>
             </div>
             @endif
 
             @if($activeShift)
-            <div class="flex gap-3 shrink-0">
-                <form action="{{ route('shift.end', $activeShift->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Close your shift? Make sure you have counted the drawer.');">
-                    @csrf
-                    <input type="hidden" name="ending_cash" id="ending_cash_input" value="0">
-                    <button type="button" onclick="let cash = prompt('Enter ending cash amount in drawer:'); if(cash !== null) { document.getElementById('ending_cash_input').value = cash; this.closest('form').submit(); }" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wider inline-flex items-center">
-                        Close Shift
-                    </button>
-                </form>
+            <div class="flex gap-3 shrink-0" x-data="{ showShiftModal: false, endingCash: '' }">
+                <button type="button" @click="showShiftModal = true" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wider inline-flex items-center gap-2">
+                    <x-lucide-lock class="w-4 h-4" />
+                    <span>End Shift</span>
+                </button>
+
+                <!-- Shift Modal -->
+                <div x-show="showShiftModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="showShiftModal = false">
+                    <div class="bg-white rounded-2xl p-6 w-96 shadow-xl" @click.outside="showShiftModal = false">
+                        <h3 class="text-xl font-bold text-[#3E2723] mb-4">Close Shift</h3>
+                        <p class="text-sm text-[#8D6E63] mb-4">Make sure you have counted the drawer.</p>
+                        <form action="{{ route('shift.end', $activeShift->id) }}" method="POST">
+                            @csrf
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-[#3E2723] mb-1">Ending Cash</label>
+                                <input type="number" step="0.01" name="ending_cash" x-model="endingCash" class="w-full px-4 py-2 border border-[#F0E6D2] rounded-lg focus:ring-[#3E2723] focus:border-[#3E2723]" required placeholder="0.00">
+                            </div>
+                            <div class="flex justify-end gap-3 mt-6">
+                                <button type="button" @click="showShiftModal = false" class="px-4 py-2 text-[#8D6E63] hover:text-[#3E2723] font-medium transition">Cancel</button>
+                                <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold transition">Confirm Close</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
             @endif
         </div>
@@ -101,12 +119,20 @@
         
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-2xl font-bold text-[#3E2723]">Cart</h3>
-            <button type="button" x-show="cart.length > 0" @click="resetCart()" class="text-xs text-red-400 hover:text-red-600 font-bold uppercase tracking-wider transition">Clear All</button>
+            <button type="button" x-show="cart.length > 0" @click="resetCart()" class="text-[#8D6E63] hover:text-red-600 transition p-2 hover:bg-red-50 rounded-lg" title="Clear All">
+                <x-lucide-trash-2 class="w-5 h-5" />
+            </button>
         </div>
 
         <div class="flex bg-[#FAFAFA] border border-[#F0E6D2] rounded-full p-1 mb-6">
-            <button class="flex-1 py-2 rounded-full text-xs font-bold bg-[#3E2723] text-white shadow-sm transition">Dine in</button>
-            <button class="flex-1 py-2 rounded-full text-xs font-bold text-[#8D6E63] hover:text-[#3E2723] transition">Take away</button>
+            <button @click="orderType = 'dine_in'" class="flex-1 py-2 rounded-full text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'dine_in' ? 'bg-[#3E2723] text-white shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">
+                <x-lucide-utensils class="w-3.5 h-3.5" />
+                <span>Dine In</span>
+            </button>
+            <button @click="orderType = 'take_away'" class="flex-1 py-2 rounded-full text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'take_away' ? 'bg-[#3E2723] text-white shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">
+                <x-lucide-shopping-bag class="w-3.5 h-3.5" />
+                <span>Take Away</span>
+            </button>
         </div>
 
         <div class="flex-1 overflow-y-auto space-y-4 pr-2 mb-6">
@@ -180,8 +206,14 @@
                 </div>
             </div>
 
-            <button type="button" @click="submitCheckout()" :disabled="cart.length === 0 || isProcessing || (amountTendered > 0 && amountTendered < grandTotal)" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-full font-bold uppercase tracking-widest transition shadow-lg shadow-[#3E2723]/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center text-sm">
-                <span x-text="isProcessing ? 'Processing...' : (amountTendered > 0 && amountTendered < grandTotal ? 'Insufficient Funds' : 'Place Order')" :class="{ 'animate-pulse': isProcessing }"></span>
+            <button type="button" @click="submitCheckout()" :disabled="cart.length === 0 || isProcessing || (amountTendered > 0 && amountTendered < grandTotal)" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-full font-bold uppercase tracking-widest transition shadow-lg shadow-[#3E2723]/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center text-sm gap-3">
+                <template x-if="!isProcessing">
+                    <x-lucide-send class="w-5 h-5" />
+                </template>
+                <template x-if="isProcessing">
+                    <x-lucide-loader-2 class="w-5 h-5 animate-spin" />
+                </template>
+                <span x-text="isProcessing ? 'Processing...' : (amountTendered > 0 && amountTendered < grandTotal ? 'Insufficient Funds' : 'Place Order')"></span>
             </button>
         </div>
     </div>
@@ -212,8 +244,14 @@
             </template>
 
             <div class="flex gap-4">
-                <button type="button" @click="resetCart()" class="flex-1 py-4 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#8D6E63] hover:bg-[#FDF8F5] font-bold transition">New Order</button>
-                <a :href="'/pos/receipt/' + saleId" target="_blank" class="flex-1 py-4 bg-[#3E2723] text-white rounded-full hover:bg-[#271815] font-bold transition shadow-md flex items-center justify-center">Print Receipt</a>
+                <button type="button" @click="resetCart()" class="flex-1 py-4 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#8D6E63] hover:bg-[#FDF8F5] font-bold transition flex items-center justify-center gap-2">
+                    <x-lucide-plus-circle class="w-4 h-4" />
+                    <span>New Order</span>
+                </button>
+                <a :href="'/pos/receipt/' + saleId" target="_blank" class="flex-1 py-4 bg-[#3E2723] text-white rounded-full hover:bg-[#271815] font-bold transition shadow-md flex items-center justify-center gap-2">
+                    <x-lucide-printer class="w-4 h-4" />
+                    <span>Print</span>
+                </a>
             </div>
         </div>
     </div>
@@ -235,7 +273,10 @@
                     <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-2 text-center">Starting Float / Cash</label>
                     <input type="number" name="starting_cash" required min="0" step="0.01" class="w-full p-4 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-amber-600 bg-[#FAFAFA] transition-all text-center text-2xl font-bold text-[#3E2723]" placeholder="0.00">
                 </div>
-                <button type="submit" class="w-full py-4 bg-amber-600 text-white rounded-full hover:bg-amber-700 font-bold uppercase tracking-widest transition shadow-lg text-xs">Open Shift</button>
+                <button type="submit" class="w-full py-4 bg-amber-600 text-white rounded-full hover:bg-amber-700 font-bold uppercase tracking-widest transition shadow-lg text-xs flex items-center justify-center gap-2">
+                    <x-lucide-unlock class="w-4 h-4" />
+                    <span>Open Shift</span>
+                </button>
             </form>
         </div>
     </div>

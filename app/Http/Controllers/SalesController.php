@@ -13,7 +13,7 @@ class SalesController extends Controller
      */
     public function index()
     {
-        $sales = Sale::with('user')->latest()->get();
+        $sales = Sale::with('user')->latest()->paginate(20);
         $totalRevenue = Sale::sum('total_amount');
         $todaysRevenue = Sale::whereDate('created_at', today())->sum('total_amount');
 

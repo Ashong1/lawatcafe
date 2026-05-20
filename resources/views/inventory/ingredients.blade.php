@@ -22,11 +22,13 @@
             </div>
             
             <div class="flex flex-wrap gap-3">
-                <button class="bg-[#FAFAFA] hover:bg-[#FDF8F5] text-[#8D6E63] hover:text-[#3E2723] border border-[#F0E6D2] px-6 py-3 rounded-full font-bold transition text-xs tracking-widest uppercase">
-                    Log Adjustment
+                <button class="bg-[#FAFAFA] hover:bg-[#FDF8F5] text-[#8D6E63] hover:text-[#3E2723] border border-[#F0E6D2] px-6 py-3 rounded-full font-bold transition text-xs tracking-widest uppercase flex items-center gap-2">
+                    <x-lucide-history class="w-4 h-4" />
+                    <span>Adjustments</span>
                 </button>
-                <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95">
-                    + Add New Ingredient
+                <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
+                    <x-lucide-plus class="w-4 h-4" />
+                    <span>Ingredient</span>
                 </button>
             </div>
         </div>
@@ -58,9 +60,13 @@
                             @endif
                         </td>
                         <td class="py-4 text-right">
-                            <div class="flex justify-end gap-4 font-bold text-[11px] uppercase tracking-widest">
-                                <button @click="openEditModal({{ $ingredient }})" class="text-[#8D6E63] hover:text-amber-700 transition">Restock</button>
-                                <button @click="openEditModal({{ $ingredient }})" class="text-[#8D6E63] hover:text-amber-700 transition">Edit</button>
+                            <div class="flex justify-end gap-2">
+                                <button @click="openEditModal({{ $ingredient }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Restock">
+                                    <x-lucide-package-plus class="w-4 h-4" />
+                                </button>
+                                <button @click="openEditModal({{ $ingredient }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit">
+                                    <x-lucide-pencil class="w-4 h-4" />
+                                </button>
                             </div>
                         </td>
                     </tr>

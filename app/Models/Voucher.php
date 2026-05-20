@@ -15,6 +15,7 @@ class Voucher extends Model
         'used_at',
         'ip_address',
         'mac_address',
+        'sale_id',
     ];
 
     protected $casts = [

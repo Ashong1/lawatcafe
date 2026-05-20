@@ -92,24 +92,7 @@
 
             <!-- Right Column -->
             <div class="space-y-8">
-                <!-- Voucher Durations (JSON) -->
-                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="p-2 bg-amber-50 rounded-lg">
-                            <x-lucide-clock class="w-5 h-5 text-amber-700" />
-                        </div>
-                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Voucher Pricing & Durations</h3>
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-2">Pricing JSON Mapping</label>
-                        <textarea name="voucher_durations" rows="4" class="w-full px-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] text-xs font-mono">{{ $settings['voucher_durations'] }}</textarea>
-                        <p class="text-[9px] text-[#A1887F] mt-2 font-medium">Format: <code>{"Price": Minutes}</code>. e.g. <code>{"20": 60, "50": 180}</code></p>
-                    </div>
-                </div>
-
                 <!-- QR Code -->
-                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
                     <div class="flex items-center gap-3 mb-6">
                         <div class="p-2 bg-green-50 rounded-lg">
                             <x-lucide-qr-code class="w-5 h-5 text-green-700" />

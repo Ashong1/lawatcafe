@@ -31,8 +31,9 @@
             <div>
                 <h3 class="text-lg font-bold text-[#3E2723] uppercase tracking-widest">Active Accounts</h3>
             </div>
-            <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-lg font-bold transition shadow-md text-sm tracking-widest uppercase">
-                + Add Staff Member
+            <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-lg font-bold transition shadow-md text-sm tracking-widest uppercase flex items-center gap-2">
+                <x-lucide-plus class="w-4 h-4" />
+                <span>Staff Member</span>
             </button>
         </div>
 
@@ -58,13 +59,17 @@
                             <td class="px-6 py-4 text-[#8D6E63] font-medium">{{ $user->email }}</td>
                             <td class="px-6 py-4 text-[#8D6E63] font-medium">{{ $user->created_at->format('M d, Y') }}</td>
                             <td class="px-6 py-4 text-right">
-                                <div class="flex justify-end gap-4 font-bold text-xs uppercase tracking-wider">
-                                    <button @click="openEditModal({{ $user }})" class="text-amber-700 hover:text-amber-900 transition">Edit</button>
+                                <div class="flex justify-end gap-2">
+                                    <button @click="openEditModal({{ $user }})" class="p-2 text-amber-700 hover:text-amber-900 hover:bg-amber-100 rounded-lg transition" title="Edit">
+                                        <x-lucide-pencil class="w-4 h-4" />
+                                    </button>
                                     
                                     <form action="{{ route('accounts.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove {{ $user->name }}\'s access?');" class="inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-500 hover:text-red-700 transition" {{ auth()->id() === $user->id ? 'disabled class=opacity-50 cursor-not-allowed' : '' }}>Remove</button>
+                                        <button type="submit" class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition" {{ auth()->id() === $user->id ? 'disabled' : '' }} title="Remove">
+                                            <x-lucide-trash-2 class="w-4 h-4" />
+                                        </button>
                                     </form>
                                 </div>
                             </td>

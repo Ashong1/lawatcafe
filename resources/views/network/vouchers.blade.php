@@ -37,9 +37,10 @@
                 <!-- Bulk Delete -->
                 <button @click="deleteSelected()" 
                         x-show="selectedVouchers.length > 0"
-                        class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-red-500/20 text-xs tracking-widest uppercase active:scale-95"
+                        class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-red-500/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2"
                         style="display: none;">
-                    Delete Selected (<span x-text="selectedVouchers.length"></span>)
+                    <x-lucide-trash-2 class="w-3.5 h-3.5" />
+                    <span x-text="'Delete Selected (' + selectedVouchers.length + ')'"></span>
                 </button>
 
                 <!-- Auto Purge -->
@@ -53,8 +54,9 @@
 
                 <form action="{{ route('network.vouchers.generate') }}" method="POST">
                     @csrf
-                    <button type="submit" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95">
-                        + Generate Batch (5)
+                    <button type="submit" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
+                        <x-lucide-plus class="w-4 h-4" />
+                        <span>Generate (5)</span>
                     </button>
                 </form>
             </div>
@@ -96,20 +98,21 @@
                                 <span class="block text-[10px] text-[#A1887F]">{{ $voucher->created_at->format('h:i A') }}</span>
                             </td>
                             <td class="py-4 text-right">
-                                <div class="flex justify-end items-center gap-4 font-bold text-[11px] uppercase tracking-widest">
+                                <div class="flex justify-end gap-2">
                                     
                                     <a href="{{ route('network.vouchers.print', $voucher->id) }}" 
                                        target="_blank" 
-                                       class="text-[#8D6E63] hover:text-amber-700 transition-colors">
-                                        Print
+                                       class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition"
+                                       title="Print">
+                                        <x-lucide-printer class="w-4 h-4" />
                                     </a>
 
                                     <form action="{{ route('network.vouchers.destroy', $voucher->id) }}" method="POST" 
                                           onsubmit="return confirm('Delete this voucher forever? This cannot be undone.');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-400 hover:text-red-600 transition-colors">
-                                            Delete
+                                        <button type="submit" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                            <x-lucide-trash-2 class="w-4 h-4" />
                                         </button>
                                     </form>
 
@@ -128,6 +131,9 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="mt-8">
+            {{ $vouchers->links() }}
         </div>
     </div>
 

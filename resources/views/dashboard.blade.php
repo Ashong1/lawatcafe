@@ -110,8 +110,9 @@
                 
                 <form action="{{ route('network.vouchers.generate') }}" method="POST">
                     @csrf
-                    <button type="submit" class="bg-[#3E2723] hover:bg-[#271815] text-white px-5 py-2.5 rounded-full shadow-sm transition-colors duration-200 text-[11px] font-bold uppercase tracking-wider active:scale-95">
-                        + Generate Batch
+                    <button type="submit" class="bg-[#3E2723] hover:bg-[#271815] text-white px-5 py-2.5 rounded-full shadow-sm transition-colors duration-200 text-[11px] font-bold uppercase tracking-wider active:scale-95 flex items-center gap-2">
+                        <x-lucide-plus class="w-4 h-4" />
+                        <span>Generate</span>
                     </button>
                 </form>
             </div>
@@ -154,8 +155,9 @@
             
             @if(count($recentVouchers ?? []) > 0)
             <div class="mt-6 text-center">
-                <a href="{{ route('network.vouchers.index') }}" class="text-[11px] font-bold uppercase tracking-widest text-[#8D6E63] hover:text-[#3E2723] transition-colors underline decoration-dotted decoration-2 underline-offset-4">
-                    Manage All Vouchers
+                <a href="{{ route('network.vouchers.index') }}" class="text-[11px] font-bold uppercase tracking-widest text-[#8D6E63] hover:text-[#3E2723] transition-colors underline decoration-dotted decoration-2 underline-offset-4 flex items-center justify-center gap-2">
+                    <x-lucide-list class="w-3.5 h-3.5" />
+                    <span>All Vouchers</span>
                 </a>
             </div>
             @endif

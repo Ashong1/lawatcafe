@@ -13,8 +13,8 @@ class VoucherController extends Controller
      */
     public function index()
     {
-        // Fetch all vouchers, showing the newest ones first
-        $vouchers = Voucher::latest()->get();
+        // Fetch vouchers with pagination (e.g. 50 per page)
+        $vouchers = Voucher::latest()->paginate(50);
         
         return view('network.vouchers', compact('vouchers'));
     }
@@ -99,43 +99,78 @@ class VoucherController extends Controller
     }
 
     /**
+     * Display the Wi-Fi plans management page.
+     */
+    public function plans()
+    {
+        $settings = [
+            'voucher_durations' => \App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'),
+        ];
+
+        return view('network.plans', compact('settings'));
+    }
+
+    /**
      * Display active network sessions.
      */
     public function sessions(\App\Services\OpnSenseService $opnsense)
     {
         // 1. Get real-time sessions from OPNsense
         $opnSessions = $opnsense->listSessions();
+        $sessionCollection = collect($opnSessions);
 
-        // 2. Map and cross-reference with our database
-        $sessions = collect($opnSessions)->map(function($raw) {
+        // 2. Batch fetch relevant vouchers to avoid N+1
+        $ips = $sessionCollection->map(fn($s) => str_replace('/32', '', $s['ipAddress']))->toArray();
+        $macs = $sessionCollection->map(fn($s) => $s['macAddress'] ?? null)->filter()->toArray();
+
+        $voucherList = Voucher::where('is_used', true)
+            ->where(function($q) use ($ips, $macs) {
+                $q->whereIn('ip_address', $ips);
+                if (!empty($macs)) {
+                    $q->orWhereIn('mac_address', $macs);
+                }
+            })
+            ->latest('used_at')
+            ->get();
+
+        // 3. Map and cross-reference
+        $sessions = $sessionCollection->map(function($raw) use ($voucherList) {
             $ip = str_replace('/32', '', $raw['ipAddress']);
+            $mac = $raw['macAddress'] ?? null;
             
-            // Find the latest voucher used by this IP or MAC
-            $voucher = Voucher::where('is_used', true)
-                ->where(function($q) use ($ip, $raw) {
-                    $q->where('ip_address', $ip);
-                    if (!empty($raw['macAddress'])) {
-                        $q->orWhere('mac_address', $raw['macAddress']);
-                    }
-                })
-                ->latest('used_at')
-                ->first();
+            // Find the latest voucher in our pre-fetched collection
+            $voucher = $voucherList->filter(function($v) use ($ip, $mac) {
+                return $v->ip_address === $ip || ($mac && $v->mac_address === $mac);
+            })->first();
+
+            // Format bytes to human readable
+            $formatBytes = function($bytes) {
+                if ($bytes <= 0) return '0 B';
+                $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+                $i = floor(log($bytes, 1024));
+                return round($bytes / pow(1024, $i), 2) . ' ' . $units[$i];
+            };
+
+            $bytesIn = isset($raw['bytes_in']) ? (int)$raw['bytes_in'] : 0;
+            $bytesOut = isset($raw['bytes_out']) ? (int)$raw['bytes_out'] : 0;
 
             if (!$voucher) {
-                // If no voucher found, it might be a static/admin session
                 return (object) [
                     'sessionId' => $raw['sessionId'],
                     'ip_address' => $ip,
-                    'mac_address' => $raw['macAddress'] ?: 'N/A',
+                    'mac_address' => $mac ?: 'N/A',
                     'code' => 'SYSTEM/STATIC',
                     'timeLeft' => '∞',
                     'progress' => 100,
-                    'is_system' => true
+                    'is_system' => true,
+                    'bytes_in' => $formatBytes($bytesIn),
+                    'bytes_out' => $formatBytes($bytesOut),
+                    'connected_at' => isset($raw['startTime']) ? \Carbon\Carbon::createFromTimestamp($raw['startTime'])->diffForHumans() : 'N/A'
                 ];
             }
 
-            // Calculate time remaining based on our database
-            $usedAt = $voucher->used_at;
+            // Calculate time remaining
+            $usedAt = \Carbon\Carbon::parse($voucher->used_at);
             $expiryTime = $usedAt->copy()->addMinutes($voucher->duration_minutes);
             $now = now();
             
@@ -145,14 +180,16 @@ class VoucherController extends Controller
             return (object) [
                 'sessionId' => $raw['sessionId'],
                 'ip_address' => $ip,
-                'mac_address' => $raw['macAddress'] ?: 'N/A',
+                'mac_address' => $mac ?: 'N/A',
                 'code' => $voucher->code,
                 'timeLeft' => $timeLeft,
                 'progress' => $progress,
-                'is_system' => false
+                'is_system' => false,
+                'bytes_in' => $formatBytes($bytesIn),
+                'bytes_out' => $formatBytes($bytesOut),
+                'connected_at' => isset($raw['startTime']) ? \Carbon\Carbon::createFromTimestamp($raw['startTime'])->diffForHumans() : 'N/A'
             ];
         })->filter(function($session) {
-            // Filter out infrastructure devices from dynamic settings
             $ignoredIpsStr = \App\Models\Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.100,192.168.2.5,192.168.2.4');
             $ignoredIps = explode(',', $ignoredIpsStr);
             return !in_array($session->ip_address, $ignoredIps);

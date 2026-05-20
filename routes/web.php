@@ -58,6 +58,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         // Admin Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::post('/admin/ai/chat', [DashboardController::class, 'adminChat'])->name('admin.ai.chat');
+        Route::get('/admin/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('admin.analytics');
 
         // Inventory Management
         Route::prefix('inventory')->name('inventory.')->group(function () {
@@ -84,6 +86,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/vouchers/purge', [VoucherController::class, 'purge'])->name('vouchers.purge');
             Route::get('/vouchers/{voucher}/print', [VoucherController::class, 'print'])->name('vouchers.print');
             Route::delete('/vouchers/{voucher}', [VoucherController::class, 'destroy'])->name('vouchers.destroy');
+
+            Route::get('/plans', [VoucherController::class, 'plans'])->name('plans');
         });
 
         // Finance / Sales Reports

@@ -31,12 +31,18 @@ class ScanImapReceipts extends Command
     {
         $this->info("Starting IMAP Scan...");
 
-        // Simplified: Defaulting to Gmail IMAP settings as requested
-        $host = Setting::get('imap_host', 'imap.gmail.com');
-        $port = Setting::get('imap_port', '993');
-        $encryption = Setting::get('imap_encryption', 'ssl');
-        $username = Setting::get('imap_username');
-        $password = Setting::get('imap_password');
+        // Fetch all needed settings at once to avoid multiple DB hits
+        $configKeys = ['imap_host', 'imap_port', 'imap_encryption', 'imap_username', 'imap_password'];
+        $settings = [];
+        foreach ($configKeys as $key) {
+            $settings[$key] = Setting::get($key);
+        }
+
+        $host = $settings['imap_host'] ?? 'imap.gmail.com';
+        $port = $settings['imap_port'] ?? '993';
+        $encryption = $settings['imap_encryption'] ?? 'ssl';
+        $username = $settings['imap_username'];
+        $password = $settings['imap_password'];
 
         if (!$username || !$password) {
             $this->error("IMAP credentials (username/password) not configured in settings.");
@@ -61,68 +67,67 @@ class ScanImapReceipts extends Command
             $folder = $client->getFolder('INBOX');
             
             // Search for unread emails from GCash or similar
-            // We search for UNSEEN messages
             $messages = $folder->query()->unseen()->get();
 
             $this->info("Found " . $messages->count() . " unseen messages.");
 
+            $ai = new \App\Services\AIService();
+
             foreach ($messages as $message) {
-                $subject = $message->getSubject();
-                $body = $message->getTextBody() ?: $message->getHTMLBody(true);
-                $from = $message->getFrom()[0]->mail;
+                try {
+                    $subject = $message->getSubject();
+                    $body = $message->getTextBody() ?: $message->getHTMLBody(true);
+                    $from = $message->getFrom()[0]->mail;
 
-                $this->info("Processing email from: $from - Subject: $subject");
+                    $this->info("Processing email from: $from - Subject: $subject");
 
-                // GCash Parsing Logic
-                // Pattern for Reference Number (Usually 9-13 digits)
-                // Pattern for Amount (e.g. PHP 100.00 or 100.00)
-                
-                $refNumber = null;
-                $amount = null;
+                    $refNumber = null;
+                    $amount = null;
 
-                // Match Reference Number: "Ref. No. 1234..." or "Ref No: 1234..."
-                if (preg_match('/Ref\.?\s*No\.?[:\s]*(\d+)/i', $body, $matches)) {
-                    $refNumber = $matches[1];
-                }
-
-                // Match Amount: "Amount: PHP 100.00" or "Sent PHP 100.00"
-                if (preg_match('/PHP\s*([\d,]+\.\d{2})/i', $body, $matches)) {
-                    $amount = str_replace(',', '', $matches[1]);
-                } elseif (preg_match('/Amount[:\s]*([\d,]+\.\d{2})/i', $body, $matches)) {
-                    $amount = str_replace(',', '', $matches[1]);
-                }
-
-                if ($refNumber && $amount) {
-                    $this->info("Extracted (Regex): Ref #$refNumber, Amount: $amount");
-                } else {
-                    $this->info("Regex failed, falling back to AI extraction...");
-                    $ai = new \App\Services\AIService();
-                    $aiResult = $ai->extractPaymentDetails($body);
-                    
-                    if ($aiResult) {
-                        $refNumber = $aiResult['reference_number'];
-                        $amount = $aiResult['amount'];
-                        $this->info("Extracted (AI): Ref #$refNumber, Amount: $amount");
+                    // Match Reference Number
+                    if (preg_match('/Ref\.?\s*No\.?[:\s]*(\d+)/i', $body, $matches)) {
+                        $refNumber = $matches[1];
                     }
-                }
 
-                if ($refNumber && $amount) {
-                    EwalletPayment::updateOrCreate(
-                        ['reference_number' => $refNumber],
-                        [
-                            'amount' => $amount,
-                            'sender_details' => $from,
-                            'email_date' => $message->getDate()[0] ?? now(),
-                            'is_used' => false
-                        ]
-                    );
+                    // Match Amount
+                    if (preg_match('/PHP\s*([\d,]+\.\d{2})/i', $body, $matches)) {
+                        $amount = str_replace(',', '', $matches[1]);
+                    } elseif (preg_match('/Amount[:\s]*([\d,]+\.\d{2})/i', $body, $matches)) {
+                        $amount = str_replace(',', '', $matches[1]);
+                    }
 
-                    // Mark as seen so we don't process it again
-                    $message->setFlag('Seen');
-                } else {
-                    $this->warn("Could not extract payment details from this email.");
-                    // Optional: mark as seen anyway or leave unread to manual review
-                    // $message->setFlag('Seen'); 
+                    if (!$refNumber || !$amount) {
+                        $this->info("Regex failed, falling back to AI extraction...");
+                        $aiResult = $ai->extractPaymentDetails($body);
+                        
+                        if ($aiResult) {
+                            $refNumber = $aiResult['reference_number'];
+                            $amount = $aiResult['amount'];
+                            $this->info("Extracted (AI): Ref #$refNumber, Amount: $amount");
+                        }
+                    } else {
+                        $this->info("Extracted (Regex): Ref #$refNumber, Amount: $amount");
+                    }
+
+                    if ($refNumber && $amount) {
+                        \Illuminate\Support\Facades\DB::transaction(function() use ($refNumber, $amount, $from, $message) {
+                            EwalletPayment::updateOrCreate(
+                                ['reference_number' => $refNumber],
+                                [
+                                    'amount' => $amount,
+                                    'sender_details' => $from,
+                                    'email_date' => $message->getDate()[0] ?? now(),
+                                    'is_used' => false
+                                ]
+                            );
+                            // Mark as seen so we don't process it again
+                            $message->setFlag('Seen');
+                        });
+                    } else {
+                        $this->warn("Could not extract payment details. Leaving unread.");
+                    }
+                } catch (\Exception $e) {
+                    $this->error("Error processing message: " . $e->getMessage());
                 }
             }
 

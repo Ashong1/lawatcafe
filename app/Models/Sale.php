@@ -13,9 +13,14 @@ class Sale extends Model
     protected $fillable = [
         'transaction_number',
         'total_amount',
+        'amount_received',
         'status',
         'payment_method',
-        'user_id'
+        'order_type',
+        'discount_type',
+        'discount_amount',
+        'user_id',
+        'shift_id'
     ];
 
     // Optional: Setup the relationship so you can get the user who made the sale

@@ -12,12 +12,21 @@ class CaptivePortalController extends Controller
     {
         $qrCode = \App\Models\Setting::get('payment_qr_code');
         
+        // Fetch and sort durations
+        $durationsRaw = \App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}');
+        $durations = json_decode($durationsRaw, true);
+        if ($durations) {
+            ksort($durations); // Sort by price ascending
+        } else {
+            $durations = [];
+        }
+
         // Capture OPNsense redirect parameters if they exist
         if ($request->has('clientIp')) session(['clientIp' => $request->query('clientIp')]);
         if ($request->has('clientMac')) session(['clientMac' => $request->query('clientMac')]);
         if ($request->has('zone')) session(['zone' => $request->query('zone')]);
 
-        return view('portal.index', compact('qrCode'));
+        return view('portal.index', compact('qrCode', 'durations'));
     }
 
     // Handle e-wallet reference number verification
@@ -27,55 +36,58 @@ class CaptivePortalController extends Controller
             'reference_number' => 'required|string',
         ]);
 
-        $payment = \App\Models\EwalletPayment::where('reference_number', $request->reference_number)
-                                             ->where('is_used', false)
-                                             ->first();
+        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $opnsense) {
+            $payment = \App\Models\EwalletPayment::where('reference_number', $request->reference_number)
+                                                 ->where('is_used', false)
+                                                 ->lockForUpdate() // Lock to prevent race conditions
+                                                 ->first();
 
-        if (!$payment) {
-            return back()->with('error', 'Payment not found or already verified. If you just paid, please wait a minute for the system to process the email.');
-        }
-
-        // Determine duration based on amount from dynamic settings
-        $durations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
-        $amount = (float) $payment->amount;
-        $duration = 0;
-
-        // Sort keys descending to find the highest matching tier
-        krsort($durations);
-        foreach ($durations as $minAmount => $mins) {
-            if ($amount >= (float)$minAmount) {
-                $duration = (int)$mins;
-                break;
+            if (!$payment) {
+                return back()->with('error', 'Payment not found or already verified. If you just paid, please wait a minute for the system to process the email.');
             }
-        }
 
-        if ($duration === 0) {
-            return back()->with('error', 'Insufficient amount for a Wi-Fi voucher. Minimum is ₱20.00.');
-        }
+            // Determine duration based on amount from dynamic settings
+            $durations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
+            $amount = (float) $payment->amount;
+            $duration = 0;
 
-        // Authorize device on OPNsense
-        $ip = session('clientIp', $request->ip());
-        $mac = session('clientMac', $request->query('clientMac') ?? $request->input('mac'));
-        
-        // Generate the voucher
-        $code = 'LAWA-' . strtoupper(\Illuminate\Support\Str::random(4));
-        
-        \App\Models\Voucher::create([
-            'code' => $code,
-            'duration_minutes' => $duration,
-            'is_used' => true,
-            'used_at' => now(),
-            'ip_address' => $ip,
-            'mac_address' => $mac,
-        ]);
+            // Sort keys descending to find the highest matching tier
+            krsort($durations);
+            foreach ($durations as $minAmount => $mins) {
+                if ($amount >= (float)$minAmount) {
+                    $duration = (int)$mins;
+                    break;
+                }
+            }
 
-        // Mark payment as used
-        $payment->update(['is_used' => true]);
+            if ($duration === 0) {
+                return back()->with('error', 'Insufficient amount for a Wi-Fi voucher. Minimum is ₱20.00.');
+            }
 
-        // Authorize device via backend API
-        $opnsense->authorizeDevice($ip, $code);
+            // Authorize device on OPNsense
+            $ip = session('clientIp', $request->ip());
+            $mac = session('clientMac', $request->query('clientMac') ?? $request->input('mac'));
+            
+            // Generate the voucher
+            $code = 'LAWA-' . strtoupper(\Illuminate\Support\Str::random(4));
+            
+            \App\Models\Voucher::create([
+                'code' => $code,
+                'duration_minutes' => $duration,
+                'is_used' => true,
+                'used_at' => now(),
+                'ip_address' => $ip,
+                'mac_address' => $mac,
+            ]);
 
-        return redirect()->route('portal.success')->with('passcode', $code);
+            // Mark payment as used
+            $payment->update(['is_used' => true]);
+
+            // Authorize device via backend API
+            $opnsense->authorizeDevice($ip, $code);
+
+            return redirect()->route('portal.success')->with('passcode', $code);
+        });
     }
 
     // Handle standard passcode entry
@@ -85,35 +97,38 @@ class CaptivePortalController extends Controller
             'passcode' => 'required|string',
         ]);
 
-        // 1. Verify the Lawa't Voucher in your Database
-        $voucher = \App\Models\Voucher::where('code', $request->passcode)
-                          ->where('is_used', false)
-                          ->first();
+        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $opnsense) {
+            // 1. Verify the Lawa't Voucher in your Database
+            $voucher = \App\Models\Voucher::where('code', $request->passcode)
+                              ->where('is_used', false)
+                              ->lockForUpdate()
+                              ->first();
 
-        // If the voucher is wrong, we send them back with the red error
-        if (!$voucher) {
-            return back()->with('error', 'Invalid or expired voucher code.');
-        }
+            // If the voucher is wrong, we send them back with the red error
+            if (!$voucher) {
+                return back()->with('error', 'Invalid or expired voucher code.');
+            }
 
-        $ip = session('clientIp', $request->ip());
-        $mac = session('clientMac', $request->query('clientMac') ?? $request->input('mac'));
+            $ip = session('clientIp', $request->ip());
+            $mac = session('clientMac', $request->query('clientMac') ?? $request->input('mac'));
 
-        // 2. Authorize via backend API first
-        $authorized = $opnsense->authorizeDevice($ip, $voucher->code);
+            // 2. Authorize via backend API first
+            $authorized = $opnsense->authorizeDevice($ip, $voucher->code);
 
-        if (!$authorized) {
-            return back()->with('error', 'Failed to communicate with the firewall. Please try again.');
-        }
+            if (!$authorized) {
+                return back()->with('error', 'Failed to communicate with the firewall. Please try again.');
+            }
 
-        // 3. Mark voucher as used in the database
-        $voucher->update([
-            'is_used' => true,
-            'used_at' => now(),
-            'ip_address' => $ip,
-            'mac_address' => $mac,
-        ]);
+            // 3. Mark voucher as used in the database
+            $voucher->update([
+                'is_used' => true,
+                'used_at' => now(),
+                'ip_address' => $ip,
+                'mac_address' => $mac,
+            ]);
 
-        return redirect()->route('portal.success');
+            return redirect()->route('portal.success');
+        });
     }
 
     // Handle e-wallet receipt uploads

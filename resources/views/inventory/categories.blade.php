@@ -32,8 +32,9 @@
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Available Categories</h3>
             </div>
             
-            <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95">
-                + Add New Category
+            <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
+                <x-lucide-plus class="w-4 h-4" />
+                <span>New Category</span>
             </button>
         </div>
 
@@ -54,13 +55,17 @@
                         <td class="py-4 text-[#8D6E63] font-mono text-xs">{{ $category->slug }}</td>
                         <td class="py-4 text-[#8D6E63] font-medium">{{ Str::limit($category->description, 50) }}</td>
                         <td class="py-4 text-right">
-                            <div class="flex justify-end gap-4 font-bold text-[11px] uppercase tracking-widest">
-                                <button @click="openEditModal({{ $category }})" class="text-[#8D6E63] hover:text-amber-700 transition">Edit</button>
+                            <div class="flex justify-end gap-2">
+                                <button @click="openEditModal({{ $category }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit">
+                                    <x-lucide-pencil class="w-4 h-4" />
+                                </button>
                                 
                                 <form action="{{ route('inventory.categories.destroy', $category->id) }}" method="POST" onsubmit="return confirm('Are you sure? This will not delete products in this category but they will lose their link.');" class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-400 hover:text-red-600 transition">Delete</button>
+                                    <button type="submit" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                        <x-lucide-trash-2 class="w-4 h-4" />
+                                    </button>
                                 </form>
                             </div>
                         </td>
