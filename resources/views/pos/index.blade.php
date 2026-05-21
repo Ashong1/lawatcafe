@@ -4,125 +4,132 @@
 @section('title', 'POS Register')
 
 @section('content')
-<div x-data="posSystem()" class="bg-[#FDF8F5] -m-6 p-6 min-h-screen flex items-start gap-6 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+<div x-data="posSystem()" class="bg-[#FDF8F5] -mx-8 -my-8 h-[calc(100vh-3.5rem)] flex items-stretch text-[#4A3B32] overflow-hidden" style="font-family: 'Montserrat', sans-serif;">
 
-    <div class="flex-1 bg-white p-6 md:p-8 rounded-2xl shadow-sm flex flex-col h-[calc(100vh-3rem)] overflow-hidden border border-[#F0E6D2]">
-        
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 shrink-0">
+    {{-- Menu Area (Left) --}}
+    <div class="flex-1 p-8 flex flex-col overflow-hidden">
+        <div class="flex-1 bg-white p-6 md:p-8 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden border border-[#F0E6D2]">
             
-            <div class="flex items-center gap-3 text-[#3E2723] hidden lg:flex shrink-0">
-                <span class="text-3xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-base font-bold tracking-[0.2em] uppercase mt-1">POS</span>
-            </div>
-
-            <div class="relative w-full max-w-md">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#8D6E63]">
-                    <x-lucide-search class="w-5 h-5 text-gray-400" />
+            <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 shrink-0">
+                
+                <div class="flex items-center gap-3 text-[#3E2723] hidden lg:flex shrink-0">
+                    <span class="text-3xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                    <span class="text-base font-bold tracking-[0.2em] uppercase mt-1">POS</span>
                 </div>
-                <input type="text" x-model="searchQuery" placeholder="Search menu..." class="w-full pl-11 pr-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full focus:outline-none focus:ring-2 focus:ring-[#3E2723] transition-all text-sm font-medium placeholder-[#A1887F] text-[#3E2723]">
-            </div>
-            
-            {{-- ONLY show these sensitive buttons if the user is an Admin --}}
-            @if(auth()->user()->role === 'admin')
-            <div class="flex gap-3 shrink-0">
-                <a href="{{ route('network.sessions') }}" class="bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#8D6E63] hover:text-[#3E2723] px-5 py-3 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center border border-[#F0E6D2] gap-2" title="Active Sessions">
-                    <x-lucide-wifi class="w-4 h-4" />
-                    <span>Sessions</span>
-                </a>
-                <a href="{{ route('sales.export') }}" class="bg-[#3E2723] hover:bg-[#271815] text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center gap-2" title="Export Sales">
-                    <x-lucide-download class="w-4 h-4" />
-                    <span>Export</span>
-                </a>
-            </div>
-            @endif
 
-            @if($activeShift)
-            <div class="flex gap-3 shrink-0" x-data="{ showShiftModal: false, endingCash: '' }">
-                <button type="button" @click="showShiftModal = true" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wider inline-flex items-center gap-2">
-                    <x-lucide-lock class="w-4 h-4" />
-                    <span>End Shift</span>
-                </button>
+                <div class="relative w-full max-w-md">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#8D6E63]">
+                        <x-lucide-search class="w-5 h-5 text-gray-400" />
+                    </div>
+                    <input type="text" x-model="searchQuery" placeholder="Search menu..." class="w-full pl-11 pr-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full focus:outline-none focus:ring-2 focus:ring-[#3E2723] transition-all text-sm font-medium placeholder-[#A1887F] text-[#3E2723]">
+                </div>
+                
+                {{-- ONLY show these sensitive buttons if the user is an Admin --}}
+                @if(auth()->user()->role === 'admin')
+                <div class="flex gap-3 shrink-0">
+                    <a href="{{ route('network.sessions') }}" class="bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#8D6E63] hover:text-[#3E2723] px-5 py-3 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center border border-[#F0E6D2] gap-2" title="Active Sessions">
+                        <x-lucide-wifi class="w-4 h-4" />
+                        <span>Sessions</span>
+                    </a>
+                    <a href="{{ route('sales.export') }}" class="bg-[#3E2723] hover:bg-[#271815] text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center gap-2" title="Export Sales">
+                        <x-lucide-download class="w-4 h-4" />
+                        <span>Export</span>
+                    </a>
+                </div>
+                @endif
 
-                <!-- Shift Modal -->
-                <div x-show="showShiftModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="showShiftModal = false">
-                    <div class="bg-white rounded-2xl p-6 w-96 shadow-xl" @click.outside="showShiftModal = false">
-                        <h3 class="text-xl font-bold text-[#3E2723] mb-4">Close Shift</h3>
-                        <p class="text-sm text-[#8D6E63] mb-4">Make sure you have counted the drawer.</p>
-                        <form action="{{ route('shift.end', $activeShift->id) }}" method="POST">
-                            @csrf
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-[#3E2723] mb-1">Ending Cash</label>
-                                <input type="number" step="0.01" name="ending_cash" x-model="endingCash" class="w-full px-4 py-2 border border-[#F0E6D2] rounded-lg focus:ring-[#3E2723] focus:border-[#3E2723]" required placeholder="0.00">
+                @if($activeShift)
+                <div class="flex gap-3 shrink-0" x-data="{ showShiftModal: false, endingCash: '' }">
+                    <button type="button" @click="showShiftModal = true" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wider inline-flex items-center gap-2">
+                        <x-lucide-lock class="w-4 h-4" />
+                        <span>End Shift</span>
+                    </button>
+
+                    <!-- Shift Modal -->
+                    <div x-show="showShiftModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="showShiftModal = false">
+                        <div class="bg-white rounded-2xl p-6 w-96 shadow-xl" @click.outside="showShiftModal = false">
+                            <h3 class="text-xl font-bold text-[#3E2723] mb-4">Close Shift</h3>
+                            <p class="text-sm text-[#8D6E63] mb-4">Make sure you have counted the drawer.</p>
+                            <form action="{{ route('shift.end', $activeShift->id) }}" method="POST">
+                                @csrf
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-[#3E2723] mb-1">Ending Cash</label>
+                                    <input type="number" step="0.01" name="ending_cash" x-model="endingCash" class="w-full px-4 py-2 border border-[#F0E6D2] rounded-lg focus:ring-[#3E2723] focus:border-[#3E2723]" required placeholder="0.00">
+                                </div>
+                                <div class="flex justify-end gap-3 mt-6">
+                                    <button type="button" @click="showShiftModal = false" class="px-4 py-2 text-[#8D6E63] hover:text-[#3E2723] font-medium transition">Cancel</button>
+                                    <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold transition">Confirm Close</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
+
+            <div class="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide shrink-0">
+                <template x-for="category in categories" :key="category">
+                    <button @click="selectedCategory = category" 
+                            class="px-6 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap border"
+                            :class="selectedCategory === category ? 'bg-[#3E2723] text-white border-[#3E2723] shadow-md' : 'bg-[#FAFAFA] text-[#8D6E63] border-[#F0E6D2] hover:bg-[#FDF8F5]'">
+                        <span x-text="category"></span>
+                    </button>
+                </template>
+            </div>
+
+            <h3 class="text-xl font-bold text-[#3E2723] mb-4 capitalize shrink-0" x-text="selectedCategory + ' Menu'"></h3>
+
+            <div class="flex-1 overflow-y-auto pb-6 pr-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="item in filteredProducts" :key="item.id">
+                        <div class="bg-white p-5 rounded-2xl border border-[#F0E6D2] shadow-sm hover:shadow-md hover:border-[#D7CCC8] transition-all flex flex-col group h-full">
+                            
+                            <div class="h-24 w-full bg-[#FDF8F5] rounded-xl mb-4 flex items-center justify-center group-hover:bg-white transition-colors duration-300 border border-[#F0E6D2] shrink-0">
+                                <template x-if="item.type === 'wifi'">
+                                    <x-lucide-wifi class="w-8 h-8 text-amber-800/20" />
+                                </template>
+                                <template x-if="item.type !== 'wifi' && item.category === 'Pastries'">
+                                    <x-lucide-cookie class="w-8 h-8 text-amber-800/20" />
+                                </template>
+                                <template x-if="item.type !== 'wifi' && item.category !== 'Pastries'">
+                                    <x-lucide-coffee class="w-8 h-8 text-amber-800/20" />
+                                </template>
                             </div>
-                            <div class="flex justify-end gap-3 mt-6">
-                                <button type="button" @click="showShiftModal = false" class="px-4 py-2 text-[#8D6E63] hover:text-[#3E2723] font-medium transition">Cancel</button>
-                                <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold transition">Confirm Close</button>
+
+                            <div class="flex justify-between items-start mb-1 shrink-0">
+                                <h4 class="font-bold text-[#3E2723] text-base leading-tight pr-2" x-text="item.name"></h4>
+                                <span class="font-black text-[#8D6E63] text-base shrink-0" x-text="'₱' + Number(item.price).toFixed(2)"></span>
                             </div>
-                        </form>
+                            
+                            <p class="text-xs text-[#A1887F] font-medium mb-4 line-clamp-2 flex-1" x-text="item.type === 'wifi' ? 'Seamless high-speed internet access.' : 'Freshly prepared for your enjoyment.'"></p>
+
+                            <div class="mt-auto shrink-0">
+                                <button type="button" @click="addToCart(item)" class="w-full block bg-[#FAFAFA] hover:bg-[#3E2723] border border-[#F0E6D2] hover:border-[#3E2723] text-[#8D6E63] hover:text-white font-bold py-3 rounded-full transition-all text-sm tracking-wide active:scale-95">
+                                    Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                    
+                    <div x-show="filteredProducts.length === 0" class="col-span-full text-center py-12 text-[#A1887F] text-sm font-medium">
+                        <span class="block text-4xl mb-3 opacity-50">🔍</span>
+                        No items found for this category or search.
                     </div>
                 </div>
-            </div>
-            @endif
-        </div>
-
-        <div class="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide shrink-0">
-            <template x-for="category in categories" :key="category">
-                <button @click="selectedCategory = category" 
-                        class="px-6 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap border"
-                        :class="selectedCategory === category ? 'bg-[#3E2723] text-white border-[#3E2723] shadow-md' : 'bg-[#FAFAFA] text-[#8D6E63] border-[#F0E6D2] hover:bg-[#FDF8F5]'">
-                    <span x-text="category"></span>
-                </button>
-            </template>
-        </div>
-
-        <h3 class="text-xl font-bold text-[#3E2723] mb-4 capitalize shrink-0" x-text="selectedCategory + ' Menu'"></h3>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto pb-6 pr-2">
-            <template x-for="item in filteredProducts" :key="item.id">
-                <div class="bg-white p-5 rounded-2xl border border-[#F0E6D2] shadow-sm hover:shadow-md hover:border-[#D7CCC8] transition-all flex flex-col group h-full">
-                    
-                    <div class="h-24 w-full bg-[#FDF8F5] rounded-xl mb-4 flex items-center justify-center group-hover:bg-white transition-colors duration-300 border border-[#F0E6D2] shrink-0">
-                        <template x-if="item.type === 'wifi'">
-                            <x-lucide-wifi class="w-8 h-8 text-amber-800/20" />
-                        </template>
-                        <template x-if="item.type !== 'wifi' && item.category === 'Pastries'">
-                            <x-lucide-cookie class="w-8 h-8 text-amber-800/20" />
-                        </template>
-                        <template x-if="item.type !== 'wifi' && item.category !== 'Pastries'">
-                            <x-lucide-coffee class="w-8 h-8 text-amber-800/20" />
-                        </template>
-                    </div>
-
-                    <div class="flex justify-between items-start mb-1 shrink-0">
-                        <h4 class="font-bold text-[#3E2723] text-base leading-tight pr-2" x-text="item.name"></h4>
-                        <span class="font-black text-[#8D6E63] text-base shrink-0" x-text="'₱' + Number(item.price).toFixed(2)"></span>
-                    </div>
-                    
-                    <p class="text-xs text-[#A1887F] font-medium mb-4 line-clamp-2 flex-1" x-text="item.type === 'wifi' ? 'Seamless high-speed internet access.' : 'Freshly prepared for your enjoyment.'"></p>
-
-                    <div class="mt-auto shrink-0">
-                        <button type="button" @click="addToCart(item)" class="w-full block bg-[#FAFAFA] hover:bg-[#3E2723] border border-[#F0E6D2] hover:border-[#3E2723] text-[#8D6E63] hover:text-white font-bold py-3 rounded-full transition-all text-sm tracking-wide active:scale-95">
-                            Add to Cart
-                        </button>
-                    </div>
-                </div>
-            </template>
-            
-            <div x-show="filteredProducts.length === 0" class="col-span-full text-center py-12 text-[#A1887F] text-sm font-medium">
-                <span class="block text-4xl mb-3 opacity-50">🔍</span>
-                No items found for this category or search.
             </div>
         </div>
     </div>
 
-    <div class="w-96 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col sticky top-6 h-[calc(100vh-3rem)] shrink-0">
+    {{-- Cart Sidebar (Right) --}}
+    <div class="w-[400px] bg-white border-l border-[#F0E6D2] flex flex-col h-full shrink-0 shadow-[-4px_0_20px_rgba(0,0,0,0.02)]">
         
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-bold text-[#3E2723]">Cart</h3>
-            <button type="button" x-show="cart.length > 0" @click="resetCart()" class="text-[#8D6E63] hover:text-red-600 transition p-2 hover:bg-red-50 rounded-lg" title="Clear All">
-                <x-lucide-trash-2 class="w-5 h-5" />
-            </button>
-        </div>
+        <div class="p-6 md:p-8 flex flex-col h-full overflow-hidden">
+            <div class="flex justify-between items-center mb-6 shrink-0">
+                <h3 class="text-2xl font-bold text-[#3E2723]">Cart</h3>
+                <button type="button" x-show="cart.length > 0" @click="resetCart()" class="text-[#8D6E63] hover:text-red-600 transition p-2 hover:bg-red-50 rounded-lg" title="Clear All">
+                    <x-lucide-trash-2 class="w-5 h-5" />
+                </button>
+            </div>
 
         <div class="flex bg-[#FAFAFA] border border-[#F0E6D2] rounded-full p-1 mb-6">
             <button @click="orderType = 'dine_in'" class="flex-1 py-2 rounded-full text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'dine_in' ? 'bg-[#3E2723] text-white shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">

@@ -20,7 +20,7 @@ class IngredientController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'current_stock' => 'required|numeric|min:0',
+            'current_stock' => 'required|numeric|min:0|max:999999999999999',
             'unit' => 'required|string|max:50',
             'status' => 'required|string',
         ]);
@@ -47,7 +47,7 @@ class IngredientController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'current_stock' => 'required|numeric|min:0',
+            'current_stock' => 'required|numeric|min:0|max:999999999999999',
             'unit' => 'required|string|max:50',
             'status' => 'required|string',
         ]);
