@@ -34,13 +34,34 @@
                 </div>
 
                 <div class="p-6 flex-1 space-y-4">
-                    <ul class="space-y-3">
+                    <ul class="space-y-4">
                         @foreach($order->items as $item)
-                            <li class="flex justify-between items-start gap-4">
-                                <div class="flex gap-3">
-                                    <span class="font-black text-amber-700 bg-amber-50 w-6 h-6 flex items-center justify-center rounded-lg text-xs">{{ $item->quantity }}</span>
-                                    <span class="text-sm font-bold text-[#3E2723]">{{ $item->product->name ?? 'Wi-Fi Voucher' }}</span>
-                                </div>
+                            <li class="group">
+                                <form action="{{ route('kds.item.update', $item->id) }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="status" value="{{ $item->kds_status === 'completed' ? 'pending' : 'completed' }}">
+                                    <button type="submit" class="w-full flex justify-between items-start gap-4 text-left group-hover:bg-[#FAFAFA] -m-1 p-1 rounded-lg transition-colors">
+                                        <div class="flex gap-3">
+                                            <span class="font-black {{ $item->kds_status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-amber-50 text-amber-700' }} w-6 h-6 flex items-center justify-center rounded-lg text-xs shrink-0 transition-colors">
+                                                @if($item->kds_status === 'completed')
+                                                    <x-lucide-check class="w-3.5 h-3.5" />
+                                                @else
+                                                    {{ $item->quantity }}
+                                                @endif
+                                            </span>
+                                            <div>
+                                                <span class="text-sm font-bold {{ $item->kds_status === 'completed' ? 'text-[#A1887F] line-through' : 'text-[#3E2723]' }} transition-all">
+                                                    {{ $item->product->name ?? $item->item_name }}
+                                                </span>
+                                                @if($item->note)
+                                                    <p class="text-[10px] text-amber-700 font-bold mt-1 bg-amber-50 px-2 py-0.5 rounded-md inline-block uppercase tracking-tighter italic">
+                                                        "{{ $item->note }}"
+                                                    </p>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </button>
+                                </form>
                             </li>
                         @endforeach
                     </ul>
@@ -48,12 +69,20 @@
 
                 <div class="p-4 bg-[#FAFAFA] border-t border-[#FDF8F5] grid grid-cols-2 gap-3">
                     @if($order->status === 'pending')
-                        <form action="{{ route('kds.update', $order->id) }}" method="POST" class="col-span-2">
+                        <form action="{{ route('kds.update', $order->id) }}" method="POST">
                             @csrf
                             <input type="hidden" name="status" value="preparing">
                             <button type="submit" class="w-full py-3 bg-[#3E2723] text-white rounded-xl font-bold transition flex items-center justify-center gap-2 hover:bg-[#271815]" title="Start Preparing">
                                 <x-lucide-play class="w-4 h-4" />
                                 <span class="text-[10px] uppercase tracking-widest">Start</span>
+                            </button>
+                        </form>
+                        <form action="{{ route('kds.update', $order->id) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="status" value="completed">
+                            <button type="submit" class="w-full py-3 bg-green-600 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 hover:bg-green-700" title="Mark as Done">
+                                <x-lucide-check-circle class="w-4 h-4" />
+                                <span class="text-[10px] uppercase tracking-widest">Done</span>
                             </button>
                         </form>
                     @else

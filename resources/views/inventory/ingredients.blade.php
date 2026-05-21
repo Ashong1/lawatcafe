@@ -102,8 +102,19 @@
 
                 <div class="flex gap-4 mb-4">
                     <div class="flex-1">
-                        <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Unit (e.g. ml, g)</label>
-                        <input type="text" name="unit" x-model="formData.unit" required class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all">
+                        <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Unit</label>
+                        <select name="unit" x-model="formData.unit" required class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
+                            <option value="">Select Unit</option>
+                            <option value="ml">ml (Milliliters)</option>
+                            <option value="g">g (Grams)</option>
+                            <option value="kg">kg (Kilograms)</option>
+                            <option value="L">L (Liters)</option>
+                            <option value="pcs">pcs (Pieces)</option>
+                            <option value="box">box (Boxes)</option>
+                            <option value="bag">bag (Bags)</option>
+                            <option value="can">can (Cans)</option>
+                            <option value="bottle">bottle (Bottles)</option>
+                        </select>
                     </div>
                     <div class="flex-1">
                         <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Status</label>

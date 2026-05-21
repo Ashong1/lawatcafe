@@ -40,6 +40,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
     Route::get('/pos/receipt/{sale}', [PosController::class, 'receipt'])->name('pos.receipt');
 
+    // Kitchen Display System
+    Route::get('/kds', [\App\Http\Controllers\KdsController::class, 'index'])->name('kds.index');
+    Route::post('/kds/{sale}/status', [\App\Http\Controllers\KdsController::class, 'updateStatus'])->name('kds.update');
+    Route::post('/kds/item/{item}/status', [\App\Http\Controllers\KdsController::class, 'updateItemStatus'])->name('kds.item.update');
+
     // Shift Management
     Route::post('/shift/start', [\App\Http\Controllers\ShiftController::class, 'start'])->name('shift.start');
     Route::post('/shift/end/{shift}', [\App\Http\Controllers\ShiftController::class, 'end'])->name('shift.end');
@@ -70,10 +75,6 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('products', ProductController::class)->except(['create', 'show', 'edit']);
             Route::resource('ingredients', IngredientController::class)->except(['create', 'show', 'edit']);
         });
-
-        // Kitchen Display System
-        Route::get('/kds', [\App\Http\Controllers\KdsController::class, 'index'])->name('kds.index');
-        Route::post('/kds/{sale}/status', [\App\Http\Controllers\KdsController::class, 'updateStatus'])->name('kds.update');
 
         // Network & Voucher Management
         Route::prefix('network')->name('network.')->group(function () {

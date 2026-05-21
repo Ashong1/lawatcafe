@@ -118,7 +118,23 @@ class PosController extends Controller
             }
         }
 
+        // 3. Securely handle discounts
         $discountAmount = (float) ($request->discount_amount ?? 0);
+        $expectedDiscount = 0;
+        
+        if ($request->discount_type === 'senior') {
+            // Senior/PWD discount is 20% of the calculated subtotal
+            $expectedDiscount = round($calculatedTotal * 0.20, 2);
+        }
+
+        // Validate that the discount provided by the frontend matches our server calculation
+        if (abs($discountAmount - $expectedDiscount) > 0.01) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Invalid discount amount detected. Please refresh and try again.'
+            ], 422);
+        }
+
         $finalTotal = max(0, $calculatedTotal - $discountAmount);
 
         // Optional: Validate that amount_received >= finalTotal (unless it's a non-cash payment that might be handled differently, but usually it should match)
@@ -144,7 +160,7 @@ class PosController extends Controller
             // Clear dashboard cache
             \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
 
-            $generatedCode = null;
+            $generatedCodes = [];
             $hasWifi = false;
 
             // 4. Loop through the cart to create items, generate vouchers, and deduct stock
@@ -164,12 +180,7 @@ class PosController extends Controller
                 // A. Handle Wi-Fi
                 if ($item['type'] === 'wifi') {
                     $hasWifi = true;
-                    // For now, we generate ONE code per checkout if it has wifi, 
-                    // or should we generate one per wifi item? The original code did it per item but only returned the last one.
-                    // Let's stick to the original behavior but maybe improve it slightly to handle multiple.
-                    // Actually, if they buy 2 wifi vouchers, they should get 2 codes.
-                    // The original code: $generatedCode = 'LAWA-' . strtoupper(Str::random(4));
-                    // Let's generate one per quantity if needed, but for now let's keep it simple.
+                    // Generate one code per quantity
                     for ($i = 0; $i < $item['quantity']; $i++) {
                         $code = 'LAWA-' . strtoupper(Str::random(4));
                         Voucher::create([
@@ -178,7 +189,7 @@ class PosController extends Controller
                             'is_used' => false,
                             'sale_id' => $sale->id,
                         ]);
-                        $generatedCode = $code; // Returns the last one generated
+                        $generatedCodes[] = $code;
                     }
                 }
 
@@ -207,7 +218,7 @@ class PosController extends Controller
             return response()->json([
                 'success' => true,
                 'hasWifi' => $hasWifi,
-                'generatedCode' => $generatedCode,
+                'generatedCode' => implode(', ', $generatedCodes),
                 'sale_id' => $sale->id, 
             ]);
         });

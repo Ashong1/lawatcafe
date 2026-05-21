@@ -34,4 +34,21 @@ class KdsController extends Controller
 
         return redirect()->back()->with('success', 'Order status updated.');
     }
+
+    public function updateItemStatus(Request $request, SaleItem $item)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,completed'
+        ]);
+
+        $item->update(['kds_status' => $request->status]);
+
+        // Auto-complete the order if all items are completed
+        $sale = $item->sale;
+        if ($sale->items()->where('kds_status', '!=', 'completed')->count() === 0) {
+            $sale->update(['status' => 'completed']);
+        }
+
+        return redirect()->back()->with('success', 'Item status updated.');
+    }
 }
