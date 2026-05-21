@@ -54,52 +54,48 @@
     </div>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 mb-8">
     
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
         <div class="absolute -right-4 -top-4 w-16 h-16 bg-amber-50 rounded-full z-0 group-hover:scale-150 transition duration-500"></div>
         <div class="relative z-10">
-            <div class="flex justify-between items-start mb-4">
-                <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">WiFi Vouchers</h3>
-                <x-lucide-ticket class="w-5 h-5 text-amber-600/50" />
-            </div>
+            <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em] mb-4">Vouchers</h3>
             <div class="flex items-baseline gap-2">
-                <p class="text-4xl font-black text-[#3E2723]">{{ $unusedVouchers ?? $availableVouchers ?? 0 }}</p>
-                <p class="text-xs text-[#A1887F] font-bold uppercase">Available</p>
+                <p class="text-4xl font-black text-[#3E2723]">{{ $availableVouchers ?? 0 }}</p>
+                <p class="text-[10px] text-[#A1887F] font-bold uppercase">Stock</p>
             </div>
         </div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
         <div class="absolute -right-4 -top-4 w-16 h-16 bg-green-50 rounded-full z-0 group-hover:scale-150 transition duration-500"></div>
         <div class="relative z-10">
-            <div class="flex justify-between items-start mb-4">
-                <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Today's Sales</h3>
-                <x-lucide-trending-up class="w-5 h-5 text-green-600/50" />
-            </div>
-            <p class="text-4xl font-black text-[#2E7D32]">₱{{ number_format($todaysSales ?? 0, 2) }}</p>
+            <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em] mb-4">Today's Sales</h3>
+            <p class="text-3xl font-black text-[#2E7D32]">₱{{ number_format($todaysSales ?? 0, 0) }}</p>
         </div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
+        <div class="absolute -right-4 -top-4 w-16 h-16 bg-emerald-50 rounded-full z-0 group-hover:scale-150 transition duration-500"></div>
+        <div class="relative z-10">
+            <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em] mb-4">Total Orders</h3>
+            <p class="text-4xl font-black text-[#065F46]">{{ $todaysOrders ?? 0 }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
         <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-50 rounded-full z-0 group-hover:scale-150 transition duration-500"></div>
         <div class="relative z-10">
-            <div class="flex justify-between items-start mb-4">
-                <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Active Users</h3>
-                <x-lucide-globe class="w-5 h-5 text-blue-600/50" />
-            </div>
+            <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em] mb-4">Active Users</h3>
             <p class="text-4xl font-black text-[#1565C0]">{{ $activeUsers ?? 0 }}</p>
         </div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
         <div class="absolute -right-4 -top-4 w-16 h-16 bg-red-50 rounded-full z-0 group-hover:scale-150 transition duration-500"></div>
         <div class="relative z-10">
-            <div class="flex justify-between items-start mb-4">
-                <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Low Stock</h3>
-                <x-lucide-alert-circle class="w-5 h-5 text-red-600/50" />
-            </div>
-            <p class="text-4xl font-black text-[#C62828]">{{ $lowStockItems ?? $lowStockCount ?? 0 }}</p>
+            <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em] mb-4">Low Stock</h3>
+            <p class="text-4xl font-black text-[#C62828]">{{ $lowStockCount ?? 0 }}</p>
         </div>
     </div>
 </div>
@@ -124,70 +120,87 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     
+    <!-- Recent Transactions (NEW) -->
     <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
         <div class="flex justify-between items-center mb-6">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Recent Vouchers</h3>
-                <p class="text-xs text-[#A1887F] font-medium mt-1">Latest generated network access codes.</p>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Recent Transactions</h3>
+                <p class="text-xs text-[#A1887F] font-medium mt-1">Latest sales activity in real-time.</p>
             </div>
-            
-            <form action="{{ route('network.vouchers.generate') }}" method="POST">
-                @csrf
-                <button type="submit" class="bg-[#3E2723] hover:bg-[#271815] text-white px-5 py-2.5 rounded-full shadow-sm transition-colors duration-200 text-[11px] font-bold uppercase tracking-wider active:scale-95 flex items-center gap-2">
-                    <x-lucide-plus class="w-4 h-4" />
-                    <span>Generate</span>
-                </button>
-            </form>
+            <a href="{{ route('sales.index') }}" class="text-[10px] font-bold uppercase tracking-widest text-amber-700 hover:text-amber-800 transition-colors">View All</a>
         </div>
         
         <div class="overflow-x-auto pr-2">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-black">Voucher Code</th>
-                        <th class="pb-4 font-black text-center">Duration</th>
-                        <th class="pb-4 font-black text-center">Status</th>
-                        <th class="pb-4 font-black text-right">Created</th>
+                        <th class="pb-4 font-black">Transaction</th>
+                        <th class="pb-4 font-black">Method</th>
+                        <th class="pb-4 font-black text-right">Amount</th>
+                        <th class="pb-4 font-black text-right">Time</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
-                    @forelse($recentVouchers ?? [] as $voucher)
+                    @forelse($recentSales ?? [] as $sale)
                         <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
-                            <td class="py-4 font-black text-amber-700 tracking-widest font-mono">{{ $voucher->code }}</td>
-                            <td class="py-4 text-[#8D6E63] font-bold text-center">{{ $voucher->duration_minutes }}m</td>
-                            <td class="py-4 text-center">
-                                <span class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $voucher->is_used ? 'bg-gray-100 text-gray-500' : 'bg-[#FFF3E0] text-[#E65100]' }}">
-                                    {{ $voucher->is_used ? 'Used' : 'Available' }}
+                            <td class="py-4">
+                                <span class="font-black text-[#3E2723] block">{{ substr($sale->transaction_number, -8) }}</span>
+                                <span class="text-[10px] text-[#A1887F] font-bold">{{ $sale->user->name ?? 'System' }}</span>
+                            </td>
+                            <td class="py-4">
+                                <span class="px-2 py-0.5 bg-[#FAFAFA] border border-[#F0E6D2] text-[9px] font-black uppercase rounded text-[#8D6E63]">
+                                    {{ $sale->payment_method }}
                                 </span>
                             </td>
-                <td class="py-4 text-[#A1887F] text-xs font-medium text-right">{{ $voucher->created_at->diffForHumans() }}</td>
+                            <td class="py-4 text-right font-black text-[#2E7D32]">₱{{ number_format($sale->total_amount, 2) }}</td>
+                            <td class="py-4 text-[#A1887F] text-xs font-medium text-right">{{ $sale->created_at->diffForHumans() }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="py-16 text-center">
-                                <div class="flex flex-col items-center opacity-30">
-                                    <x-lucide-ticket class="w-10 h-10 mb-3" />
-                                    <p class="text-[#A1887F] text-sm font-medium">No vouchers found in database.</p>
-                                </div>
-                            </td>
+                            <td colspan="4" class="py-16 text-center text-[#A1887F] text-xs">No transactions recorded today.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        
-        @if(count($recentVouchers ?? []) > 0)
-        <div class="mt-6 text-center">
-            <a href="{{ route('network.vouchers.index') }}" class="text-[11px] font-bold uppercase tracking-widest text-[#8D6E63] hover:text-[#3E2723] transition-colors underline decoration-dotted decoration-2 underline-offset-4 flex items-center justify-center gap-2">
-                <x-lucide-list class="w-3.5 h-3.5" />
-                <span>All Vouchers</span>
-            </a>
-        </div>
-        @endif
     </div>
 
     <div class="space-y-6">
-        <!-- Top Selling Items (NEW) -->
+        <!-- Daily Revenue Split (NEW) -->
+        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
+            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest mb-6 text-center">Daily Revenue Split</h3>
+            <div class="space-y-4">
+                @php
+                    $cashTotal = $paymentBreakdown['Cash'] ?? 0;
+                    $ewalletTotal = $paymentBreakdown['E-Wallet'] ?? 0;
+                    $total = $cashTotal + $ewalletTotal;
+                    $cashPct = $total > 0 ? ($cashTotal / $total) * 100 : 0;
+                    $ewalletPct = $total > 0 ? ($ewalletTotal / $total) * 100 : 0;
+                @endphp
+                
+                <div>
+                    <div class="flex justify-between text-[10px] mb-2 font-black uppercase tracking-widest">
+                        <span class="text-[#8D6E63]">Cash</span>
+                        <span class="text-[#3E2723]">₱{{ number_format($cashTotal, 0) }}</span>
+                    </div>
+                    <div class="w-full bg-[#FAFAFA] rounded-full h-1.5 overflow-hidden">
+                        <div class="bg-[#3E2723] h-full transition-all duration-700" style="width: {{ $cashPct }}%"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-[10px] mb-2 font-black uppercase tracking-widest">
+                        <span class="text-[#8D6E63]">E-Wallet</span>
+                        <span class="text-[#3E2723]">₱{{ number_format($ewalletTotal, 0) }}</span>
+                    </div>
+                    <div class="w-full bg-[#FAFAFA] rounded-full h-1.5 overflow-hidden">
+                        <div class="bg-blue-600 h-full transition-all duration-700" style="width: {{ $ewalletPct }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Selling Items -->
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
             <div class="flex items-center gap-3 mb-6">
                 <div class="p-2 bg-amber-50 rounded-lg">
@@ -212,10 +225,43 @@
                 @endforelse
             </div>
         </div>
-
-
     </div>
+</div>
 
+<div class="mt-8 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Recent Vouchers</h3>
+        <a href="{{ route('network.vouchers.index') }}" class="text-[10px] font-bold uppercase tracking-widest text-amber-700 hover:text-amber-800 transition-colors">Manage All</a>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
+                    <th class="pb-4 font-black">Code</th>
+                    <th class="pb-4 font-black text-center">Duration</th>
+                    <th class="pb-4 font-black text-center">Status</th>
+                    <th class="pb-4 font-black text-right">Created</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm">
+                @forelse($recentVouchers ?? [] as $voucher)
+                    <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
+                        <td class="py-4 font-black text-amber-700 tracking-widest font-mono">{{ $voucher->code }}</td>
+                        <td class="py-4 text-[#8D6E63] font-bold text-center">{{ $voucher->duration_minutes }}m</td>
+                        <td class="py-4 text-center">
+                            <span class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $voucher->is_used ? 'bg-gray-100 text-gray-500' : 'bg-[#FFF3E0] text-[#E65100]' }}">
+                                {{ $voucher->is_used ? 'Used' : 'Available' }}
+                            </span>
+                        </td>
+                        <td class="py-4 text-[#A1887F] text-xs font-medium text-right">{{ $voucher->created_at->diffForHumans() }}</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="4" class="py-8 text-center text-[#A1887F] text-xs italic">No vouchers found.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 </div>
 </div>
 

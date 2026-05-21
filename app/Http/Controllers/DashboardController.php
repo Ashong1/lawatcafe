@@ -21,13 +21,20 @@ class DashboardController extends Controller
             return [
                 'availableVouchers' => Voucher::where('is_used', false)->count(),
                 'todaysSales' => Sale::where('created_at', '>=', Carbon::today())->sum('total_amount'),
+                'todaysOrders' => Sale::where('created_at', '>=', Carbon::today())->count(),
                 'lowStockCount' => Ingredient::where('current_stock', '<', $lowStockThreshold)->count(),
                 'recentVouchers' => Voucher::orderBy('created_at', 'desc')->take(5)->get(),
+                'recentSales' => Sale::with('user')->orderBy('created_at', 'desc')->take(5)->get(),
                 'topProducts' => \App\Models\SaleItem::select('item_name', DB::raw('SUM(quantity) as total_qty'))
                     ->groupBy('item_name')
                     ->orderByDesc('total_qty')
                     ->take(5)
-                    ->get()
+                    ->get(),
+                'paymentBreakdown' => Sale::where('created_at', '>=', Carbon::today())
+                    ->select('payment_method', DB::raw('SUM(total_amount) as total'))
+                    ->groupBy('payment_method')
+                    ->pluck('total', 'payment_method')
+                    ->toArray()
             ];
         });
 

@@ -49,13 +49,10 @@
                     </button>
                 </form>
 
-                <form action="{{ route('network.vouchers.generate') }}" method="POST">
-                    @csrf
-                    <button type="submit" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
-                        <x-lucide-plus class="w-4 h-4" />
-                        <span>Generate (5)</span>
-                    </button>
-                </form>
+                <button @click="isModalOpen = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
+                    <x-lucide-plus class="w-4 h-4" />
+                    <span>Generate Vouchers</span>
+                </button>
             </div>
         </div>
 
@@ -148,11 +145,41 @@
             <input type="hidden" name="ids[]" :value="id">
         </template>
     </form>
+
+    <!-- Generation Modal -->
+    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <div @click.away="isModalOpen = false" class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md border-t-8 border-[#3E2723]">
+            <h2 class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-widest">Generate Vouchers</h2>
+            
+            <form action="{{ route('network.vouchers.generate') }}" method="POST">
+                @csrf
+                <div class="mb-4">
+                    <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Quantity (Max 100)</label>
+                    <input type="number" name="quantity" required min="1" max="100" value="5" class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all">
+                </div>
+
+                <div class="mb-8">
+                    <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Voucher Duration</label>
+                    <select name="duration_minutes" required class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
+                        @foreach($durations as $price => $mins)
+                            <option value="{{ $mins }}">₱{{ $price }} - {{ $mins >= 1440 ? 'Whole Day' : ($mins >= 60 ? ($mins/60) . ' Hour(s)' : $mins . ' Mins') }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="button" @click="isModalOpen = false" class="flex-1 py-3.5 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#8D6E63] hover:bg-[#FDF8F5] font-bold transition text-sm tracking-wide">Cancel</button>
+                    <button type="submit" class="flex-1 py-3.5 bg-[#3E2723] text-white rounded-full hover:bg-[#271815] font-bold transition shadow-md shadow-[#3E2723]/20 text-sm tracking-wide">Generate Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
     function voucherManager() {
         return {
+            isModalOpen: false,
             selectedVouchers: [],
             vouchers: {!! json_encode($vouchers->pluck('id')) !!},
             get allSelected() {

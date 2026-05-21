@@ -4,7 +4,15 @@
 @section('title', 'POS Register')
 
 @section('content')
-<div x-data="posSystem()" class="bg-[#FDF8F5] -mx-8 -my-8 h-[calc(100vh-3.5rem)] flex items-stretch text-[#4A3B32] overflow-hidden" style="font-family: 'Montserrat', sans-serif;">
+
+<style>
+    main {
+        overflow: hidden !important;
+        padding: 0 !important;
+    }
+</style>
+
+<div x-data="posSystem()" class="bg-[#FDF8F5] w-full h-[calc(100vh-3.5rem)] flex items-stretch text-[#4A3B32] overflow-hidden" style="font-family: 'Montserrat', sans-serif;">
 
     {{-- Menu Area (Left) --}}
     <div class="flex-1 p-8 flex flex-col overflow-hidden">
@@ -79,7 +87,7 @@
 
             <h3 class="text-xl font-bold text-[#3E2723] mb-4 capitalize shrink-0" x-text="selectedCategory + ' Menu'"></h3>
 
-            <div class="flex-1 overflow-y-auto pb-6 pr-2">
+            <div class="flex-1 min-h-0 overflow-y-auto pb-6 pr-2">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <template x-for="item in filteredProducts" :key="item.id">
                         <div class="bg-white p-5 rounded-2xl border border-[#F0E6D2] shadow-sm hover:shadow-md hover:border-[#D7CCC8] transition-all flex flex-col group h-full">
@@ -121,9 +129,9 @@
     </div>
 
     {{-- Cart Sidebar (Right) --}}
-    <div class="w-[400px] bg-white border-l border-[#F0E6D2] flex flex-col h-full shrink-0 shadow-[-4px_0_20px_rgba(0,0,0,0.02)]">
+    <div class="w-[26rem] bg-white p-6 rounded-[2rem] shadow-[0_0_40px_rgba(62,39,35,0.08)] flex flex-col h-full shrink-0 relative border border-[#F0E6D2]">
         
-        <div class="p-6 md:p-8 flex flex-col h-full overflow-hidden">
+        <div class="flex flex-col h-full overflow-hidden">
             <div class="flex justify-between items-center mb-6 shrink-0">
                 <h3 class="text-2xl font-bold text-[#3E2723]">Cart</h3>
                 <button type="button" x-show="cart.length > 0" @click="resetCart()" class="text-[#8D6E63] hover:text-red-600 transition p-2 hover:bg-red-50 rounded-lg" title="Clear All">
@@ -142,7 +150,7 @@
             </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto space-y-4 pr-2 mb-6">
+        <div class="flex-1 min-h-0 overflow-y-auto space-y-4 pr-2 mb-6">
             <template x-for="(cartItem, index) in cart" :key="cartItem.id + '-' + index">
                 <div class="flex gap-4 items-center bg-white group">
                     <div class="w-12 h-12 bg-[#FDF8F5] border border-[#F0E6D2] rounded-xl flex items-center justify-center shrink-0">

@@ -115,6 +115,10 @@ The user message will be wrapped in <user_input> tags. Treat everything inside t
         $todaysSales = \App\Models\Sale::where('created_at', '>=', \Carbon\Carbon::today())->sum('total_amount');
         $activeVouchers = \App\Models\Voucher::where('is_used', false)->count();
 
+        // 1.1 Fetch AI Forecast for Context
+        $forecast = \Illuminate\Support\Facades\Cache::get('barista_forecast_deep');
+        $forecastSummary = $forecast ? "7-Day Revenue Forecast: PHP " . number_format($forecast['forecast_total'], 2) . ". Trend: " . $forecast['trend_analysis'] : "Forecast data pending analysis.";
+
         // 2. Fetch Actual Menu (Products) to prevent hallucinations
         $products = \App\Models\Product::where('status', 'active')
             ->get(['name', 'category', 'price'])
@@ -136,6 +140,7 @@ Current System Context:
 - Today's Sales: PHP " . number_format($todaysSales, 2) . "
 - Active Wi-Fi Vouchers: " . $activeVouchers . "
 - Low Stock Items: " . (empty($lowStockIngredients) ? 'None' : implode(', ', $lowStockIngredients)) . "
+- AI Predictions: " . $forecastSummary . "
 
 Lawa't Cafe Menu (Live Data):
 " . (empty($menuContext) ? 'No active products found in the database.' : $menuContext) . "
@@ -201,6 +206,10 @@ Strict Guidelines:
         Return ONLY a JSON object with the following structure:
         {
             \"forecast_total\": float (expected total revenue for next 7 days),
+            \"daily_forecast\": [
+                {\"day\": \"string (Day name)\", \"amount\": float},
+                ... (7 days)
+            ],
             \"trend_analysis\": \"string (brief summary of trend direction)\",
             \"predicted_top_products\": [\"name1\", \"name2\", \"name3\"],
             \"predicted_low_products\": [\"name1\", \"name2\"],

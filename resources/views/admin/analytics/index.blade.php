@@ -39,22 +39,34 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-col md:flex-row items-center gap-12">
-                        <div class="flex-1">
+                    <div class="flex flex-col md:flex-row items-stretch gap-12">
+                        <div class="flex-1 flex flex-col justify-center">
                             <div class="flex items-baseline gap-3 mb-2">
-                                <span class="text-6xl font-black text-[#3E2723] tracking-tighter">₱{{ number_format($aiForecast['forecast_total'] ?? 0, 2) }}</span>
+                                <span class="text-6xl font-black text-[#3E2723] tracking-tighter">₱{{ number_format($aiForecast['forecast_total'] ?? 0, 0) }}</span>
                                 <span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg uppercase">Estimated</span>
                             </div>
-                            <p class="text-xs text-[#8D6E63] font-medium leading-relaxed max-w-md">
+                            <p class="text-xs text-[#8D6E63] font-medium leading-relaxed max-w-md mb-6">
                                 {{ $aiForecast['trend_analysis'] ?? 'Gathering historical data to generate a precise financial outlook for your cafe.' }}
                             </p>
+                            
+                            <div class="bg-[#FAFAFA] rounded-2xl p-5 border border-[#F0E6D2]">
+                                <h4 class="text-[9px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-4">Daily Projections</h4>
+                                <div class="grid grid-cols-4 md:grid-cols-7 gap-2">
+                                    @foreach($aiForecast['daily_forecast'] ?? [] as $day)
+                                        <div class="text-center">
+                                            <p class="text-[8px] font-bold text-[#A1887F] uppercase mb-1">{{ substr($day['day'], 0, 3) }}</p>
+                                            <p class="text-[10px] font-black text-[#3E2723]">₱{{ number_format($day['amount'], 0) }}</p>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="w-full md:w-64 bg-[#FAFAFA] rounded-3xl p-6 border border-[#F0E6D2] shadow-inner">
+                        <div class="w-full md:w-64 bg-[#FAFAFA] rounded-3xl p-6 border border-[#F0E6D2] shadow-inner flex flex-col justify-between">
                             <div class="flex flex-col gap-4">
                                 <div class="flex justify-between items-center">
                                     <span class="text-[9px] font-black text-[#A1887F] uppercase tracking-widest">Daily Avg (Proj.)</span>
-                                    <span class="text-sm font-black text-[#3E2723]">₱{{ number_format(($aiForecast['forecast_total'] ?? 0) / 7, 2) }}</span>
+                                    <span class="text-sm font-black text-[#3E2723]">₱{{ number_format(($aiForecast['forecast_total'] ?? 0) / 7, 0) }}</span>
                                 </div>
                                 <div class="h-[1px] w-full bg-[#F0E6D2]"></div>
                                 <div class="flex justify-between items-center">
@@ -65,6 +77,16 @@
                                         @endfor
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <div class="mt-6 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                                <p class="text-[8px] font-black text-amber-800 uppercase tracking-widest mb-1">Peak Day Prediction</p>
+                                <p class="text-xs font-bold text-[#3E2723]">
+                                    @php
+                                        $peak = collect($aiForecast['daily_forecast'] ?? [])->sortByDesc('amount')->first();
+                                    @endphp
+                                    {{ $peak['day'] ?? 'Determining...' }}
+                                </p>
                             </div>
                         </div>
                     </div>

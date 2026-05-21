@@ -15,24 +15,28 @@ class VoucherController extends Controller
     {
         // Fetch vouchers with pagination (e.g. 50 per page)
         $vouchers = Voucher::latest()->paginate(50);
+
+        // Load Wi-Fi options from dynamic settings for the generation modal
+        $durations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
         
-        return view('network.vouchers', compact('vouchers'));
+        return view('network.vouchers', compact('vouchers', 'durations'));
     }
 
     /**
-     * Batch generate 5 unique vouchers.
+     * Batch generate unique vouchers with custom quantity and duration.
      */
-    public function generateBatch()
+    public function generateBatch(Request $request)
     {
+        $request->validate([
+            'quantity' => 'required|integer|min:1|max:100',
+            'duration_minutes' => 'required|integer|min:1',
+        ]);
+
         $vouchersCreated = 0;
-        $batchSize = 5;
+        $batchSize = (int) $request->quantity;
+        $duration = (int) $request->duration_minutes;
 
-        // Get default duration from lowest tier in settings
-        $durations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
-        asort($durations);
-        $defaultDuration = !empty($durations) ? reset($durations) : 60;
-
-        // Loop until we successfully create 5 unique vouchers
+        // Loop until we successfully create the requested unique vouchers
         while ($vouchersCreated < $batchSize) {
             $code = 'LAWA-' . strtoupper(Str::random(4));
 
@@ -40,7 +44,7 @@ class VoucherController extends Controller
             if (!Voucher::where('code', $code)->exists()) {
                 Voucher::create([
                     'code' => $code,
-                    'duration_minutes' => $defaultDuration,
+                    'duration_minutes' => $duration,
                     'is_used' => false,
                 ]);
                 $vouchersCreated++;
@@ -50,7 +54,7 @@ class VoucherController extends Controller
         // Clear dashboard cache
         \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
 
-        return redirect()->back()->with('success', "{$batchSize} new vouchers generated successfully!");
+        return redirect()->back()->with('success', "{$vouchersCreated} new vouchers generated successfully!");
     }
 
     /**
