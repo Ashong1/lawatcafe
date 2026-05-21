@@ -25,7 +25,7 @@ class ShiftController extends Controller
             'opened_at' => now(),
         ]);
 
-        return redirect()->route('pos.index')->with('success', 'Shift started successfully.');
+        return redirect()->route('pos')->with('success', 'Shift started successfully.');
     }
 
     public function end(Request $request, Shift $shift)
@@ -46,6 +46,6 @@ class ShiftController extends Controller
             'closed_at' => now(),
         ]);
 
-        return redirect()->route('pos.index')->with('success', 'Shift closed successfully. Variance: ₱' . number_format($request->ending_cash - $expectedCash, 2));
+        return redirect()->route('pos')->with('success', 'Shift closed successfully. Variance: ₱' . number_format($request->ending_cash - $expectedCash, 2));
     }
 }

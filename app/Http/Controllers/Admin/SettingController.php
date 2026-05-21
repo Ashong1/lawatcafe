@@ -43,6 +43,9 @@ class SettingController extends Controller
         Setting::set('opnsense_zone', $request->opnsense_zone);
         Setting::set('low_stock_threshold', $request->low_stock_threshold);
 
+        // Clear dashboard cache
+        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+
         if ($request->hasFile('payment_qr_code')) {
             // Delete old QR code if exists
             $oldQr = Setting::get('payment_qr_code');

@@ -14,6 +14,7 @@
 
     <form action="{{ route('admin.settings.payment.update') }}" method="POST" enctype="multipart/form-data">
         @csrf
+        <input type="hidden" name="voucher_durations" value="{{ $settings['voucher_durations'] }}">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
             <!-- Core Configurations -->
@@ -82,6 +83,7 @@
             <!-- Right Column -->
             <div class="space-y-8">
                 <!-- QR Code -->
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
                     <div class="flex items-center gap-3 mb-6">
                         <div class="p-2 bg-green-50 rounded-lg">
                             <x-lucide-qr-code class="w-5 h-5 text-green-700" />

@@ -13,14 +13,24 @@ class PosController extends Controller
 {
     public function index()
     {
-        // Fetch only Active products from the database
-        $products = Product::where('status', 'Active')->get()->map(function($product) {
+        // Fetch only Active products from the database with ingredients to check stock
+        $products = Product::with('ingredients')->where('status', 'Active')->get()->map(function($product) {
+            // Check if we have enough ingredients for at least one serving
+            $inStock = true;
+            foreach ($product->ingredients as $ingredient) {
+                if ($ingredient->current_stock < $ingredient->pivot->quantity) {
+                    $inStock = false;
+                    break;
+                }
+            }
+
             return [
                 'id' => $product->id,
                 'name' => $product->name,
                 'price' => (float) $product->price, // Ensure it's a number for JS math
                 'category' => $product->category,
-                'type' => 'product' // Distinguishes it from Wi-Fi add-ons
+                'type' => 'product', // Distinguishes it from Wi-Fi add-ons
+                'inStock' => $inStock
             ];
         });
 
@@ -131,6 +141,9 @@ class PosController extends Controller
                 'shift_id' => $request->shift_id,
             ]);
 
+            // Clear dashboard cache
+            \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+
             $generatedCode = null;
             $hasWifi = false;
 
@@ -144,7 +157,8 @@ class PosController extends Controller
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                     'type' => $item['type'],
-                    'kds_status' => 'pending'
+                    'kds_status' => 'pending',
+                    'note' => $item['note'] ?? null
                 ]);
 
                 // A. Handle Wi-Fi

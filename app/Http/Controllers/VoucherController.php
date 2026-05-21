@@ -47,6 +47,9 @@ class VoucherController extends Controller
             }
         }
 
+        // Clear dashboard cache
+        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+
         return redirect()->back()->with('success', "{$batchSize} new vouchers generated successfully!");
     }
 
@@ -65,6 +68,9 @@ class VoucherController extends Controller
     {
         $voucher->delete();
 
+        // Clear dashboard cache
+        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+
         return redirect()->back()->with('success', 'Voucher removed from the system.');
     }
 
@@ -80,6 +86,9 @@ class VoucherController extends Controller
 
         Voucher::whereIn('id', $request->ids)->delete();
 
+        // Clear dashboard cache
+        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+
         return redirect()->back()->with('success', 'Selected vouchers have been removed.');
     }
 
@@ -94,6 +103,9 @@ class VoucherController extends Controller
         // 2. Expired vouchers (if we have an expires_at or calculate from used_at)
         // For now, let's just purge all used vouchers as a safe start
         Voucher::where('is_used', true)->delete();
+
+        // Clear dashboard cache
+        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
 
         return redirect()->back()->with('success', "Cleaned up {$usedCount} used/expired vouchers.");
     }
@@ -194,6 +206,10 @@ class VoucherController extends Controller
             $ignoredIps = explode(',', $ignoredIpsStr);
             return !in_array($session->ip_address, $ignoredIps);
         });
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return view('network.partials.sessions-table', compact('sessions'));
+        }
 
         return view('network.sessions', compact('sessions'));
     }

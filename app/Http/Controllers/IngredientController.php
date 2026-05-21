@@ -27,6 +27,9 @@ class IngredientController extends Controller
 
         $ingredient = Ingredient::create($request->all());
 
+        // Clear dashboard cache
+        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+
         // Log the initial stock
         \App\Models\InventoryLog::create([
             'ingredient_id' => $ingredient->id,
@@ -52,6 +55,9 @@ class IngredientController extends Controller
         $oldStock = $ingredient->current_stock;
         $ingredient->update($request->all());
         $newStock = $ingredient->current_stock;
+
+        // Clear dashboard cache
+        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
 
         if ($oldStock != $newStock) {
             \App\Models\InventoryLog::create([
