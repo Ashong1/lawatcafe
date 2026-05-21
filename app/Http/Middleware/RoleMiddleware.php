@@ -10,17 +10,33 @@ class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, string $role): Response
     {
+        // 0. Ensure user is actually logged in
+        if (!auth()->check()) {
+            return redirect()->route('login');
+        }
+
+        $user = auth()->user();
+        $userRole = trim($user->role);
+
         // 1. If the user's role matches the required route role, let them through!
-        if (auth()->check() && auth()->user()->role === $role) {
+        if ($userRole === $role) {
             return $next($request);
         }
 
-        // 2. If they are a Staff member trying to access Admin pages, kick them to Staff Hub
-        if (auth()->check() && auth()->user()->role === 'staff') {
-            return redirect()->route('staff.dashboard')->with('error', 'Unauthorized Access.');
+        // 2. Staff members are redirected to their own dashboard if they try to access something else
+        if ($userRole === 'staff') {
+            if ($role === 'admin') {
+                return redirect()->route('staff.dashboard')->with('error', 'Unauthorized Access.');
+            }
+            return $next($request); // Allow staff to access non-admin shared routes
         }
 
-        // 3. Default fallback: kick them to the Admin Dashboard
-        return redirect()->route('dashboard');
+        // 3. Admins can access staff routes
+        if ($userRole === 'admin' && $role === 'staff') {
+            return $next($request);
+        }
+
+        // 4. Final fallback: unauthorized
+        abort(403, 'Unauthorized access.');
     }
 }

@@ -33,7 +33,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
 // ==========================================
 // SHARED ROUTES (Admins & Staff)
 // ==========================================
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     
     // Shared POS Access
     Route::get('/pos', [PosController::class, 'index'])->name('pos');

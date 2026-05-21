@@ -12,6 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('vouchers', function (Blueprint $table) {
+            if (!Schema::hasColumn('vouchers', 'ip_address')) {
+                $table->string('ip_address', 45)->nullable()->after('used_at');
+            }
             if (!Schema::hasColumn('vouchers', 'mac_address')) {
                 $table->string('mac_address')->nullable()->after('ip_address');
             }
@@ -24,7 +27,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('vouchers', function (Blueprint $table) {
-            $table->dropColumn(['mac_address']);
+            $table->dropColumn(['ip_address', 'mac_address']);
         });
     }
 };

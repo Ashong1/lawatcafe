@@ -127,7 +127,7 @@
             <div class="flex gap-3 overflow-x-auto pb-4 mb-4 snap-x no-scrollbar">
                 @foreach($durations as $price => $minutes)
                     <div class="flex-none w-32 bg-white border-2 border-[#F0E6D2] rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:border-[#3E2723] group snap-center shadow-sm hover:shadow-md cursor-pointer relative overflow-hidden"
-                         @click="selectedPlan = '{{ $price }}'">
+                         x-on:click="selectedPlan = '{{ $price }}'">
                         <!-- Selection Indicator -->
                         <div class="absolute top-2 right-2 w-4 h-4 rounded-full border-2 border-[#F0E6D2] flex items-center justify-center" :class="selectedPlan === '{{ $price }}' ? 'bg-[#3E2723] border-[#3E2723]' : ''">
                              <x-lucide-check x-show="selectedPlan === '{{ $price }}'" class="w-2.5 h-2.5 text-white" />
@@ -235,21 +235,21 @@
 
     <!-- Modern Bottom Navigation -->
     <div class="bg-white border-t border-[#F0E6D2]/50 p-3 flex gap-2">
-        <button @click="activeTab = 'code'" 
+        <button x-on:click="activeTab = 'code'" 
                 class="flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2 relative overflow-hidden"
                 :class="activeTab === 'code' ? 'text-[#3E2723] bg-amber-50' : 'text-[#A1887F] hover:bg-gray-50'">
             <div x-show="activeTab === 'code'" class="absolute top-0 inset-x-0 h-1 bg-[#3E2723]"></div>
             <x-lucide-keyboard class="w-5 h-5" />
             <span>Voucher</span>
         </button>
-        <button @click="activeTab = 'ewallet'" 
+        <button x-on:click="activeTab = 'ewallet'" 
                 class="flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2 relative overflow-hidden"
                 :class="activeTab === 'ewallet' ? 'text-[#3E2723] bg-amber-50' : 'text-[#A1887F] hover:bg-gray-50'">
             <div x-show="activeTab === 'ewallet'" class="absolute top-0 inset-x-0 h-1 bg-[#3E2723]"></div>
             <x-lucide-credit-card class="w-5 h-5" />
             <span>Pay</span>
         </button>
-        <button @click="activeTab = 'help'" 
+        <button x-on:click="activeTab = 'help'" 
                 class="flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2 relative overflow-hidden"
                 :class="activeTab === 'help' ? 'text-[#3E2723] bg-amber-50' : 'text-[#A1887F] hover:bg-gray-50'">
             <div x-show="activeTab === 'help'" class="absolute top-0 inset-x-0 h-1 bg-[#3E2723]"></div>
