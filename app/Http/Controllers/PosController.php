@@ -54,10 +54,20 @@ class PosController extends Controller
         // Check for active shift
         $activeShift = \App\Models\Shift::where('user_id', auth()->id())->where('status', 'open')->latest()->first();
 
-        // Prepare combined categories for the UI
-        $categories = collect(['All', 'Coffee', 'Pastries', 'Wi-Fi']);
-        $dbCategories = Product::select('category')->distinct()->pluck('category');
-        $categories = $categories->merge($dbCategories)->unique()->values();
+        // Load Categories from database, including icons and colors
+        $dbCategories = \App\Models\Category::orderBy('sort_order')->get()->map(function($cat) {
+            return [
+                'name' => $cat->name,
+                'icon' => $cat->icon,
+                'color' => $cat->color,
+            ];
+        });
+
+        $categories = collect([
+            ['name' => 'All', 'icon' => 'layout-grid', 'color' => '#3E2723']
+        ])->concat($dbCategories)->concat([
+            ['name' => 'Wi-Fi', 'icon' => 'wifi', 'color' => '#1565C0']
+        ])->unique('name')->values();
 
         // Merge WiFi options into products list so Alpine logic stays simple
         $mergedProducts = collect($products)->merge($wifiOptions)->toArray();
@@ -69,6 +79,7 @@ class PosController extends Controller
         return view('pos.index', [
             'products' => $mergedProducts,
             'categories' => $categories,
+            'dbCategories' => $dbCategories,
             'activeShift' => $activeShift,
             'freeWifiMinAmount' => $freeWifiMinAmount,
             'freeWifiDuration' => $freeWifiDuration
@@ -229,6 +240,17 @@ class PosController extends Controller
                             'reason' => 'Sale: ' . $product->name . ' (#' . substr($sale->transaction_number, -4) . ')',
                             'user_id' => auth()->id()
                         ]);
+
+                        // Check for Low Stock
+                        if ($ingredient->current_stock <= $ingredient->low_stock_threshold) {
+                            $admins = \App\Models\User::where('role', 'admin')->get();
+                            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\SystemAlert(
+                                'Inventory Warning',
+                                "{$ingredient->name} reached low stock during a sale.",
+                                'package-x',
+                                route('inventory.ingredients.index')
+                            ));
+                        }
                     }
                 }
             }
@@ -251,6 +273,15 @@ class PosController extends Controller
                 // Add to generated codes list, but mark it as free for the UI if needed
                 array_unshift($generatedCodes, $freeCode); // Put the free code first
             }
+
+            // Notify Staff of New Order
+            $staff = \App\Models\User::where('role', 'staff')->get();
+            \Illuminate\Support\Facades\Notification::send($staff, new \App\Notifications\SystemAlert(
+                'New Order!',
+                "Transaction #{$sale->transaction_number} was just placed.",
+                'shopping-bag',
+                route('kds.index')
+            ));
 
             return response()->json([
                 'success' => true,

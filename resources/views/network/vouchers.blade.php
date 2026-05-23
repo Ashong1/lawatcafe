@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.staff')
 @section('title', 'WiFi Voucher Management')
 
 @section('content')
@@ -22,7 +22,17 @@
                 <p class="text-xs text-[#A1887F] mt-1 font-medium">Manage and track the status of all WiFi access codes.</p>
             </div>
             
+            @if(auth()->user()->role === 'admin')
             <div class="flex items-center gap-3 flex-wrap">
+                <!-- Batch Print -->
+                <button @click="printSelected()" 
+                        x-show="selectedVouchers.length > 0"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-blue-600/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2"
+                        style="display: none;">
+                    <x-lucide-printer class="w-3.5 h-3.5" />
+                    <span x-text="'Print Selected (' + selectedVouchers.length + ')'"></span>
+                </button>
+
                 <!-- Bulk Delete -->
                 <button @click="deleteSelected()" 
                         x-show="selectedVouchers.length > 0"
@@ -54,15 +64,18 @@
                     <span>Generate Vouchers</span>
                 </button>
             </div>
+            @endif
         </div>
 
         <div class="overflow-x-auto pr-2">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
+                        @if(auth()->user()->role === 'admin')
                         <th class="pb-4 w-10">
                             <input type="checkbox" @change="toggleAll()" :checked="allSelected" class="rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
                         </th>
+                        @endif
                         <th class="pb-4 font-black">Voucher Code</th>
                         <th class="pb-4 font-black">Duration</th>
                         <th class="pb-4 font-black text-center">Status</th>
@@ -73,9 +86,11 @@
                 <tbody class="text-sm">
                     @forelse($vouchers as $voucher)
                         <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors" :class="selectedVouchers.includes({{ $voucher->id }}) ? 'bg-amber-50/50' : ''">
+                            @if(auth()->user()->role === 'admin')
                             <td class="py-4">
                                 <input type="checkbox" value="{{ $voucher->id }}" x-model="selectedVouchers" class="rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
                             </td>
+                            @endif
                             <td class="py-4 font-extrabold text-amber-700 text-base tracking-widest font-mono">{{ $voucher->code }}</td>
                             <td class="py-4 text-[#8D6E63] font-bold">
                                 {{ $voucher->duration_minutes }} Mins
@@ -101,6 +116,7 @@
                                         <x-lucide-printer class="w-4 h-4" />
                                     </a>
 
+                                    @if(auth()->user()->role === 'admin')
                                     <form action="{{ route('network.vouchers.destroy', $voucher->id) }}" method="POST" id="delete-voucher-{{ $voucher->id }}">
                                         @csrf
                                         @method('DELETE')
@@ -116,16 +132,17 @@
                                             <x-lucide-trash-2 class="w-4 h-4" />
                                         </button>
                                     </form>
+                                    @endif
 
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-16 text-center">
+                            <td colspan="{{ auth()->user()->role === 'admin' ? 6 : 5 }}" class="py-16 text-center">
                                 <div class="flex flex-col items-center opacity-30">
                                     <x-lucide-ticket class="w-10 h-10 mb-3" />
-                                    <p class="text-[#A1887F] text-sm font-medium">No vouchers generated yet. Click the button above to start.</p>
+                                    <p class="text-[#A1887F] text-sm font-medium">No vouchers found.</p>
                                 </div>
                             </td>
                         </tr>
@@ -138,6 +155,7 @@
         </div>
     </div>
 
+    @if(auth()->user()->role === 'admin')
     <!-- Hidden Bulk Delete Form -->
     <form id="bulk-delete-form" action="{{ route('network.vouchers.bulk-delete') }}" method="POST" class="hidden">
         @csrf
@@ -174,6 +192,7 @@
             </form>
         </div>
     </div>
+    @endif
 </div>
 
 <script>
@@ -200,6 +219,11 @@
                     confirmText: 'Yes, Delete All',
                     callback: () => document.getElementById('bulk-delete-form').submit()
                 });
+            },
+            printSelected() {
+                const params = new URLSearchParams();
+                this.selectedVouchers.forEach(id => params.append('ids[]', id));
+                window.open(`{{ route('network.vouchers.batch-print') }}?${params.toString()}`, '_blank');
             }
         }
     }

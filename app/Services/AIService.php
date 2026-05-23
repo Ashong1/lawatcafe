@@ -213,7 +213,8 @@ Strict Guidelines:
             \"trend_analysis\": \"string (brief summary of trend direction)\",
             \"predicted_top_products\": [\"name1\", \"name2\", \"name3\"],
             \"predicted_low_products\": [\"name1\", \"name2\"],
-            \"strategic_advice\": \"string (one actionable tip)\"
+            \"strategic_advice\": \"string (one actionable tip)\",
+            \"context_tags\": [\"string (e.g. 'Based on weekend trend', 'Morning rush velocity')\"]
         }
         Do not include markdown tags or any other text.";
 

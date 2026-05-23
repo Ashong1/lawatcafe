@@ -395,10 +395,54 @@
             <!-- Results State -->
             <div x-show="!loadingInsights && !errorInsights && insights" class="flex-1 overflow-y-auto pr-2 space-y-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full" style="display: none;">
                 
+                <!-- Data Milestone Progress (Cold Start) -->
+                <template x-if="insights?.meta?.transaction_count < insights?.meta?.target_transactions">
+                    <div class="bg-blue-50 border border-blue-200 p-4 rounded-2xl shrink-0">
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="text-[10px] font-black text-blue-800 uppercase tracking-[0.2em]">Learning Phase</p>
+                            <p class="text-xs font-bold text-blue-700" x-text="`${insights?.meta?.transaction_count} / ${insights?.meta?.target_transactions} Transactions`"></p>
+                        </div>
+                        <div class="w-full bg-blue-200/50 rounded-full h-2 overflow-hidden mb-2">
+                            <div class="bg-blue-600 h-full transition-all duration-700" :style="`width: ${insights?.meta?.progress_percent}%`"></div>
+                        </div>
+                        <p class="text-xs text-blue-800/80 font-medium">Barista AI is establishing a baseline. Accuracy will improve as more sales are recorded.</p>
+                        <div class="mt-3">
+                            <a href="{{ route('pos') }}" class="inline-flex items-center gap-2 text-xs font-bold text-blue-700 bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded-lg transition-colors">
+                                <x-lucide-shopping-cart class="w-3 h-3" />
+                                Go to POS Register
+                            </a>
+                        </div>
+                    </div>
+                </template>
+
                 <div class="grid grid-cols-2 gap-4 shrink-0">
-                    <div class="bg-[#FDF8F5] border border-[#F0E6D2] p-4 rounded-2xl">
-                        <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1">Expected Revenue</p>
-                        <p class="text-2xl font-black text-[#2E7D32]" x-text="'₱' + Number(insights?.forecast_total || 0).toLocaleString()"></p>
+                    <div class="bg-[#FDF8F5] border border-[#F0E6D2] p-4 rounded-2xl relative">
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em]">Expected Revenue</p>
+                            <!-- Confidence Meter -->
+                            <div class="group relative flex items-center cursor-help">
+                                <div class="flex gap-0.5">
+                                    <template x-for="i in 5">
+                                        <div class="w-1.5 h-3 rounded-full" :class="i <= Math.ceil((insights?.meta?.confidence_score || 0) / (insights?.meta?.confidence_max || 7) * 5) ? 'bg-[#3E2723]' : 'bg-[#E6D5C3]'"></div>
+                                    </template>
+                                </div>
+                                <!-- Tooltip -->
+                                <div class="absolute bottom-full right-0 mb-2 w-48 bg-[#3E2723] text-white text-[10px] p-2 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-lg z-10">
+                                    <p class="font-bold mb-0.5">Confidence: <span x-text="insights?.meta?.confidence_label"></span></p>
+                                    <p class="text-white/70">Based on <span x-text="insights?.meta?.days_of_data"></span> days of historical data.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <template x-if="insights?.forecast_range_low">
+                                <p class="text-2xl font-black text-[#2E7D32]" x-text="'₱' + Number(insights?.forecast_range_low || 0).toLocaleString(undefined, {maximumFractionDigits: 0})"></p>
+                            </template>
+                            <template x-if="insights?.forecast_range_low">
+                                <p class="text-sm font-bold text-[#8D6E63]">-</p>
+                            </template>
+                            <p class="text-2xl font-black text-[#2E7D32]" x-text="'₱' + Number(insights?.forecast_range_high || insights?.forecast_total || 0).toLocaleString(undefined, {maximumFractionDigits: 0})"></p>
+                        </div>
+                        <p class="text-[10px] text-[#A1887F] font-medium mt-1">7-Day Projected Range</p>
                     </div>
                     <div class="bg-[#FDF8F5] border border-[#F0E6D2] p-4 rounded-2xl">
                         <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1">Trend Analysis</p>
@@ -409,9 +453,22 @@
                 <div class="bg-amber-50 border border-amber-200/50 p-5 rounded-2xl shrink-0">
                     <div class="flex items-start gap-3">
                         <x-lucide-lightbulb class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                        <div>
+                        <div class="flex-1">
                             <p class="text-[10px] font-black text-amber-700 uppercase tracking-[0.2em] mb-1">Strategic Advice</p>
                             <p class="text-sm font-medium text-[#4A3B32] leading-relaxed" x-text="insights?.strategic_advice"></p>
+                            <div class="mt-3 flex gap-2 flex-wrap">
+                                <!-- Context Tags -->
+                                <template x-for="tag in (insights?.context_tags || [])" :key="tag">
+                                    <span class="inline-flex items-center px-2 py-1 rounded bg-amber-100 text-amber-800 text-[9px] font-black uppercase tracking-wider" x-text="`Based on: ${tag}`"></span>
+                                </template>
+                            </div>
+                            
+                            <!-- Deep Linking / Actions -->
+                            <div class="mt-4 flex gap-3">
+                                <a href="{{ route('inventory.ingredients.index') }}" class="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-800 hover:text-amber-900 bg-amber-200/50 hover:bg-amber-200 px-3 py-1.5 rounded transition-colors">
+                                    <x-lucide-package class="w-3 h-3" /> Check Inventory
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -425,6 +482,9 @@
                             <template x-for="item in insights?.predicted_top_products || []" :key="item">
                                 <li class="bg-white border border-[#F0E6D2] px-3 py-2 rounded-xl text-xs font-bold text-[#3E2723] flex items-center before:content-[''] before:w-1.5 before:h-1.5 before:bg-green-500 before:rounded-full before:mr-2" x-text="item"></li>
                             </template>
+                            <template x-if="(insights?.predicted_top_products || []).length === 0">
+                                <li class="text-xs text-[#A1887F] italic">Gathering more data...</li>
+                            </template>
                         </ul>
                     </div>
                     <div>
@@ -434,6 +494,9 @@
                         <ul class="space-y-2">
                             <template x-for="item in insights?.predicted_low_products || []" :key="item">
                                 <li class="bg-white border border-[#F0E6D2] px-3 py-2 rounded-xl text-xs font-bold text-[#8D6E63] flex items-center before:content-[''] before:w-1.5 before:h-1.5 before:bg-red-400 before:rounded-full before:mr-2" x-text="item"></li>
+                            </template>
+                            <template x-if="(insights?.predicted_low_products || []).length === 0">
+                                <li class="text-xs text-[#A1887F] italic">Gathering more data...</li>
                             </template>
                         </ul>
                     </div>

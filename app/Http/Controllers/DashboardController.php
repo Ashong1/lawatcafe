@@ -181,23 +181,64 @@ class DashboardController extends Controller
     public function getAIInsights(\App\Services\AIService $ai)
     {
         $insights = Cache::remember('barista_forecast_deep', 3600, function() use ($ai) {
+            $thirtyDaysAgo = Carbon::now()->subDays(30);
+            
+            $transactionCount = Sale::where('created_at', '>=', $thirtyDaysAgo)->count();
+            
             $historicalSales = Sale::selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
-                ->where('created_at', '>=', Carbon::now()->subDays(30))
+                ->where('created_at', '>=', $thirtyDaysAgo)
                 ->groupBy('date')
                 ->orderBy('date', 'ASC')
                 ->get()
                 ->pluck('total', 'date')
                 ->toArray();
+            
+            $daysOfData = count($historicalSales);
 
             $productPerformance = \App\Models\SaleItem::select('item_name', DB::raw('SUM(quantity) as total_qty'))
-                ->where('created_at', '>=', Carbon::now()->subDays(30))
+                ->where('created_at', '>=', $thirtyDaysAgo)
                 ->groupBy('item_name')
                 ->orderByDesc('total_qty')
                 ->get()
                 ->pluck('total_qty', 'item_name')
                 ->toArray();
 
-            return $ai->analyzeSalesTrends($historicalSales, $productPerformance);
+            $aiResult = $ai->analyzeSalesTrends($historicalSales, $productPerformance);
+            
+            if ($aiResult) {
+                // Determine confidence and progress
+                $targetTransactions = 50;
+                $progress = min($transactionCount, $targetTransactions);
+                
+                $targetDays = 7;
+                $confidenceScore = min($daysOfData, $targetDays);
+                $confidenceLabels = [
+                    0 => 'None', 1 => 'Very Low', 2 => 'Low', 3 => 'Moderate', 4 => 'Good', 5 => 'High', 6 => 'Very High', 7 => 'Excellent'
+                ];
+                
+                $aiResult['meta'] = [
+                    'transaction_count' => $transactionCount,
+                    'target_transactions' => $targetTransactions,
+                    'progress_percent' => $targetTransactions > 0 ? ($progress / $targetTransactions) * 100 : 0,
+                    'days_of_data' => $daysOfData,
+                    'confidence_score' => $confidenceScore,
+                    'confidence_label' => $confidenceLabels[min($confidenceScore, 7)] ?? 'Unknown',
+                    'confidence_max' => $targetDays,
+                ];
+                
+                // Ranges
+                if (isset($aiResult['forecast_total'])) {
+                    $total = $aiResult['forecast_total'];
+                    // variance depends on confidence. lower confidence = higher variance
+                    $variance = 1.0 - ($confidenceScore / $targetDays); // 0 to 1
+                    $variance = max(0.1, $variance * 0.4); // 10% to 40% variance
+                    
+                    $aiResult['forecast_range_low'] = $total * (1 - $variance);
+                    $aiResult['forecast_range_high'] = $total * (1 + $variance);
+                }
+            }
+
+            return $aiResult;
         });
 
         return response()->json($insights);

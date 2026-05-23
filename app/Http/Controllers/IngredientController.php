@@ -22,6 +22,7 @@ class IngredientController extends Controller
             'name' => 'required|string|max:255',
             'current_stock' => 'required|numeric|min:0|max:999999999999999',
             'unit' => 'required|string|max:50',
+            'low_stock_threshold' => 'required|numeric|min:0',
             'status' => 'required|string',
         ]);
 
@@ -49,6 +50,7 @@ class IngredientController extends Controller
             'name' => 'required|string|max:255',
             'current_stock' => 'required|numeric|min:0|max:999999999999999',
             'unit' => 'required|string|max:50',
+            'low_stock_threshold' => 'required|numeric|min:0',
             'status' => 'required|string',
         ]);
 
@@ -67,8 +69,46 @@ class IngredientController extends Controller
                 'reason' => 'Manual Adjustment',
                 'user_id' => auth()->id()
             ]);
+
+            // Check for Low Stock
+            if ($newStock <= $ingredient->low_stock_threshold) {
+                $admins = \App\Models\User::where('role', 'admin')->get();
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\SystemAlert(
+                    'Low Stock Alert!',
+                    "{$ingredient->name} is running low ({$newStock} {$ingredient->unit} left).",
+                    'alert-triangle',
+                    route('inventory.ingredients.index')
+                ));
+            }
         }
 
         return redirect()->route('inventory.ingredients.index')->with('success', 'Ingredient updated!');
+    }
+
+    public function logs(Request $request)
+    {
+        $query = \App\Models\InventoryLog::with(['ingredient', 'user'])->latest();
+
+        if ($request->filled('ingredient_id')) {
+            $query->where('ingredient_id', $request->ingredient_id);
+        }
+
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $logs = $query->paginate(20);
+        $ingredients = Ingredient::orderBy('name')->get();
+        $users = \App\Models\User::where('role', 'admin')->orderBy('name')->get();
+
+        return view('inventory.logs', compact('logs', 'ingredients', 'users'));
     }
 }

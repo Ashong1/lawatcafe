@@ -10,7 +10,7 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::latest()->get();
+        $categories = Category::withCount('products')->orderBy('sort_order')->latest()->get();
         return view('inventory.categories', compact('categories'));
     }
 
@@ -19,6 +19,9 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:categories',
             'description' => 'nullable|string',
+            'icon' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:7',
+            'sort_order' => 'nullable|integer',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
@@ -33,6 +36,9 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
             'description' => 'nullable|string',
+            'icon' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:7',
+            'sort_order' => 'nullable|integer',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);

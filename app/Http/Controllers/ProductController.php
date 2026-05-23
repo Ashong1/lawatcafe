@@ -86,4 +86,12 @@ class ProductController extends Controller
         // Refresh the page
         return redirect()->route('inventory.products.index')->with('success', 'Product deleted successfully!');
     }
+
+    public function toggleStatus(Product $product)
+    {
+        $product->status = $product->status === 'Active' ? 'Out of Stock' : 'Active';
+        $product->save();
+
+        return response()->json(['success' => true, 'new_status' => $product->status]);
+    }
 }

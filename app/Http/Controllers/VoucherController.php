@@ -66,6 +66,21 @@ class VoucherController extends Controller
     }
 
     /**
+     * Display the printable version of multiple vouchers.
+     */
+    public function printBatch(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:vouchers,id',
+        ]);
+
+        $vouchers = Voucher::whereIn('id', $request->ids)->get();
+        
+        return view('network.print-vouchers-batch', compact('vouchers'));
+    }
+
+    /**
      * Remove the specified voucher from the database.
      */
     public function destroy(Voucher $voucher)
@@ -126,29 +141,53 @@ class VoucherController extends Controller
         return view('network.plans', compact('settings'));
     }
 
-    /**
-     * Display active network sessions.
-     */
     public function sessions(\App\Services\OpnSenseService $opnsense)
     {
         // 1. Get real-time sessions from OPNsense
         $opnSessions = collect($opnsense->listSessions());
+        $arpTable = collect($opnsense->getArpTable());
 
-        // 2. Filter for truly active devices (Authorized/Connected) and unique physical hardware
-        $sessionCollection = $opnSessions->filter(function($s) {
-            $isLive = isset($s['clientState']) && in_array(strtoupper($s['clientState']), ['AUTHORIZED', 'CONNECTED']);
+        // 2. Identify ignored and VIP IPs
+        $ignoredIpsStr = \App\Models\Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.1');
+        $ignoredIps = explode(',', $ignoredIpsStr);
+        
+        $vipIpsStr = \App\Models\Setting::get('network_vip_ips', '192.168.2.100,192.168.2.5,192.168.2.4,192.168.2.99');
+        $vipIps = explode(',', $vipIpsStr);
+
+        // 3. Create maps for quick lookup
+        $arpByMac = $arpTable->keyBy(fn($item) => strtoupper($item['mac'] ?? ''));
+        $cpByMac = $opnSessions->keyBy(fn($item) => strtoupper($item['macAddress'] ?? ''));
+
+        // 4. Combine all unique MAC addresses
+        $allMacs = $arpByMac->keys()->concat($cpByMac->keys())->unique()->filter();
+
+        $combinedDevices = $allMacs->map(function($mac) use ($arpByMac, $cpByMac, $ignoredIps) {
+            $arp = $arpByMac->get($mac);
+            $cp = $cpByMac->get($mac);
             
-            $ip = str_replace('/32', '', $s['ipAddress']);
-            $ignoredIpsStr = \App\Models\Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.100,192.168.2.5,192.168.2.4');
-            $ignoredIps = explode(',', $ignoredIpsStr);
-            $isNotIgnored = !in_array($ip, $ignoredIps);
+            $ip = $arp['ip'] ?? ($cp['ipAddress'] ?? 'N/A');
+            $ip = str_replace('/32', '', $ip);
 
-            return $isLive && $isNotIgnored;
-        })->unique('macAddress');
+            // Skip ignored IPs
+            if (in_array($ip, $ignoredIps)) return null;
+            
+            return [
+                'ipAddress' => $ip,
+                'macAddress' => $mac,
+                'hostname' => $arp['hostname'] ?? 'Unknown',
+                'manufacturer' => $arp['manufacturer'] ?? 'Generic',
+                'cpSession' => $cp,
+                'isAuthorized' => isset($cp['clientState']) && in_array(strtoupper($cp['clientState']), ['AUTHORIZED', 'CONNECTED']),
+                'sessionId' => $cp['sessionId'] ?? null,
+                'bytes_received' => $cp['bytes_received'] ?? 0,
+                'bytes_sent' => $cp['bytes_sent'] ?? 0,
+                'startTime' => $cp['startTime'] ?? null,
+            ];
+        })->filter();
 
-        // 3. Batch fetch relevant vouchers to avoid N+1
-        $ips = $sessionCollection->map(fn($s) => str_replace('/32', '', $s['ipAddress']))->toArray();
-        $macs = $sessionCollection->map(fn($s) => $s['macAddress'] ?? null)->filter()->toArray();
+        // 5. Batch fetch relevant vouchers
+        $ips = $combinedDevices->pluck('ipAddress')->toArray();
+        $macs = $combinedDevices->pluck('macAddress')->toArray();
 
         $voucherList = Voucher::where('is_used', true)
             ->where(function($q) use ($ips, $macs) {
@@ -160,17 +199,47 @@ class VoucherController extends Controller
             ->latest('used_at')
             ->get();
 
-        // 4. Map and cross-reference
-        $sessions = $sessionCollection->map(function($raw) use ($voucherList) {
-            $ip = str_replace('/32', '', $raw['ipAddress']);
-            $mac = $raw['macAddress'] ?? null;
+        // 6. Throughput Speed Calculation (Real-time delta)
+        $now = now();
+        $snapshotKey = 'network_sessions_throughput_snapshot';
+        $oldSnapshot = \Illuminate\Support\Facades\Cache::get($snapshotKey, []);
+        $newSnapshot = [];
+
+        // 7. Map and cross-reference for the view
+        $sessions = $combinedDevices->map(function($device) use ($voucherList, $vipIps, $oldSnapshot, &$newSnapshot, $now) {
+            $ip = $device['ipAddress'];
+            $mac = $device['macAddress'];
             
-            // Find the latest voucher in our pre-fetched collection
+            // Speed logic
+            $curIn = (int)$device['bytes_received'];
+            $curOut = (int)$device['bytes_sent'];
+            $newSnapshot[$mac] = ['in' => $curIn, 'out' => $curOut, 't' => $now->timestamp];
+
+            $speedIn = 0; $speedOut = 0;
+            if (isset($oldSnapshot[$mac])) {
+                $prev = $oldSnapshot[$mac];
+                $dt = $now->timestamp - $prev['t'];
+                if ($dt > 0 && $dt < 60) {
+                    $speedIn = max(0, ($curIn - $prev['in']) * 8 / $dt); // bps
+                    $speedOut = max(0, ($curOut - $prev['out']) * 8 / $dt);
+                }
+            }
+
+            $formatSpeed = function($bps) {
+                if ($bps >= 1048576) return round($bps / 1048576, 2) . ' Mbps';
+                if ($bps >= 1024) return round($bps / 1024, 1) . ' Kbps';
+                return round($bps) . ' bps';
+            };
+
+            // Check if this is a VIP IP
+            $isVip = in_array($ip, $vipIps);
+
+            // Find the latest voucher
             $voucher = $voucherList->filter(function($v) use ($ip, $mac) {
-                return $v->ip_address === $ip || ($mac && $v->mac_address === $mac);
+                return $v->ip_address === $ip || ($mac && strtoupper($v->mac_address) === strtoupper($mac));
             })->first();
 
-            // Format bytes to human readable
+            // Format bytes
             $formatBytes = function($bytes) {
                 if ($bytes <= 0) return '0 B';
                 $units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -178,51 +247,68 @@ class VoucherController extends Controller
                 return round($bytes / pow(1024, $i), 2) . ' ' . $units[$i];
             };
 
-            $bytesIn = isset($raw['bytes_received']) ? (int)$raw['bytes_received'] : 0;
-            $bytesOut = isset($raw['bytes_sent']) ? (int)$raw['bytes_sent'] : 0;
+            $res = (object) [
+                'sessionId' => $device['sessionId'],
+                'ip_address' => $ip,
+                'mac_address' => $mac,
+                'hostname' => $device['hostname'],
+                'manufacturer' => $device['manufacturer'],
+                'bytes_in' => $formatBytes($curIn),
+                'bytes_out' => $formatBytes($curOut),
+                'speed_in' => $formatSpeed($speedIn),
+                'speed_out' => $formatSpeed($speedOut),
+                'has_traffic' => ($speedIn + $speedOut) > 1000, // Show active indicator if > 1Kbps
+                'connected_at' => $device['startTime'] ? \Carbon\Carbon::createFromTimestamp($device['startTime'])->diffForHumans() : 'Just Connected',
+                'is_authorized' => $device['isAuthorized'] || $isVip,
+            ];
 
-            if (!$voucher) {
-                return (object) [
-                    'sessionId' => $raw['sessionId'],
-                    'ip_address' => $ip,
-                    'mac_address' => $mac ?: 'N/A',
-                    'code' => 'SYSTEM/STATIC',
-                    'timeLeft' => '∞',
-                    'progress' => 100,
-                    'is_system' => true,
-                    'bytes_in' => $formatBytes($bytesIn),
-                    'bytes_out' => $formatBytes($bytesOut),
-                    'connected_at' => isset($raw['startTime']) ? \Carbon\Carbon::createFromTimestamp($raw['startTime'])->diffForHumans() : 'N/A'
-                ];
+            if ($isVip) {
+                $res->code = 'SYSTEM VIP';
+                $res->timeLeft = '∞';
+                $res->progress = 100;
+                $res->is_system = true;
+                $res->is_unauthorized = false;
+            } elseif (!$voucher) {
+                $res->code = $device['isAuthorized'] ? 'SYSTEM/STATIC' : 'UNAUTHORIZED';
+                $res->timeLeft = '∞';
+                $res->progress = $device['isAuthorized'] ? 100 : 0;
+                $res->is_system = $device['isAuthorized'];
+                $res->is_unauthorized = !$device['isAuthorized'];
+            } else {
+                // Calculate time remaining
+                $usedAt = \Carbon\Carbon::parse($voucher->used_at);
+                $expiryTime = $usedAt->copy()->addMinutes($voucher->duration_minutes);
+                $now_c = now();
+                
+                $timeLeft = $now_c->greaterThan($expiryTime) ? 0 : (int) $now_c->diffInMinutes($expiryTime);
+                $progress = $voucher->duration_minutes > 0 ? ($timeLeft / $voucher->duration_minutes) * 100 : 0;
+
+                $res->code = $voucher->code;
+                $res->timeLeft = $timeLeft;
+                $res->progress = $progress;
+                $res->is_system = false;
+                $res->is_unauthorized = false;
             }
 
-            // Calculate time remaining
-            $usedAt = \Carbon\Carbon::parse($voucher->used_at);
-            $expiryTime = $usedAt->copy()->addMinutes($voucher->duration_minutes);
-            $now = now();
-            
-            $timeLeft = $now->greaterThan($expiryTime) ? 0 : (int) $now->diffInMinutes($expiryTime);
-            $progress = $voucher->duration_minutes > 0 ? ($timeLeft / $voucher->duration_minutes) * 100 : 0;
-
-            return (object) [
-                'sessionId' => $raw['sessionId'],
-                'ip_address' => $ip,
-                'mac_address' => $mac ?: 'N/A',
-                'code' => $voucher->code,
-                'timeLeft' => $timeLeft,
-                'progress' => $progress,
-                'is_system' => false,
-                'bytes_in' => $formatBytes($bytesIn),
-                'bytes_out' => $formatBytes($bytesOut),
-                'connected_at' => isset($raw['startTime']) ? \Carbon\Carbon::createFromTimestamp($raw['startTime'])->diffForHumans() : 'N/A'
-            ];
+            return $res;
         });
 
+        \Illuminate\Support\Facades\Cache::put($snapshotKey, $newSnapshot, 120);
+
+        // 8. Identify Infrastructure IPs
+        $infraIpsStr = \App\Models\Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4');
+        $infraIps = explode(',', $infraIpsStr);
+
+        // 9. Split into three collections for the UI
+        $infrastructureSessions = $sessions->filter(fn($s) => in_array($s->ip_address, $infraIps));
+        $activeSessions = $sessions->filter(fn($s) => !in_array($s->ip_address, $infraIps) && !$s->is_unauthorized);
+        $pendingSessions = $sessions->filter(fn($s) => !in_array($s->ip_address, $infraIps) && $s->is_unauthorized);
+
         if (request()->ajax() || request()->wantsJson()) {
-            return view('network.partials.sessions-table', compact('sessions'));
+            return view('network.partials.sessions-tables', compact('activeSessions', 'infrastructureSessions', 'pendingSessions'));
         }
 
-        return view('network.sessions', compact('sessions'));
+        return view('network.sessions', compact('activeSessions', 'infrastructureSessions', 'pendingSessions'));
     }
 
     /**

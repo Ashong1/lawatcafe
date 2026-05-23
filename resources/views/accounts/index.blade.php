@@ -2,55 +2,76 @@
 @section('title', 'Staff Management')
 
 @section('content')
-<div x-data="accountManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+<div x-data="accountManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     
-    <div class="mb-8 border-b border-[#E6D5C3] pb-4">
-        <h2 class="flex items-center gap-3 text-[#3E2723]">
-            <span class="text-3xl font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-            <span class="text-lg font-bold tracking-[0.2em] uppercase mt-1">Staff Management</span>
-        </h2>
-        <p class="text-sm text-[#8D6E63] mt-2 font-medium">Control system access, add new baristas, or edit admin accounts.</p>
+    <div class="mb-8 border-b border-[#E6D5C3] pb-6">
+        <h2 class="text-3xl font-black text-[#3E2723] tracking-wider uppercase italic" style="font-family: 'Dancing Script', cursive;">Lawa't <span class="font-sans not-italic font-bold text-[#4A3B32] text-2xl tracking-[0.2em]">STAFF MANAGEMENT</span></h2>
+        <p class="text-sm text-[#8D6E63] mt-2 font-medium">Control system access, assign roles, and edit admin accounts.</p>
     </div>
 
-    <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-[#F0E6D2]">
+    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
         
-        <div class="flex justify-between items-center mb-6 border-b border-[#F0E6D2] pb-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-lg font-bold text-[#3E2723] uppercase tracking-widest">Active Accounts</h3>
+                <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">Active Accounts</h3>
+                <p class="text-xs text-[#A1887F] mt-1 font-medium italic">System users with authenticated access to the dashboard.</p>
             </div>
-            <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-lg font-bold transition shadow-md text-sm tracking-widest uppercase flex items-center gap-2">
+            
+            <button @click="openAddModal()" 
+                    class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition shadow-lg active:scale-95 flex items-center gap-3">
                 <x-lucide-plus class="w-4 h-4" />
-                <span>Staff Member</span>
+                <span>Add Staff Member</span>
             </button>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-[#FDF8F5] text-[#8D6E63] text-xs uppercase tracking-wider border-b border-[#E6D5C3]">
-                        <th class="px-6 py-4 font-bold rounded-tl-lg">Name</th>
-                        <th class="px-6 py-4 font-bold">Email Address</th>
-                        <th class="px-6 py-4 font-bold">Joined Date</th>
-                        <th class="px-6 py-4 font-bold rounded-tr-lg text-right">Actions</th>
+                    <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
+                        <th class="pb-4 px-4 font-black">Name</th>
+                        <th class="pb-4 px-4 font-black">Email Address</th>
+                        <th class="pb-4 px-4 font-black">Role / Access</th>
+                        <th class="pb-4 px-4 font-black">Joined Date</th>
+                        <th class="pb-4 px-4 font-black text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="text-[#4A3B32] text-sm">
+                <tbody class="text-sm">
                     @forelse($users as $user)
-                        <tr class="border-b border-[#F0E6D2] hover:bg-[#FAFAFA] transition">
-                            <td class="px-6 py-4 font-bold text-[#3E2723] text-base">
-                                {{ $user->name }}
-                                @if(auth()->id() === $user->id)
-                                    <span class="ml-2 text-[10px] bg-amber-100 text-amber-800 px-2 py-1 rounded-full uppercase tracking-wider">You</span>
+                        <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors {{ auth()->id() === $user->id ? 'bg-amber-50/10' : '' }}">
+                            <td class="py-4 px-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-extrabold text-[#3E2723]">{{ $user->name }}</span>
+                                    @if(auth()->id() === $user->id)
+                                        <span class="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded text-[9px] font-black uppercase tracking-wider">You</span>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="py-4 px-4 text-[#8D6E63] font-medium font-mono text-xs">
+                                {{ $user->email }}
+                            </td>
+                            <td class="py-4 px-4">
+                                @if($user->role === 'admin')
+                                    <span class="px-2.5 py-1 bg-amber-100 text-[#3E2723] border border-amber-200 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                                        System Admin
+                                    </span>
+                                @else
+                                    <span class="px-2.5 py-1 bg-gray-100 text-gray-600 border border-gray-200 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                                        Barista
+                                    </span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-[#8D6E63] font-medium">{{ $user->email }}</td>
-                            <td class="px-6 py-4 text-[#8D6E63] font-medium">{{ $user->created_at->format('M d, Y') }}</td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex justify-end gap-2">
-                                    <button @click="openEditModal({{ $user }})" class="p-2 text-amber-700 hover:text-amber-900 hover:bg-amber-100 rounded-lg transition" title="Edit">
+                            <td class="py-4 px-4 text-[#A1887F] font-bold text-xs">
+                                {{ $user->created_at->format('M d, Y') }}
+                            </td>
+                            <td class="py-4 px-4 text-right">
+                                <div class="flex justify-end gap-3">
+                                    <button @click="openEditModal({{ $user }})" 
+                                            class="p-2 text-amber-700 hover:text-amber-900 hover:bg-amber-100 rounded-xl transition-all"
+                                            title="Edit Staff">
                                         <x-lucide-pencil class="w-4 h-4" />
                                     </button>
                                     
+                                    @if(auth()->id() !== $user->id)
                                     <form action="{{ route('accounts.destroy', $user->id) }}" method="POST" id="delete-form-{{ $user->id }}" class="inline">
                                         @csrf
                                         @method('DELETE')
@@ -62,49 +83,65 @@
                                                     confirmText: 'Yes, Remove Access',
                                                     callback: () => document.getElementById('delete-form-{{ $user->id }}').submit()
                                                 })"
-                                                class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition" {{ auth()->id() === $user->id ? 'disabled' : '' }} title="Remove">
+                                                class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                                title="Remove Access">
                                             <x-lucide-trash-2 class="w-4 h-4" />
                                         </button>
                                     </form>
+                                    @else
+                                        <button class="p-2 text-gray-300 cursor-not-allowed opacity-30" title="Cannot delete active account">
+                                            <x-lucide-trash-2 class="w-4 h-4" />
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="px-6 py-8 text-center text-[#8D6E63] italic">No accounts found.</td></tr>
+                        <tr><td colspan="5" class="px-6 py-16 text-center text-[#8D6E63] italic font-medium opacity-50">No staff accounts found.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
 
-    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
-        <div @click.away="closeModal()" class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md border-t-8 border-[#3E2723]">
-            <h2 class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-widest" x-text="modalTitle"></h2>
+    <!-- Account Modal -->
+    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl p-8 w-full max-w-md border-t-8 border-[#3E2723] transform transition-all">
+            <h2 class="text-2xl font-black text-[#3E2723] mb-2 uppercase tracking-tight" x-text="modalTitle"></h2>
+            <p class="text-xs text-[#8D6E63] mb-8 font-medium">Configure authentication and system permission levels.</p>
             
-            <form :action="formAction" method="POST">
+            <form :action="formAction" method="POST" class="space-y-6">
                 @csrf
                 <template x-if="isEditing">
                     <input type="hidden" name="_method" value="PUT">
                 </template>
 
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-[#8D6E63] uppercase tracking-wider mb-2">Full Name</label>
-                    <input type="text" name="name" x-model="formData.name" required class="w-full p-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA]">
+                <div>
+                    <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Full Name</label>
+                    <input type="text" name="name" x-model="formData.name" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                 </div>
 
-                <div class="mb-4">
-                    <label class="block text-xs font-bold text-[#8D6E63] uppercase tracking-wider mb-2">Email Address</label>
-                    <input type="email" name="email" x-model="formData.email" required class="w-full p-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA]">
+                <div>
+                    <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Email Address</label>
+                    <input type="email" name="email" x-model="formData.email" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                 </div>
 
-                <div class="mb-8">
-                    <label class="block text-xs font-bold text-[#8D6E63] uppercase tracking-wider mb-2">Password <span x-show="isEditing" class="text-[10px] text-amber-600 font-normal lowercase">(leave blank to keep current)</span></label>
-                    <input type="password" name="password" :required="!isEditing" class="w-full p-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA]">
+                <div>
+                    <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Account Role</label>
+                    <select name="role" x-model="formData.role" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                        <option value="staff">Staff / Barista</option>
+                        <option value="admin">System Administrator</option>
+                    </select>
                 </div>
 
-                <div class="flex gap-3">
-                    <button type="button" @click="closeModal()" class="flex-1 py-3 border border-[#D7CCC8] rounded-lg text-[#4A3B32] hover:bg-[#FDF8F5] font-bold transition">Cancel</button>
-                    <button type="submit" class="flex-1 py-3 bg-[#3E2723] text-white rounded-lg hover:bg-[#271815] font-bold transition">Save Account</button>
+                <div>
+                    <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Password <span x-show="isEditing" class="text-[9px] text-amber-600 font-bold lowercase">(leave blank to keep current)</span></label>
+                    <input type="password" name="password" :required="!isEditing" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" @click="closeModal()" class="flex-1 py-4 bg-[#FDF8F5] text-[#8D6E63] rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#F0E6D2] transition">Cancel</button>
+                    <button type="submit" class="flex-2 px-8 py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-amber-900/20 active:scale-95">Save Account</button>
                 </div>
             </form>
         </div>
@@ -118,13 +155,13 @@
             isEditing: false,
             modalTitle: 'Add New Staff',
             formAction: '{{ route('accounts.store') }}',
-            formData: { id: null, name: '', email: '' },
+            formData: { id: null, name: '', email: '', role: 'staff' },
 
             openAddModal() {
                 this.isEditing = false;
                 this.modalTitle = 'Add New Staff';
                 this.formAction = '{{ route('accounts.store') }}';
-                this.formData = { id: null, name: '', email: '' };
+                this.formData = { id: null, name: '', email: '', role: 'staff' };
                 this.isModalOpen = true;
             },
 

@@ -28,12 +28,12 @@
                 });
             }
          }"
-         x-init="setInterval(() => refreshSessions(), 10000)">
+         x-init="setInterval(() => refreshSessions(), 5000)">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Connected Guests</h3>
-                <p class="text-xs text-[#A1887F] mt-1 font-medium">Real-time view of devices currently authenticated on the portal.</p>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Network Traffic Control</h3>
+                <p class="text-xs text-[#A1887F] mt-1 font-medium">Monitoring both active revenue-generating users and pending connections.</p>
             </div>
             
             <div class="flex items-center gap-3 px-5 py-2.5 bg-[#E8F5E9] border border-green-200 rounded-full shadow-sm">
@@ -42,22 +42,8 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto pr-2">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-black">Device</th>
-                        <th class="pb-4 font-black">Voucher</th>
-                        <th class="pb-4 font-black">Usage (Up / Down)</th>
-                        <th class="pb-4 font-black">Connected</th>
-                        <th class="pb-4 font-black">Time Left</th>
-                        <th class="pb-4 font-black text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="text-sm" x-ref="sessionTableBody">
-                    @include('network.partials.sessions-table')
-                </tbody>
-            </table>
+        <div id="sessions-container" x-ref="sessionTableBody">
+            @include('network.partials.sessions-tables')
         </div>
         
     </div>

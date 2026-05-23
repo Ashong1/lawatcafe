@@ -24,12 +24,14 @@ class AccountController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
+            'role' => 'required|in:admin,staff',
         ]);
 
         User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $request->role,
         ]);
 
         return redirect()->route('accounts.index')->with('success', 'Staff account created successfully!');
@@ -42,10 +44,12 @@ class AccountController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($account->id)],
             'password' => 'nullable|string|min:8', // Password is optional when editing
+            'role' => 'required|in:admin,staff',
         ]);
 
         $account->name = $request->name;
         $account->email = $request->email;
+        $account->role = $request->role;
         
         // Only change the password if they typed a new one
         if ($request->filled('password')) {

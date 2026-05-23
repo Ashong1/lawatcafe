@@ -16,7 +16,14 @@ class KdsController extends Controller
             ->oldest()
             ->get();
 
-        return view('kds.index', compact('orders'));
+        // Fetch recently completed orders for recall (last 10)
+        $recentlyCompleted = Sale::with(['items.product', 'user'])
+            ->where('status', 'completed')
+            ->latest('updated_at')
+            ->take(10)
+            ->get();
+
+        return view('kds.index', compact('orders', 'recentlyCompleted'));
     }
 
     public function updateStatus(Request $request, Sale $sale)

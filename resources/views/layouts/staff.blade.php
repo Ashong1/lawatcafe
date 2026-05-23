@@ -116,6 +116,11 @@
                 <x-lucide-chef-hat class="w-6 h-6 shrink-0 {{ request()->is('kds') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">Kitchen Display</span>
             </a>
+
+            <a href="{{ route('network.vouchers.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.vouchers.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Vouchers">
+                <x-lucide-ticket class="w-6 h-6 shrink-0 {{ request()->routeIs('network.vouchers.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
+                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">Vouchers</span>
+            </a>
             
             </nav>
     </aside>
@@ -129,6 +134,10 @@
             </button>
             
             <div class="flex items-center space-x-6">
+                <x-notification-bell />
+
+                <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
+
                 <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group cursor-pointer">
                     <span class="text-[11px] uppercase tracking-widest text-[#A1887F] group-hover:text-[#3E2723] transition font-bold">Staff Status:</span>
                     <span class="text-sm font-bold text-[#3E2723] group-hover:text-amber-700 transition">{{ Auth::user()->name }}</span>

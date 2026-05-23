@@ -56,7 +56,7 @@
             </button>
         </div>
 
-        <form action="{{ route('admin.settings.payment.update') }}" method="POST">
+        <form action="{{ route('admin.settings.update') }}" method="POST">
             @csrf
             
             <div class="overflow-x-auto rounded-2xl border border-[#F0E6D2] mb-8">
@@ -65,6 +65,7 @@
                         <tr class="border-b border-[#F0E6D2] bg-[#FDF8F5] text-[10px] font-black text-[#8D6E63] uppercase tracking-widest">
                             <th class="py-4 px-6">Tier</th>
                             <th class="py-4 px-6">Price</th>
+                            <th class="py-4 px-6">Allocated Speed</th>
                             <th class="py-4 px-6">Duration (Minutes)</th>
                             <th class="py-4 px-6">Formatted Display</th>
                             <th class="py-4 px-6 text-right">Actions</th>
@@ -78,6 +79,18 @@
                                           x-text="'Tier ' + (index + 1)"></span>
                                 </td>
                                 <td class="py-4 px-6 font-black text-[#3E2723]" x-text="'₱' + plan.price"></td>
+                                <td class="py-4 px-6">
+                                    <div class="flex flex-col">
+                                        <div class="flex items-center gap-1 text-[9px] font-bold text-blue-600 uppercase">
+                                            <x-lucide-arrow-down class="w-2.5 h-2.5" />
+                                            <span x-text="(index === 0 ? '{{ \App\Models\Setting::get('bw_free_down', 2) }}' : '{{ \App\Models\Setting::get('bw_premium_down', 10) }}') + ' Mbps'"></span>
+                                        </div>
+                                        <div class="flex items-center gap-1 text-[9px] font-bold text-amber-600 uppercase mt-0.5">
+                                            <x-lucide-arrow-up class="w-2.5 h-2.5" />
+                                            <span x-text="(index === 0 ? '{{ \App\Models\Setting::get('bw_free_up', 1) }}' : '{{ \App\Models\Setting::get('bw_premium_up', 5) }}') + ' Mbps'"></span>
+                                        </div>
+                                    </div>
+                                </td>
                                 <td class="py-4 px-6 text-[#8D6E63]" x-text="plan.minutes + ' mins'"></td>
                                 <td class="py-4 px-6">
                                     <span class="text-xs font-bold text-amber-600 uppercase tracking-tight italic" 
@@ -139,11 +152,6 @@
             </div>
 
             <input type="hidden" name="voucher_durations" :value="jsonOutput">
-            <input type="hidden" name="imap_username" value="{{ \App\Models\Setting::get('imap_username') }}">
-            <input type="hidden" name="imap_password" value="{{ \App\Models\Setting::get('imap_password') }}">
-            <input type="hidden" name="network_ignored_ips" value="{{ \App\Models\Setting::get('network_ignored_ips') }}">
-            <input type="hidden" name="opnsense_zone" value="{{ \App\Models\Setting::get('opnsense_zone') }}">
-            <input type="hidden" name="low_stock_threshold" value="{{ \App\Models\Setting::get('low_stock_threshold') }}">
         </form>
     </div>
 

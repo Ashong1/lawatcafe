@@ -76,6 +76,35 @@ class OpnSenseService
     }
 
     /**
+     * Get the ARP table from OPNsense.
+     *
+     * @return array
+     */
+    public function getArpTable()
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return [];
+        }
+
+        try {
+            $url = "{$this->baseUrl}/api/diagnostics/interface/getArp";
+            
+            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
+                ->withoutVerifying()
+                ->get($url);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return [];
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception fetching ARP table: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Get the list of active sessions from OPNsense.
      *
      * @return array

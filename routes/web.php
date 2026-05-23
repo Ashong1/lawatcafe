@@ -10,6 +10,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\CaptivePortalController; // <-- Added Portal Controller
 use App\Http\Middleware\RoleMiddleware; 
 
@@ -56,6 +57,17 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/profile', 'destroy')->name('profile.destroy');
     });
 
+    // Notification System
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+
+    // Shared Network Info (Vouchers list visible to staff)
+    Route::prefix('network')->name('network.')->group(function () {
+        Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
+    });
+
     // ==========================================
     // ADMIN ONLY ROUTES
     // ==========================================
@@ -69,27 +81,33 @@ Route::middleware(['auth'])->group(function () {
 
         // Inventory Management
         Route::prefix('inventory')->name('inventory.')->group(function () {
-            Route::get('/logs', function() {
-                return view('inventory.logs', ['logs' => \App\Models\InventoryLog::with(['ingredient', 'user'])->latest()->get()]);
-            })->name('logs');
+            Route::get('/logs', [IngredientController::class, 'logs'])->name('logs');
             Route::resource('categories', \App\Http\Controllers\CategoryController::class)->except(['create', 'show', 'edit']);
             Route::resource('products', ProductController::class)->except(['create', 'show', 'edit']);
+            Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
             Route::resource('ingredients', IngredientController::class)->except(['create', 'show', 'edit']);
         });
 
-        // Network & Voucher Management
+        // Network & Voucher Actions (Admin only)
         Route::prefix('network')->name('network.')->group(function () {
             Route::get('/sessions', [VoucherController::class, 'sessions'])->name('sessions');
             Route::post('/sessions/kick', [VoucherController::class, 'kick'])->name('sessions.kick');
+            Route::get('/verifications', [\App\Http\Controllers\PaymentController::class, 'logs'])->name('verifications');
             
-            Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
             Route::post('/vouchers/generate', [VoucherController::class, 'generateBatch'])->name('vouchers.generate');
             Route::post('/vouchers/bulk-delete', [VoucherController::class, 'bulkDestroy'])->name('vouchers.bulk-delete');
             Route::post('/vouchers/purge', [VoucherController::class, 'purge'])->name('vouchers.purge');
+            Route::get('/vouchers/batch-print', [VoucherController::class, 'printBatch'])->name('vouchers.batch-print');
             Route::get('/vouchers/{voucher}/print', [VoucherController::class, 'print'])->name('vouchers.print');
             Route::delete('/vouchers/{voucher}', [VoucherController::class, 'destroy'])->name('vouchers.destroy');
 
             Route::get('/plans', [VoucherController::class, 'plans'])->name('plans');
+            Route::get('/traffic', [\App\Http\Controllers\TrafficController::class, 'index'])->name('traffic');
+            Route::post('/traffic', [\App\Http\Controllers\TrafficController::class, 'update'])->name('traffic.update');
+
+            Route::get('/blocklist', [\App\Http\Controllers\BlocklistController::class, 'index'])->name('blocklist');
+            Route::post('/blocklist', [\App\Http\Controllers\BlocklistController::class, 'store'])->name('blocklist.store');
+            Route::delete('/blocklist/{device}', [\App\Http\Controllers\BlocklistController::class, 'destroy'])->name('blocklist.destroy');
         });
 
         // Finance / Sales Reports
@@ -99,9 +117,13 @@ Route::middleware(['auth'])->group(function () {
         // System Accounts
         Route::resource('accounts', AccountController::class)->except(['create', 'show', 'edit']);
 
-        // Payment & IMAP Settings
-        Route::get('/settings/payment', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('admin.settings.payment');
-        Route::post('/settings/payment', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('admin.settings.payment.update');
+        // System Settings (Consolidated)
+        Route::prefix('settings')->name('admin.settings.')->group(function () {
+            Route::get('/store', [\App\Http\Controllers\Admin\SettingController::class, 'store'])->name('store');
+            Route::get('/integrations', [\App\Http\Controllers\Admin\SettingController::class, 'integrations'])->name('integrations');
+            Route::get('/network', [\App\Http\Controllers\Admin\SettingController::class, 'network'])->name('network');
+            Route::post('/update', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('update');
+        });
     });
 
     // ==========================================
@@ -111,6 +133,7 @@ Route::middleware(['auth'])->group(function () {
         
         // Staff Hub
         Route::get('/staff-dashboard', [StaffController::class, 'index'])->name('staff.dashboard');
+        Route::get('/staff-dashboard/live', [StaffController::class, 'getLiveData'])->name('staff.dashboard.live');
 
     });
 });

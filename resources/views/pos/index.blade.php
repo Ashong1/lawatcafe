@@ -103,11 +103,21 @@
             </div>
 
             <div class="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide shrink-0">
-                <template x-for="category in categories" :key="category">
-                    <button @click="selectedCategory = category" 
-                            class="px-6 py-2.5 rounded-full text-sm font-bold transition-all whitespace-nowrap border"
-                            :class="selectedCategory === category ? 'bg-[#3E2723] text-white border-[#3E2723] shadow-md' : 'bg-[#FAFAFA] text-[#8D6E63] border-[#F0E6D2] hover:bg-[#FDF8F5]'">
-                        <span x-text="category"></span>
+                <template x-for="category in categories" :key="category.name">
+                    <button @click="selectedCategory = category.name" 
+                            class="px-5 py-2.5 rounded-full text-xs font-black transition-all whitespace-nowrap border flex items-center gap-2 tracking-widest uppercase"
+                            :class="selectedCategory === category.name ? 'bg-[#3E2723] text-white border-[#3E2723] shadow-md' : 'bg-[#FAFAFA] text-[#8D6E63] border-[#F0E6D2] hover:bg-[#FDF8F5]'">
+                        {{-- Handle dynamic lucide icons in Alpine --}}
+                        <div x-show="category.icon === 'layout-grid'"><x-lucide-layout-grid class="w-3.5 h-3.5" /></div>
+                        <div x-show="category.icon === 'coffee'"><x-lucide-coffee class="w-3.5 h-3.5" /></div>
+                        <div x-show="category.icon === 'cup-soda'"><x-lucide-cup-soda class="w-3.5 h-3.5" /></div>
+                        <div x-show="category.icon === 'cookie'"><x-lucide-cookie class="w-3.5 h-3.5" /></div>
+                        <div x-show="category.icon === 'beef'"><x-lucide-beef class="w-3.5 h-3.5" /></div>
+                        <div x-show="category.icon === 'utensils'"><x-lucide-utensils class="w-3.5 h-3.5" /></div>
+                        <div x-show="category.icon === 'wifi'"><x-lucide-wifi class="w-3.5 h-3.5" /></div>
+                        <div x-show="category.icon === 'star'"><x-lucide-star class="w-3.5 h-3.5" /></div>
+                        <div x-show="category.icon === 'layers'"><x-lucide-layers class="w-3.5 h-3.5" /></div>
+                        <span x-text="category.name"></span>
                     </button>
                 </template>
             </div>
@@ -120,15 +130,23 @@
                         <template x-for="item in filteredProducts" :key="item.id">
                             <div class="bg-white p-4 rounded-[1.5rem] shadow-[0_4px_15px_-3px_rgba(62,39,35,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(62,39,35,0.12)] transition-all duration-300 flex flex-col group relative border border-transparent hover:border-[#FDF8F5]">
                                 
-                                <div class="h-32 w-full bg-[#FDF8F5] rounded-xl mb-4 flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-300 border border-[#F0E6D2]/50 shrink-0">
+                                <div class="h-32 w-full bg-[#FDF8F5] rounded-xl mb-4 flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-300 border border-[#F0E6D2]/50 shrink-0 relative overflow-hidden">
+                                    {{-- Visual cue based on category --}}
                                     <template x-if="item.type === 'wifi'">
-                                        <x-lucide-wifi class="w-10 h-10 text-amber-800/20" />
+                                        <x-lucide-wifi class="w-10 h-10 text-blue-800/20" />
                                     </template>
-                                    <template x-if="item.type !== 'wifi' && item.category === 'Pastries'">
-                                        <x-lucide-cookie class="w-10 h-10 text-amber-800/20" />
-                                    </template>
-                                    <template x-if="item.type !== 'wifi' && item.category !== 'Pastries'">
-                                        <x-lucide-coffee class="w-10 h-10 text-amber-800/20" />
+                                    <template x-if="item.type !== 'wifi'">
+                                        <div class="flex items-center justify-center">
+                                            @foreach($dbCategories as $cat)
+                                                <div x-show="item.category === '{{ $cat['name'] }}'" style="color: {{ $cat['color'] }}30">
+                                                    <x-dynamic-component :component="'lucide-' . $cat['icon']" class="w-10 h-10" />
+                                                </div>
+                                            @endforeach
+                                            {{-- Fallback --}}
+                                            <template x-if="!categories.find(c => c.name === item.category)">
+                                                <x-lucide-coffee class="w-10 h-10 text-amber-800/20" />
+                                            </template>
+                                        </div>
                                     </template>
                                 </div>
 
@@ -187,126 +205,144 @@
     </div>
 
     {{-- Cart Sidebar (Right) --}}
-    <div class="bg-white p-6 md:p-8 flex flex-col shrink-0 relative border-l border-[#F0E6D2] shadow-[-10px_0_30px_rgba(62,39,35,0.05)] h-full z-10" style="width: 28rem;">
+    <div class="bg-white p-5 flex flex-col shrink-0 border-l border-[#F0E6D2] shadow-[-10px_0_30px_rgba(62,39,35,0.05)] h-full z-10 overflow-hidden" style="width: 28rem;">
         
-        <div class="flex justify-between items-center mb-6 shrink-0">
-            <div>
-                <h3 class="text-2xl font-black text-[#3E2723]">Current Order</h3>
-                <p class="text-sm font-medium text-[#8D6E63] mt-0.5"><span x-text="cart.length"></span> items in cart</p>
+        {{-- TOP HEADER (Fixed: Will not shrink) --}}
+        <div class="shrink-0 flex flex-col gap-4 mb-2">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-xl font-black text-[#3E2723]">Current Order</h3>
+                    <p class="text-xs font-medium text-[#8D6E63] mt-0.5"><span x-text="cart.length"></span> items in cart</p>
+                </div>
+                
+                <button type="button" x-show="cart.length > 0" @click="resetCart()" class="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center shadow-sm" title="Clear All">
+                    <x-lucide-trash-2 class="w-4 h-4" />
+                </button>
             </div>
-            
-            <button type="button" x-show="cart.length > 0" @click="resetCart()" class="w-10 h-10 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center shadow-sm" title="Clear All">
-                <x-lucide-trash-2 class="w-5 h-5" />
-            </button>
+
+            <div class="flex bg-[#FDF8F5] p-1 rounded-xl border border-[#F0E6D2]/50">
+                <button @click="orderType = 'dine_in'" class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'dine_in' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">
+                    <x-lucide-utensils class="w-3.5 h-3.5" />
+                    <span>Dine In</span>
+                </button>
+                <button @click="orderType = 'takeaway'" class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'takeaway' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">
+                    <x-lucide-shopping-bag class="w-3.5 h-3.5" />
+                    <span>Take Away</span>
+                </button>
+            </div>
         </div>
 
-        <div class="flex bg-[#FDF8F5] p-1.5 rounded-2xl mb-6 shrink-0 border border-[#F0E6D2]/50">
-            <button @click="orderType = 'dine_in'" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'dine_in' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">
-                <x-lucide-utensils class="w-3.5 h-3.5" />
-                <span>Dine In</span>
-            </button>
-            <button @click="orderType = 'takeaway'" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'takeaway' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">
-                <x-lucide-shopping-bag class="w-3.5 h-3.5" />
-                <span>Take Away</span>
-            </button>
-        </div>
-
-        <div class="relative flex-1 mb-6">
-            <div class="absolute inset-0 overflow-y-auto space-y-3 pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">
+        {{-- CART ITEMS (Scrollable: Takes up remaining space) --}}
+        {{-- min-h-0 is the CSS secret that allows flex-1 to scroll properly --}}
+        <div class="flex-1 min-h-0 overflow-y-auto pr-2 my-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">
+            <div class="flex flex-col">
                 <template x-for="(cartItem, index) in cart" :key="cartItem.id + '-' + index">
-                    <div class="flex gap-4 items-center bg-white group">
-                        <div class="w-12 h-12 bg-[#FDF8F5] border border-[#F0E6D2] rounded-xl flex items-center justify-center shrink-0">
+                    
+                    {{-- Added min-h-[5rem] (80px) to absolutely forbid the browser from squishing the item vertically --}}
+                    <div class="flex gap-3 items-center bg-white group shrink-0 min-h-[5rem] py-2 border-b border-[#FDF8F5] last:border-0">
+                        <div class="w-10 h-10 bg-[#FDF8F5] border border-[#F0E6D2] rounded-lg flex items-center justify-center shrink-0">
                             <template x-if="cartItem.type === 'wifi'">
-                                <x-lucide-wifi class="w-6 h-6 text-amber-800/30" />
+                                <x-lucide-wifi class="w-5 h-5 text-amber-800/30" />
                             </template>
                             <template x-if="cartItem.type !== 'wifi'">
-                                <x-lucide-coffee class="w-6 h-6 text-amber-800/30" />
+                                <x-lucide-coffee class="w-5 h-5 text-amber-800/30" />
                             </template>
                         </div>
                         
-                        <div class="flex-1">
-                            <h4 class="font-bold text-sm text-[#3E2723] line-clamp-1">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-sm text-[#3E2723] truncate pr-2 flex items-center">
                                 <span x-text="cartItem.name"></span>
-                                <span x-show="cartItem.variant" class="ml-1 text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full" :class="cartItem.variant === 'Hot' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'" x-text="cartItem.variant"></span>
+                                <span x-show="cartItem.variant" class="ml-1.5 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full shrink-0" :class="cartItem.variant === 'Hot' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'" x-text="cartItem.variant"></span>
                             </h4>
-                            <div class="flex justify-between items-center mt-2">                                <p class="font-black text-sm text-[#8D6E63]" x-text="'₱' + (Number(cartItem.price) * cartItem.quantity).toFixed(2)"></p>
+                            <div class="flex justify-between items-center mt-0.5">
+                                <p class="font-black text-xs text-[#8D6E63]" x-text="'₱' + (Number(cartItem.price) * cartItem.quantity).toFixed(2)"></p>
                                 
-                                <div class="flex items-center bg-[#FAFAFA] border border-[#F0E6D2] rounded-full px-2 py-1">
-                                    <button type="button" @click="removeFromCart(index)" class="w-6 h-6 flex items-center justify-center text-[#8D6E63] hover:text-[#3E2723] font-bold transition">-</button>
-                                    <span class="w-6 text-center text-xs font-bold text-[#3E2723]" x-text="cartItem.quantity"></span>
-                                    <button type="button" @click="addToCart(cartItem)" class="w-6 h-6 flex items-center justify-center text-[#8D6E63] hover:text-[#3E2723] font-bold transition">+</button>
+                                <div class="flex items-center bg-[#FAFAFA] border border-[#F0E6D2] rounded-full px-1 py-0.5 shrink-0">
+                                    <button type="button" @click="removeFromCart(index)" class="w-5 h-5 flex items-center justify-center text-[#8D6E63] hover:text-[#3E2723] font-bold transition text-xs">-</button>
+                                    <span class="w-5 text-center text-[11px] font-bold text-[#3E2723]" x-text="cartItem.quantity"></span>
+                                    <button type="button" @click="addToCart(cartItem)" class="w-5 h-5 flex items-center justify-center text-[#8D6E63] hover:text-[#3E2723] font-bold transition text-xs">+</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </template>
                 
-                <div x-show="cart.length === 0" class="flex flex-col items-center justify-center h-full text-[#A1887F] text-sm font-medium">
-                    <x-lucide-shopping-cart class="w-12 h-12 mb-4 opacity-20" />
+                <div x-show="cart.length === 0" class="flex flex-col items-center justify-center py-10 text-[#A1887F] text-sm font-medium">
+                    <x-lucide-shopping-cart class="w-10 h-10 mb-3 opacity-20" />
                     Your cart is empty.
                 </div>
             </div>
         </div>
 
-        <div class="pt-4 border-t border-[#F0E6D2] mt-auto">
-            
-            <div x-show="freeWifiMinAmount > 0" class="mb-4 p-3 rounded-xl border flex flex-col justify-center items-center text-center transition-all" :class="grandTotal >= freeWifiMinAmount ? 'bg-[#F3F9FF] border-[#E3F2FD]' : 'bg-[#FAFAFA] border-[#F0E6D2]'" style="display: none;">
-                <template x-if="grandTotal >= freeWifiMinAmount">
-                    <div>
-                        <p class="text-[10px] font-black text-[#1565C0] uppercase tracking-[0.2em] mb-0.5"><x-lucide-wifi class="w-3 h-3 inline-block mr-1 -mt-0.5"/> Free Wi-Fi Unlocked!</p>
-                        <p class="text-[10px] text-[#A1887F] font-medium" x-text="`Order qualifies for ${freeWifiDuration} mins free access.`"></p>
-                    </div>
-                </template>
-                <template x-if="grandTotal < freeWifiMinAmount">
-                    <div>
-                        <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-0.5">Free Wi-Fi Promo</p>
-                        <p class="text-[10px] text-[#A1887F] font-medium" x-text="`Spend ₱${(freeWifiMinAmount - grandTotal).toFixed(2)} more to get ${freeWifiDuration} mins free.`"></p>
-                    </div>
-                </template>
+        {{-- BOTTOM CHECKOUT (Fixed: Will not shrink) --}}
+        <div class="shrink-0 pt-3 border-t border-[#F0E6D2] flex flex-col gap-3">
+            <div x-show="freeWifiMinAmount > 0" class="p-3 rounded-xl border flex flex-col gap-2 transition-all" :class="grandTotal >= freeWifiMinAmount ? 'bg-[#F3F9FF] border-[#E3F2FD]' : 'bg-[#FAFAFA] border-[#F0E6D2]'" style="display: none;">
+                <div class="flex justify-between items-center">
+                    <p class="text-[9px] font-black uppercase tracking-[0.2em]" :class="grandTotal >= freeWifiMinAmount ? 'text-[#1565C0]' : 'text-[#8D6E63]'">
+                        <span x-show="grandTotal >= freeWifiMinAmount"><x-lucide-wifi class="w-3 h-3 inline-block mr-1 -mt-0.5"/> Free Wi-Fi Unlocked!</span>
+                        <span x-show="grandTotal < freeWifiMinAmount">Free Wi-Fi Promo</span>
+                    </p>
+                    <p class="text-[9px] font-bold" :class="grandTotal >= freeWifiMinAmount ? 'text-[#1565C0]' : 'text-[#8D6E63]'" x-text="Math.min(100, Math.round((grandTotal / freeWifiMinAmount) * 100)) + '%'"></p>
+                </div>
+                
+                <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                    <div class="h-full transition-all duration-500" 
+                         :class="grandTotal >= freeWifiMinAmount ? 'bg-[#1565C0]' : 'bg-[#3E2723]'" 
+                         :style="`width: ${Math.min(100, (grandTotal / freeWifiMinAmount) * 100)}%`"></div>
+                </div>
+
+                <p class="text-[9px] text-[#A1887F] font-medium text-center">
+                    <template x-if="grandTotal >= freeWifiMinAmount">
+                        <span x-text="`Order qualifies for ${freeWifiDuration} mins free access.`"></span>
+                    </template>
+                    <template x-if="grandTotal < freeWifiMinAmount">
+                        <span x-text="`Spend ₱${(freeWifiMinAmount - grandTotal).toFixed(2)} more to get ${freeWifiDuration} mins free.`"></span>
+                    </template>
+                </p>
             </div>
 
-            <div class="mb-4">
-                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-2">Discount</label>
+            <div>
+                <label class="block text-[9px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1.5">Discount</label>
                 <div class="flex gap-2">
-                    <button type="button" @click="discountType = 'none'; discountAmount = 0" class="flex-1 py-2 rounded-lg text-xs font-bold transition border" :class="discountType === 'none' ? 'bg-[#3E2723] text-white border-[#3E2723]' : 'bg-[#FAFAFA] text-[#8D6E63] border-[#F0E6D2] hover:bg-[#FDF8F5]'">None</button>
-                    <button type="button" @click="discountType = 'senior'; discountAmount = 0.20" class="flex-1 py-2 rounded-lg text-xs font-bold transition border" :class="discountType === 'senior' ? 'bg-[#3E2723] text-white border-[#3E2723]' : 'bg-[#FAFAFA] text-[#8D6E63] border-[#F0E6D2] hover:bg-[#FDF8F5]'">Senior/PWD (20%)</button>
+                    <button type="button" @click="discountType = 'none'; discountAmount = 0" class="flex-1 py-1.5 rounded-md text-[11px] font-bold transition border" :class="discountType === 'none' ? 'bg-[#3E2723] text-white border-[#3E2723]' : 'bg-[#FAFAFA] text-[#8D6E63] border-[#F0E6D2] hover:bg-[#FDF8F5]'">None</button>
+                    <button type="button" @click="discountType = 'senior'; discountAmount = 0.20" class="flex-1 py-1.5 rounded-md text-[11px] font-bold transition border" :class="discountType === 'senior' ? 'bg-[#3E2723] text-white border-[#3E2723]' : 'bg-[#FAFAFA] text-[#8D6E63] border-[#F0E6D2] hover:bg-[#FDF8F5]'">Senior/PWD (20%)</button>
                 </div>
             </div>
 
-            <div class="mb-4">
-                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-2">Amount Tendered (₱)</label>
-                <input type="number" x-model.number="amountTendered" class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-sm font-bold text-[#3E2723]" placeholder="Enter amount">
+            <div>
+                <label class="block text-[9px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1.5">Amount Tendered (₱)</label>
+                <input type="number" x-model.number="amountTendered" class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-sm font-bold text-[#3E2723]" placeholder="Enter amount">
             </div>
 
-            <div class="space-y-3 mb-6">
-                <div class="flex justify-between text-sm text-[#8D6E63] font-medium">
+            <div class="space-y-1">
+                <div class="flex justify-between text-xs text-[#8D6E63] font-medium">
                     <span>Subtotal</span>
                     <span x-text="'₱' + subtotal.toFixed(2)"></span>
                 </div>
-                <div class="flex justify-between text-sm text-[#8D6E63] font-medium">
+                <div class="flex justify-between text-xs text-[#8D6E63] font-medium">
                     <span>Discount</span>
                     <span class="text-red-500" x-text="'- ₱' + calculatedDiscount.toFixed(2)"></span>
                 </div>
-                <div class="flex justify-between text-sm text-[#8D6E63] font-medium">
+                <div class="flex justify-between text-xs text-[#8D6E63] font-medium">
                     <span>VAT (12% inc)</span>
                     <span x-text="'₱' + vatAmount.toFixed(2)"></span>
                 </div>
-                <div class="flex justify-between text-xl font-bold text-[#3E2723] pt-2 border-t border-[#FDF8F5]">
+                <div class="flex justify-between text-lg font-bold text-[#3E2723] pt-1.5 border-t border-[#FDF8F5]">
                     <span>Total</span>
                     <span x-text="'₱' + grandTotal.toFixed(2)"></span>
                 </div>
-                <div class="flex justify-between text-sm font-bold text-green-600 pt-2 border-t border-[#FDF8F5]" x-show="amountTendered > 0">
+                <div class="flex justify-between text-xs font-bold text-green-600 pt-1 border-t border-[#FDF8F5]" x-show="amountTendered > 0">
                     <span>Change</span>
                     <span x-text="'₱' + Math.max(0, amountTendered - grandTotal).toFixed(2)"></span>
                 </div>
             </div>
 
-            <button type="button" @click="submitCheckout()" :disabled="cart.length === 0 || isProcessing || (amountTendered > 0 && amountTendered < grandTotal)" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-full font-bold uppercase tracking-widest transition shadow-lg shadow-[#3E2723]/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center text-sm gap-3">
+            <button type="button" @click="submitCheckout()" :disabled="cart.length === 0 || isProcessing || (amountTendered > 0 && amountTendered < grandTotal)" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-3 rounded-full font-bold uppercase tracking-widest transition shadow-lg shadow-[#3E2723]/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center text-xs gap-2 shrink-0">
                 <template x-if="!isProcessing">
-                    <x-lucide-send class="w-5 h-5" />
+                    <x-lucide-send class="w-4 h-4" />
                 </template>
                 <template x-if="isProcessing">
-                    <x-lucide-loader-2 class="w-5 h-5 animate-spin" />
+                    <x-lucide-loader-2 class="w-4 h-4 animate-spin" />
                 </template>
                 <span x-text="isProcessing ? 'Processing...' : (amountTendered > 0 && amountTendered < grandTotal ? 'Insufficient Funds' : 'Place Order')"></span>
             </button>
@@ -323,14 +359,14 @@
             <p class="text-sm text-[#8D6E63] mb-2">Payment completed for ₱<span x-text="grandTotal.toFixed(2)"></span>.</p>
             <p class="text-sm font-bold text-green-600 mb-8" x-show="amountTendered > 0">Change: ₱<span x-text="Math.max(0, amountTendered - grandTotal).toFixed(2)"></span></p>
 
-            <template x-if="hasWifi">
+            <template x-if="checkoutHasWifi">
                 <div class="border border-[#E3F2FD] rounded-2xl p-6 mb-8 bg-[#F3F9FF]">
                     <p class="text-xs text-[#1565C0] uppercase tracking-widest mb-2 font-bold">Generated Wi-Fi Access</p>
                     <p class="text-3xl font-mono font-black tracking-widest text-[#0D47A1]" x-text="generatedCode"></p>
                 </div>
             </template>
             
-            <template x-if="!hasWifi">
+            <template x-if="!checkoutHasWifi">
                 <div class="border border-[#F0E6D2] rounded-2xl p-6 mb-8 bg-[#FDF8F5]">
                     <p class="text-xs text-[#8D6E63] uppercase tracking-wider font-bold">Standard Order</p>
                     <p class="text-sm font-bold text-[#3E2723] mt-1">No network access required.</p>
@@ -393,6 +429,7 @@
             pendingItem: null,
             saleId: null,
             generatedCode: '',
+            checkoutHasWifi: false,
             isProcessing: false,
             freeWifiMinAmount: {{ $freeWifiMinAmount ?? 0 }},
             freeWifiDuration: {{ $freeWifiDuration ?? 0 }},
@@ -478,6 +515,7 @@
                 this.discountType = 'none';
                 this.discountAmount = 0;
                 this.showModal = false;
+                this.checkoutHasWifi = false;
                 this.isProcessing = false;
             },
 
@@ -509,7 +547,8 @@
                     
                     if (result.success) {
                         this.saleId = result.sale_id;
-                        this.generatedCode = result.voucher_code || '';
+                        this.generatedCode = result.generatedCode || '';
+                        this.checkoutHasWifi = result.hasWifi || false;
                         this.showModal = true;
                     } else {
                         Swal.fire({

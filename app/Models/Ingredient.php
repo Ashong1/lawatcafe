@@ -13,6 +13,7 @@ class Ingredient extends Model
         'name',
         'current_stock',
         'unit',
+        'low_stock_threshold',
         'status',
     ];
 
