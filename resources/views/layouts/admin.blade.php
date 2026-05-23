@@ -237,7 +237,7 @@
     </div>
 
     <!-- Barista AI Floating Chat -->
-    <div x-data="baristaAI()" class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div x-data="baristaAI()" class="fixed bottom-8 right-8 z-[100] flex flex-col items-end">
         <!-- Chat Window -->
         <div x-show="open" 
              x-transition:enter="transition ease-out duration-300"
