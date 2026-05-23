@@ -132,10 +132,21 @@ class VoucherController extends Controller
     public function sessions(\App\Services\OpnSenseService $opnsense)
     {
         // 1. Get real-time sessions from OPNsense
-        $opnSessions = $opnsense->listSessions();
-        $sessionCollection = collect($opnSessions);
+        $opnSessions = collect($opnsense->listSessions());
 
-        // 2. Batch fetch relevant vouchers to avoid N+1
+        // 2. Filter for truly active devices (Authorized/Connected) and unique physical hardware
+        $sessionCollection = $opnSessions->filter(function($s) {
+            $isLive = isset($s['clientState']) && in_array(strtoupper($s['clientState']), ['AUTHORIZED', 'CONNECTED']);
+            
+            $ip = str_replace('/32', '', $s['ipAddress']);
+            $ignoredIpsStr = \App\Models\Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.100,192.168.2.5,192.168.2.4');
+            $ignoredIps = explode(',', $ignoredIpsStr);
+            $isNotIgnored = !in_array($ip, $ignoredIps);
+
+            return $isLive && $isNotIgnored;
+        })->unique('macAddress');
+
+        // 3. Batch fetch relevant vouchers to avoid N+1
         $ips = $sessionCollection->map(fn($s) => str_replace('/32', '', $s['ipAddress']))->toArray();
         $macs = $sessionCollection->map(fn($s) => $s['macAddress'] ?? null)->filter()->toArray();
 
@@ -149,7 +160,7 @@ class VoucherController extends Controller
             ->latest('used_at')
             ->get();
 
-        // 3. Map and cross-reference
+        // 4. Map and cross-reference
         $sessions = $sessionCollection->map(function($raw) use ($voucherList) {
             $ip = str_replace('/32', '', $raw['ipAddress']);
             $mac = $raw['macAddress'] ?? null;
@@ -167,8 +178,8 @@ class VoucherController extends Controller
                 return round($bytes / pow(1024, $i), 2) . ' ' . $units[$i];
             };
 
-            $bytesIn = isset($raw['bytes_in']) ? (int)$raw['bytes_in'] : 0;
-            $bytesOut = isset($raw['bytes_out']) ? (int)$raw['bytes_out'] : 0;
+            $bytesIn = isset($raw['bytes_received']) ? (int)$raw['bytes_received'] : 0;
+            $bytesOut = isset($raw['bytes_sent']) ? (int)$raw['bytes_sent'] : 0;
 
             if (!$voucher) {
                 return (object) [
@@ -205,10 +216,6 @@ class VoucherController extends Controller
                 'bytes_out' => $formatBytes($bytesOut),
                 'connected_at' => isset($raw['startTime']) ? \Carbon\Carbon::createFromTimestamp($raw['startTime'])->diffForHumans() : 'N/A'
             ];
-        })->filter(function($session) {
-            $ignoredIpsStr = \App\Models\Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.100,192.168.2.5,192.168.2.4');
-            $ignoredIps = explode(',', $ignoredIpsStr);
-            return !in_array($session->ip_address, $ignoredIps);
         });
 
         if (request()->ajax() || request()->wantsJson()) {

@@ -20,77 +20,84 @@
     </div>
 </div>
 
-<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <!-- System Health -->
-    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col h-full justify-center">
+        
+        <div class="flex justify-between items-center w-full mb-6">
             <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap">System Health</h3>
-            
-            <div class="flex flex-row justify-center items-center flex-1 gap-6 md:gap-8">
-                <div class="group flex flex-row items-center gap-2">
-                    <div class="relative w-10 h-10 md:w-12 md:h-12">
-                        <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
-                            <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path class="text-amber-600 transition-all duration-1000 ease-out" 
-                                  stroke-dasharray="{{ $cpuLoad }}, 100" 
-                                  stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span class="text-[10px] font-black text-amber-700">{{ number_format($cpuLoad, 0) }}%</span>
-                        </div>
-                    </div>
-                    <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Load</span>
-                </div>
-                
-                <div class="group flex flex-row items-center gap-2">
-                    <div class="relative w-10 h-10 md:w-12 md:h-12">
-                        <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
-                            <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path class="text-amber-600 transition-all duration-1000 ease-out" 
-                                  stroke-dasharray="{{ $memoryUsage }}, 100" 
-                                  stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span class="text-[10px] font-black text-amber-700">{{ number_format($memoryUsage, 0) }}%</span>
-                        </div>
-                    </div>
-                    <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">Mem<br>Usage</span>
-                </div>
-
-                <div class="group flex flex-row items-center gap-2">
-                    <div class="relative w-10 h-10 md:w-12 md:h-12">
-                        <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
-                            <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path class="text-red-500 transition-all duration-1000 ease-out" 
-                                  stroke-dasharray="{{ min($cpuTemp, 100) }}, 100" 
-                                  stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span class="text-[10px] font-black text-red-600">{{ $cpuTemp }}°</span>
-                        </div>
-                    </div>
-                    <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Temp</span>
-                </div>
-            </div>
-
-            <div class="hidden lg:flex items-center gap-2 opacity-60">
+            <div class="flex items-center gap-2 opacity-60">
                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Stable</span>
+            </div>
+        </div>
+        
+        <div class="flex flex-row justify-center items-center w-full gap-6 md:gap-8 flex-1">
+            <div class="group flex flex-row items-center gap-2">
+                <div class="relative w-10 h-10 md:w-12 md:h-12">
+                    <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
+                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="text-amber-600 transition-all duration-1000 ease-out" 
+                              stroke-dasharray="{{ $cpuLoad }}, 100" 
+                              stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="text-[10px] font-black text-amber-700">{{ number_format($cpuLoad, 0) }}%</span>
+                    </div>
+                </div>
+                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight text-left">CPU<br>Load</span>
+            </div>
+            
+            <div class="group flex flex-row items-center gap-2">
+                <div class="relative w-10 h-10 md:w-12 md:h-12">
+                    <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
+                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="text-amber-600 transition-all duration-1000 ease-out" 
+                              stroke-dasharray="{{ $memoryUsage }}, 100" 
+                              stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="text-[10px] font-black text-amber-700">{{ number_format($memoryUsage, 0) }}%</span>
+                    </div>
+                </div>
+                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight text-left">Mem<br>Usage</span>
+            </div>
+
+            <div class="group flex flex-row items-center gap-2">
+                <div class="relative w-10 h-10 md:w-12 md:h-12">
+                    <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
+                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="text-red-500 transition-all duration-1000 ease-out" 
+                              stroke-dasharray="{{ min($cpuTemp ?? 0, 100) }}, 100" 
+                              stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span class="text-[10px] font-black text-red-600">{{ $cpuTemp ?? 0 }}°</span>
+                    </div>
+                </div>
+                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight text-left">CPU<br>Temp</span>
             </div>
         </div>
     </div>
 
     <!-- Network Status -->
-    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col relative overflow-hidden group">
+    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col relative overflow-hidden group h-full justify-center">
         <div class="absolute -right-4 -top-4 w-20 h-20 bg-blue-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
         
-        <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6 h-full">
-            <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap">Network Pulse</h3>
+        <div class="relative z-10 flex flex-col h-full w-full">
             
-            <div class="flex flex-row justify-center items-center flex-1 gap-8 md:gap-12">
+            <div class="flex justify-between items-center w-full mb-6">
+                <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap">Network Pulse</h3>
+                <div class="flex items-center gap-2 opacity-60">
+                    <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Live</span>
+                </div>
+            </div>
+            
+            <div class="flex flex-row justify-center items-center w-full gap-8 md:gap-12 flex-1">
                 <div class="flex flex-col items-center">
                     <div class="flex items-baseline gap-1 mb-1">
-                        <span class="text-xl font-black text-[#1565C0]">{{ number_format($bandwidthDown, 2) }}</span>
+                        <span class="text-xl font-black text-[#1565C0]">{{ number_format($bandwidthDown ?? 0, 2) }}</span>
                         <span class="text-[10px] font-bold text-[#A1887F] uppercase">Mbps</span>
                     </div>
                     <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Down Speed</span>
@@ -98,7 +105,7 @@
 
                 <div class="flex flex-col items-center">
                     <div class="flex items-baseline gap-1 mb-1">
-                        <span class="text-xl font-black text-[#059669]">{{ number_format($bandwidthUp, 2) }}</span>
+                        <span class="text-xl font-black text-[#059669]">{{ number_format($bandwidthUp ?? 0, 2) }}</span>
                         <span class="text-[10px] font-bold text-[#A1887F] uppercase">Mbps</span>
                     </div>
                     <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Up Speed</span>
@@ -112,16 +119,11 @@
                     <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Devices</span>
                 </div>
             </div>
-
-            <div class="hidden lg:flex items-center gap-2 opacity-60">
-                <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Live</span>
-            </div>
         </div>
     </div>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300">
         <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
         <div class="relative z-10">
@@ -130,6 +132,31 @@
                 <span class="text-xl opacity-50">🌐</span>
             </div>
             <p class="text-4xl font-black text-[#1565C0]">{{ $activeUsers ?? 0 }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300">
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">WiFi Vouchers</h3>
+                <span class="text-xl opacity-50">🎫</span>
+            </div>
+            <div class="flex items-baseline gap-2">
+                <p class="text-4xl font-black text-[#3E2723]">{{ $availableVouchers ?? 0 }}</p>
+                <p class="text-xs text-[#A1887F] font-bold uppercase">Stock</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300">
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Today's Sales</h3>
+                <span class="text-xl opacity-50">📈</span>
+            </div>
+            <p class="text-3xl font-black text-[#2E7D32]">₱{{ number_format($todaysSales ?? 0, 0) }}</p>
         </div>
     </div>
 
@@ -273,93 +300,59 @@
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+<div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] mb-8">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Recent Vouchers</h3>
+            <p class="text-xs text-[#A1887F] font-medium mt-1">Latest generated network access codes.</p>
+        </div>
+        
+        <form action="{{ route('network.vouchers.generate') }}" method="POST">
+            @csrf
+            <button type="submit" class="bg-[#3E2723] hover:bg-[#271815] text-white px-5 py-2.5 rounded-full shadow-sm transition-colors duration-200 text-[11px] font-bold uppercase tracking-wider active:scale-95 whitespace-nowrap">
+                + Generate Batch
+            </button>
+        </form>
+    </div>
     
-    <!-- Operational Metrics Column (Locked to top on mobile/tablet) -->
-    <div class="lg:col-span-1 lg:order-last w-full flex flex-col gap-6">
-        
-        <div class="w-full max-w-[320px] mx-auto lg:max-w-none bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
-            <div class="relative z-10 flex flex-col justify-center py-2">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">WiFi Vouchers</h3>
-                    <span class="text-xl opacity-50">🎫</span>
-                </div>
-                <div class="flex items-baseline gap-2">
-                    <p class="text-4xl font-black text-[#3E2723]">{{ $availableVouchers ?? 0 }}</p>
-                    <p class="text-xs text-[#A1887F] font-bold uppercase">Available</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="w-full max-w-[320px] mx-auto lg:max-w-none bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
-            <div class="relative z-10 flex flex-col justify-center py-2">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Today's Sales</h3>
-                    <span class="text-xl opacity-50">📈</span>
-                </div>
-                <p class="text-4xl font-black text-[#2E7D32]">₱{{ number_format($todaysSales ?? 0, 0) }}</p>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Recent Vouchers Table (Moves below on mobile, takes 2/3 space on desktop) -->
-    <div class="lg:col-span-2 lg:order-first bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Recent Vouchers</h3>
-                <p class="text-xs text-[#A1887F] font-medium mt-1">Latest generated network access codes.</p>
-            </div>
-            
-            <form action="{{ route('network.vouchers.generate') }}" method="POST">
-                @csrf
-                <button type="submit" class="bg-[#3E2723] hover:bg-[#271815] text-white px-5 py-2.5 rounded-full shadow-sm transition-colors duration-200 text-[11px] font-bold uppercase tracking-wider active:scale-95 whitespace-nowrap">
-                    + Generate Batch
-                </button>
-            </form>
-        </div>
-        
-        <div class="overflow-x-auto pr-2">
-            <table class="w-full text-left border-collapse min-w-[500px]">
-                <thead>
-                    <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-black">Code</th>
-                        <th class="pb-4 font-black text-center">Duration</th>
-                        <th class="pb-4 font-black text-center">Status</th>
-                        <th class="pb-4 font-black text-right">Created</th>
+    <div class="overflow-x-auto pr-2">
+        <table class="w-full text-left border-collapse min-w-[500px]">
+            <thead>
+                <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
+                    <th class="pb-4 font-black">Code</th>
+                    <th class="pb-4 font-black text-center">Duration</th>
+                    <th class="pb-4 font-black text-center">Status</th>
+                    <th class="pb-4 font-black text-right">Created</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm">
+                @forelse($recentVouchers ?? [] as $voucher)
+                    <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
+                        <td class="py-4 font-black text-amber-700 tracking-widest font-mono">{{ $voucher->code }}</td>
+                        <td class="py-4 text-[#8D6E63] font-bold text-center">{{ $voucher->duration_minutes }}m</td>
+                        <td class="py-4 text-center">
+                            <span class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $voucher->is_used ? 'bg-gray-100 text-gray-500' : 'bg-[#FFF3E0] text-[#E65100]' }}">
+                                {{ $voucher->is_used ? 'Used' : 'Available' }}
+                            </span>
+                        </td>
+                        <td class="py-4 text-[#A1887F] text-xs font-medium text-right">{{ $voucher->created_at->diffForHumans() }}</td>
                     </tr>
-                </thead>
-                <tbody class="text-sm">
-                    @forelse($recentVouchers ?? [] as $voucher)
-                        <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
-                            <td class="py-4 font-black text-amber-700 tracking-widest font-mono">{{ $voucher->code }}</td>
-                            <td class="py-4 text-[#8D6E63] font-bold text-center">{{ $voucher->duration_minutes }}m</td>
-                            <td class="py-4 text-center">
-                                <span class="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider {{ $voucher->is_used ? 'bg-gray-100 text-gray-500' : 'bg-[#FFF3E0] text-[#E65100]' }}">
-                                    {{ $voucher->is_used ? 'Used' : 'Available' }}
-                                </span>
-                            </td>
-                            <td class="py-4 text-[#A1887F] text-xs font-medium text-right">{{ $voucher->created_at->diffForHumans() }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="py-16 text-center text-[#A1887F] text-xs italic">No vouchers found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        
-        @if(count($recentVouchers ?? []) > 0)
-        <div class="mt-6 text-center">
-            <a href="{{ route('network.vouchers.index') }}" class="text-[11px] font-bold uppercase tracking-widest text-[#8D6E63] hover:text-[#3E2723] transition-colors underline decoration-dotted decoration-2 underline-offset-4">
-                Manage All Vouchers
-            </a>
-        </div>
-        @endif
+                @empty
+                    <tr>
+                        <td colspan="4" class="py-16 text-center text-[#A1887F] text-xs italic">No vouchers found.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
+    
+    @if(count($recentVouchers ?? []) > 0)
+    <div class="mt-6 text-center">
+        <a href="{{ route('network.vouchers.index') }}" class="text-[11px] font-bold uppercase tracking-widest text-[#8D6E63] hover:text-[#3E2723] transition-colors underline decoration-dotted decoration-2 underline-offset-4">
+            Manage All Vouchers
+        </a>
+    </div>
+    @endif
 </div>
 
 </div>
