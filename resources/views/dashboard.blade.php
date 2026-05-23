@@ -62,9 +62,9 @@
 
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     
-    <!-- Recent Transactions (NEW) -->
+    <!-- Recent Transactions -->
     <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
         <div class="flex justify-between items-center mb-6">
             <div>
@@ -110,7 +110,7 @@
     </div>
 
     <div class="space-y-6">
-        <!-- Daily Revenue Split (NEW) -->
+        <!-- Daily Revenue Split -->
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
             <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest mb-6 text-center">Daily Revenue Split</h3>
             <div class="space-y-4">
@@ -172,9 +172,97 @@
     </div>
 </div>
 
-<div class="flex flex-col-reverse lg:flex-row gap-6 mb-8">
+<div class="flex flex-col lg:flex-row gap-6 mb-8">
     
-    <div class="w-full lg:w-2/3 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
+    <!-- Operational Metrics Column (Moves to top on mobile, right on desktop) -->
+    <div class="w-full lg:w-1/3 flex flex-col gap-6 order-1 lg:order-2">
+        
+        <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col">
+            <h3 class="text-sm font-bold text-[#3E2723] mb-6 uppercase tracking-widest text-center lg:text-left">System Health</h3>
+            
+            <div class="flex flex-row justify-center lg:justify-between items-center w-full flex-1 gap-6 sm:gap-10 lg:gap-1">
+                
+                <div class="group flex flex-row items-center gap-1.5 md:gap-2">
+                    <div class="relative w-12 h-12 md:w-14 md:h-14">
+                        <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
+                            <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="text-amber-600 transition-all duration-1000 ease-out" 
+                                  stroke-dasharray="{{ $cpuLoad }}, 100" 
+                                  stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-[10px] md:text-xs font-black text-amber-700">{{ number_format($cpuLoad, 0) }}%</span>
+                        </div>
+                    </div>
+                    <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Load</span>
+                </div>
+                
+                <div class="group flex flex-row items-center gap-1.5 md:gap-2">
+                    <div class="relative w-12 h-12 md:w-14 md:h-14">
+                        <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
+                            <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="text-amber-600 transition-all duration-1000 ease-out" 
+                                  stroke-dasharray="{{ $memoryUsage }}, 100" 
+                                  stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-[10px] md:text-xs font-black text-amber-700">{{ number_format($memoryUsage, 0) }}%</span>
+                        </div>
+                    </div>
+                    <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">Mem<br>Usage</span>
+                </div>
+
+                <div class="group flex flex-row items-center gap-1.5 md:gap-2">
+                    <div class="relative w-12 h-12 md:w-14 md:h-14">
+                        <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
+                            <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="text-red-500 transition-all duration-1000 ease-out" 
+                                  stroke-dasharray="{{ min($cpuTemp, 100) }}, 100" 
+                                  stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-[10px] md:text-xs font-black text-red-600">{{ $cpuTemp }}°</span>
+                        </div>
+                    </div>
+                    <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Temp</span>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-5 border-t border-[#FDF8F5] flex items-center justify-center lg:justify-start gap-3 opacity-60">
+                <div class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-[#8D6E63]">All Systems Online</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300 flex-1">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
+            <div class="relative z-10 flex flex-col justify-center h-full">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">WiFi Vouchers</h3>
+                    <span class="text-xl opacity-50">🎫</span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <p class="text-4xl font-black text-[#3E2723]">{{ $availableVouchers ?? 0 }}</p>
+                    <p class="text-xs text-[#A1887F] font-bold uppercase">Available</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300 flex-1">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
+            <div class="relative z-10 flex flex-col justify-center h-full">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Today's Sales</h3>
+                    <span class="text-xl opacity-50">📈</span>
+                </div>
+                <p class="text-4xl font-black text-[#2E7D32]">₱{{ number_format($todaysSales ?? 0, 0) }}</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Recent Vouchers Table (Moves to bottom on mobile, left on desktop) -->
+    <div class="w-full lg:w-2/3 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] order-2 lg:order-1">
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Recent Vouchers</h3>
@@ -232,93 +320,8 @@
         </div>
         @endif
     </div>
-
-    <div class="w-full lg:w-1/3 flex flex-col gap-6">
-        
-        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col">
-            <h3 class="text-sm font-bold text-[#3E2723] mb-6 uppercase tracking-widest">System Health</h3>
-            
-            <div class="flex flex-row justify-between items-center w-full flex-1 gap-1">
-                
-                <div class="group flex flex-row items-center gap-1.5 md:gap-2">
-                    <div class="relative w-12 h-12 md:w-14 md:h-14">
-                        <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
-                            <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path class="text-amber-600 transition-all duration-1000 ease-out" 
-                                  stroke-dasharray="{{ $cpuLoad }}, 100" 
-                                  stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span class="text-[10px] md:text-xs font-black text-amber-700">{{ number_format($cpuLoad, 0) }}%</span>
-                        </div>
-                    </div>
-                    <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Load</span>
-                </div>
-                
-                <div class="group flex flex-row items-center gap-1.5 md:gap-2">
-                    <div class="relative w-12 h-12 md:w-14 md:h-14">
-                        <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
-                            <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path class="text-amber-600 transition-all duration-1000 ease-out" 
-                                  stroke-dasharray="{{ $memoryUsage }}, 100" 
-                                  stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span class="text-[10px] md:text-xs font-black text-amber-700">{{ number_format($memoryUsage, 0) }}%</span>
-                        </div>
-                    </div>
-                    <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">Mem<br>Usage</span>
-                </div>
-
-                <div class="group flex flex-row items-center gap-1.5 md:gap-2">
-                    <div class="relative w-12 h-12 md:w-14 md:h-14">
-                        <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
-                            <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            <path class="text-red-500 transition-all duration-1000 ease-out" 
-                                  stroke-dasharray="{{ min($cpuTemp, 100) }}, 100" 
-                                  stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span class="text-[10px] md:text-xs font-black text-red-600">{{ $cpuTemp }}°</span>
-                        </div>
-                    </div>
-                    <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Temp</span>
-                </div>
-            </div>
-
-            <div class="mt-6 pt-5 border-t border-[#FDF8F5] flex items-center gap-3 opacity-60">
-                <div class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-[#8D6E63]">All Systems Online</span>
-            </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300 flex-1">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
-            <div class="relative z-10 flex flex-col justify-center h-full">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">WiFi Vouchers</h3>
-                    <span class="text-xl opacity-50">🎫</span>
-                </div>
-                <div class="flex items-baseline gap-2">
-                    <p class="text-4xl font-black text-[#3E2723]">{{ $availableVouchers ?? 0 }}</p>
-                    <p class="text-xs text-[#A1887F] font-bold uppercase">Available</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#E6D5C3] transition-all duration-300 flex-1">
-            <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
-            <div class="relative z-10 flex flex-col justify-center h-full">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Today's Sales</h3>
-                    <span class="text-xl opacity-50">📈</span>
-                </div>
-                <p class="text-4xl font-black text-[#2E7D32]">₱{{ number_format($todaysSales ?? 0, 0) }}</p>
-            </div>
-        </div>
-
-    </div>
 </div>
+
 </div>
 
 <script>
