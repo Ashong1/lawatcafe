@@ -6,17 +6,40 @@
 @section('content')
 
 <style>
-    /* Prevent the main browser window from scrolling to lock the POS in place */
+    /* 1. Completely lock the viewport to prevent the native browser scrollbar */
     body, html {
         overflow: hidden !important;
+        height: 100vh !important;
     }
+    
+    /* 2. Force Laravel layout wrappers to act as full-height flex columns */
+    body > div, #app, .min-h-screen {
+        height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* 3. Strip all layout padding and force the main content to fill the remaining space */
     main {
         overflow: hidden !important;
         padding: 0 !important;
+        margin: 0 !important;
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    /* Override any internal Laravel container paddings (like .py-12 or .max-w-7xl) */
+    main > div {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: none !important;
+        flex: 1 !important;
+        display: flex !important;
     }
 </style>
 
-<div x-data="posSystem()" class="bg-[#FDF8F5] w-full h-[calc(100vh-3.5rem)] flex items-stretch text-[#4A3B32] overflow-hidden" style="font-family: 'Montserrat', sans-serif;">
+<div x-data="posSystem()" class="bg-[#FDF8F5] w-full flex-1 h-full flex items-stretch text-[#4A3B32] overflow-hidden" style="font-family: 'Montserrat', sans-serif;">
 
     {{-- Menu Area (Left) --}}
     <div class="flex-1 p-8 flex flex-col overflow-hidden">
@@ -141,7 +164,7 @@
     </div>
 
     {{-- Cart Sidebar (Right) --}}
-    <div class="w-[26rem] bg-white p-6 rounded-[2rem] shadow-[0_0_40px_rgba(62,39,35,0.08)] flex flex-col shrink-0 relative border border-[#F0E6D2]">
+    <div class="bg-white p-6 md:p-8 flex flex-col shrink-0 relative border-l border-[#F0E6D2] shadow-[-10px_0_30px_rgba(62,39,35,0.05)] h-full z-10" style="width: 28rem;">
         
         <div class="flex justify-between items-center mb-6 shrink-0">
             <div>
