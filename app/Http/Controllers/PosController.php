@@ -54,7 +54,19 @@ class PosController extends Controller
         // Check for active shift
         $activeShift = \App\Models\Shift::where('user_id', auth()->id())->where('status', 'open')->latest()->first();
 
-        return view('pos.index', compact('products', 'wifiOptions', 'activeShift'));
+        // Prepare combined categories for the UI
+        $categories = collect(['All', 'Coffee', 'Pastries', 'Wi-Fi']);
+        $dbCategories = Product::select('category')->distinct()->pluck('category');
+        $categories = $categories->merge($dbCategories)->unique()->values();
+
+        // Merge WiFi options into products list so Alpine logic stays simple
+        $mergedProducts = collect($products)->merge($wifiOptions)->toArray();
+
+        return view('pos.index', [
+            'products' => $mergedProducts,
+            'categories' => $categories,
+            'activeShift' => $activeShift
+        ]);
     }
 
     public function checkout(Request $request)
