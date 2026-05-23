@@ -6,7 +6,7 @@
     <title>Connected - Lawa't Cafe</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-[#3E2723] text-[#4A3B32] min-h-screen flex items-center justify-center p-4 antialiased" style="font-family: 'Montserrat', sans-serif;">
+<body class="bg-[#FAF7F2] text-[#4A3B32] min-h-screen flex items-center justify-center p-4 antialiased" style="font-family: 'Montserrat', sans-serif;">
 
     <!-- Background Image with Blur & Dark Overlay -->
     <div class="fixed inset-0 z-0">
@@ -25,12 +25,12 @@
             <div class="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg backdrop-blur-md">
                 <x-lucide-check class="w-12 h-12 text-white" />
             </div>
-            <h1 class="text-4xl font-black text-white uppercase tracking-[0.2em] drop-shadow-md">Connected!</h1>
+            <h1 class="text-5xl font-black text-white uppercase tracking-[0.2em] drop-shadow-md">Connected!</h1>
             <p class="text-white/80 text-[10px] font-bold uppercase tracking-widest mt-4">Internet Access Granted</p>
         </div>
 
         <div class="p-10 pb-14">
-            <h2 class="text-2xl font-black text-[#3E2723] mb-3">You're all set</h2>
+            <h2 class="text-3xl font-black text-[#3E2723] mb-3">You're all set</h2>
             <p class="text-sm text-[#8D6E63] font-medium leading-relaxed mb-10 px-4">Your device is now whitelisted. You can now browse the web, check social media, or stream your favorite content.</p>
 
             @if(session('passcode'))

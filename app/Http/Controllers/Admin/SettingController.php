@@ -16,9 +16,10 @@ class SettingController extends Controller
     {
         $settings = [
             'payment_qr_code' => Setting::get('payment_qr_code', ''),
-            'free_wifi_min_amount' => Setting::get('free_wifi_min_amount', '200'),
-            'free_wifi_duration' => Setting::get('free_wifi_duration', '60'),
             'low_stock_threshold' => Setting::get('low_stock_threshold', '500'),
+            'store_open_time' => Setting::get('store_open_time', '08:00'),
+            'store_close_time' => Setting::get('store_close_time', '22:00'),
+            'receipt_header' => Setting::get('receipt_header', 'Thank you for visiting Lawa\'t Cafe!'),
         ];
 
         return view('admin.settings.store', compact('settings'));
@@ -73,6 +74,9 @@ class SettingController extends Controller
             'low_stock_threshold' => 'nullable|numeric',
             'free_wifi_min_amount' => 'nullable|numeric|min:0',
             'free_wifi_duration' => 'nullable|numeric|min:1',
+            'store_open_time' => 'nullable|string',
+            'store_close_time' => 'nullable|string',
+            'receipt_header' => 'nullable|string|max:255',
         ]);
 
         foreach ($validated as $key => $value) {

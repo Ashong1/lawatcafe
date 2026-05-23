@@ -3,6 +3,7 @@
 
 @section('content')
 <div class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+    <div class="max-w-7xl mx-auto">
     
     <!-- Header Section -->
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -15,7 +16,7 @@
         </div>
         <div class="flex items-center gap-2 px-4 py-2 bg-[#3E2723] rounded-xl shadow-lg shadow-amber-900/10">
             <x-lucide-sparkles class="w-4 h-4 text-amber-500 animate-pulse" />
-            <span class="text-[10px] font-black text-white uppercase tracking-widest">Model: Gemini 2.0 Flash</span>
+            <span class="text-[10px] font-black text-white uppercase tracking-widest">Model: {{ $activeModel }}</span>
         </div>
     </div>
 
@@ -225,6 +226,7 @@
                 </table>
             </div>
         </div>
+    </div>
     </div>
 </div>
 @endsection

@@ -67,54 +67,45 @@ class DashboardController extends Controller
             ];
         });
 
-        // 2. Network & Sessions (Mbps speed and accurate counting)
-        $networkPulse = Cache::remember('network_pulse', 15, function () use ($opnsense) {
+        // 2. Network & Sessions ( Mbps speed calculation removed from server, raw counters sent)
+        $networkPulse = Cache::remember('network_pulse_initial', 15, function () use ($opnsense) {
             try {
                 $sessions = collect($opnsense->listSessions());
                 $arpTable = collect($opnsense->getArpTable());
-                $now = now();
                 
-                // Identify Infrastructure IPs
                 $infraIpsStr = \App\Models\Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4');
                 $infraIps = explode(',', $infraIpsStr);
 
-                // Split into Guest vs Infrastructure
-                $activeSessions = $sessions->filter(function($s) {
-                    return isset($s['clientState']) && in_array(strtoupper($s['clientState']), ['AUTHORIZED', 'CONNECTED']);
-                });
-
-                $activeGuests = $activeSessions->filter(fn($s) => !in_array(str_replace('/32', '', $s['ipAddress']), $infraIps))
-                    ->unique('macAddress')->count();
+                $activeGuests = $sessions->filter(function($s) use ($infraIps) {
+                    $ip = str_replace('/32', '', $s['ipAddress'] ?? '');
+                    return !empty($ip) && !in_array($ip, $infraIps);
+                })->unique('ipAddress')->count();
                 
-                $systemNodes = $arpTable->filter(fn($s) => in_array($s['ip'], $infraIps))
+                $systemNodes = $arpTable->filter(fn($s) => in_array($s['ip'] ?? '', $infraIps))
                     ->unique('mac')->count();
                 
-                // Calculate Real-time Speed (Mbps)
-                $currentBytesIn = (int) $activeSessions->sum('bytes_received');
-                $currentBytesOut = (int) $activeSessions->sum('bytes_sent');
-                
-                $snapshot = Cache::get('network_snapshot');
-                $speedDown = 0; $speedUp = 0;
-
-                if ($snapshot && isset($snapshot['time'])) {
-                    $timeDelta = $now->diffInSeconds($snapshot['time']);
-                    if ($timeDelta > 0 && $timeDelta < 300) {
-                        $speedDown = round((max(0, $currentBytesIn - $snapshot['bytes_in']) * 8) / (1024 * 1024) / $timeDelta, 2);
-                        $speedUp = round((max(0, $currentBytesOut - $snapshot['bytes_out']) * 8) / (1024 * 1024) / $timeDelta, 2);
+                $stats = $opnsense->getInterfaceStats();
+                $iface = $stats['wan'] ?? $stats['lan'] ?? null;
+                if (!$iface) {
+                    foreach ($stats as $item) {
+                        if ($item['inbytes'] > 0) { $iface = $item; break; }
                     }
                 }
 
-                Cache::put('network_snapshot', ['time' => $now, 'bytes_in' => $currentBytesIn, 'bytes_out' => $currentBytesOut], 300);
+                $gateways = $opnsense->getGatewayStatus();
 
                 return [
                     'activeGuests' => $activeGuests,
                     'systemNodes' => $systemNodes,
-                    'bandwidthDown' => $speedDown,
-                    'bandwidthUp' => $speedUp,
-                    'totalDevices' => $activeSessions->unique('macAddress')->count()
+                    'rawIn' => (int) ($iface['inbytes'] ?? 0),
+                    'rawOut' => (int) ($iface['outbytes'] ?? 0),
+                    'bandwidthDown' => 0, // Initial 0, will be calculated by client
+                    'bandwidthUp' => 0,
+                    'totalDevices' => $activeGuests + $systemNodes,
+                    'gateways' => $gateways['gateways'] ?? []
                 ];
             } catch (\Exception $e) {
-                return ['activeGuests' => 0, 'systemNodes' => 0, 'bandwidthDown' => 0, 'bandwidthUp' => 0, 'totalDevices' => 0];
+                return ['activeGuests' => 0, 'systemNodes' => 0, 'bandwidthDown' => 0, 'bandwidthUp' => 0, 'totalDevices' => 0, 'gateways' => [], 'rawIn' => 0, 'rawOut' => 0];
             }
         });
 
@@ -127,13 +118,26 @@ class DashboardController extends Controller
                 ->get()
                 ->pluck('total', 'date')
                 ->toArray();
+            
+            $lastWeekSales = Sale::selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
+                ->where('created_at', '>=', Carbon::now()->subDays(13))
+                ->where('created_at', '<', Carbon::now()->subDays(6))
+                ->groupBy('date')
+                ->orderBy('date', 'ASC')
+                ->get()
+                ->pluck('total', 'date')
+                ->toArray();
 
             $chartLabels = [];
             $chartValues = [];
+            $lastWeekValues = [];
             for ($i = 6; $i >= 0; $i--) {
                 $date = Carbon::now()->subDays($i)->format('Y-m-d');
+                $lastWeekDate = Carbon::now()->subDays($i + 7)->format('Y-m-d');
+                
                 $chartLabels[] = Carbon::parse($date)->format('M d');
                 $chartValues[] = $salesData[$date] ?? 0;
+                $lastWeekValues[] = $lastWeekSales[$lastWeekDate] ?? 0;
             }
 
             $categoryData = Product::selectRaw('category, COUNT(*) as count')
@@ -150,7 +154,9 @@ class DashboardController extends Controller
             return [
                 'chartLabels' => $chartLabels,
                 'chartValues' => $chartValues,
-                'categoryData' => $categoryData
+                'lastWeekValues' => $lastWeekValues,
+                'categoryData' => $categoryData,
+                'totalItemsSold' => array_sum($categoryData)
             ];
         });
 
@@ -159,6 +165,7 @@ class DashboardController extends Controller
             $cpuLoad = function_exists('sys_getloadavg') ? sys_getloadavg()[0] * 10 : 12;
             $memoryUsage = 0;
             $cpuTemp = 0;
+            $diskUsage = 0;
 
             if (PHP_OS_FAMILY === 'Linux') {
                 // Memory
@@ -181,12 +188,20 @@ class DashboardController extends Controller
                         $cpuTemp = round(trim($temp) / 1000);
                     }
                 }
+
+                // Disk Usage
+                $diskFree = disk_free_space('/');
+                $diskTotal = disk_total_space('/');
+                if ($diskTotal > 0) {
+                    $diskUsage = round((($diskTotal - $diskFree) / $diskTotal) * 100);
+                }
             }
 
             return [
                 'cpuLoad' => $cpuLoad,
                 'memoryUsage' => $memoryUsage ?: 45,
-                'cpuTemp' => $cpuTemp ?: 42
+                'cpuTemp' => $cpuTemp ?: 42,
+                'diskUsage' => $diskUsage ?: 18
             ];
         });
 
@@ -206,9 +221,7 @@ class DashboardController extends Controller
     {
         $insights = Cache::remember('barista_forecast_deep', 3600, function() use ($ai) {
             $thirtyDaysAgo = Carbon::now()->subDays(30);
-            
             $transactionCount = Sale::where('created_at', '>=', $thirtyDaysAgo)->count();
-            
             $historicalSales = Sale::selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
                 ->where('created_at', '>=', $thirtyDaysAgo)
                 ->groupBy('date')
@@ -218,7 +231,6 @@ class DashboardController extends Controller
                 ->toArray();
             
             $daysOfData = count($historicalSales);
-
             $productPerformance = \App\Models\SaleItem::select('item_name', DB::raw('SUM(quantity) as total_qty'))
                 ->where('created_at', '>=', $thirtyDaysAgo)
                 ->groupBy('item_name')
@@ -230,15 +242,11 @@ class DashboardController extends Controller
             $aiResult = $ai->analyzeSalesTrends($historicalSales, $productPerformance);
             
             if ($aiResult) {
-                // Update the Dashboard Brief
                 if (isset($aiResult['strategic_advice'])) {
                     Cache::put('barista_ai_brief', $aiResult['strategic_advice'], 3600);
                 }
-
-                // Determine confidence and progress
                 $targetTransactions = 50;
                 $progress = min($transactionCount, $targetTransactions);
-                
                 $targetDays = 7;
                 $confidenceScore = min($daysOfData, $targetDays);
                 $confidenceLabels = [
@@ -262,7 +270,6 @@ class DashboardController extends Controller
                     $aiResult['forecast_range_high'] = $total * (1 + $variance);
                 }
             }
-
             return $aiResult;
         });
 
@@ -275,9 +282,61 @@ class DashboardController extends Controller
             'message' => 'required|string|max:1000',
             'history' => 'nullable|array'
         ]);
-
         $reply = $ai->adminChat($request->message, $request->history ?? []);
-        
         return response()->json(['reply' => $reply]);
+    }
+
+    /**
+     * Get real-time stats for the dashboard polling.
+     */
+    public function liveStats(\App\Services\OpnSenseService $opnsense)
+    {
+        // 1. Network Throughput (Raw Bytes) - Selection logic matches index()
+        $stats = $opnsense->getInterfaceStats();
+        $iface = $stats['wan'] ?? $stats['lan'] ?? null;
+        if (!$iface) {
+            foreach ($stats as $item) {
+                if ($item['inbytes'] > 0) { $iface = $item; break; }
+            }
+        }
+
+        // 2. System Health
+        $cpuLoad = function_exists('sys_getloadavg') ? sys_getloadavg()[0] * 10 : 12;
+        $memoryUsage = 0; $cpuTemp = 0;
+        if (PHP_OS_FAMILY === 'Linux') {
+            $free = shell_exec('free');
+            if ($free) {
+                $free_arr = explode("\n", (string)trim($free));
+                if (isset($free_arr[1])) {
+                    $mem = preg_split('/\s+/', $free_arr[1]);
+                    if (isset($mem[2]) && isset($mem[1]) && $mem[1] > 0) $memoryUsage = round($mem[2] / $mem[1] * 100);
+                }
+            }
+            if (file_exists('/sys/class/thermal/thermal_zone0/temp')) {
+                $temp = @file_get_contents('/sys/class/thermal/thermal_zone0/temp');
+                if ($temp !== false) $cpuTemp = round(trim($temp) / 1000);
+            }
+        }
+
+        // 3. Active Guests
+        $activeGuests = Cache::remember('active_guests_count', 5, function() use ($opnsense) {
+            $sessions = collect($opnsense->listSessions());
+            $infraIpsStr = \App\Models\Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4');
+            $infraIps = explode(',', $infraIpsStr);
+            
+            return $sessions->filter(function($s) use ($infraIps) {
+                $ip = str_replace('/32', '', $s['ipAddress'] ?? '');
+                return !empty($ip) && !in_array($ip, $infraIps);
+            })->unique('ipAddress')->count();
+        });
+
+        return response()->json([
+            'rawIn' => (int) ($iface['inbytes'] ?? 0),
+            'rawOut' => (int) ($iface['outbytes'] ?? 0),
+            'cpuLoad' => $cpuLoad,
+            'memoryUsage' => $memoryUsage ?: 45,
+            'cpuTemp' => $cpuTemp ?: 42,
+            'activeGuests' => $activeGuests
+        ]);
     }
 }

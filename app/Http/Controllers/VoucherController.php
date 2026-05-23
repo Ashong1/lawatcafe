@@ -136,6 +136,8 @@ class VoucherController extends Controller
     {
         $settings = [
             'voucher_durations' => \App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'),
+            'free_wifi_min_amount' => \App\Models\Setting::get('free_wifi_min_amount', '200'),
+            'free_wifi_duration' => \App\Models\Setting::get('free_wifi_duration', '60'),
         ];
 
         return view('network.plans', compact('settings'));
@@ -154,16 +156,24 @@ class VoucherController extends Controller
         $vipIpsStr = \App\Models\Setting::get('network_vip_ips', '192.168.2.100,192.168.2.5,192.168.2.4,192.168.2.99');
         $vipIps = explode(',', $vipIpsStr);
 
+        $normalizeMac = fn($mac) => strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac ?? ''));
+
         // 3. Create maps for quick lookup
-        $arpByMac = $arpTable->keyBy(fn($item) => strtoupper($item['mac'] ?? ''));
-        $cpByMac = $opnSessions->keyBy(fn($item) => strtoupper($item['macAddress'] ?? ''));
+        $arpByMac = $arpTable->keyBy(fn($item) => $normalizeMac($item['mac'] ?? ''));
+        $cpByMac = $opnSessions->keyBy(fn($item) => $normalizeMac($item['macAddress'] ?? ''));
+        $cpByIp = $opnSessions->keyBy(fn($item) => str_replace('/32', '', $item['ipAddress'] ?? ''));
 
-        // 4. Combine all unique MAC addresses
-        $allMacs = $arpByMac->keys()->concat($cpByMac->keys())->unique()->filter();
+        // 4. Combine all unique MAC addresses from ARP table and CP sessions (that have MACs)
+        $allMacs = $arpByMac->keys()->concat($cpByMac->keys()->filter())->unique()->filter();
 
-        $combinedDevices = $allMacs->map(function($mac) use ($arpByMac, $cpByMac, $ignoredIps) {
+        $combinedDevices = $allMacs->map(function($mac) use ($arpByMac, $cpByMac, $cpByIp, $ignoredIps, $normalizeMac) {
             $arp = $arpByMac->get($mac);
             $cp = $cpByMac->get($mac);
+            
+            // If no match by MAC, try matching by the IP from the ARP table
+            if (!$cp && $arp && isset($arp['ip'])) {
+                $cp = $cpByIp->get($arp['ip']);
+            }
             
             $ip = $arp['ip'] ?? ($cp['ipAddress'] ?? 'N/A');
             $ip = str_replace('/32', '', $ip);
@@ -177,7 +187,7 @@ class VoucherController extends Controller
                 'hostname' => $arp['hostname'] ?? 'Unknown',
                 'manufacturer' => $arp['manufacturer'] ?? 'Generic',
                 'cpSession' => $cp,
-                'isAuthorized' => isset($cp['clientState']) && in_array(strtoupper($cp['clientState']), ['AUTHORIZED', 'CONNECTED']),
+                'isAuthorized' => (isset($cp['clientState']) && in_array(strtoupper($cp['clientState']), ['AUTHORIZED', 'CONNECTED'])) || (!empty($cp['ipAddress'])),
                 'sessionId' => $cp['sessionId'] ?? null,
                 'bytes_received' => $cp['bytes_received'] ?? 0,
                 'bytes_sent' => $cp['bytes_sent'] ?? 0,
@@ -206,7 +216,7 @@ class VoucherController extends Controller
         $newSnapshot = [];
 
         // 7. Map and cross-reference for the view
-        $sessions = $combinedDevices->map(function($device) use ($voucherList, $vipIps, $oldSnapshot, &$newSnapshot, $now) {
+        $sessions = $combinedDevices->map(function($device) use ($voucherList, $vipIps, $oldSnapshot, &$newSnapshot, $now, $normalizeMac) {
             $ip = $device['ipAddress'];
             $mac = $device['macAddress'];
             
@@ -235,8 +245,8 @@ class VoucherController extends Controller
             $isVip = in_array($ip, $vipIps);
 
             // Find the latest voucher
-            $voucher = $voucherList->filter(function($v) use ($ip, $mac) {
-                return $v->ip_address === $ip || ($mac && strtoupper($v->mac_address) === strtoupper($mac));
+            $voucher = $voucherList->filter(function($v) use ($ip, $mac, $normalizeMac) {
+                return $v->ip_address === $ip || ($mac && $normalizeMac($v->mac_address) === $mac);
             })->first();
 
             // Format bytes

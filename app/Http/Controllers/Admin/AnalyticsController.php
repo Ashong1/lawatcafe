@@ -51,6 +51,8 @@ class AnalyticsController extends Controller
             ->orderByDesc('revenue')
             ->get();
 
-        return view('admin.analytics.index', compact('aiForecast', 'weeklyStats', 'categoryPerformance'));
+        $activeModel = $ai->getModel();
+
+        return view('admin.analytics.index', compact('aiForecast', 'weeklyStats', 'categoryPerformance', 'activeModel'));
     }
 }

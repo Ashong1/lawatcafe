@@ -3,6 +3,7 @@
 
 @section('content')
 <div class="bg-[#FDF8F5] min-h-screen -m-6 p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+    <div class="max-w-7xl mx-auto">
     
     <!-- Page Header Area -->
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex justify-between items-end">
@@ -106,6 +107,7 @@
         <div class="mt-8">
             {{ $sales->links() }}
         </div>
+    </div>
     </div>
 </div>
 

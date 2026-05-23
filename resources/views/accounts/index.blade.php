@@ -3,11 +3,11 @@
 
 @section('content')
 <div x-data="accountManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
-    
-    <div class="mb-8 border-b border-[#E6D5C3] pb-6">
-        <h2 class="text-3xl font-black text-[#3E2723] tracking-wider uppercase italic" style="font-family: 'Dancing Script', cursive;">Lawa't <span class="font-sans not-italic font-bold text-[#4A3B32] text-2xl tracking-[0.2em]">STAFF MANAGEMENT</span></h2>
-        <p class="text-sm text-[#8D6E63] mt-2 font-medium">Control system access, assign roles, and edit admin accounts.</p>
-    </div>
+    <div class="max-w-7xl mx-auto">
+        <div class="mb-8 border-b border-[#E6D5C3] pb-6">
+            <h2 class="text-3xl font-black text-[#3E2723] tracking-wider uppercase italic" style="font-family: 'Dancing Script', cursive;">Lawa't <span class="font-sans not-italic font-bold text-[#4A3B32] text-2xl tracking-[0.2em]">STAFF MANAGEMENT</span></h2>
+            <p class="text-sm text-[#8D6E63] mt-2 font-medium">Control system access, assign roles, and edit admin accounts.</p>
+        </div>
 
     <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
         
@@ -106,7 +106,7 @@
 
     <!-- Account Modal -->
     <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl p-8 w-full max-w-md border-t-8 border-[#3E2723] transform transition-all">
+        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl p-8 w-full max-w-xl border-t-8 border-[#3E2723] transform transition-all">
             <h2 class="text-2xl font-black text-[#3E2723] mb-2 uppercase tracking-tight" x-text="modalTitle"></h2>
             <p class="text-xs text-[#8D6E63] mb-8 font-medium">Configure authentication and system permission levels.</p>
             

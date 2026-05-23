@@ -3,6 +3,7 @@
 
 @section('content')
 <div x-data="ingredientManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+    <div class="max-w-7xl mx-auto">
     
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -50,23 +51,42 @@
                         $isLow = $ingredient->current_stock <= $ingredient->low_stock_threshold;
                         $isOut = $ingredient->current_stock <= 0;
                         
-                        // Dynamic formatting logic
-                        $displayStock = $ingredient->current_stock;
+                        // Precise Dynamic Formatting Logic
+                        $displayStock = (float) $ingredient->current_stock;
                         $displayUnit = $ingredient->unit;
                         
-                        if (($ingredient->unit === 'g' || $ingredient->unit === 'ml') && $ingredient->current_stock >= 1000) {
-                            $displayStock = $ingredient->current_stock / 1000;
-                            $displayUnit = ($ingredient->unit === 'g') ? 'kg' : 'L';
+                        if ($ingredient->unit === 'g') {
+                            if ($displayStock >= 1000) {
+                                $displayStock /= 1000;
+                                $displayUnit = 'kg';
+                            } elseif ($displayStock < 1 && $displayStock > 0) {
+                                $displayStock *= 1000;
+                                $displayUnit = 'mg';
+                            }
+                        } elseif ($ingredient->unit === 'ml') {
+                            if ($displayStock >= 1000) {
+                                $displayStock /= 1000;
+                                $displayUnit = 'L';
+                            }
                         }
+                        
+                        $formattedStock = $displayStock >= 100 
+                            ? number_format($displayStock, 1) 
+                            : ($displayStock >= 10 
+                                ? number_format($displayStock, 2) 
+                                : number_format($displayStock, 3));
+                        
+                        // Remove trailing zeros and decimal if whole number
+                        $formattedStock = rtrim(rtrim($formattedStock, '0'), '.');
                     @endphp
                     <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors {{ $isLow ? 'bg-red-50/30' : '' }}">
                         <td class="py-4">
                             <span class="font-bold text-[#3E2723] text-base block">{{ $ingredient->name }}</span>
-                            <span class="text-[10px] text-[#A1887F] font-medium uppercase tracking-widest">Base: {{ $ingredient->unit }}</span>
+                            <span class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest">Tracking Unit: {{ $ingredient->unit }}</span>
                         </td>
                         <td class="py-4 text-right">
                             <span class="font-extrabold text-base {{ $isLow ? 'text-red-600' : 'text-[#3E2723]' }}">
-                                {{ is_float($displayStock) ? number_format($displayStock, 1) : number_format($displayStock) }}
+                                {{ $formattedStock }}
                             </span>
                             <span class="text-[10px] font-black uppercase text-[#8D6E63] ml-1">{{ $displayUnit }}</span>
                         </td>
@@ -107,9 +127,13 @@
         </div>
     </div>
 
-    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-        <div @click.away="closeModal()" class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg border-t-8 border-[#3E2723]">
-            <h2 class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-widest" x-text="modalTitle"></h2>
+    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl w-full max-w-xl overflow-hidden border-t-8 border-[#3E2723]">
+            
+            <div class="px-8 py-6 border-b border-[#FDF8F5]">
+                <h2 class="text-xl font-black text-[#3E2723] uppercase tracking-widest" x-text="modalTitle"></h2>
+                <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter">Configure tracking units and stock thresholds.</p>
+            </div>
             
             <form :action="formAction" method="POST">
                 @csrf
@@ -117,52 +141,55 @@
                     <input type="hidden" name="_method" value="PUT">
                 </template>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div class="md:col-span-2">
-                        <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Ingredient Name</label>
-                        <input type="text" name="name" x-model="formData.name" required class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all" placeholder="e.g. Whole Milk">
+                <div class="p-8 space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Ingredient Name</label>
+                        <input type="text" name="name" x-model="formData.name" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm" placeholder="e.g. Whole Milk">
                     </div>
 
-                    <div>
-                        <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Base Unit</label>
-                        <select name="unit" x-model="formData.unit" required class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
-                            <option value="">Select Unit</option>
-                            <option value="ml">ml (Milliliters)</option>
-                            <option value="g">g (Grams)</option>
-                            <option value="pcs">pcs (Pieces)</option>
-                            <option value="box">box (Boxes)</option>
-                            <option value="bag">bag (Bags)</option>
-                            <option value="can">can (Cans)</option>
-                            <option value="bottle">bottle (Bottles)</option>
-                        </select>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Base Unit</label>
+                            <select name="unit" x-model="formData.unit" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
+                                <option value="">Select...</option>
+                                <option value="ml">ml (Milliliters)</option>
+                                <option value="g">g (Grams)</option>
+                                <option value="pcs">pcs (Pieces)</option>
+                                <option value="box">box (Boxes)</option>
+                                <option value="bag">bag (Bags)</option>
+                                <option value="can">can (Cans)</option>
+                                <option value="bottle">bottle (Bottles)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Initial Status</label>
+                            <select name="status" x-model="formData.status" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
+                                <option value="In Stock">In Stock</option>
+                                <option value="Low Stock">Low Stock</option>
+                                <option value="Out of Stock">Out of Stock</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Initial Status</label>
-                        <select name="status" x-model="formData.status" class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
-                            <option value="In Stock">In Stock</option>
-                            <option value="Low Stock">Low Stock</option>
-                            <option value="Out of Stock">Out of Stock</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Current Stock</label>
-                        <input type="number" name="current_stock" x-model="formData.current_stock" required step="0.01" class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all">
-                    </div>
-
-                    <div>
-                        <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Low Stock Alert at</label>
-                        <input type="number" name="low_stock_threshold" x-model="formData.low_stock_threshold" required step="0.01" class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Current Stock</label>
+                            <input type="number" name="current_stock" x-model="formData.current_stock" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Low Alert At</label>
+                            <input type="number" name="low_stock_threshold" x-model="formData.low_stock_threshold" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex gap-4">
-                    <button type="button" @click="closeModal()" class="flex-1 py-3.5 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#8D6E63] hover:bg-[#FDF8F5] font-bold transition text-sm tracking-wide">Cancel</button>
-                    <button type="submit" class="flex-1 py-3.5 bg-[#3E2723] text-white rounded-full hover:bg-[#271815] font-bold transition shadow-md shadow-[#3E2723]/20 text-sm tracking-wide">Save Ingredient</button>
+                <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
+                    <button type="button" @click="closeModal()" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-[#FDF8F5] font-black transition text-[10px] uppercase tracking-widest">Cancel</button>
+                    <button type="submit" class="flex-1 py-4 bg-[#3E2723] text-white rounded-2xl hover:bg-[#271815] font-black transition shadow-lg shadow-[#3E2723]/20 text-[10px] uppercase tracking-widest">Save Item</button>
                 </div>
             </form>
         </div>
+    </div>
     </div>
 </div>
 

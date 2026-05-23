@@ -12,8 +12,13 @@ class AIService
 
     public function __construct()
     {
-        $this->apiKey = env('OPENROUTER_API_KEY');
-        $this->model = env('OPENROUTER_MODEL', 'google/gemini-2.5-flash'); 
+        $this->apiKey = \App\Models\Setting::get('ai_api_key') ?: env('OPENROUTER_API_KEY');
+        $this->model = \App\Models\Setting::get('active_ai_model') ?: env('OPENROUTER_MODEL', 'google/gemini-2.0-flash-001'); 
+    }
+
+    public function getModel()
+    {
+        return $this->model;
     }
 
     /**

@@ -17,7 +17,8 @@ class OpnSenseService
         $this->baseUrl = config('services.opnsense.url');
         $this->apiKey = config('services.opnsense.key');
         $this->apiSecret = config('services.opnsense.secret');
-        $this->zone = config('services.opnsense.zone', 0);
+        // Prioritize database setting, fallback to config
+        $this->zone = \App\Models\Setting::get('opnsense_zone', config('services.opnsense.zone', 0));
     }
 
     /**
@@ -124,12 +125,110 @@ class OpnSenseService
                 ->get($url);
 
             if ($response->successful()) {
-                return $response->json();
+                $data = $response->json();
+                $rows = $data['rows'] ?? $data['sessions'] ?? $data;
+                
+                if (!is_array($rows)) return [];
+
+                return array_map(function($session) {
+                    // Normalize byte keys
+                    if (isset($session['bytes_in']) && !isset($session['bytes_received'])) {
+                        $session['bytes_received'] = $session['bytes_in'];
+                    }
+                    if (isset($session['bytes_out']) && !isset($session['bytes_sent'])) {
+                        $session['bytes_sent'] = $session['bytes_out'];
+                    }
+                    return $session;
+                }, $rows);
             }
 
             return [];
         } catch (\Exception $e) {
             Log::error("OPNsense: Exception fetching sessions: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get the gateway status from OPNsense.
+     */
+    public function getGatewayStatus()
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return [];
+        }
+
+        try {
+            $url = "{$this->baseUrl}/api/diagnostics/gateway/status";
+            
+            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
+                ->withoutVerifying()
+                ->get($url);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return [];
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception fetching gateway status: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get interface statistics from OPNsense.
+     */
+    public function getInterfaceStats()
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return [];
+        }
+
+        try {
+            $url = "{$this->baseUrl}/api/diagnostics/interface/getInterfaceStatistics";
+            
+            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
+                ->withoutVerifying()
+                ->get($url);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $stats = $data['statistics'] ?? [];
+                
+                $normalized = [];
+                foreach ($stats as $key => $values) {
+                    // Extract the human name (WAN, LAN) or the interface name (vtnet0)
+                    $name = 'unknown';
+                    
+                    // Improved regex to handle nested brackets [[WAN]] -> wan
+                    if (preg_match('/\[+([a-zA-Z0-9]+)\]+/', $key, $matches)) {
+                        $name = strtolower($matches[1]);
+                    } elseif (preg_match('/\(([^\)]+)\)/', $key, $matches)) {
+                        $name = strtolower($matches[1]);
+                    }
+
+                    $inBytes = (int) ($values['received-bytes'] ?? 0);
+                    $outBytes = (int) ($values['sent-bytes'] ?? 0);
+
+                    // We want the aggregate entry for each interface.
+                    // Usually, this is the one with the highest traffic count.
+                    if (!isset($normalized[$name]) || ($inBytes + $outBytes) > ($normalized[$name]['inbytes'] + $normalized[$name]['outbytes'])) {
+                        $normalized[$name] = [
+                            'inbytes' => $inBytes,
+                            'outbytes' => $outBytes,
+                            'inpackets' => (int) ($values['received-packets'] ?? 0),
+                            'outpackets' => (int) ($values['sent-packets'] ?? 0),
+                            'errors' => (int) (($values['received-errors'] ?? 0) + ($values['send-errors'] ?? 0)),
+                        ];
+                    }
+                }
+                return $normalized;
+            }
+
+            return [];
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception fetching interface stats: " . $e->getMessage());
             return [];
         }
     }

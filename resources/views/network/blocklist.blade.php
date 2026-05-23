@@ -3,6 +3,7 @@
 
 @section('content')
 <div class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+    <div class="max-w-7xl mx-auto">
     
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -21,7 +22,7 @@
 
             <!-- Ban Modal -->
             <div x-show="showModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                <div @click.outside="showModal = false" class="bg-white rounded-[2rem] p-8 w-full max-w-md shadow-2xl border-t-8 border-red-600">
+                <div @click.outside="showModal = false" class="bg-white rounded-[2rem] p-8 w-full max-w-xl shadow-2xl border-t-8 border-red-600">
                     <h3 class="text-xl font-black text-[#3E2723] mb-2 uppercase tracking-tight">Restrict Network Access</h3>
                     <p class="text-xs text-[#8D6E63] mb-8 font-medium leading-relaxed">Enter the device details to permanently block it from connecting to the guest Wi-Fi.</p>
                     
@@ -122,6 +123,7 @@
             </table>
         </div>
         
+    </div>
     </div>
 </div>
 @endsection

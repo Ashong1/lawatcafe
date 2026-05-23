@@ -3,6 +3,7 @@
 
 @section('content')
 <div class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+    <div class="max-w-7xl mx-auto">
     
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -95,6 +96,7 @@
             {{ $payments->links() }}
         </div>
         
+    </div>
     </div>
 </div>
 @endsection

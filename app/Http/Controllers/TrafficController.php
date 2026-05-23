@@ -36,4 +36,10 @@ class TrafficController extends Controller
 
         return redirect()->back()->with('success', 'Bandwidth shaping rules updated successfully.');
     }
+
+    public function stats(\App\Services\OpnSenseService $opnsense)
+    {
+        $stats = $opnsense->getInterfaceStats();
+        return response()->json($stats);
+    }
 }

@@ -27,3 +27,13 @@
   - Implemented a progress bar visualization in the dashboard UI.
   - Added robust fallbacks for non-Linux environments to prevent dashboard crashes.
 - **Rule**: When adding system-level metrics, always provide fallbacks and use cached values (30s-60s) to minimize server load. Avoid executing complex shell commands on every page load.
+
+### 2026-05-23 - Captive Portal UX & Compliance
+- **Action**: Upgraded the Captive Portal with a split-screen desktop layout, active state styling, and legal compliance checkboxes.
+- **Goal**: Improve desktop UX while maintaining mobile responsiveness, and ensure network compliance.
+- **Outcome**: 
+  - Implemented a `hidden lg:flex` split-screen layout that provides a premium desktop experience without affecting mobile users.
+  - Standardized the "Intermediate Unlock" flow (`unlock.blade.php`) to ensure OS-level captive portal detection is correctly handled for Android/iOS devices.
+  - Added mandatory "Terms of Service" checkboxes to both voucher and payment forms to meet network administration standards.
+- **Rule**: Captive portals should always include an "unlocking" phase that performs a client-side form POST to the gateway IP. This ensures the device's OS recognizes the portal login as successful and dismisses the "Log in to network" notification.
+

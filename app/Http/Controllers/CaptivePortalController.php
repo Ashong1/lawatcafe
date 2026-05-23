@@ -167,7 +167,20 @@ class CaptivePortalController extends Controller
         return response()->json(['reply' => $reply]);
     }
 
-    // Show the success page after connection
+    /**
+     * Intermediate page to handle the OPNsense form submission.
+     * This is required for some devices to recognize they are connected to the network.
+     */
+    public function unlock()
+    {
+        $opnsenseIp = \App\Models\Setting::get('opnsense_ip', '192.168.1.1');
+        $zone = session('zone', \App\Models\Setting::get('opnsense_zone', '0'));
+        return view('portal.unlock', compact('opnsenseIp', 'zone'));
+    }
+
+    /**
+     * Show the success page after connection.
+     */
     public function success()
     {
         return view('portal.success');

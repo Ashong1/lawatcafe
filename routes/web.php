@@ -28,6 +28,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::post('/verify-payment', [CaptivePortalController::class, 'verifyPayment'])->name('verify-payment');
     Route::post('/upload', [CaptivePortalController::class, 'uploadReceipt'])->name('upload');
     Route::post('/chat', [CaptivePortalController::class, 'chat'])->name('chat');
+    Route::get('/unlock', [CaptivePortalController::class, 'unlock'])->name('unlock'); // Added unlock route
     Route::get('/success', [CaptivePortalController::class, 'success'])->name('success');
 });
 
@@ -75,6 +76,7 @@ Route::middleware(['auth'])->group(function () {
         
         // Admin Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/admin/live-stats', [DashboardController::class, 'liveStats'])->name('admin.live-stats'); // Added live-stats route
         Route::post('/admin/ai/chat', [DashboardController::class, 'adminChat'])->name('admin.ai.chat');
         Route::get('/admin/ai/insights', [DashboardController::class, 'getAIInsights'])->name('admin.ai.insights');
         Route::get('/admin/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('admin.analytics');
@@ -86,6 +88,12 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('products', ProductController::class)->except(['create', 'show', 'edit']);
             Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
             Route::resource('ingredients', IngredientController::class)->except(['create', 'show', 'edit']);
+            
+            // Supplier Deliveries (Receiving)
+            Route::resource('deliveries', \App\Http\Controllers\IngredientDeliveryController::class)->only(['index', 'store', 'destroy']);
+            
+            // Wastage & Spoilage
+            Route::resource('wastage', \App\Http\Controllers\WastageController::class)->only(['index', 'store', 'destroy']);
         });
 
         // Network & Voucher Actions (Admin only)
@@ -103,6 +111,7 @@ Route::middleware(['auth'])->group(function () {
 
             Route::get('/plans', [VoucherController::class, 'plans'])->name('plans');
             Route::get('/traffic', [\App\Http\Controllers\TrafficController::class, 'index'])->name('traffic');
+            Route::get('/traffic/stats', [\App\Http\Controllers\TrafficController::class, 'stats'])->name('traffic.stats'); // Added stats route
             Route::post('/traffic', [\App\Http\Controllers\TrafficController::class, 'update'])->name('traffic.update');
 
             Route::get('/blocklist', [\App\Http\Controllers\BlocklistController::class, 'index'])->name('blocklist');

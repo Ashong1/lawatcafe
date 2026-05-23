@@ -3,6 +3,7 @@
 
 @section('content')
 <div x-data="voucherManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+    <div class="max-w-7xl mx-auto">
     
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -166,7 +167,7 @@
 
     <!-- Generation Modal -->
     <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-        <div @click.away="isModalOpen = false" class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md border-t-8 border-[#3E2723]">
+        <div @click.away="isModalOpen = false" class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-xl border-t-8 border-[#3E2723]">
             <h2 class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-widest">Generate Vouchers</h2>
             
             <form action="{{ route('network.vouchers.generate') }}" method="POST">
@@ -193,12 +194,13 @@
         </div>
     </div>
     @endif
+    </div>
 </div>
 
 <script>
     function voucherManager() {
         return {
-            isModalOpen: false,
+            isModalOpen: {{ request('action') === 'generate' ? 'true' : 'false' }},
             selectedVouchers: [],
             vouchers: {!! json_encode($vouchers->pluck('id')) !!},
             get allSelected() {

@@ -8,9 +8,15 @@ use Illuminate\Http\Request;
 class ProductController extends Controller
 {
     // 1. Display the products on the page
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('ingredients')->get();
+        $query = Product::with('ingredients');
+
+        if ($request->has('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        $products = $query->orderBy('name')->get();
         $categories = \App\Models\Category::orderBy('name')->get();
         $ingredients = \App\Models\Ingredient::orderBy('name')->get();
         return view('inventory.products', compact('products', 'categories', 'ingredients'));

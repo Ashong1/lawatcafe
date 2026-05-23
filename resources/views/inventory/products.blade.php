@@ -3,6 +3,7 @@
 
 @section('content')
 <div x-data="productManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+    <div class="max-w-7xl mx-auto">
     
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -45,35 +46,54 @@
                 <tbody class="text-sm">
                     @forelse($products as $product)
                         <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
-                            <td class="py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-12 h-12 rounded-2xl bg-[#FDF8F5] border border-[#F0E6D2] flex items-center justify-center text-amber-800/30 overflow-hidden shadow-inner shrink-0">
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-xl bg-[#FAFAFA] border border-[#F0E6D2] flex items-center justify-center text-amber-800/30 shadow-sm shrink-0">
                                         @php
                                             $cat = $categories->firstWhere('name', $product->category);
                                             $icon = $cat ? 'lucide-' . $cat->icon : 'lucide-coffee';
                                         @endphp
-                                        <x-dynamic-component :component="$icon" class="w-6 h-6" />
+                                        <x-dynamic-component :component="$icon" class="w-5 h-5 text-[#8D6E63]" />
                                     </div>
-                                    <div>
-                                        <span class="font-bold text-[#3E2723] text-base block">{{ $product->name }}</span>
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[#3E2723] text-sm">{{ $product->name }}</span>
                                         <span class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest">{{ $product->category }}</span>
                                     </div>
                                 </div>
                             </td>
                             <td class="py-4">
-                                <span class="text-xs font-bold text-[#8D6E63]">
-                                    @php
-                                        $ingCount = $product->ingredients->count();
-                                    @endphp
-                                    {{ $ingCount }} {{ Str::plural('Ingredient', $ingCount) }}
-                                </span>
+                                @php
+                                    $ingCount = $product->ingredients->count();
+                                @endphp
+                                <div class="flex flex-col">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full {{ $ingCount > 0 ? 'bg-green-500' : 'bg-red-500 animate-pulse' }}"></span>
+                                        <span class="text-xs font-bold {{ $ingCount > 0 ? 'text-[#3E2723]' : 'text-red-600' }}">
+                                            {{ $ingCount }} {{ Str::plural('Ingredient', $ingCount) }}
+                                        </span>
+                                    </div>
+                                    @if($ingCount > 0)
+                                        <div class="flex flex-wrap gap-1 mt-1">
+                                            @foreach($product->ingredients->take(2) as $ing)
+                                                <span class="text-[9px] bg-[#FAFAFA] text-[#8D6E63] border border-[#F0E6D2] px-2 py-0.5 rounded font-bold uppercase tracking-tighter">
+                                                    {{ $ing->name }}
+                                                </span>
+                                            @endforeach
+                                            @if($ingCount > 2)
+                                                <span class="text-[9px] text-[#A1887F] font-bold italic ml-0.5">+{{ $ingCount - 2 }}</span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <span class="text-[9px] text-red-400 font-bold uppercase tracking-tighter mt-0.5">Missing Recipe</span>
+                                    @endif
+                                </div>
                             </td>
-                            <td class="py-4 font-extrabold text-[#3E2723] text-base">₱{{ number_format($product->price, 2) }}</td>
+                            <td class="py-4 font-black text-[#3E2723] text-sm">₱{{ number_format($product->price, 2) }}</td>
                             <td class="py-4">
                                 <button type="button" 
                                         @click="toggleStatus({{ $product->id }})"
-                                        :class="statuses['{{ $product->id }}'] === 'Active' ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#FFEBEE] text-[#C62828]'"
-                                        class="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all active:scale-95 border border-transparent hover:border-current">
+                                        :class="statuses['{{ $product->id }}'] === 'Active' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'"
+                                        class="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg border transition-all active:scale-95">
                                     <span x-text="statuses['{{ $product->id }}'] || '{{ $product->status }}'"></span>
                                 </button>
                             </td>
@@ -117,109 +137,111 @@
     </div>
 
     {{-- Add/Edit Modal (Refactored for space) --}}
-    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-        <div @click.away="closeModal()" class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden border-t-8 border-[#3E2723]">
+    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden border-t-8 border-[#3E2723]">
             
-            <div class="p-8 pb-4 flex justify-between items-start">
+            <div class="px-8 py-6 border-b border-[#FDF8F5] flex justify-between items-center">
                 <div>
-                    <h2 class="text-2xl font-bold text-[#3E2723] uppercase tracking-widest" x-text="modalTitle"></h2>
-                    <p class="text-xs text-[#8D6E63] font-medium mt-1">Configure product details and required ingredients.</p>
+                    <h2 class="text-xl font-black text-[#3E2723] uppercase tracking-widest" x-text="modalTitle"></h2>
+                    <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter">Configure product details and required ingredients.</p>
                 </div>
-                <div class="flex bg-[#FDF8F5] p-1 rounded-xl border border-[#F0E6D2]">
+                <div class="flex bg-[#FDF8F5] p-1 rounded-xl border border-[#F0E6D2] shrink-0 ml-4">
                     <button type="button" @click="activeTab = 'general'" 
                             :class="activeTab === 'general' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#8D6E63]'"
-                            class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">General</button>
+                            class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">General</button>
                     <button type="button" @click="activeTab = 'recipe'" 
                             :class="activeTab === 'recipe' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#8D6E63]'"
-                            class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">Recipe</button>
+                            class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">Recipe</button>
                 </div>
             </div>
             
-            <form :action="formAction" method="POST" class="p-8 pt-4">
+            <form :action="formAction" method="POST">
                 @csrf
                 <template x-if="isEditing">
                     <input type="hidden" name="_method" value="PUT">
                 </template>
 
-                <div x-show="activeTab === 'general'" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="md:col-span-2">
+                <div class="p-8 space-y-6">
+                    <div x-show="activeTab === 'general'" class="space-y-5">
+                        <div>
                             <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Product Name</label>
-                            <input type="text" name="name" x-model="formData.name" required class="w-full bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all" placeholder="e.g. Spanish Latte">
+                            <input type="text" name="name" x-model="formData.name" required class="w-full bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all" placeholder="e.g. Spanish Latte">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Category</label>
+                                <select name="category" x-model="formData.category" required class="w-full bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-3 py-3 text-xs font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
+                                    <option value="">Select...</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->name }}">{{ $category->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Price (₱)</label>
+                                <input type="number" step="0.01" name="price" x-model="formData.price" required class="w-full bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all" placeholder="0.00">
+                            </div>
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Category</label>
-                            <select name="category" x-model="formData.category" required class="w-full bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
-                                <option value="">Select...</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->name }}">{{ $category->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Price (₱)</label>
-                            <input type="number" step="0.01" name="price" x-model="formData.price" required class="w-full bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all" placeholder="0.00">
-                        </div>
-
-                        <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Initial Status</label>
-                            <select name="status" x-model="formData.status" required class="w-full bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
+                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Status</label>
+                            <select name="status" x-model="formData.status" required class="w-full bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-3 py-3 text-xs font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
                                 <option value="Active">Active</option>
                                 <option value="Out of Stock">Out of Stock</option>
                             </select>
                         </div>
                     </div>
+
+                    <div x-show="activeTab === 'recipe'" class="space-y-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-widest">Ingredients for 1 Unit</p>
+                            <button type="button" @click="addIngredientRow()" class="text-[9px] font-black text-blue-700 uppercase bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 transition-all flex items-center gap-1.5">
+                                <x-lucide-plus class="w-3 h-3" />
+                                <span>Add Material</span>
+                            </button>
+                        </div>
+
+                        <div class="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                            <template x-for="(ing, idx) in currentRecipe" :key="'recipe-ing-'+idx">
+                                <div class="flex gap-3 items-end bg-[#FDF8F5] p-3 rounded-xl border border-[#F0E6D2] group relative">
+                                    <div class="flex-[2]">
+                                        <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Ingredient</label>
+                                        <select :name="'ingredients['+idx+'][id]'" x-model="ing.id" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-[10px] bg-white font-bold text-[#3E2723]">
+                                            <option value="">Select...</option>
+                                            @foreach($ingredients as $ingredient)
+                                                <option value="{{ $ingredient->id }}">{{ $ingredient->name }} ({{ $ingredient->unit }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="flex-1">
+                                        <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Qty</label>
+                                        <input type="number" :name="'ingredients['+idx+'][quantity]'" x-model="ing.quantity" step="0.01" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723]">
+                                    </div>
+                                    <button type="button" @click="removeIngredientRow(idx)" class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                                        <x-lucide-trash-2 class="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </template>
+                            
+                            <template x-if="currentRecipe.length === 0">
+                                <div class="py-12 text-center border-2 border-dashed border-[#F0E6D2] rounded-2xl bg-[#FAFAFA]">
+                                    <x-lucide-utensils-crossed class="w-8 h-8 text-[#D7CCC8] mx-auto mb-2 opacity-50" />
+                                    <p class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest">No ingredients linked.</p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
                 </div>
 
-                <div x-show="activeTab === 'recipe'" class="space-y-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-widest">Ingredients for 1 Unit</p>
-                        <button type="button" @click="addIngredientRow()" class="text-[10px] font-black text-amber-700 uppercase bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 hover:bg-amber-100 transition-all flex items-center gap-1.5">
-                            <x-lucide-plus class="w-3 h-3" />
-                            <span>Add Material</span>
-                        </button>
-                    </div>
-
-                    <div class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                        <template x-for="(ing, idx) in currentRecipe" :key="'recipe-ing-'+idx">
-                            <div class="flex gap-3 items-end bg-[#FAFAFA] p-3 rounded-xl border border-[#F0E6D2] group">
-                                <div class="flex-[2]">
-                                    <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Ingredient</label>
-                                    <select :name="'ingredients['+idx+'][id]'" x-model="ing.id" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs bg-white font-bold text-[#3E2723]">
-                                        <option value="">Select...</option>
-                                        @foreach($ingredients as $ingredient)
-                                            <option value="{{ $ingredient->id }}">{{ $ingredient->name }} ({{ $ingredient->unit }})</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="flex-1">
-                                    <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Quantity</label>
-                                    <input type="number" :name="'ingredients['+idx+'][quantity]'" x-model="ing.quantity" step="0.01" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723]">
-                                </div>
-                                <button type="button" @click="removeIngredientRow(idx)" class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                    <x-lucide-trash-2 class="w-4 h-4" />
-                                </button>
-                            </div>
-                        </template>
-                        
-                        <template x-if="currentRecipe.length === 0">
-                            <div class="py-12 text-center border-2 border-dashed border-[#F0E6D2] rounded-2xl bg-[#FAFAFA]">
-                                <x-lucide-utensils-crossed class="w-8 h-8 text-[#D7CCC8] mx-auto mb-2 opacity-50" />
-                                <p class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest">No ingredients linked.</p>
-                                <p class="text-[9px] text-[#D7CCC8] mt-1 italic">Click "Add Material" to build the recipe.</p>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-
-                <div class="flex gap-4 mt-8">
-                    <button type="button" @click="closeModal()" class="flex-1 py-3.5 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#8D6E63] hover:bg-[#FDF8F5] font-bold transition text-sm tracking-wide">Cancel</button>
-                    <button type="submit" class="flex-1 py-3.5 bg-[#3E2723] text-white rounded-full hover:bg-[#271815] font-bold transition shadow-md shadow-[#3E2723]/20 text-sm tracking-wide">Save Product</button>
+                <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
+                    <button type="button" @click="closeModal()" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-[#FDF8F5] font-black transition text-[10px] uppercase tracking-widest whitespace-nowrap">Cancel</button>
+                    <button type="submit" class="flex-1 py-4 bg-[#3E2723] text-white rounded-2xl hover:bg-[#271815] font-black transition shadow-lg shadow-[#3E2723]/20 text-[10px] uppercase tracking-widest whitespace-nowrap">Save Product</button>
                 </div>
             </form>
         </div>
+    </div>
     </div>
 </div>
 

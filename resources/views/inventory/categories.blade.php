@@ -3,6 +3,7 @@
 
 @section('content')
 <div x-data="categoryManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+    <div class="max-w-7xl mx-auto">
     
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -103,9 +104,13 @@
         </div>
     </div>
 
-    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-        <div @click.away="closeModal()" class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg border-t-8 border-[#3E2723]">
-            <h2 class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-widest" x-text="modalTitle"></h2>
+    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl w-full max-w-xl overflow-hidden border-t-8 border-[#3E2723]">
+            
+            <div class="px-8 py-6 border-b border-[#FDF8F5]">
+                <h2 class="text-xl font-black text-[#3E2723] uppercase tracking-widest" x-text="modalTitle"></h2>
+                <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter">Organize products into logical groups.</p>
+            </div>
             
             <form :action="formAction" method="POST">
                 @csrf
@@ -113,51 +118,54 @@
                     <input type="hidden" name="_method" value="PUT">
                 </template>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div class="md:col-span-2">
-                        <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Category Name</label>
-                        <input type="text" name="name" x-model="formData.name" required class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all" placeholder="e.g. Cold Brews">
+                <div class="p-8 space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Category Name</label>
+                        <input type="text" name="name" x-model="formData.name" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm" placeholder="e.g. Cold Brews">
                     </div>
 
-                    <div>
-                        <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Icon Identifier</label>
-                        <div class="relative">
-                            <select name="icon" x-model="formData.icon" class="w-full p-3 pl-10 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all appearance-none">
-                                <option value="coffee">Coffee Cup</option>
-                                <option value="cup-soda">Soda / Cold</option>
-                                <option value="cookie">Pastry / Cookie</option>
-                                <option value="beef">Food / Meals</option>
-                                <option value="utensils">General Dining</option>
-                                <option value="wifi">Network / WiFi</option>
-                                <option value="star">Featured</option>
-                                <option value="layers">General</option>
-                            </select>
-                            <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#8D6E63]">
-                                <x-lucide-search class="w-4 h-4" />
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Icon</label>
+                            <div class="relative">
+                                <select name="icon" x-model="formData.icon" class="w-full p-3 pl-10 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all appearance-none text-xs font-bold">
+                                    <option value="coffee">Coffee Cup</option>
+                                    <option value="cup-soda">Soda / Cold</option>
+                                    <option value="cookie">Pastry / Cookie</option>
+                                    <option value="beef">Food / Meals</option>
+                                    <option value="utensils">General Dining</option>
+                                    <option value="wifi">Network / WiFi</option>
+                                    <option value="star">Featured</option>
+                                    <option value="layers">General</option>
+                                </select>
+                                <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#8D6E63]">
+                                    <x-lucide-search class="w-4 h-4" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Color</label>
+                            <div class="flex gap-2">
+                                <input type="color" name="color" x-model="formData.color" class="h-10 w-12 p-1 border-2 border-[#F0E6D2] rounded-xl bg-white cursor-pointer">
+                                <input type="text" x-model="formData.color" class="flex-1 p-2 border-2 border-[#F0E6D2] rounded-xl text-[10px] font-mono uppercase focus:outline-none bg-[#FAFAFA]" readonly>
                             </div>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Brand Color</label>
-                        <div class="flex gap-2">
-                            <input type="color" name="color" x-model="formData.color" class="h-12 w-16 p-1 border border-[#F0E6D2] rounded-xl bg-white cursor-pointer">
-                            <input type="text" x-model="formData.color" class="flex-1 p-3 border border-[#F0E6D2] rounded-xl text-xs font-mono uppercase focus:outline-none bg-[#FAFAFA]" readonly>
-                        </div>
+                        <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Description (Optional)</label>
+                        <textarea name="description" x-model="formData.description" rows="2" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-medium" placeholder="Brief description of this group..."></textarea>
                     </div>
                 </div>
 
-                <div class="mb-8">
-                    <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Description (Optional)</label>
-                    <textarea name="description" x-model="formData.description" rows="3" class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all" placeholder="Brief description of this group..."></textarea>
-                </div>
-
-                <div class="flex gap-4">
-                    <button type="button" @click="closeModal()" class="flex-1 py-3.5 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#8D6E63] hover:bg-[#FDF8F5] font-bold transition text-sm tracking-wide">Cancel</button>
-                    <button type="submit" class="flex-1 py-3.5 bg-[#3E2723] text-white rounded-full hover:bg-[#271815] font-bold transition shadow-md shadow-[#3E2723]/20 text-sm tracking-wide">Save Category</button>
+                <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
+                    <button type="button" @click="closeModal()" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-[#FDF8F5] font-black transition text-[10px] uppercase tracking-widest whitespace-nowrap">Cancel</button>
+                    <button type="submit" class="flex-1 py-4 bg-[#3E2723] text-white rounded-2xl hover:bg-[#271815] font-black transition shadow-lg shadow-[#3E2723]/20 text-[10px] uppercase tracking-widest whitespace-nowrap">Save Category</button>
                 </div>
             </form>
         </div>
+    </div>
     </div>
 </div>
 

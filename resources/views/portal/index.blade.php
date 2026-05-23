@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-[#3E2723] text-[#4A3B32] min-h-screen flex items-center justify-center p-4 antialiased selection:bg-amber-200" style="font-family: 'Montserrat', sans-serif;"
+<body class="bg-[#FAF7F2] text-[#4A3B32] min-h-screen font-sans antialiased overflow-x-hidden flex items-center justify-center p-4 lg:p-8"
       x-data="portalSystem()"
       x-init="
         @if(session('message'))
@@ -64,205 +64,240 @@
         @endif
       ">
 
-<!-- Background Image with Blur & Dark Overlay -->
-<div class="fixed inset-0 z-0">
-    <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('/images/lawat-bg.jpg');"></div>
-    <div class="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
-</div>
-
-<div class="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/20 overflow-hidden flex flex-col transition-all duration-500 hover:shadow-amber-900/20">
-    
-    <!-- Premium Header Area -->
-    <div class="relative pt-10 pb-8 px-8 text-center overflow-hidden">
-        <!-- Decorative circle -->
-        <div class="absolute -top-12 -right-12 w-32 h-32 bg-amber-100/30 rounded-full blur-2xl"></div>
-        
-        <h1 class="text-7xl font-bold text-[#3E2723] mb-3 drop-shadow-sm" style="font-family: 'Dancing Script', cursive;">Lawa't</h1>
-        
-        <div class="flex items-center justify-center gap-4 text-[#3E2723]">
-            <div class="h-[1px] w-10 bg-[#3E2723] opacity-20"></div>
-            <span class="text-sm font-black tracking-[0.5em] uppercase">Cafe</span>
-            <div class="h-[1px] w-10 bg-[#3E2723] opacity-20"></div>
-        </div>
-        <p class="mt-4 text-[10px] font-bold text-[#8D6E63] uppercase tracking-[0.2em] opacity-80">Guest Wi-Fi Network</p>
+    <div class="fixed inset-0 z-0">
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-[20s] hover:scale-105" style="background-image: url('/images/lawat-bg.jpg');"></div>
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-[4px]"></div>
     </div>
 
-    <div class="px-8 pb-10 flex-1 relative min-h-[360px]">
-        
-        <!-- Tab: Voucher Code -->
-        <div x-show="activeTab === 'code'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="flex flex-col h-full">
-            <div class="text-center mb-8">
-                <h2 class="text-2xl font-black text-[#3E2723] mb-2 tracking-tight">Welcome Back</h2>
-                <p class="text-sm text-[#8D6E63] font-medium leading-relaxed px-4">Enter the passcode from your receipt to connect instantly.</p>
-            </div>
+    <div class="relative z-10 w-full max-w-md lg:max-w-4xl xl:max-w-5xl flex flex-col lg:flex-row rounded-[2.5rem] shadow-2xl border border-white/20 overflow-hidden bg-white/95 backdrop-blur-xl h-[85vh] lg:h-[700px] transition-all duration-500">
 
-            <form action="{{ route('portal.authenticate') }}" method="POST" id="lawat-login-form" class="mt-auto">
-                @csrf
-                <input type="hidden" name="zone" value="{{ \App\Models\Setting::get('opnsense_zone', '0') }}">
-                <div class="mb-6 group">
-                    <label class="block text-[10px] font-black text-[#A1887F] uppercase tracking-widest mb-3 ml-1">Voucher Passcode</label>
-                    <div class="relative">
-                        <input type="text" name="passcode" required placeholder="XXXX-XXXX" 
-                                class="w-full bg-white/50 border-2 border-[#F0E6D2] rounded-2xl py-5 px-5 text-center text-2xl font-mono font-black text-[#3E2723] tracking-[0.3em] uppercase focus:outline-none focus:border-[#3E2723] focus:bg-white transition-all shadow-sm group-hover:border-amber-200 placeholder-[#D7CCC8]">
-                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[#D7CCC8]">
-                            <x-lucide-ticket class="w-6 h-6" />
-                        </div>
-                    </div>
+        <div class="hidden lg:flex lg:w-[40%] bg-[#3E2723] relative flex-col justify-center items-center p-10 overflow-hidden text-center shrink-0 border-r border-[#271815]">
+            <div class="absolute -top-32 -left-32 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl"></div>
+            
+            <div class="relative z-10">
+                <h1 class="text-7xl font-bold text-white mb-2 drop-shadow-md" style="font-family: 'Dancing Script', cursive;">Lawa't</h1>
+                <p class="text-white/70 text-[10px] font-black tracking-[0.4em] uppercase mb-10">Cafe Connection</p>
+
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/20 border border-white/10 backdrop-blur-md">
+                    <div class="w-2 h-2 rounded-full animate-pulse" :class="connectionStatus === 'disconnected' ? 'bg-red-500' : 'bg-amber-500'"></div>
+                    <span class="text-[9px] font-black text-white/80 uppercase tracking-widest" x-text="connectionStatus === 'disconnected' ? 'Disconnected' : 'Authenticating...'">Disconnected</span>
                 </div>
-                <button type="submit" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-[1.25rem] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-amber-900/20 active:scale-95 flex items-center justify-center gap-3">
-                    Connect Now
-                    <x-lucide-arrow-right class="w-5 h-5" />
-                </button>
-            </form>
+            </div>
+            
+            <div class="absolute bottom-0 left-0 w-full opacity-10 pointer-events-none">
+                <svg viewBox="0 0 100 100" class="w-full h-auto text-amber-500" fill="currentColor">
+                    <path d="M0,100 C30,80 70,80 100,100 L100,100 L0,100 Z" />
+                </svg>
+            </div>
         </div>
 
-        <!-- Tab: E-Wallet -->
-        <div x-show="activeTab === 'ewallet'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col h-full overflow-hidden">
-            <div class="text-center mb-4">
-                <h2 class="text-2xl font-black text-[#3E2723] mb-1 tracking-tight">Instant Access</h2>
-                <p class="text-[11px] text-[#8D6E63] font-bold uppercase tracking-wider">Select a plan & scan to pay</p>
-            </div>
-
-            <!-- Scrollable Plans Container -->
-            <div class="flex gap-3 overflow-x-auto pb-4 mb-4 snap-x no-scrollbar">
-                @foreach($durations as $price => $minutes)
-                    <div class="flex-none w-32 bg-white border-2 border-[#F0E6D2] rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:border-[#3E2723] group snap-center shadow-sm hover:shadow-md cursor-pointer relative overflow-hidden"
-                         x-on:click="selectedPlan = '{{ $price }}'">
-                        <!-- Selection Indicator -->
-                        <div class="absolute top-2 right-2 w-4 h-4 rounded-full border-2 border-[#F0E6D2] flex items-center justify-center" :class="selectedPlan === '{{ $price }}' ? 'bg-[#3E2723] border-[#3E2723]' : ''">
-                             <x-lucide-check x-show="selectedPlan === '{{ $price }}'" class="w-2.5 h-2.5 text-white" />
-                        </div>
-
-                        <div class="text-[#8D6E63] font-black text-[9px] uppercase tracking-widest mb-1">
-                            @if($minutes >= 1440)
-                                {{ round($minutes / 1440) }} Day
-                            @elseif($minutes >= 60)
-                                {{ round($minutes / 60) }} Hour
-                            @else
-                                {{ $minutes }} Min
-                            @endif
-                        </div>
-                        <div class="text-2xl font-black text-[#3E2723] group-hover:scale-110 transition-transform tracking-tighter">
-                            <span class="text-sm font-bold opacity-50">₱</span>{{ $price }}
-                        </div>
-                        
-                        <div x-show="selectedPlan === '{{ $price }}'" class="absolute inset-0 bg-[#3E2723]/5 pointer-events-none"></div>
-                    </div>
-                @endforeach
-            </div>
-
-            <div class="flex-1 flex flex-col min-h-0">
-                <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-4 flex flex-col items-center justify-center mb-4 shadow-inner relative overflow-hidden group shrink-0">
-                    <!-- Subtle Pattern -->
-                    <div class="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                    
-                    @if($qrCode)
-                        <img src="{{ Storage::url($qrCode) }}" class="max-h-[140px] w-auto relative z-10 rounded-xl transition-transform group-hover:scale-105" alt="Payment QR">
-                        <div class="mt-3 px-3 py-1 bg-green-50 rounded-full border border-green-100 flex items-center gap-2">
-                            <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                            <span class="text-[9px] font-black text-green-700 uppercase tracking-widest">G-Cash Supported</span>
-                        </div>
-                    @else
-                        <div class="text-center py-6">
-                            <x-lucide-qr-code class="w-12 h-12 text-[#D7CCC8] mx-auto mb-3" />
-                            <p class="text-[9px] font-black text-[#A1887F] uppercase tracking-widest">Payment Offline</p>
-                        </div>
-                    @endif
+        <div class="w-full lg:w-[60%] flex flex-col relative h-full">
+            
+            <div class="lg:hidden relative pt-10 pb-4 px-8 text-center shrink-0">
+                <h1 class="text-6xl font-bold text-[#3E2723] mb-2" style="font-family: 'Dancing Script', cursive;">Lawa't</h1>
+                <div class="flex items-center justify-center gap-4 text-[#3E2723]">
+                    <div class="h-[1px] w-8 bg-[#3E2723] opacity-20"></div>
+                    <span class="text-[10px] font-black tracking-[0.4em] uppercase">Guest Wi-Fi</span>
+                    <div class="h-[1px] w-8 bg-[#3E2723] opacity-20"></div>
                 </div>
+            </div>
 
-                <form action="{{ route('portal.verify-payment') }}" method="POST" id="lawat-payment-form" class="space-y-3">
-                    @csrf
-                    <div>
-                        <label class="block text-[9px] font-black text-[#A1887F] uppercase tracking-widest mb-1.5 ml-1">Reference Number</label>
-                        <input type="text" name="reference_number" required placeholder="Enter Ref # from G-Cash" value="{{ session('ai_ref') }}"
-                                class="w-full bg-white/50 border-2 border-[#F0E6D2] rounded-xl py-3 px-4 text-center text-sm font-mono font-bold text-[#3E2723] focus:outline-none focus:border-[#3E2723] focus:bg-white transition-all shadow-sm placeholder-[#D7CCC8]">
+            <div class="flex-1 overflow-y-auto px-6 py-6 lg:px-12 lg:py-12 no-scrollbar flex flex-col">
+
+                <div x-show="activeTab === 'code'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="flex flex-col h-full flex-1 justify-center">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-black text-[#3E2723] mb-2 tracking-tight">Welcome Back</h2>
+                        <p class="text-sm text-[#8D6E63] font-medium leading-relaxed px-4">Enter the passcode from your receipt to connect instantly.</p>
                     </div>
-                    <button type="submit" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-[1.25rem] font-black uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 text-[10px] flex items-center justify-center gap-3">
-                        Verify Payment
-                        <x-lucide-shield-check class="w-4 h-4" />
-                    </button>
-                </form>
 
-                <div class="mt-3 pt-3 border-t border-[#F0E6D2]">
-                    <form action="{{ route('portal.upload') }}" method="POST" enctype="multipart/form-data" class="text-center">
+                    <form action="{{ route('portal.authenticate') }}" method="POST" id="lawat-login-form" @submit.prevent="submitForm($event)">
                         @csrf
-                        <label class="cursor-pointer inline-block text-[9px] font-black text-[#8D6E63] hover:text-[#3E2723] uppercase tracking-widest transition-colors underline decoration-dotted underline-offset-4">
-                            Or Upload Receipt Image (AI Parse)
-                            <input type="file" name="receipt" accept="image/*" class="hidden" onchange="this.form.submit()">
-                        </label>
+                        <input type="hidden" name="zone" value="{{ \App\Models\Setting::get('opnsense_zone', '0') }}">
+                        <div class="mb-6 group">
+                            <label class="block text-[10px] font-black text-[#A1887F] uppercase tracking-widest mb-3 ml-1 text-left">Voucher Passcode</label>
+                            <div class="relative">
+                                <input type="text" name="passcode" required placeholder="XXXX-XXXX" 
+                                        class="w-full bg-white/50 border-2 border-[#F0E6D2] rounded-2xl py-5 px-5 text-center text-2xl font-mono font-black text-[#3E2723] tracking-[0.3em] uppercase focus:outline-none focus:border-[#3E2723] focus:bg-white transition-all shadow-sm placeholder-[#D7CCC8]">
+                                <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[#D7CCC8]">
+                                    <x-lucide-ticket class="w-6 h-6" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-8 flex items-start gap-3 px-1">
+                            <input type="checkbox" id="terms-voucher" required class="mt-1 w-4 h-4 text-[#3E2723] border-[#E6D5C3] rounded focus:ring-[#3E2723] cursor-pointer shrink-0">
+                            <label for="terms-voucher" class="text-[10px] text-[#A1887F] font-medium leading-relaxed cursor-pointer text-left">
+                                I agree to the <a href="#" class="text-[#3E2723] font-bold underline">Terms of Service</a> and acknowledge this network is monitored for security.
+                            </label>
+                        </div>
+
+                        <button type="submit" 
+                                :disabled="isSubmitting"
+                                class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-[1.25rem] font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-amber-900/20 active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50">
+                            <template x-if="!isSubmitting">
+                                <div class="flex items-center gap-3">
+                                    <span>Connect Now</span>
+                                    <x-lucide-arrow-right class="w-5 h-5" />
+                                </div>
+                            </template>
+                            <template x-if="isSubmitting">
+                                <div class="flex items-center gap-3">
+                                    <x-lucide-loader-2 class="w-5 h-5 animate-spin" />
+                                    <span>Connecting...</span>
+                                </div>
+                            </template>
+                        </button>
                     </form>
                 </div>
-            </div>
-        </div>
 
-        <!-- Tab: AI Help -->
-        <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col h-full">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-black text-[#3E2723] mb-2 tracking-tight">Support Hub</h2>
-                <p class="text-sm text-[#8D6E63] font-medium leading-relaxed px-4">Having trouble? Our AI assistant is here to guide you 24/7.</p>
-            </div>
+                <div x-show="activeTab === 'ewallet'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col h-full justify-center">
+                    
+                    <div class="text-center mb-4 shrink-0">
+                        <h2 class="text-3xl font-black text-[#3E2723] mb-1 tracking-tight">Instant Access</h2>
+                        <p class="text-[10px] text-[#8D6E63] font-bold uppercase tracking-wider">Select a plan & scan to pay</p>
+                    </div>
 
-            <div class="flex-1 bg-white/50 border-2 border-[#F0E6D2] rounded-[2rem] p-5 mb-5 flex flex-col justify-end space-y-4 min-h-[200px] shadow-inner overflow-hidden relative" id="chat-container">
-                <div class="absolute top-4 left-4 flex items-center gap-2 opacity-50">
-                    <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-                    <span class="text-[9px] font-black uppercase tracking-widest text-[#8D6E63]">Barista AI Active</span>
+                    <div class="flex justify-center gap-3 pb-2 mb-4 shrink-0 overflow-x-auto no-scrollbar">
+                        @foreach($durations as $price => $minutes)
+                            <div class="w-28 flex-none rounded-[1.25rem] py-3 px-2 flex flex-col items-center justify-center transition-all border-2 group cursor-pointer relative overflow-hidden"
+                                 x-on:click="selectedPlan = '{{ $price }}'"
+                                 :class="selectedPlan === '{{ $price }}' ? 'border-[#3E2723] bg-amber-50 ring-2 ring-[#3E2723]/10 shadow-md' : 'border-[#F0E6D2] bg-white hover:border-[#8D6E63] shadow-sm'">
+                                
+                                <div class="absolute top-2 right-2 w-3 h-3 rounded-full border-2 flex items-center justify-center transition-colors" 
+                                     :class="selectedPlan === '{{ $price }}' ? 'bg-[#3E2723] border-[#3E2723]' : 'border-[#F0E6D2]'">
+                                     <x-lucide-check x-show="selectedPlan === '{{ $price }}'" class="w-2.5 h-2.5 text-white" />
+                                </div>
+
+                                <div class="font-black text-[9px] uppercase tracking-widest mb-0.5 transition-colors"
+                                     :class="selectedPlan === '{{ $price }}' ? 'text-[#3E2723]' : 'text-[#8D6E63]'">
+                                    @if($minutes >= 1440) {{ round($minutes / 1440) }} Day @elseif($minutes >= 60) {{ round($minutes / 60) }} Hour @else {{ $minutes }} Min @endif
+                                </div>
+                                <div class="text-xl font-black transition-transform tracking-tighter"
+                                     :class="selectedPlan === '{{ $price }}' ? 'text-[#3E2723] scale-110' : 'text-[#3E2723]'">
+                                    <span class="text-xs font-bold opacity-50">₱</span>{{ $price }}
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="bg-white/60 border-2 border-[#F0E6D2] rounded-3xl p-4 flex flex-col lg:flex-row gap-5 items-center shrink-0 shadow-sm relative overflow-hidden">
+                        <div class="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                        
+                        <div class="w-full lg:w-[40%] flex flex-col items-center justify-center bg-white rounded-2xl border border-[#F0E6D2] p-4 relative z-10 shadow-inner h-full min-h-[120px]">
+                            @if($qrCode)
+                                <img src="{{ Storage::url($qrCode) }}" class="h-20 w-auto object-contain transition-transform hover:scale-105" alt="Payment QR">
+                                <div class="mt-2 flex items-center gap-1.5">
+                                    <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                                    <span class="text-[9px] font-black text-green-700 uppercase tracking-widest">G-Cash Supported</span>
+                                </div>
+                            @else
+                                <x-lucide-qr-code class="w-10 h-10 text-[#D7CCC8] mb-2" />
+                                <p class="text-[9px] font-black text-[#A1887F] uppercase tracking-widest text-center leading-tight">System Offline<br>Proceed to Counter</p>
+                            @endif
+                        </div>
+
+                        <form action="{{ route('portal.verify-payment') }}" method="POST" id="lawat-payment-form" class="w-full lg:w-[60%] flex flex-col relative z-10 gap-3" @submit.prevent="submitForm($event)"> 
+                            @csrf
+                            <div>
+                                <label class="flex justify-between items-end mb-1.5 ml-1">
+                                    <span class="text-[9px] font-black text-[#A1887F] uppercase tracking-widest">Reference No.</span>
+                                    
+                                    <div class="relative overflow-hidden inline-block group">
+                                        <input type="file" name="receipt" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="this.form.action='{{ route('portal.upload') }}'; this.form.submit()">
+                                        <span class="text-[8px] font-black text-amber-600 group-hover:text-amber-700 uppercase tracking-widest flex items-center gap-1 cursor-pointer transition-colors">
+                                            <x-lucide-sparkles class="w-3 h-3" /> AI Parse Receipt
+                                        </span>
+                                    </div>
+                                </label>
+                                
+                                <input type="text" name="reference_number" required placeholder="Enter Ref # from G-Cash" value="{{ session('ai_ref') }}"
+                                        class="w-full bg-white border-2 border-[#F0E6D2] rounded-[1rem] py-3 px-4 text-center text-sm font-mono font-bold text-[#3E2723] focus:outline-none focus:border-[#3E2723] transition-all shadow-sm">
+                            </div>
+
+                            <div class="flex items-center gap-2 px-1 mt-1">
+                                <input type="checkbox" id="terms-payment" required class="w-3.5 h-3.5 text-[#3E2723] border-[#E6D5C3] rounded focus:ring-[#3E2723] cursor-pointer shrink-0">
+                                <label for="terms-payment" class="text-[8px] text-[#A1887F] font-medium leading-tight cursor-pointer">
+                                    I agree to the <a href="#" class="text-[#3E2723] font-bold underline">Terms</a>. Network is monitored.
+                                </label>
+                            </div>
+
+                            <button type="submit" 
+                                    :disabled="isSubmitting"
+                                    class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-3.5 rounded-[1rem] font-black uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 text-[10px] flex items-center justify-center gap-2 mt-auto disabled:opacity-70 disabled:cursor-not-allowed">
+                                <template x-if="!isSubmitting">
+                                    <div class="flex items-center gap-2">
+                                        <span>Verify Payment</span>
+                                        <x-lucide-shield-check class="w-4 h-4" />
+                                    </div>
+                                </template>
+                                <template x-if="isSubmitting">
+                                    <div class="flex items-center gap-2">
+                                        <x-lucide-loader-2 class="w-4 h-4 animate-spin" />
+                                        <span>Verifying...</span>
+                                    </div>
+                                </template>
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
-                <div class="overflow-y-auto space-y-4 pr-2 max-h-48 flex-1 w-full flex flex-col justify-end">
-                    <template x-for="(msg, index) in chatHistory" :key="index">
-                        <div class="p-3 rounded-2xl shadow-sm text-sm font-medium relative w-fit max-w-[85%]"
-                                :class="msg.role === 'user' ? 'bg-[#3E2723] text-white self-end rounded-tr-none' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] self-start rounded-tl-none'">
-                            <span x-text="msg.content"></span>
-                            <div class="absolute w-3 h-3"
-                                    :class="msg.role === 'user' ? '-right-1.5 top-0 bg-[#3E2723] -rotate-45' : '-left-1.5 top-0 bg-white border-l border-t border-[#F0E6D2] -rotate-45'"></div>
+                <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col h-full">
+                    <div class="text-center mb-6 shrink-0">
+                        <h2 class="text-3xl font-black text-[#3E2723] mb-2 tracking-tight">AI Assistant</h2>
+                        <p class="text-[10px] text-[#8D6E63] font-bold uppercase tracking-widest">Ask me anything about Lawa't Cafe</p>
+                    </div>
+
+                    <div class="flex-1 bg-white/50 border-2 border-[#F0E6D2] rounded-[2rem] p-5 mb-5 flex flex-col justify-end min-h-[250px] shadow-inner relative overflow-hidden" id="chat-container">
+                        <div class="absolute top-4 left-4 flex items-center gap-2 opacity-50 z-10">
+                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-[#8D6E63]">System Online</span>
                         </div>
-                    </template>
-                    <div x-show="isThinking" class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-[#F0E6D2] self-start w-fit">
-                        <span class="text-xs text-[#8D6E63] font-black tracking-widest uppercase animate-pulse">Thinking...</span>
+
+                        <div class="overflow-y-auto space-y-4 pr-2 flex-1 w-full flex flex-col justify-end pt-8 z-10">
+                            <template x-for="(msg, index) in chatHistory" :key="index">
+                                <div class="p-4 rounded-2xl shadow-sm text-sm font-medium relative w-fit max-w-[90%]"
+                                        :class="msg.role === 'user' ? 'bg-[#3E2723] text-white self-end rounded-br-sm' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] self-start rounded-bl-sm'">
+                                    <span x-text="msg.content" class="leading-relaxed"></span>
+                                </div>
+                            </template>
+                            <div x-show="isThinking" class="bg-white p-4 rounded-2xl rounded-bl-sm shadow-sm border border-[#F0E6D2] self-start w-fit">
+                                <span class="text-xs text-[#8D6E63] font-black tracking-widest uppercase animate-pulse">Typing...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 shrink-0 mt-auto">
+                        <input type="text" x-model="chatMessage" @keydown.enter="sendChat()" placeholder="Ask something..." class="flex-1 bg-white border-2 border-[#F0E6D2] rounded-2xl px-5 py-4 text-xs font-bold uppercase tracking-widest focus:outline-none focus:border-[#3E2723] transition-all shadow-sm text-[#3E2723]" :disabled="isThinking">
+                        <button @click="sendChat()" class="bg-[#3E2723] text-white p-4 rounded-2xl hover:bg-[#271815] transition shadow-lg active:scale-90 disabled:opacity-50 flex items-center justify-center w-14" :disabled="isThinking || !chatMessage.trim()">
+                            <x-lucide-send class="w-5 h-5" />
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="flex gap-3">
-                <input type="text" x-model="chatMessage" @keydown.enter="sendChat()" placeholder="Type your issue..." class="flex-1 bg-white/50 border-2 border-[#F0E6D2] rounded-2xl px-5 text-sm focus:outline-none focus:border-[#3E2723] focus:bg-white transition-all shadow-sm" :disabled="isThinking">
-                <button @click="sendChat()" class="bg-[#3E2723] text-white p-4 rounded-2xl hover:bg-[#271815] transition shadow-lg active:scale-90 disabled:opacity-50" :disabled="isThinking || !chatMessage.trim()">
-                    <x-lucide-send class="w-5 h-5" />
+            <div class="bg-white/80 backdrop-blur-md pt-2 pb-6 px-6 lg:px-12 flex justify-center gap-2 shrink-0 border-t border-[#F0E6D2]/50">
+                <button x-on:click="activeTab = 'code'" 
+                        class="flex-1 py-3 px-2 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2"
+                        :class="activeTab === 'code' ? 'text-[#3E2723] bg-[#FDF8F5] shadow-sm border border-[#F0E6D2]' : 'text-[#A1887F] hover:bg-gray-50 border border-transparent'">
+                    <x-lucide-keyboard class="w-5 h-5" />
+                    <span>Connect</span>
+                </button>
+                <button x-on:click="activeTab = 'ewallet'" 
+                        class="flex-1 py-3 px-2 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2"
+                        :class="activeTab === 'ewallet' ? 'text-[#3E2723] bg-[#FDF8F5] shadow-sm border border-[#F0E6D2]' : 'text-[#A1887F] hover:bg-gray-50 border border-transparent'">
+                    <span class="font-bold border-2 border-current rounded-full w-5 h-5 flex items-center justify-center text-[10px]">$</span>
+                    <span>Top-Up</span>
+                </button>
+                <button x-on:click="activeTab = 'help'" 
+                        class="flex-1 py-3 px-2 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2"
+                        :class="activeTab === 'help' ? 'text-[#3E2723] bg-[#FDF8F5] shadow-sm border border-[#F0E6D2]' : 'text-[#A1887F] hover:bg-gray-50 border border-transparent'">
+                    <x-lucide-message-square class="w-5 h-5" />
+                    <span>AI Chat</span>
                 </button>
             </div>
+
         </div>
-
     </div>
-
-    <!-- Modern Bottom Navigation -->
-    <div class="bg-white border-t border-[#F0E6D2]/50 p-3 flex gap-2">
-        <button x-on:click="activeTab = 'code'" 
-                class="flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2 relative overflow-hidden"
-                :class="activeTab === 'code' ? 'text-[#3E2723] bg-amber-50' : 'text-[#A1887F] hover:bg-gray-50'">
-            <div x-show="activeTab === 'code'" class="absolute top-0 inset-x-0 h-1 bg-[#3E2723]"></div>
-            <x-lucide-keyboard class="w-5 h-5" />
-            <span>Voucher</span>
-        </button>
-        <button x-on:click="activeTab = 'ewallet'" 
-                class="flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2 relative overflow-hidden"
-                :class="activeTab === 'ewallet' ? 'text-[#3E2723] bg-amber-50' : 'text-[#A1887F] hover:bg-gray-50'">
-            <div x-show="activeTab === 'ewallet'" class="absolute top-0 inset-x-0 h-1 bg-[#3E2723]"></div>
-            <x-lucide-credit-card class="w-5 h-5" />
-            <span>Pay</span>
-        </button>
-        <button x-on:click="activeTab = 'help'" 
-                class="flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-2 relative overflow-hidden"
-                :class="activeTab === 'help' ? 'text-[#3E2723] bg-amber-50' : 'text-[#A1887F] hover:bg-gray-50'">
-            <div x-show="activeTab === 'help'" class="absolute top-0 inset-x-0 h-1 bg-[#3E2723]"></div>
-            <x-lucide-bot class="w-5 h-5" />
-            <span>Help</span>
-        </button>
-    </div>
-</div>
-
-<!-- Small Footer -->
-<div class="fixed bottom-6 z-10 text-white/50 text-[9px] font-black uppercase tracking-[0.4em] pointer-events-none">
-    Powered by Lawat-Core v1.0
-</div>
 
 <script>
 document.addEventListener('alpine:init', () => {
@@ -271,9 +306,17 @@ document.addEventListener('alpine:init', () => {
         selectedPlan: null,
         chatMessage: '',
         isThinking: false,
+        isSubmitting: false,
+        connectionStatus: 'disconnected',
         chatHistory: [
             { role: 'assistant', content: 'Hi! I am Barista AI. Having trouble connecting or need to know our Wi-Fi prices? Just ask!' }
         ],
+
+        async submitForm(e) {
+            this.isSubmitting = true;
+            this.connectionStatus = 'authenticating';
+            e.target.submit();
+        },
 
         async sendChat() {
             if (!this.chatMessage.trim() || this.isThinking) return;
