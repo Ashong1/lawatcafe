@@ -174,7 +174,7 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     
-    <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
+    <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] order-2 lg:order-1">
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Recent Vouchers</h3>
@@ -233,7 +233,7 @@
         @endif
     </div>
 
-    <div class="flex flex-col gap-6">
+    <div class="flex flex-col gap-6 order-1 lg:order-2">
         
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col">
             <h3 class="text-sm font-bold text-[#3E2723] mb-4 uppercase tracking-widest">System Health</h3>
