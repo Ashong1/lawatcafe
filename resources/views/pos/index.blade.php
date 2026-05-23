@@ -6,6 +6,10 @@
 @section('content')
 
 <style>
+    /* Prevent the main browser window from scrolling to lock the POS in place */
+    body, html {
+        overflow: hidden !important;
+    }
     main {
         overflow: hidden !important;
         padding: 0 !important;
@@ -15,8 +19,8 @@
 <div x-data="posSystem()" class="bg-[#FDF8F5] w-full h-[calc(100vh-3.5rem)] flex items-stretch text-[#4A3B32] overflow-hidden" style="font-family: 'Montserrat', sans-serif;">
 
     {{-- Menu Area (Left) --}}
-    <div class="flex-1 p-8 flex flex-col overflow-hidden min-h-0">
-        <div class="flex-1 bg-white p-6 md:p-8 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden border border-[#F0E6D2] min-h-0">
+    <div class="flex-1 p-8 flex flex-col overflow-hidden h-0">
+        <div class="flex-1 bg-white p-6 md:p-8 rounded-2xl shadow-sm flex flex-col h-0 overflow-hidden border border-[#F0E6D2]">
             
             <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 shrink-0">
                 
@@ -87,53 +91,55 @@
 
             <h3 class="text-xl font-bold text-[#3E2723] mb-4 capitalize shrink-0" x-text="selectedCategory + ' Menu'"></h3>
 
-            <div class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 overflow-y-auto pb-6 pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#D7CCC8] [&::-webkit-scrollbar-thumb]:rounded-full">
-                <template x-for="item in filteredProducts" :key="item.id">
-                    <div class="bg-white p-4 rounded-[1.5rem] shadow-[0_4px_15px_-3px_rgba(62,39,35,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(62,39,35,0.12)] transition-all duration-300 flex flex-col group relative border border-transparent hover:border-[#FDF8F5]">
-                        
-                        <div class="h-32 w-full bg-[#FDF8F5] rounded-xl mb-4 flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-300 border border-[#F0E6D2]/50 shrink-0">
-                            <template x-if="item.type === 'wifi'">
-                                <x-lucide-wifi class="w-10 h-10 text-amber-800/20" />
-                            </template>
-                            <template x-if="item.type !== 'wifi' && item.category === 'Pastries'">
-                                <x-lucide-cookie class="w-10 h-10 text-amber-800/20" />
-                            </template>
-                            <template x-if="item.type !== 'wifi' && item.category !== 'Pastries'">
-                                <x-lucide-coffee class="w-10 h-10 text-amber-800/20" />
-                            </template>
-                        </div>
-
-                        <div class="flex flex-col flex-1">
-                            <h4 class="font-bold text-[#3E2723] text-base leading-tight mb-1" x-text="item.name"></h4>
-                            <p class="text-[11px] text-[#A1887F] font-medium mb-3 line-clamp-2" x-text="item.type === 'wifi' ? 'Seamless high-speed internet access.' : 'Freshly prepared for your enjoyment.'"></p>
+            <div class="flex-1 h-0 overflow-y-auto pb-6 pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#D7CCC8] [&::-webkit-scrollbar-thumb]:rounded-full">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    <template x-for="item in filteredProducts" :key="item.id">
+                        <div class="bg-white p-4 rounded-[1.5rem] shadow-[0_4px_15px_-3px_rgba(62,39,35,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(62,39,35,0.12)] transition-all duration-300 flex flex-col group relative border border-transparent hover:border-[#FDF8F5]">
                             
-                            <div class="mt-auto flex justify-between items-center pt-2">
-                                <div class="flex flex-col">
-                                    <span class="text-[10px] uppercase font-black tracking-wider text-[#A1887F]">Price</span>
-                                    <span class="font-black text-[#3E2723] text-lg" x-text="'₱' + Number(item.price).toFixed(2)"></span>
-                                </div>
+                            <div class="h-32 w-full bg-[#FDF8F5] rounded-xl mb-4 flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-300 border border-[#F0E6D2]/50 shrink-0">
+                                <template x-if="item.type === 'wifi'">
+                                    <x-lucide-wifi class="w-10 h-10 text-amber-800/20" />
+                                </template>
+                                <template x-if="item.type !== 'wifi' && item.category === 'Pastries'">
+                                    <x-lucide-cookie class="w-10 h-10 text-amber-800/20" />
+                                </template>
+                                <template x-if="item.type !== 'wifi' && item.category !== 'Pastries'">
+                                    <x-lucide-coffee class="w-10 h-10 text-amber-800/20" />
+                                </template>
+                            </div>
+
+                            <div class="flex flex-col flex-1">
+                                <h4 class="font-bold text-[#3E2723] text-base leading-tight mb-1" x-text="item.name"></h4>
+                                <p class="text-[11px] text-[#A1887F] font-medium mb-3 line-clamp-2" x-text="item.type === 'wifi' ? 'Seamless high-speed internet access.' : 'Freshly prepared for your enjoyment.'"></p>
                                 
-                                <button type="button" @click="addToCart(item)" class="w-11 h-11 rounded-full bg-[#3E2723] text-white flex items-center justify-center hover:bg-[#271815] transition-all active:scale-90 shadow-md shadow-[#3E2723]/30">
-                                    <x-lucide-plus class="w-5 h-5" />
-                                </button>
+                                <div class="mt-auto flex justify-between items-center pt-2">
+                                    <div class="flex flex-col">
+                                        <span class="text-[10px] uppercase font-black tracking-wider text-[#A1887F]">Price</span>
+                                        <span class="font-black text-[#3E2723] text-lg" x-text="'₱' + Number(item.price).toFixed(2)"></span>
+                                    </div>
+                                    
+                                    <button type="button" @click="addToCart(item)" class="w-11 h-11 rounded-full bg-[#3E2723] text-white flex items-center justify-center hover:bg-[#271815] transition-all active:scale-90 shadow-md shadow-[#3E2723]/30">
+                                        <x-lucide-plus class="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
+                    </template>
+                    
+                    <div x-show="filteredProducts.length === 0" class="col-span-full flex flex-col items-center justify-center py-20 text-[#A1887F]">
+                        <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                            <span class="text-3xl opacity-50">🔍</span>
+                        </div>
+                        <p class="font-bold text-sm">No items found.</p>
+                        <p class="text-xs mt-1">Try searching for something else.</p>
                     </div>
-                </template>
-                
-                <div x-show="filteredProducts.length === 0" class="col-span-full flex flex-col items-center justify-center py-20 text-[#A1887F]">
-                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                        <span class="text-3xl opacity-50">🔍</span>
-                    </div>
-                    <p class="font-bold text-sm">No items found.</p>
-                    <p class="text-xs mt-1">Try searching for something else.</p>
                 </div>
             </div>
         </div>
     </div>
 
     {{-- Cart Sidebar (Right) --}}
-    <div class="w-[26rem] bg-white p-6 rounded-[2rem] shadow-[0_0_40px_rgba(62,39,35,0.08)] flex flex-col h-full shrink-0 relative border border-[#F0E6D2] min-h-0">
+    <div class="w-[26rem] bg-white p-6 rounded-[2rem] shadow-[0_0_40px_rgba(62,39,35,0.08)] flex flex-col h-0 shrink-0 relative border border-[#F0E6D2] min-h-0">
         
         <div class="flex justify-between items-center mb-6 shrink-0">
             <div>
@@ -157,7 +163,7 @@
             </button>
         </div>
 
-        <div class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 mb-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">
+        <div class="flex-1 h-0 overflow-y-auto space-y-3 pr-2 mb-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">
             <template x-for="(cartItem, index) in cart" :key="cartItem.id + '-' + index">
                 <div class="flex gap-4 items-center bg-white group">
                     <div class="w-12 h-12 bg-[#FDF8F5] border border-[#F0E6D2] rounded-xl flex items-center justify-center shrink-0">
@@ -240,7 +246,6 @@
         </div>
     </div>
 
-    <!-- Success Modal -->
     <div x-show="showModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60]" style="display: none;">
         <div @click.away="resetCart()" class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center border-t-8 border-[#3E2723]">
             <div class="w-20 h-20 bg-[#E8F5E9] rounded-full flex items-center justify-center mx-auto mb-6 text-[#2E7D32]">
@@ -278,7 +283,6 @@
         </div>
     </div>
 
-    <!-- Shift Modal -->
     @if(!$activeShift)
     <div class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[70]">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full border-t-8 border-amber-600">
@@ -306,41 +310,27 @@
 </div>
 
 <script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('posSystem', () => ({
-            menuItems: {!! json_encode($products ?? []) !!},
-            wifiAddons: {!! json_encode($wifiOptions ?? []) !!},
-            activeShiftId: {{ $activeShift ? $activeShift->id : 'null' }},
-            
-            cart: [],
-            showModal: false,
-            isProcessing: false,
-            generatedCode: '',
-            saleId: null,
-            
+    function posSystem() {
+        return {
             searchQuery: '',
-            selectedCategory: 'All',
+            selectedCategory: 'Coffee',
+            categories: {!! json_encode($categories->pluck('name')) !!},
+            products: {!! json_encode($products) !!},
+            cart: [],
             orderType: 'dine_in',
             discountType: 'none',
             discountAmount: 0,
-            amountTendered: null,
-            
-            get categories() {
-                let cats = ['All'];
-                this.menuItems.forEach(item => {
-                    if (item.category && !cats.includes(item.category)) cats.push(item.category);
-                });
-                cats.push('Wi-Fi');
-                return cats;
-            },
+            amountTendered: 0,
+            showModal: false,
+            saleId: null,
+            generatedCode: '',
+            isProcessing: false,
 
             get filteredProducts() {
-                let allProducts = [...this.menuItems, ...this.wifiAddons];
-                
-                return allProducts.filter(item => {
-                    let matchesCategory = this.selectedCategory === 'All' || item.category === this.selectedCategory;
-                    let matchesSearch = item.name.toLowerCase().includes(this.searchQuery.toLowerCase());
-                    return matchesCategory && matchesSearch;
+                return this.products.filter(i => {
+                    const matchesSearch = i.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+                    const matchesCategory = this.selectedCategory === 'All' || i.category === this.selectedCategory;
+                    return matchesSearch && matchesCategory;
                 });
             },
 
@@ -352,25 +342,25 @@
                 return this.subtotal * this.discountAmount;
             },
 
-            get grandTotal() {
-                return this.subtotal - this.calculatedDiscount;
+            get vatAmount() {
+                // Assuming prices are VAT inclusive (12%)
+                return (this.subtotal - this.calculatedDiscount) * (12/112);
             },
 
-            get vatAmount() {
-                // Assuming 12% inclusive VAT
-                return this.grandTotal - (this.grandTotal / 1.12);
+            get grandTotal() {
+                return this.subtotal - this.calculatedDiscount;
             },
 
             get hasWifi() {
                 return this.cart.some(item => item.type === 'wifi');
             },
 
-            addToCart(item) {
-                let existingItem = this.cart.find(i => i.id === item.id);
-                if (existingItem) {
-                    existingItem.quantity++;
+            addToCart(product) {
+                const existing = this.cart.find(i => i.id === product.id);
+                if (existing) {
+                    existing.quantity++;
                 } else {
-                    this.cart.push({ ...item, price: Number(item.price), quantity: 1 });
+                    this.cart.push({ ...product, quantity: 1 });
                 }
             },
 
@@ -382,97 +372,59 @@
                 }
             },
 
+            resetCart() {
+                this.cart = [];
+                this.amountTendered = 0;
+                this.discountType = 'none';
+                this.discountAmount = 0;
+                this.showModal = false;
+                this.isProcessing = false;
+            },
+
             async submitCheckout() {
-                if (this.amountTendered > 0 && this.amountTendered < this.grandTotal) return;
+                if (this.cart.length === 0) return;
                 
                 this.isProcessing = true;
-
+                
                 try {
-                    let response = await fetch('{{ route("pos.checkout") }}', {
+                    const response = await fetch('{{ route('pos.checkout') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Accept': 'application/json', 
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}' 
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify({
-                            total_amount: this.grandTotal.toFixed(2),
-                            amount_received: this.amountTendered || this.grandTotal.toFixed(2),
-                            cart: this.cart,
-                            order_type: this.orderType,
+                            items: this.cart,
+                            total: this.grandTotal,
                             discount_type: this.discountType,
-                            discount_amount: this.calculatedDiscount.toFixed(2),
-                            shift_id: this.activeShiftId
+                            discount_amount: this.calculatedDiscount,
+                            payment_method: 'Cash',
+                            amount_tendered: this.amountTendered
                         })
                     });
 
-                    let errorData = response.ok ? null : await response.json();
+                    const result = await response.json();
                     
-                    if (!response.ok) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Server Error',
-                            text: errorData.message || 'Failed to process transaction.',
-                            confirmButtonColor: '#3E2723',
-                            background: '#FDF8F5',
-                            color: '#3E2723',
-                            customClass: {
-                                popup: 'rounded-[2rem] border-t-8 border-red-600 shadow-2xl',
-                                confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs'
-                            }
-                        });
-                        return;
-                    }
-
-                    let data = await response.json();
-
-                    if (data.success) {
-                        this.generatedCode = data.hasWifi ? data.generatedCode : '';
-                        this.saleId = data.sale_id;
+                    if (result.success) {
+                        this.saleId = result.sale_id;
+                        this.generatedCode = result.voucher_code || '';
                         this.showModal = true;
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Transaction Failed',
-                            text: 'Please try again.',
-                            confirmButtonColor: '#3E2723',
-                            background: '#FDF8F5',
-                            color: '#3E2723',
-                            customClass: {
-                                popup: 'rounded-[2rem] border-t-8 border-red-600 shadow-2xl',
-                                confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs'
-                            }
+                            title: 'Inventory Alert',
+                            text: result.message || 'Failed to process order.',
+                            confirmButtonColor: '#3E2723'
                         });
+                        this.isProcessing = false;
                     }
                 } catch (error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Network Error',
-                        text: 'Unable to connect to server. Check console for details.',
-                        confirmButtonColor: '#3E2723',
-                        background: '#FDF8F5',
-                        color: '#3E2723',
-                        customClass: {
-                            popup: 'rounded-[2rem] border-t-8 border-red-600 shadow-2xl',
-                            confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs'
-                        }
-                    });
-                } finally {
+                    console.error('Checkout error:', error);
                     this.isProcessing = false;
                 }
-            },
-
-            resetCart() {
-                this.cart = [];
-                this.showModal = false;
-                this.generatedCode = '';
-                this.searchQuery = '';
-                this.discountType = 'none';
-                this.discountAmount = 0;
-                this.amountTendered = null;
-                this.saleId = null;
             }
-        }))
-    })
+        }
+    }
 </script>
+
 @endsection
