@@ -223,7 +223,7 @@ Strict Guidelines:
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => config('app.name'),
             ])->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => 'google/gemini-2.5-flash:free',
+                'model' => 'google/gemini-2.0-pro-exp-02-05:free',
                 'messages' => [
                     ['role' => 'user', 'content' => $prompt]
                 ],
@@ -281,7 +281,7 @@ Strict Guidelines:
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => config('app.name'),
             ])->post('https://openrouter.ai/api/v1/chat/completions', [
-                'model' => 'google/gemini-2.5-flash:free', // Ensure we use a vision-capable model
+                'model' => 'google/gemini-2.0-pro-exp-02-05:free', // Ensure we use a vision-capable model
                 'messages' => [
                     [
                         'role' => 'user',
