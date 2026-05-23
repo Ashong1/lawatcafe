@@ -205,7 +205,7 @@
                 <x-lucide-utensils class="w-3.5 h-3.5" />
                 <span>Dine In</span>
             </button>
-            <button @click="orderType = 'take_away'" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'take_away' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">
+            <button @click="orderType = 'takeaway'" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'takeaway' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">
                 <x-lucide-shopping-bag class="w-3.5 h-3.5" />
                 <span>Take Away</span>
             </button>
@@ -477,12 +477,14 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify({
-                            items: this.cart,
-                            total: this.grandTotal,
+                            cart: this.cart,
+                            total_amount: this.grandTotal,
                             discount_type: this.discountType,
                             discount_amount: this.calculatedDiscount,
                             payment_method: 'Cash',
-                            amount_tendered: this.amountTendered
+                            amount_received: this.amountTendered,
+                            order_type: this.orderType,
+                            shift_id: {{ $activeShift ? $activeShift->id : 'null' }}
                         })
                     });
 
