@@ -227,6 +227,25 @@ class PosController extends Controller
                 }
             }
 
+            // C. Handle Automatic Free Wi-Fi based on Minimum Spend
+            $freeWifiMin = (float) \App\Models\Setting::get('free_wifi_min_amount', 200);
+            $freeWifiDuration = (int) \App\Models\Setting::get('free_wifi_duration', 60);
+
+            if ($freeWifiMin > 0 && $finalTotal >= $freeWifiMin) {
+                // Check if they already purchased a wifi voucher explicitly to prevent stacking, or allow it. Let's allow it as a bonus.
+                $hasWifi = true;
+                $freeCode = 'FREE-' . strtoupper(Str::random(4));
+                Voucher::create([
+                    'code' => $freeCode,
+                    'duration_minutes' => $freeWifiDuration,
+                    'is_used' => false,
+                    'sale_id' => $sale->id,
+                ]);
+                
+                // Add to generated codes list, but mark it as free for the UI if needed
+                array_unshift($generatedCodes, $freeCode); // Put the free code first
+            }
+
             return response()->json([
                 'success' => true,
                 'hasWifi' => $hasWifi,
