@@ -178,6 +178,31 @@ class DashboardController extends Controller
         ));
     }
 
+    public function getAIInsights(\App\Services\AIService $ai)
+    {
+        $insights = Cache::remember('barista_forecast_deep', 3600, function() use ($ai) {
+            $historicalSales = Sale::selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
+                ->where('created_at', '>=', Carbon::now()->subDays(30))
+                ->groupBy('date')
+                ->orderBy('date', 'ASC')
+                ->get()
+                ->pluck('total', 'date')
+                ->toArray();
+
+            $productPerformance = \App\Models\SaleItem::select('item_name', DB::raw('SUM(quantity) as total_qty'))
+                ->where('created_at', '>=', Carbon::now()->subDays(30))
+                ->groupBy('item_name')
+                ->orderByDesc('total_qty')
+                ->get()
+                ->pluck('total_qty', 'item_name')
+                ->toArray();
+
+            return $ai->analyzeSalesTrends($historicalSales, $productPerformance);
+        });
+
+        return response()->json($insights);
+    }
+
     public function adminChat(Request $request, \App\Services\AIService $ai)
     {
         $request->validate([

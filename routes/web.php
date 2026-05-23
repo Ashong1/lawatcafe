@@ -64,6 +64,7 @@ Route::middleware(['auth'])->group(function () {
         // Admin Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('/admin/ai/chat', [DashboardController::class, 'adminChat'])->name('admin.ai.chat');
+        Route::get('/admin/ai/insights', [DashboardController::class, 'getAIInsights'])->name('admin.ai.insights');
         Route::get('/admin/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('admin.analytics');
 
         // Inventory Management

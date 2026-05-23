@@ -5,7 +5,7 @@
 @section('content')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+<div x-data="aiInsights()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
 
 <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
     <div>
@@ -15,7 +15,11 @@
         </h2>
         <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Real-time network performance and sales analytics.</p>
     </div>
-    <div class="text-right">
+    <div class="flex flex-col items-end gap-3">
+        <button @click="getInsights()" class="bg-[#3E2723] text-white px-6 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-[#271815] transition-all shadow-lg active:scale-95">
+            <x-lucide-brain-circuit class="w-4 h-4" />
+            AI Insights
+        </button>
         <p class="text-xs font-bold uppercase tracking-widest text-[#A1887F]">{{ now()->format('l, F jS') }}</p>
     </div>
 </div>
@@ -355,7 +359,127 @@
     @endif
 </div>
 
+    <!-- AI Insights Modal -->
+    <div x-show="showInsightsModal" x-cloak class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[80]" style="display: none;">
+        <div @click.away="showInsightsModal = false" class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full border-t-8 border-[#3E2723] max-h-[90vh] flex flex-col relative">
+            <button @click="showInsightsModal = false" class="absolute top-6 right-6 text-[#A1887F] hover:text-[#3E2723] transition">
+                <x-lucide-x class="w-6 h-6" />
+            </button>
+            
+            <div class="flex items-center gap-3 mb-6 shrink-0">
+                <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-700 shadow-sm">
+                    <x-lucide-brain-circuit class="w-6 h-6" />
+                </div>
+                <div>
+                    <h2 class="text-2xl font-black text-[#3E2723]">Barista AI Insights</h2>
+                    <p class="text-xs font-bold text-[#8D6E63] uppercase tracking-widest">7-Day Predictive Forecast</p>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div x-show="loadingInsights" class="flex flex-col items-center justify-center py-12 flex-1">
+                <div class="flex gap-2 mb-4">
+                    <div class="w-3 h-3 bg-amber-500 rounded-full animate-bounce"></div>
+                    <div class="w-3 h-3 bg-amber-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                    <div class="w-3 h-3 bg-amber-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                </div>
+                <p class="text-sm font-bold text-[#8D6E63] uppercase tracking-widest animate-pulse">Analyzing Store Data...</p>
+            </div>
+
+            <!-- Error State -->
+            <div x-show="!loadingInsights && errorInsights" class="flex flex-col items-center justify-center py-12 flex-1 text-center" style="display: none;">
+                <x-lucide-alert-triangle class="w-12 h-12 text-red-500 mb-4 opacity-50" />
+                <p class="text-sm font-bold text-[#C62828]" x-text="errorInsights"></p>
+            </div>
+
+            <!-- Results State -->
+            <div x-show="!loadingInsights && !errorInsights && insights" class="flex-1 overflow-y-auto pr-2 space-y-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full" style="display: none;">
+                
+                <div class="grid grid-cols-2 gap-4 shrink-0">
+                    <div class="bg-[#FDF8F5] border border-[#F0E6D2] p-4 rounded-2xl">
+                        <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1">Expected Revenue</p>
+                        <p class="text-2xl font-black text-[#2E7D32]" x-text="'₱' + Number(insights?.forecast_total || 0).toLocaleString()"></p>
+                    </div>
+                    <div class="bg-[#FDF8F5] border border-[#F0E6D2] p-4 rounded-2xl">
+                        <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1">Trend Analysis</p>
+                        <p class="text-sm font-bold text-[#3E2723]" x-text="insights?.trend_analysis"></p>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200/50 p-5 rounded-2xl shrink-0">
+                    <div class="flex items-start gap-3">
+                        <x-lucide-lightbulb class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                            <p class="text-[10px] font-black text-amber-700 uppercase tracking-[0.2em] mb-1">Strategic Advice</p>
+                            <p class="text-sm font-medium text-[#4A3B32] leading-relaxed" x-text="insights?.strategic_advice"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 shrink-0">
+                    <div>
+                        <h4 class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+                            <x-lucide-trending-up class="w-3 h-3 text-green-600" /> Hot Items
+                        </h4>
+                        <ul class="space-y-2">
+                            <template x-for="item in insights?.predicted_top_products || []" :key="item">
+                                <li class="bg-white border border-[#F0E6D2] px-3 py-2 rounded-xl text-xs font-bold text-[#3E2723] flex items-center before:content-[''] before:w-1.5 before:h-1.5 before:bg-green-500 before:rounded-full before:mr-2" x-text="item"></li>
+                            </template>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+                            <x-lucide-trending-down class="w-3 h-3 text-red-500" /> Cold Items
+                        </h4>
+                        <ul class="space-y-2">
+                            <template x-for="item in insights?.predicted_low_products || []" :key="item">
+                                <li class="bg-white border border-[#F0E6D2] px-3 py-2 rounded-xl text-xs font-bold text-[#8D6E63] flex items-center before:content-[''] before:w-1.5 before:h-1.5 before:bg-red-400 before:rounded-full before:mr-2" x-text="item"></li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('aiInsights', () => ({
+        showInsightsModal: false,
+        loadingInsights: false,
+        insights: null,
+        errorInsights: null,
+
+        async getInsights() {
+            this.showInsightsModal = true;
+            
+            // Only fetch if we don't have them yet, or if user wants to force refresh
+            if (this.insights) return;
+            
+            this.loadingInsights = true;
+            this.errorInsights = null;
+
+            try {
+                const response = await fetch('{{ route("admin.ai.insights") }}');
+                const data = await response.json();
+                
+                if (data && data.forecast_total !== undefined) {
+                    this.insights = data;
+                } else {
+                    this.errorInsights = "Unable to generate insights. The AI service may be temporarily unavailable.";
+                }
+            } catch (error) {
+                console.error("AI Insights Error:", error);
+                this.errorInsights = "Failed to connect to the analytical servers.";
+            } finally {
+                this.loadingInsights = false;
+            }
+        }
+    }));
+});
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
