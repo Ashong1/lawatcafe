@@ -16,13 +16,42 @@ class DashboardController extends Controller
     public function index(\App\Services\OpnSenseService $opnsense)
     {
         // 1. Basic Stats for the Top Cards
-        $stats = Cache::remember('dashboard_stats', 120, function () {
+        $stats = Cache::remember('dashboard_stats', 60, function () {
             $lowStockThreshold = (int) \App\Models\Setting::get('low_stock_threshold', 500);
+            
+            // System Alerts Logic
+            $alerts = [];
+            
+            // Low Stock Alert
+            $lowStockItems = Ingredient::where('current_stock', '<', $lowStockThreshold)->get();
+            if ($lowStockItems->count() > 0) {
+                $alerts[] = [
+                    'type' => 'warning',
+                    'icon' => 'package-x',
+                    'message' => $lowStockItems->count() . ' items reaching low stock threshold.',
+                    'action' => route('inventory.ingredients.index')
+                ];
+            }
+
+            // Failed Payments Alert (Unclaimed for > 24 hours)
+            $unclaimedPayments = \App\Models\EwalletPayment::where('is_used', false)
+                ->where('created_at', '<', now()->subHours(24))
+                ->count();
+            if ($unclaimedPayments > 0) {
+                $alerts[] = [
+                    'type' => 'danger',
+                    'icon' => 'receipt',
+                    'message' => $unclaimedPayments . ' payment verifications pending > 24h.',
+                    'action' => route('network.verifications')
+                ];
+            }
+
             return [
                 'availableVouchers' => Voucher::where('is_used', false)->count(),
                 'todaysSales' => Sale::where('created_at', '>=', Carbon::today())->sum('total_amount'),
                 'todaysOrders' => Sale::where('created_at', '>=', Carbon::today())->count(),
-                'lowStockCount' => Ingredient::where('current_stock', '<', $lowStockThreshold)->count(),
+                'lowStockCount' => $lowStockItems->count(),
+                'systemAlerts' => $alerts,
                 'recentVouchers' => Voucher::orderBy('created_at', 'desc')->take(5)->get(),
                 'recentSales' => Sale::with('user')->orderBy('created_at', 'desc')->take(5)->get(),
                 'topProducts' => \App\Models\SaleItem::select('item_name', DB::raw('SUM(quantity) as total_qty'))
@@ -39,63 +68,55 @@ class DashboardController extends Controller
         });
 
         // 2. Network & Sessions (Mbps speed and accurate counting)
-        $networkPulse = Cache::remember('network_pulse', 30, function () use ($opnsense) {
+        $networkPulse = Cache::remember('network_pulse', 15, function () use ($opnsense) {
             try {
                 $sessions = collect($opnsense->listSessions());
+                $arpTable = collect($opnsense->getArpTable());
                 $now = now();
                 
-                // 1. Filter for truly active devices (Authorized/Connected)
+                // Identify Infrastructure IPs
+                $infraIpsStr = \App\Models\Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4');
+                $infraIps = explode(',', $infraIpsStr);
+
+                // Split into Guest vs Infrastructure
                 $activeSessions = $sessions->filter(function($s) {
                     return isset($s['clientState']) && in_array(strtoupper($s['clientState']), ['AUTHORIZED', 'CONNECTED']);
                 });
 
-                // Unique devices by MAC address to ensure "1 device" means 1 physical device
-                $uniqueDevices = $activeSessions->unique('macAddress')->count();
+                $activeGuests = $activeSessions->filter(fn($s) => !in_array(str_replace('/32', '', $s['ipAddress']), $infraIps))
+                    ->unique('macAddress')->count();
                 
-                // 2. Calculate Real-time Speed (Mbps)
+                $systemNodes = $arpTable->filter(fn($s) => in_array($s['ip'], $infraIps))
+                    ->unique('mac')->count();
+                
+                // Calculate Real-time Speed (Mbps)
                 $currentBytesIn = (int) $activeSessions->sum('bytes_received');
                 $currentBytesOut = (int) $activeSessions->sum('bytes_sent');
                 
                 $snapshot = Cache::get('network_snapshot');
-                $speedDown = 0;
-                $speedUp = 0;
+                $speedDown = 0; $speedUp = 0;
 
                 if ($snapshot && isset($snapshot['time'])) {
                     $timeDelta = $now->diffInSeconds($snapshot['time']);
-                    if ($timeDelta > 0 && $timeDelta < 300) { // Only calculate if snapshot is reasonably fresh
-                        $bytesInDelta = max(0, $currentBytesIn - $snapshot['bytes_in']);
-                        $bytesOutDelta = max(0, $currentBytesOut - $snapshot['bytes_out']);
-                        
-                        // Convert to Mbps: (Bytes * 8 bits) / (1024 * 1024) / Seconds
-                        $speedDown = round(($bytesInDelta * 8) / (1024 * 1024) / $timeDelta, 2);
-                        $speedUp = round(($bytesOutDelta * 8) / (1024 * 1024) / $timeDelta, 2);
+                    if ($timeDelta > 0 && $timeDelta < 300) {
+                        $speedDown = round((max(0, $currentBytesIn - $snapshot['bytes_in']) * 8) / (1024 * 1024) / $timeDelta, 2);
+                        $speedUp = round((max(0, $currentBytesOut - $snapshot['bytes_out']) * 8) / (1024 * 1024) / $timeDelta, 2);
                     }
                 }
 
-                // Update snapshot for next calculation
-                Cache::put('network_snapshot', [
-                    'time' => $now,
-                    'bytes_in' => $currentBytesIn,
-                    'bytes_out' => $currentBytesOut
-                ], 300);
+                Cache::put('network_snapshot', ['time' => $now, 'bytes_in' => $currentBytesIn, 'bytes_out' => $currentBytesOut], 300);
 
                 return [
-                    'activeUsers' => $uniqueDevices,
-                    'totalDevices' => $uniqueDevices, // Reflecting the actual connected hardware
+                    'activeGuests' => $activeGuests,
+                    'systemNodes' => $systemNodes,
                     'bandwidthDown' => $speedDown,
-                    'bandwidthUp' => $speedUp
+                    'bandwidthUp' => $speedUp,
+                    'totalDevices' => $activeSessions->unique('macAddress')->count()
                 ];
             } catch (\Exception $e) {
-                return [
-                    'activeUsers' => 0,
-                    'totalDevices' => 0,
-                    'bandwidthDown' => 0,
-                    'bandwidthUp' => 0
-                ];
+                return ['activeGuests' => 0, 'systemNodes' => 0, 'bandwidthDown' => 0, 'bandwidthUp' => 0, 'totalDevices' => 0];
             }
         });
-
-        $activeUsers = $networkPulse['activeUsers'];
 
         // 3. Chart Data
         $charts = Cache::remember('dashboard_charts', 300, function () {
@@ -169,12 +190,15 @@ class DashboardController extends Controller
             ];
         });
 
+        // 5. AI Brief Summary
+        $aiBrief = Cache::get('barista_ai_brief', 'Store data is being analyzed for strategic insights...');
+
         return view('dashboard', array_merge(
-            $stats,
-            ['activeUsers' => $activeUsers],
-            $charts,
-            $systemHealth,
-            $networkPulse
+            $stats, 
+            $networkPulse, 
+            $charts, 
+            $systemHealth, 
+            ['aiBrief' => $aiBrief]
         ));
     }
 
@@ -206,6 +230,11 @@ class DashboardController extends Controller
             $aiResult = $ai->analyzeSalesTrends($historicalSales, $productPerformance);
             
             if ($aiResult) {
+                // Update the Dashboard Brief
+                if (isset($aiResult['strategic_advice'])) {
+                    Cache::put('barista_ai_brief', $aiResult['strategic_advice'], 3600);
+                }
+
                 // Determine confidence and progress
                 $targetTransactions = 50;
                 $progress = min($transactionCount, $targetTransactions);
@@ -226,13 +255,9 @@ class DashboardController extends Controller
                     'confidence_max' => $targetDays,
                 ];
                 
-                // Ranges
                 if (isset($aiResult['forecast_total'])) {
                     $total = $aiResult['forecast_total'];
-                    // variance depends on confidence. lower confidence = higher variance
-                    $variance = 1.0 - ($confidenceScore / $targetDays); // 0 to 1
-                    $variance = max(0.1, $variance * 0.4); // 10% to 40% variance
-                    
+                    $variance = max(0.1, (1.0 - ($confidenceScore / $targetDays)) * 0.4);
                     $aiResult['forecast_range_low'] = $total * (1 - $variance);
                     $aiResult['forecast_range_high'] = $total * (1 + $variance);
                 }
