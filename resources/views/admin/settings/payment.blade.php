@@ -51,6 +51,17 @@
                     </div>
 
                     <div class="space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-2">Free Wi-Fi Min Order (₱)</label>
+                                <input type="number" name="free_wifi_min_amount" value="{{ $settings['free_wifi_min_amount'] }}" class="w-full px-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] text-sm font-medium font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-2">Free Wi-Fi Duration (Mins)</label>
+                                <input type="number" name="free_wifi_duration" value="{{ $settings['free_wifi_duration'] }}" class="w-full px-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] text-sm font-medium font-mono">
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-2">OPNsense Zone ID</label>
                             <input type="text" name="opnsense_zone" value="{{ $settings['opnsense_zone'] }}" class="w-full px-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] text-sm font-medium font-mono">

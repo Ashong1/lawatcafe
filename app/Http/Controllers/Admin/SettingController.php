@@ -19,6 +19,8 @@ class SettingController extends Controller
             'network_ignored_ips' => Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.100,192.168.2.5,192.168.2.4'),
             'opnsense_zone' => Setting::get('opnsense_zone', '0'),
             'low_stock_threshold' => Setting::get('low_stock_threshold', '500'),
+            'free_wifi_min_amount' => Setting::get('free_wifi_min_amount', '200'),
+            'free_wifi_duration' => Setting::get('free_wifi_duration', '60'),
         ];
 
         return view('admin.settings.payment', compact('settings'));
@@ -34,6 +36,8 @@ class SettingController extends Controller
             'network_ignored_ips' => 'required|string',
             'opnsense_zone' => 'required|string',
             'low_stock_threshold' => 'required|numeric',
+            'free_wifi_min_amount' => 'required|numeric|min:0',
+            'free_wifi_duration' => 'required|numeric|min:1',
         ]);
 
         Setting::set('imap_username', $request->imap_username);
@@ -42,6 +46,8 @@ class SettingController extends Controller
         Setting::set('network_ignored_ips', $request->network_ignored_ips);
         Setting::set('opnsense_zone', $request->opnsense_zone);
         Setting::set('low_stock_threshold', $request->low_stock_threshold);
+        Setting::set('free_wifi_min_amount', $request->free_wifi_min_amount);
+        Setting::set('free_wifi_duration', $request->free_wifi_duration);
 
         // Clear dashboard cache
         \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
