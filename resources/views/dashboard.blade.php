@@ -360,8 +360,8 @@
 </div>
 
     <!-- AI Insights Modal -->
-    <div x-show="showInsightsModal" x-cloak class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[80]" style="display: none;">
-        <div @click.away="showInsightsModal = false" class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full border-t-8 border-[#3E2723] max-h-[90vh] flex flex-col relative">
+    <div x-show="showInsightsModal" x-cloak class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50" style="display: none;">
+        <div @click.away="showInsightsModal = false" class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full border-t-8 border-[#3E2723] max-h-[90vh] flex flex-col relative z-50">
             <button @click="showInsightsModal = false" class="absolute top-6 right-6 text-[#A1887F] hover:text-[#3E2723] transition">
                 <x-lucide-x class="w-6 h-6" />
             </button>
