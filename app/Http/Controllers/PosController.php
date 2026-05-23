@@ -62,10 +62,16 @@ class PosController extends Controller
         // Merge WiFi options into products list so Alpine logic stays simple
         $mergedProducts = collect($products)->merge($wifiOptions)->toArray();
 
+        // Get Free Wi-Fi settings
+        $freeWifiMinAmount = (float) \App\Models\Setting::get('free_wifi_min_amount', 200);
+        $freeWifiDuration = (int) \App\Models\Setting::get('free_wifi_duration', 60);
+
         return view('pos.index', [
             'products' => $mergedProducts,
             'categories' => $categories,
-            'activeShift' => $activeShift
+            'activeShift' => $activeShift,
+            'freeWifiMinAmount' => $freeWifiMinAmount,
+            'freeWifiDuration' => $freeWifiDuration
         ]);
     }
 

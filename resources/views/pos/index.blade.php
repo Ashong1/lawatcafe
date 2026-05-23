@@ -250,6 +250,21 @@
 
         <div class="pt-4 border-t border-[#F0E6D2] mt-auto">
             
+            <div x-show="freeWifiMinAmount > 0" class="mb-4 p-3 rounded-xl border flex flex-col justify-center items-center text-center transition-all" :class="grandTotal >= freeWifiMinAmount ? 'bg-[#F3F9FF] border-[#E3F2FD]' : 'bg-[#FAFAFA] border-[#F0E6D2]'" style="display: none;">
+                <template x-if="grandTotal >= freeWifiMinAmount">
+                    <div>
+                        <p class="text-[10px] font-black text-[#1565C0] uppercase tracking-[0.2em] mb-0.5"><x-lucide-wifi class="w-3 h-3 inline-block mr-1 -mt-0.5"/> Free Wi-Fi Unlocked!</p>
+                        <p class="text-[10px] text-[#A1887F] font-medium" x-text="`Order qualifies for ${freeWifiDuration} mins free access.`"></p>
+                    </div>
+                </template>
+                <template x-if="grandTotal < freeWifiMinAmount">
+                    <div>
+                        <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-0.5">Free Wi-Fi Promo</p>
+                        <p class="text-[10px] text-[#A1887F] font-medium" x-text="`Spend ₱${(freeWifiMinAmount - grandTotal).toFixed(2)} more to get ${freeWifiDuration} mins free.`"></p>
+                    </div>
+                </template>
+            </div>
+
             <div class="mb-4">
                 <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-2">Discount</label>
                 <div class="flex gap-2">
@@ -379,6 +394,8 @@
             saleId: null,
             generatedCode: '',
             isProcessing: false,
+            freeWifiMinAmount: {{ $freeWifiMinAmount ?? 0 }},
+            freeWifiDuration: {{ $freeWifiDuration ?? 0 }},
 
             get filteredProducts() {
                 return this.products.filter(i => {
