@@ -38,20 +38,64 @@ class DashboardController extends Controller
             ];
         });
 
-        // 2. Active Sessions
-        $activeUsers = Cache::remember('active_network_users', 60, function () use ($opnsense) {
+        // 2. Network & Sessions (Mbps speed and accurate counting)
+        $networkPulse = Cache::remember('network_pulse', 30, function () use ($opnsense) {
             try {
-                $opnSessions = $opnsense->listSessions();
-                return collect($opnSessions)->filter(function($session) {
-                    $ip = str_replace('/32', '', $session['ipAddress']);
-                    $ignoredIpsStr = \App\Models\Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.100,192.168.2.5,192.168.2.4');
-                    $ignoredIps = explode(',', $ignoredIpsStr);
-                    return !in_array($ip, $ignoredIps);
-                })->count();
+                $sessions = collect($opnsense->listSessions());
+                $now = now();
+                
+                // 1. Filter for truly active devices (Authorized/Connected)
+                $activeSessions = $sessions->filter(function($s) {
+                    return isset($s['clientState']) && in_array(strtoupper($s['clientState']), ['AUTHORIZED', 'CONNECTED']);
+                });
+
+                // Unique devices by MAC address to ensure "1 device" means 1 physical device
+                $uniqueDevices = $activeSessions->unique('macAddress')->count();
+                
+                // 2. Calculate Real-time Speed (Mbps)
+                $currentBytesIn = (int) $activeSessions->sum('bytes_received');
+                $currentBytesOut = (int) $activeSessions->sum('bytes_sent');
+                
+                $snapshot = Cache::get('network_snapshot');
+                $speedDown = 0;
+                $speedUp = 0;
+
+                if ($snapshot && isset($snapshot['time'])) {
+                    $timeDelta = $now->diffInSeconds($snapshot['time']);
+                    if ($timeDelta > 0 && $timeDelta < 300) { // Only calculate if snapshot is reasonably fresh
+                        $bytesInDelta = max(0, $currentBytesIn - $snapshot['bytes_in']);
+                        $bytesOutDelta = max(0, $currentBytesOut - $snapshot['bytes_out']);
+                        
+                        // Convert to Mbps: (Bytes * 8 bits) / (1024 * 1024) / Seconds
+                        $speedDown = round(($bytesInDelta * 8) / (1024 * 1024) / $timeDelta, 2);
+                        $speedUp = round(($bytesOutDelta * 8) / (1024 * 1024) / $timeDelta, 2);
+                    }
+                }
+
+                // Update snapshot for next calculation
+                Cache::put('network_snapshot', [
+                    'time' => $now,
+                    'bytes_in' => $currentBytesIn,
+                    'bytes_out' => $currentBytesOut
+                ], 300);
+
+                return [
+                    'activeUsers' => $uniqueDevices,
+                    'totalDevices' => $uniqueDevices, // Reflecting the actual connected hardware
+                    'bandwidthDown' => $speedDown,
+                    'bandwidthUp' => $speedUp
+                ];
             } catch (\Exception $e) {
-                return 0;
+                return [
+                    'activeUsers' => 0,
+                    'totalDevices' => 0,
+                    'bandwidthDown' => 0,
+                    'bandwidthUp' => 0
+                ];
             }
         });
+
+        $activeUsers = $networkPulse['activeUsers'];
 
         // 3. Chart Data
         $charts = Cache::remember('dashboard_charts', 300, function () {
@@ -129,7 +173,8 @@ class DashboardController extends Controller
             $stats,
             ['activeUsers' => $activeUsers],
             $charts,
-            $systemHealth
+            $systemHealth,
+            $networkPulse
         ));
     }
 
