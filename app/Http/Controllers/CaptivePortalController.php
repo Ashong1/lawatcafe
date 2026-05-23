@@ -8,8 +8,34 @@ use Illuminate\Http\Request;
 class CaptivePortalController extends Controller
 {
     // Show the main captive portal page
-    public function index(Request $request)
+    public function index(Request $request, \App\Services\OpnSenseService $opnsense)
     {
+        // 1. Capture OPNsense redirect parameters
+        if ($request->has('clientIp')) session(['clientIp' => $request->query('clientIp')]);
+        if ($request->has('clientMac')) session(['clientMac' => $request->query('clientMac')]);
+        if ($request->has('zone')) session(['zone' => $request->query('zone')]);
+
+        $ip = session('clientIp', $request->ip());
+        $mac = session('clientMac', $request->query('clientMac'));
+        
+        // 2. Check if already connected
+        $sessions = $opnsense->listSessions();
+        $activeSession = collect($sessions)->filter(function($s) use ($ip, $mac) {
+            $sessionIp = str_replace('/32', '', $s['ipAddress'] ?? '');
+            $sessionMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $s['macAddress'] ?? ''));
+            $cleanMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac ?? ''));
+            
+            return $sessionIp === $ip || (!empty($cleanMac) && $sessionMac === $cleanMac);
+        })->first();
+
+        if ($activeSession) {
+            return view('portal.status', [
+                'session' => $activeSession,
+                'startTime' => \Carbon\Carbon::createFromTimestamp($activeSession['startTime']),
+                'userName' => $activeSession['userName'] ?? 'Guest'
+            ]);
+        }
+
         $qrCode = \App\Models\Setting::get('payment_qr_code');
         
         // Fetch and sort durations
@@ -21,12 +47,17 @@ class CaptivePortalController extends Controller
             $durations = [];
         }
 
-        // Capture OPNsense redirect parameters if they exist
-        if ($request->has('clientIp')) session(['clientIp' => $request->query('clientIp')]);
-        if ($request->has('clientMac')) session(['clientMac' => $request->query('clientMac')]);
-        if ($request->has('zone')) session(['zone' => $request->query('zone')]);
-
         return view('portal.index', compact('qrCode', 'durations'));
+    }
+
+    // Handle session termination
+    public function disconnect(Request $request, \App\Services\OpnSenseService $opnsense)
+    {
+        $sessionId = $request->input('session_id');
+        if ($sessionId) {
+            $opnsense->disconnectDevice($sessionId);
+        }
+        return redirect()->route('portal.index')->with('message', 'Successfully disconnected.');
     }
 
     // Handle e-wallet reference number verification
@@ -165,6 +196,12 @@ class CaptivePortalController extends Controller
 
         $reply = $ai->chat($request->message, $request->history ?? []);
         return response()->json(['reply' => $reply]);
+    }
+
+    // Show the digital menu for Walled Garden access
+    public function menu()
+    {
+        return view('portal.menu');
     }
 
     /**
