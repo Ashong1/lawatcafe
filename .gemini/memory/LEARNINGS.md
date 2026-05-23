@@ -19,13 +19,11 @@
   - Replaced native `prompt()` in the POS UI with an Alpine.js modal for closing shifts.
 - **Rule**: Never trust client-side prices in POS systems. Always recalculate totals server-side based on database records before processing transactions.
 
-### 2026-05-20 - System-Wide Notification Standardized
-- **Action**: Centralized all success, error, and validation notifications into the main layouts (`admin`, `staff`, `guest`, `portal`) using SweetAlert2 toasts.
-- **Goal**: Eliminate redundant in-page alert blocks and provide a consistent, high-end notification experience.
+### 2026-05-23 - Enhanced System Monitoring: CPU Temperature
+- **Action**: Integrated CPU temperature tracking into the Admin Dashboard's System Health section.
+- **Goal**: Provide real-time hardware health visibility for café servers (especially Raspberry Pi or local Linux hosts).
 - **Outcome**: 
-  - Standardized success/error/status session handling in `layouts.admin` and `layouts.staff`.
-  - Added validation error handling to layouts via SweetAlert2, ensuring users see the first validation error immediately.
-  - Replaced native browser `alert()` and `confirm()` calls with stylized SweetAlert2 popups (e.g., in POS checkout and Voucher management).
-  - Modernized the Captive Portal (`portal/index.blade.php`) with SweetAlert2 toasts for a more professional guest experience.
-- **Rule**: Never use `@if(session('success'))` or `@if($errors->any())` directly in management views if they extend a standard layout. The layout now handles these globally via SweetAlert2 toasts.
-- **Rule**: Prefer `window.confirmAction({ ... })` for delete/critical actions to maintain a consistent UI across the application.
+  - Added logic to `DashboardController` to read `/sys/class/thermal/thermal_zone0/temp`.
+  - Implemented a progress bar visualization in the dashboard UI.
+  - Added robust fallbacks for non-Linux environments to prevent dashboard crashes.
+- **Rule**: When adding system-level metrics, always provide fallbacks and use cached values (30s-60s) to minimize server load. Avoid executing complex shell commands on every page load.

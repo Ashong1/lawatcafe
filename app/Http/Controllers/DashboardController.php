@@ -93,7 +93,10 @@ class DashboardController extends Controller
         $systemHealth = Cache::remember('system_health', 30, function () {
             $cpuLoad = function_exists('sys_getloadavg') ? sys_getloadavg()[0] * 10 : 12;
             $memoryUsage = 0;
+            $cpuTemp = 0;
+
             if (PHP_OS_FAMILY === 'Linux') {
+                // Memory
                 $free = shell_exec('free');
                 if ($free) {
                     $free = (string) trim($free);
@@ -105,10 +108,20 @@ class DashboardController extends Controller
                         }
                     }
                 }
+
+                // CPU Temp
+                if (file_exists('/sys/class/thermal/thermal_zone0/temp')) {
+                    $temp = @file_get_contents('/sys/class/thermal/thermal_zone0/temp');
+                    if ($temp !== false) {
+                        $cpuTemp = round(trim($temp) / 1000);
+                    }
+                }
             }
+
             return [
                 'cpuLoad' => $cpuLoad,
-                'memoryUsage' => $memoryUsage ?: 45
+                'memoryUsage' => $memoryUsage ?: 45,
+                'cpuTemp' => $cpuTemp ?: 42
             ];
         });
 

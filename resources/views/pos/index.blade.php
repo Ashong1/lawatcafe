@@ -15,8 +15,8 @@
 <div x-data="posSystem()" class="bg-[#FDF8F5] w-full h-[calc(100vh-3.5rem)] flex items-stretch text-[#4A3B32] overflow-hidden" style="font-family: 'Montserrat', sans-serif;">
 
     {{-- Menu Area (Left) --}}
-    <div class="flex-1 p-8 flex flex-col overflow-hidden">
-        <div class="flex-1 bg-white p-6 md:p-8 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden border border-[#F0E6D2]">
+    <div class="flex-1 p-8 flex flex-col overflow-hidden min-h-0">
+        <div class="flex-1 bg-white p-6 md:p-8 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden border border-[#F0E6D2] min-h-0">
             
             <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 shrink-0">
                 
@@ -87,70 +87,77 @@
 
             <h3 class="text-xl font-bold text-[#3E2723] mb-4 capitalize shrink-0" x-text="selectedCategory + ' Menu'"></h3>
 
-            <div class="flex-1 min-h-0 overflow-y-auto pb-6 pr-2">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <template x-for="item in filteredProducts" :key="item.id">
-                        <div class="bg-white p-5 rounded-2xl border border-[#F0E6D2] shadow-sm hover:shadow-md hover:border-[#D7CCC8] transition-all flex flex-col group h-full">
-                            
-                            <div class="h-24 w-full bg-[#FDF8F5] rounded-xl mb-4 flex items-center justify-center group-hover:bg-white transition-colors duration-300 border border-[#F0E6D2] shrink-0">
-                                <template x-if="item.type === 'wifi'">
-                                    <x-lucide-wifi class="w-8 h-8 text-amber-800/20" />
-                                </template>
-                                <template x-if="item.type !== 'wifi' && item.category === 'Pastries'">
-                                    <x-lucide-cookie class="w-8 h-8 text-amber-800/20" />
-                                </template>
-                                <template x-if="item.type !== 'wifi' && item.category !== 'Pastries'">
-                                    <x-lucide-coffee class="w-8 h-8 text-amber-800/20" />
-                                </template>
-                            </div>
+            <div class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 overflow-y-auto pb-6 pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#D7CCC8] [&::-webkit-scrollbar-thumb]:rounded-full">
+                <template x-for="item in filteredProducts" :key="item.id">
+                    <div class="bg-white p-4 rounded-[1.5rem] shadow-[0_4px_15px_-3px_rgba(62,39,35,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(62,39,35,0.12)] transition-all duration-300 flex flex-col group relative border border-transparent hover:border-[#FDF8F5]">
+                        
+                        <div class="h-32 w-full bg-[#FDF8F5] rounded-xl mb-4 flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-300 border border-[#F0E6D2]/50 shrink-0">
+                            <template x-if="item.type === 'wifi'">
+                                <x-lucide-wifi class="w-10 h-10 text-amber-800/20" />
+                            </template>
+                            <template x-if="item.type !== 'wifi' && item.category === 'Pastries'">
+                                <x-lucide-cookie class="w-10 h-10 text-amber-800/20" />
+                            </template>
+                            <template x-if="item.type !== 'wifi' && item.category !== 'Pastries'">
+                                <x-lucide-coffee class="w-10 h-10 text-amber-800/20" />
+                            </template>
+                        </div>
 
-                            <div class="flex justify-between items-start mb-1 shrink-0">
-                                <h4 class="font-bold text-[#3E2723] text-base leading-tight pr-2" x-text="item.name"></h4>
-                                <span class="font-black text-[#8D6E63] text-base shrink-0" x-text="'₱' + Number(item.price).toFixed(2)"></span>
-                            </div>
+                        <div class="flex flex-col flex-1">
+                            <h4 class="font-bold text-[#3E2723] text-base leading-tight mb-1" x-text="item.name"></h4>
+                            <p class="text-[11px] text-[#A1887F] font-medium mb-3 line-clamp-2" x-text="item.type === 'wifi' ? 'Seamless high-speed internet access.' : 'Freshly prepared for your enjoyment.'"></p>
                             
-                            <p class="text-xs text-[#A1887F] font-medium mb-4 line-clamp-2 flex-1" x-text="item.type === 'wifi' ? 'Seamless high-speed internet access.' : 'Freshly prepared for your enjoyment.'"></p>
-
-                            <div class="mt-auto shrink-0">
-                                <button type="button" @click="addToCart(item)" class="w-full block bg-[#FAFAFA] hover:bg-[#3E2723] border border-[#F0E6D2] hover:border-[#3E2723] text-[#8D6E63] hover:text-white font-bold py-3 rounded-full transition-all text-sm tracking-wide active:scale-95">
-                                    Add to Cart
+                            <div class="mt-auto flex justify-between items-center pt-2">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] uppercase font-black tracking-wider text-[#A1887F]">Price</span>
+                                    <span class="font-black text-[#3E2723] text-lg" x-text="'₱' + Number(item.price).toFixed(2)"></span>
+                                </div>
+                                
+                                <button type="button" @click="addToCart(item)" class="w-11 h-11 rounded-full bg-[#3E2723] text-white flex items-center justify-center hover:bg-[#271815] transition-all active:scale-90 shadow-md shadow-[#3E2723]/30">
+                                    <x-lucide-plus class="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
-                    </template>
-                    
-                    <div x-show="filteredProducts.length === 0" class="col-span-full text-center py-12 text-[#A1887F] text-sm font-medium">
-                        <span class="block text-4xl mb-3 opacity-50">🔍</span>
-                        No items found for this category or search.
                     </div>
+                </template>
+                
+                <div x-show="filteredProducts.length === 0" class="col-span-full flex flex-col items-center justify-center py-20 text-[#A1887F]">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                        <span class="text-3xl opacity-50">🔍</span>
+                    </div>
+                    <p class="font-bold text-sm">No items found.</p>
+                    <p class="text-xs mt-1">Try searching for something else.</p>
                 </div>
             </div>
         </div>
     </div>
 
     {{-- Cart Sidebar (Right) --}}
-    <div class="w-[26rem] bg-white p-6 rounded-[2rem] shadow-[0_0_40px_rgba(62,39,35,0.08)] flex flex-col h-full shrink-0 relative border border-[#F0E6D2]">
+    <div class="w-[26rem] bg-white p-6 rounded-[2rem] shadow-[0_0_40px_rgba(62,39,35,0.08)] flex flex-col h-full shrink-0 relative border border-[#F0E6D2] min-h-0">
         
-        <div class="flex flex-col h-full overflow-hidden">
-            <div class="flex justify-between items-center mb-6 shrink-0">
-                <h3 class="text-2xl font-bold text-[#3E2723]">Cart</h3>
-                <button type="button" x-show="cart.length > 0" @click="resetCart()" class="text-[#8D6E63] hover:text-red-600 transition p-2 hover:bg-red-50 rounded-lg" title="Clear All">
-                    <x-lucide-trash-2 class="w-5 h-5" />
-                </button>
+        <div class="flex justify-between items-center mb-6 shrink-0">
+            <div>
+                <h3 class="text-2xl font-black text-[#3E2723]">Current Order</h3>
+                <p class="text-sm font-medium text-[#8D6E63] mt-0.5"><span x-text="cart.length"></span> items in cart</p>
             </div>
+            
+            <button type="button" x-show="cart.length > 0" @click="resetCart()" class="w-10 h-10 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center shadow-sm" title="Clear All">
+                <x-lucide-trash-2 class="w-5 h-5" />
+            </button>
+        </div>
 
-        <div class="flex bg-[#FAFAFA] border border-[#F0E6D2] rounded-full p-1 mb-6">
-            <button @click="orderType = 'dine_in'" class="flex-1 py-2 rounded-full text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'dine_in' ? 'bg-[#3E2723] text-white shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">
+        <div class="flex bg-[#FDF8F5] p-1.5 rounded-2xl mb-6 shrink-0 border border-[#F0E6D2]/50">
+            <button @click="orderType = 'dine_in'" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'dine_in' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">
                 <x-lucide-utensils class="w-3.5 h-3.5" />
                 <span>Dine In</span>
             </button>
-            <button @click="orderType = 'take_away'" class="flex-1 py-2 rounded-full text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'take_away' ? 'bg-[#3E2723] text-white shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">
+            <button @click="orderType = 'take_away'" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'take_away' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#8D6E63] hover:text-[#3E2723]'">
                 <x-lucide-shopping-bag class="w-3.5 h-3.5" />
                 <span>Take Away</span>
             </button>
         </div>
 
-        <div class="flex-1 min-h-0 overflow-y-auto space-y-4 pr-2 mb-6">
+        <div class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 mb-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">
             <template x-for="(cartItem, index) in cart" :key="cartItem.id + '-' + index">
                 <div class="flex gap-4 items-center bg-white group">
                     <div class="w-12 h-12 bg-[#FDF8F5] border border-[#F0E6D2] rounded-xl flex items-center justify-center shrink-0">
