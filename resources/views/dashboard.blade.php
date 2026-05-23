@@ -88,8 +88,8 @@
             
             <div class="flex justify-between items-center w-full mb-6">
                 <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap">Network Pulse</h3>
-                <div class="flex items-center gap-2 opacity-60">
-                    <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <div class="flex items-center gap-2 opacity-80">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
                     <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Live</span>
                 </div>
             </div>
