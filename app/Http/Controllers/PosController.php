@@ -186,7 +186,7 @@ class PosController extends Controller
                     'price' => $item['price'],
                     'type' => $item['type'],
                     'kds_status' => 'pending',
-                    'note' => $item['note'] ?? null
+                    'note' => $item['variant'] ?? ($item['note'] ?? null)
                 ]);
 
                 // A. Handle Wi-Fi

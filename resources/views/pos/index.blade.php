@@ -13,7 +13,7 @@
     }
     
     /* 2. Force Laravel layout wrappers to act as full-height flex columns */
-    body > div, #app, .min-h-screen {
+    #app, .min-h-screen, body > aside, body > .flex-1 {
         height: 100vh !important;
         display: flex !important;
         flex-direction: column !important;
@@ -163,6 +163,29 @@
         </div>
     </div>
 
+    <!-- Variant Selection Modal -->
+    <div x-show="showVariantModal" x-cloak class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[80]" style="display: none;">
+        <div @click.away="closeVariantModal()" class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full border-t-8 border-[#3E2723]">
+            <h2 class="text-2xl font-black text-[#3E2723] mb-1" x-text="pendingItem?.name"></h2>
+            <p class="text-sm font-medium text-[#8D6E63] mb-6">Select preparation preference:</p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <button @click="confirmVariant('Hot')" class="flex flex-col items-center justify-center p-6 border-2 border-[#F0E6D2] rounded-[1.5rem] hover:border-[#3E2723] hover:bg-[#FDF8F5] transition group bg-white shadow-sm">
+                    <x-lucide-coffee class="w-12 h-12 text-amber-700 mb-3 group-hover:scale-110 transition" />
+                    <span class="font-black text-[#3E2723] uppercase tracking-widest text-sm">Hot</span>
+                </button>
+                <button @click="confirmVariant('Iced')" class="flex flex-col items-center justify-center p-6 border-2 border-[#F0E6D2] rounded-[1.5rem] hover:border-blue-800 hover:bg-blue-50 transition group bg-white shadow-sm">
+                    <x-lucide-snowflake class="w-12 h-12 text-blue-500 mb-3 group-hover:scale-110 transition" />
+                    <span class="font-black text-blue-900 uppercase tracking-widest text-sm">Iced</span>
+                </button>
+            </div>
+            
+            <button @click="closeVariantModal()" class="w-full py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#FDF8F5] font-bold transition">
+                Cancel
+            </button>
+        </div>
+    </div>
+
     {{-- Cart Sidebar (Right) --}}
     <div class="bg-white p-6 md:p-8 flex flex-col shrink-0 relative border-l border-[#F0E6D2] shadow-[-10px_0_30px_rgba(62,39,35,0.05)] h-full z-10" style="width: 28rem;">
         
@@ -202,9 +225,11 @@
                         </div>
                         
                         <div class="flex-1">
-                            <h4 class="font-bold text-sm text-[#3E2723] line-clamp-1" x-text="cartItem.name"></h4>
-                            <div class="flex justify-between items-center mt-2">
-                                <p class="font-black text-sm text-[#8D6E63]" x-text="'₱' + (Number(cartItem.price) * cartItem.quantity).toFixed(2)"></p>
+                            <h4 class="font-bold text-sm text-[#3E2723] line-clamp-1">
+                                <span x-text="cartItem.name"></span>
+                                <span x-show="cartItem.variant" class="ml-1 text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full" :class="cartItem.variant === 'Hot' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'" x-text="cartItem.variant"></span>
+                            </h4>
+                            <div class="flex justify-between items-center mt-2">                                <p class="font-black text-sm text-[#8D6E63]" x-text="'₱' + (Number(cartItem.price) * cartItem.quantity).toFixed(2)"></p>
                                 
                                 <div class="flex items-center bg-[#FAFAFA] border border-[#F0E6D2] rounded-full px-2 py-1">
                                     <button type="button" @click="removeFromCart(index)" class="w-6 h-6 flex items-center justify-center text-[#8D6E63] hover:text-[#3E2723] font-bold transition">-</button>
@@ -349,6 +374,8 @@
             discountAmount: 0,
             amountTendered: 0,
             showModal: false,
+            showVariantModal: false,
+            pendingItem: null,
             saleId: null,
             generatedCode: '',
             isProcessing: false,
@@ -383,11 +410,40 @@
             },
 
             addToCart(product) {
-                const existing = this.cart.find(i => i.id === product.id);
+                // If it's a Coffee or Tea, ask for variant first
+                if (product.type !== 'wifi' && (product.category === 'Coffee' || product.category === 'Tea' || product.category === 'Signature')) {
+                    // Check if it's already a variant object from the cart + button
+                    if (product.variant) {
+                        this.processAdd(product, product.variant);
+                    } else {
+                        this.pendingItem = product;
+                        this.showVariantModal = true;
+                    }
+                } else {
+                    this.processAdd(product, null);
+                }
+            },
+
+            confirmVariant(variant) {
+                if (this.pendingItem) {
+                    this.processAdd(this.pendingItem, variant);
+                }
+                this.closeVariantModal();
+            },
+
+            closeVariantModal() {
+                this.showVariantModal = false;
+                this.pendingItem = null;
+            },
+
+            processAdd(product, variant) {
+                // Match by ID AND Variant so Hot/Iced don't merge
+                const existing = this.cart.find(i => i.id === product.id && i.variant === variant);
+                
                 if (existing) {
                     existing.quantity++;
                 } else {
-                    this.cart.push({ ...product, quantity: 1 });
+                    this.cart.push({ ...product, quantity: 1, variant: variant });
                 }
             },
 
