@@ -172,9 +172,9 @@
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="flex flex-col-reverse lg:flex-row gap-6 mb-8">
     
-    <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] order-2 lg:order-1">
+    <div class="w-full lg:w-2/3 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Recent Vouchers</h3>
@@ -189,7 +189,7 @@
         </div>
         
         <div class="overflow-x-auto pr-2">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse min-w-[500px]">
                 <thead>
                     <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
                         <th class="pb-4 font-black">Code</th>
@@ -233,14 +233,15 @@
         @endif
     </div>
 
-    <div class="flex flex-col gap-6 order-1 lg:order-2">
+    <div class="w-full lg:w-1/3 flex flex-col gap-6">
         
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col">
-            <h3 class="text-sm font-bold text-[#3E2723] mb-4 uppercase tracking-widest">System Health</h3>
+            <h3 class="text-sm font-bold text-[#3E2723] mb-6 uppercase tracking-widest">System Health</h3>
             
-            <div class="flex flex-row justify-between items-center w-full flex-1 gap-2">
-                <div class="group flex flex-row items-center gap-2 md:gap-3">
-                    <div class="relative w-14 h-14 md:w-16 md:h-16">
+            <div class="flex flex-row justify-between items-center w-full flex-1 gap-1">
+                
+                <div class="group flex flex-row items-center gap-1.5 md:gap-2">
+                    <div class="relative w-12 h-12 md:w-14 md:h-14">
                         <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
                             <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             <path class="text-amber-600 transition-all duration-1000 ease-out" 
@@ -251,11 +252,11 @@
                             <span class="text-[10px] md:text-xs font-black text-amber-700">{{ number_format($cpuLoad, 0) }}%</span>
                         </div>
                     </div>
-                    <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Load</span>
+                    <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Load</span>
                 </div>
                 
-                <div class="group flex flex-row items-center gap-2 md:gap-3">
-                    <div class="relative w-14 h-14 md:w-16 md:h-16">
+                <div class="group flex flex-row items-center gap-1.5 md:gap-2">
+                    <div class="relative w-12 h-12 md:w-14 md:h-14">
                         <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
                             <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             <path class="text-amber-600 transition-all duration-1000 ease-out" 
@@ -266,11 +267,11 @@
                             <span class="text-[10px] md:text-xs font-black text-amber-700">{{ number_format($memoryUsage, 0) }}%</span>
                         </div>
                     </div>
-                    <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">Memory<br>Usage</span>
+                    <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">Mem<br>Usage</span>
                 </div>
 
-                <div class="group flex flex-row items-center gap-2 md:gap-3">
-                    <div class="relative w-14 h-14 md:w-16 md:h-16">
+                <div class="group flex flex-row items-center gap-1.5 md:gap-2">
+                    <div class="relative w-12 h-12 md:w-14 md:h-14">
                         <svg class="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 36 36">
                             <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             <path class="text-red-500 transition-all duration-1000 ease-out" 
@@ -281,11 +282,11 @@
                             <span class="text-[10px] md:text-xs font-black text-red-600">{{ $cpuTemp }}°</span>
                         </div>
                     </div>
-                    <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Temp</span>
+                    <span class="text-[8px] md:text-[9px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Temp</span>
                 </div>
             </div>
 
-            <div class="mt-4 pt-4 border-t border-[#FDF8F5] flex items-center gap-3 opacity-60">
+            <div class="mt-6 pt-5 border-t border-[#FDF8F5] flex items-center gap-3 opacity-60">
                 <div class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
                 <span class="text-[10px] font-bold uppercase tracking-widest text-[#8D6E63]">All Systems Online</span>
             </div>
