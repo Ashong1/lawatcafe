@@ -313,9 +313,9 @@
     function posSystem() {
         return {
             searchQuery: '',
-            selectedCategory: 'Coffee',
-            categories: {!! json_encode($categories->pluck('name')) !!},
-            products: {!! json_encode($products) !!},
+            selectedCategory: 'All',
+            categories: @js($categories),
+            products: @js($products),
             cart: [],
             orderType: 'dine_in',
             discountType: 'none',
