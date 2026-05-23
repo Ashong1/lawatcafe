@@ -19,8 +19,8 @@
 <div x-data="posSystem()" class="bg-[#FDF8F5] w-full h-[calc(100vh-3.5rem)] flex items-stretch text-[#4A3B32] overflow-hidden" style="font-family: 'Montserrat', sans-serif;">
 
     {{-- Menu Area (Left) --}}
-    <div class="flex-1 p-8 flex flex-col overflow-hidden h-0">
-        <div class="flex-1 bg-white p-6 md:p-8 rounded-2xl shadow-sm flex flex-col h-0 overflow-hidden border border-[#F0E6D2]">
+    <div class="flex-1 p-8 flex flex-col overflow-hidden min-h-0">
+        <div class="flex-1 bg-white p-6 md:p-8 rounded-2xl shadow-sm flex flex-col overflow-hidden border border-[#F0E6D2] min-h-0">
             
             <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 shrink-0">
                 
@@ -91,7 +91,7 @@
 
             <h3 class="text-xl font-bold text-[#3E2723] mb-4 capitalize shrink-0" x-text="selectedCategory + ' Menu'"></h3>
 
-            <div class="flex-1 h-0 overflow-y-auto pb-6 pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#D7CCC8] [&::-webkit-scrollbar-thumb]:rounded-full">
+            <div class="flex-1 min-h-0 overflow-y-auto pb-6 pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#D7CCC8] [&::-webkit-scrollbar-thumb]:rounded-full">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                     <template x-for="item in filteredProducts" :key="item.id">
                         <div class="bg-white p-4 rounded-[1.5rem] shadow-[0_4px_15px_-3px_rgba(62,39,35,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(62,39,35,0.12)] transition-all duration-300 flex flex-col group relative border border-transparent hover:border-[#FDF8F5]">
@@ -139,7 +139,7 @@
     </div>
 
     {{-- Cart Sidebar (Right) --}}
-    <div class="w-[26rem] bg-white p-6 rounded-[2rem] shadow-[0_0_40px_rgba(62,39,35,0.08)] flex flex-col h-0 shrink-0 relative border border-[#F0E6D2] min-h-0">
+    <div class="w-[26rem] bg-white p-6 rounded-[2rem] shadow-[0_0_40px_rgba(62,39,35,0.08)] flex flex-col shrink-0 relative border border-[#F0E6D2] min-h-0">
         
         <div class="flex justify-between items-center mb-6 shrink-0">
             <div>
@@ -163,7 +163,7 @@
             </button>
         </div>
 
-        <div class="flex-1 h-0 overflow-y-auto space-y-3 pr-2 mb-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">
+        <div class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 mb-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">
             <template x-for="(cartItem, index) in cart" :key="cartItem.id + '-' + index">
                 <div class="flex gap-4 items-center bg-white group">
                     <div class="w-12 h-12 bg-[#FDF8F5] border border-[#F0E6D2] rounded-xl flex items-center justify-center shrink-0">
