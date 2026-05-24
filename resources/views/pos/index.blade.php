@@ -59,65 +59,30 @@
                     <input type="text" x-model="searchQuery" placeholder="Search menu..." class="w-full pl-11 pr-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full focus:outline-none focus:ring-2 focus:ring-[#3E2723] transition-all text-sm font-medium placeholder-[#A1887F] text-[#3E2723]">
                 </div>
                 
-                {{-- ONLY show these sensitive buttons if the user is an Admin --}}
-                @if(auth()->user()->role === 'admin')
                 <div class="flex gap-3 shrink-0">
-                    <a href="{{ route('network.sessions') }}" class="bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#8D6E63] hover:text-[#3E2723] px-5 py-3 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center border border-[#F0E6D2] gap-2" title="Active Sessions">
-                        <x-lucide-wifi class="w-4 h-4" />
-                        <span>Sessions</span>
+                    <a href="{{ route('pos.history') }}" class="bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#8D6E63] hover:text-[#3E2723] px-5 py-3 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center border border-[#F0E6D2] gap-2" title="Order History">
+                        <x-lucide-history class="w-4 h-4" />
+                        <span>History</span>
                     </a>
-                    <a href="{{ route('sales.export') }}" class="bg-[#3E2723] hover:bg-[#271815] text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center gap-2" title="Export Sales">
-                        <x-lucide-download class="w-4 h-4" />
-                        <span>Export</span>
-                    </a>
-                </div>
-                @endif
+
+                    {{-- ONLY show these sensitive buttons if the user is an Admin --}}
+                    @if(auth()->user()->role === 'admin')
+                    <div class="flex gap-3 shrink-0">
+                        <a href="{{ route('network.sessions') }}" class="bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#8D6E63] hover:text-[#3E2723] px-5 py-3 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center border border-[#F0E6D2] gap-2" title="Active Sessions">
+                            <x-lucide-wifi class="w-4 h-4" />
+                            <span>Sessions</span>
+                        </a>
+                        <a href="{{ route('sales.export') }}" class="bg-[#3E2723] hover:bg-[#271815] text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center gap-2" title="Export Sales">
+                            <x-lucide-download class="w-4 h-4" />
+                            <span>Export</span>
+                        </a>
+                    </div>
+                    @endif
 
                 @if($activeShift)
                 <div class="flex gap-3 shrink-0">
                     <button type="button" 
-                            @click="Swal.fire({
-                                title: 'Cash Action',
-                                text: 'Add or remove cash from drawer.',
-                                html: `
-                                    <div class='flex flex-col gap-4 py-4'>
-                                        <select id='swal-type' class='w-full p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-xs'>
-                                            <option value='pay_in'>Cash Pay-In (+)</option>
-                                            <option value='pay_out'>Cash Pay-Out (-)</option>
-                                        </select>
-                                        <input id='swal-amount' type='number' step='0.01' placeholder='Amount (₱)' class='w-full p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-xs'>
-                                        <input id='swal-reason' type='text' placeholder='Reason (e.g. Change, Ice Purchase)' class='w-full p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-xs'>
-                                    </div>
-                                `,
-                                showCancelButton: true,
-                                confirmButtonText: 'Record Action',
-                                confirmButtonColor: '#3E2723',
-                                cancelButtonColor: '#8D6E63',
-                                preConfirm: () => {
-                                    const type = document.getElementById('swal-type').value;
-                                    const amount = document.getElementById('swal-amount').value;
-                                    const reason = document.getElementById('swal-reason').value;
-                                    if (!amount || amount <= 0 || !reason) {
-                                        Swal.showValidationMessage('Please fill all fields correctly');
-                                        return false;
-                                    }
-                                    return { type, amount, reason };
-                                }
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    const form = document.createElement('form');
-                                    form.method = 'POST';
-                                    form.action = '{{ route('shift.transaction', $activeShift->id) }}';
-                                    form.innerHTML = \`
-                                        @csrf
-                                        <input type='hidden' name='type' value='\${result.value.type}'>
-                                        <input type='hidden' name='amount' value='\${result.value.amount}'>
-                                        <input type='hidden' name='reason' value='\${result.value.reason}'>
-                                    \`;
-                                    document.body.appendChild(form);
-                                    form.submit();
-                                }
-                            })"
+                            @click="recordCashAction()"
                             class="bg-white hover:bg-[#FDF8F5] text-[#3E2723] px-5 py-3 rounded-full font-bold transition border border-[#F0E6D2] text-xs tracking-wider inline-flex items-center gap-2">
                         <x-lucide-banknote class="w-4 h-4" />
                         <span>Cash Action</span>
@@ -684,6 +649,70 @@
                     console.error('Checkout error:', error);
                     this.isProcessing = false;
                 }
+            },
+
+            recordCashAction() {
+                Swal.fire({
+                    title: 'Cash Action',
+                    text: 'Add or remove cash from drawer.',
+                    html: `
+                        <div class='flex flex-col gap-4 py-4'>
+                            <select id='swal-type' class='w-full p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-xs'>
+                                <option value='pay_in'>Cash Pay-In (+)</option>
+                                <option value='pay_out'>Cash Pay-Out (-)</option>
+                            </select>
+                            <input id='swal-amount' type='number' step='0.01' placeholder='Amount (₱)' class='w-full p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-xs'>
+                            <input id='swal-reason' type='text' placeholder='Reason (e.g. Change, Ice Purchase)' class='w-full p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-xs'>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Record Action',
+                    confirmButtonColor: '#3E2723',
+                    cancelButtonColor: '#8D6E63',
+                    preConfirm: () => {
+                        const type = document.getElementById('swal-type').value;
+                        const amount = document.getElementById('swal-amount').value;
+                        const reason = document.getElementById('swal-reason').value;
+                        if (!amount || amount <= 0 || !reason) {
+                            Swal.showValidationMessage('Please fill all fields correctly');
+                            return false;
+                        }
+                        return { type, amount, reason };
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '{{ route('shift.transaction', $activeShift->id ?? 0) }}';
+                        
+                        const csrf = document.createElement('input');
+                        csrf.type = 'hidden';
+                        csrf.name = '_token';
+                        csrf.value = '{{ csrf_token() }}';
+                        form.appendChild(csrf);
+
+                        const typeInput = document.createElement('input');
+                        typeInput.type = 'hidden';
+                        typeInput.name = 'type';
+                        typeInput.value = result.value.type;
+                        form.appendChild(typeInput);
+
+                        const amountInput = document.createElement('input');
+                        amountInput.type = 'hidden';
+                        amountInput.name = 'amount';
+                        amountInput.value = result.value.amount;
+                        form.appendChild(amountInput);
+
+                        const reasonInput = document.createElement('input');
+                        reasonInput.type = 'hidden';
+                        reasonInput.name = 'reason';
+                        reasonInput.value = result.value.reason;
+                        form.appendChild(reasonInput);
+
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
             }
         }
     }

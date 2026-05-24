@@ -16,8 +16,8 @@
     .portal-card {
         width: 90%;
         max-width: 360px;
-        height: 550px;
-        max-height: 85vh;
+        height: 85dvh;
+        max-height: 600px;
         display: flex;
         flex-direction: column;
         background: #FAF7F2;
@@ -26,6 +26,13 @@
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         border: 1px solid #E6D5C3;
         transition: all 0.3s ease;
+    }
+
+    /* Force 16px font on inputs to prevent iOS auto-zoom */
+    .portal-card input[type="text"],
+    .portal-card input[type="password"],
+    .portal-card input[type="number"] {
+        font-size: 16px !important;
     }
 
     /* Tablets, Laptops, Desktops */
@@ -428,6 +435,18 @@ document.addEventListener('alpine:init', () => {
             }, 100);
         }
 }));
+
+// Mobile Keyboard Layout Shift Fix: Center focused inputs
+document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('focus', function() {
+        setTimeout(() => {
+            this.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }, 300);
+    });
+});
 });
 </script>
 </body>

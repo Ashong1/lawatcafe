@@ -100,6 +100,9 @@ Route::middleware(['auth'])->group(function () {
             // Supplier Deliveries (Receiving)
             Route::resource('deliveries', \App\Http\Controllers\IngredientDeliveryController::class)->only(['index', 'store', 'destroy']);
             
+            // Suppliers Database
+            Route::resource('suppliers', \App\Http\Controllers\SupplierController::class)->except(['create', 'show', 'edit']);
+            
             // Wastage & Spoilage
             Route::resource('wastage', \App\Http\Controllers\WastageController::class)->only(['index', 'store', 'destroy']);
         });
@@ -130,6 +133,10 @@ Route::middleware(['auth'])->group(function () {
         // Finance / Sales Reports
         Route::get('/sales/export', [SalesController::class, 'export'])->name('sales.export'); 
         Route::get('/sales', [SalesController::class, 'index'])->name('sales.index');
+
+        // Z-Reads / End of Day Audits
+        Route::get('/finance/z-reads', [\App\Http\Controllers\EndOfDayController::class, 'index'])->name('admin.finance.z-reads');
+        Route::get('/finance/z-reads/{shift}', [\App\Http\Controllers\EndOfDayController::class, 'show'])->name('admin.finance.shift-detail');
 
         // System Accounts
         Route::resource('accounts', AccountController::class)->except(['create', 'show', 'edit']);

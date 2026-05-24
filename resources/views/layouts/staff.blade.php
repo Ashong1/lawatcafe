@@ -117,6 +117,11 @@
                 <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">Kitchen Display</span>
             </a>
 
+            <a href="{{ route('pos.history') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('pos.history') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Order History">
+                <x-lucide-history class="w-6 h-6 shrink-0 {{ request()->routeIs('pos.history') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
+                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">Order History</span>
+            </a>
+
             <a href="{{ route('network.vouchers.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.vouchers.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Vouchers">
                 <x-lucide-ticket class="w-6 h-6 shrink-0 {{ request()->routeIs('network.vouchers.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">Vouchers</span>
