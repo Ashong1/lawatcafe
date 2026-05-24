@@ -22,6 +22,8 @@ class IngredientController extends Controller
             'name' => 'required|string|max:255',
             'current_stock' => 'required|numeric|min:0|max:999999999999999',
             'unit' => 'required|string|max:50',
+            'packaging_unit' => 'nullable|string|max:50',
+            'capacity_per_pack' => 'required|numeric|min:0',
             'low_stock_threshold' => 'required|numeric|min:0',
             'status' => 'required|string',
         ]);
@@ -50,6 +52,8 @@ class IngredientController extends Controller
             'name' => 'required|string|max:255',
             'current_stock' => 'required|numeric|min:0|max:999999999999999',
             'unit' => 'required|string|max:50',
+            'packaging_unit' => 'nullable|string|max:50',
+            'capacity_per_pack' => 'required|numeric|min:0',
             'low_stock_threshold' => 'required|numeric|min:0',
             'status' => 'required|string',
         ]);

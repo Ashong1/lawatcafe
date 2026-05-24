@@ -85,10 +85,19 @@
                             <span class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest">Tracking Unit: {{ $ingredient->unit }}</span>
                         </td>
                         <td class="py-4 text-right">
-                            <span class="font-extrabold text-base {{ $isLow ? 'text-red-600' : 'text-[#3E2723]' }}">
-                                {{ $formattedStock }}
-                            </span>
-                            <span class="text-[10px] font-black uppercase text-[#8D6E63] ml-1">{{ $displayUnit }}</span>
+                            <div class="flex flex-col items-end">
+                                <div class="flex items-baseline gap-1">
+                                    <span class="font-extrabold text-base {{ $isLow ? 'text-red-600' : 'text-[#3E2723]' }}">
+                                        {{ $formattedStock }}
+                                    </span>
+                                    <span class="text-[10px] font-black uppercase text-[#8D6E63]">{{ $displayUnit }}</span>
+                                </div>
+                                @if($ingredient->packaging_unit && $ingredient->capacity_per_pack > 1)
+                                    <span class="text-[9px] font-bold text-[#A1887F] uppercase tracking-tighter">
+                                        ≈ {{ number_format($ingredient->current_stock / $ingredient->capacity_per_pack, 1) }} {{ $ingredient->packaging_unit }}(s)
+                                    </span>
+                                @endif
+                            </div>
                         </td>
                         <td class="py-4 text-right">
                             <span class="text-xs font-bold text-[#8D6E63]">
@@ -153,13 +162,34 @@
                             <select name="unit" x-model="formData.unit" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
                                 <option value="">Select...</option>
                                 <option value="ml">ml (Milliliters)</option>
+                                <option value="L">L (Liters)</option>
                                 <option value="g">g (Grams)</option>
+                                <option value="kg">kg (Kilograms)</option>
                                 <option value="pcs">pcs (Pieces)</option>
-                                <option value="box">box (Boxes)</option>
-                                <option value="bag">bag (Bags)</option>
-                                <option value="can">can (Cans)</option>
-                                <option value="bottle">bottle (Bottles)</option>
                             </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Packaging Unit</label>
+                            <select name="packaging_unit" x-model="formData.packaging_unit" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
+                                <option value="">None (Individual)</option>
+                                <option value="piece">Piece</option>
+                                <option value="bottle">Bottle</option>
+                                <option value="box">Box</option>
+                                <option value="can">Can</option>
+                                <option value="bag">Bag</option>
+                                <option value="sack">Bag/Sack</option>
+                                <option value="pack">Pack</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Capacity per Pack</label>
+                            <div class="relative">
+                                <input type="number" name="capacity_per_pack" x-model="formData.capacity_per_pack" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm" placeholder="1.00">
+                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#A1887F]" x-text="formData.unit"></div>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Initial Status</label>
@@ -173,12 +203,32 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Current Stock</label>
-                            <input type="number" name="current_stock" x-model="formData.current_stock" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
+                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Total Current Stock</label>
+                            <div class="relative">
+                                <input type="number" name="current_stock" x-model="formData.current_stock" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
+                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#A1887F]" x-text="formData.unit"></div>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Low Alert At</label>
-                            <input type="number" name="low_stock_threshold" x-model="formData.low_stock_threshold" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
+                            <div class="relative">
+                                <input type="number" name="low_stock_threshold" x-model="formData.low_stock_threshold" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
+                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#A1887F]" x-text="formData.unit"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pack Calculation Helper -->
+                    <div x-show="formData.packaging_unit && formData.capacity_per_pack > 1" x-cloak class="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center justify-between">
+                        <div class="flex flex-col">
+                            <span class="text-[8px] font-black text-amber-800 uppercase tracking-widest">Inventory Equivalent</span>
+                            <span class="text-xs font-bold text-[#3E2723]">
+                                <span x-text="(formData.current_stock / formData.capacity_per_pack).toFixed(1)"></span> 
+                                <span x-text="formData.packaging_unit + '(s)'"></span>
+                            </span>
+                        </div>
+                        <div class="text-[10px] font-bold text-amber-700 italic">
+                            1 Pack = <span x-text="formData.capacity_per_pack"></span> <span x-text="formData.unit"></span>
                         </div>
                     </div>
                 </div>
@@ -200,13 +250,13 @@
             isEditing: false,
             modalTitle: 'Add New Ingredient',
             formAction: '{{ route('inventory.ingredients.store') }}',
-            formData: { id: null, name: '', unit: '', current_stock: '', status: 'In Stock', low_stock_threshold: 500 },
+            formData: { id: null, name: '', unit: '', packaging_unit: '', capacity_per_pack: 1, current_stock: '', status: 'In Stock', low_stock_threshold: 500 },
 
             openAddModal() {
                 this.isEditing = false;
                 this.modalTitle = 'Add New Ingredient';
                 this.formAction = '{{ route('inventory.ingredients.store') }}';
-                this.formData = { id: null, name: '', unit: '', current_stock: '', status: 'In Stock', low_stock_threshold: 500 };
+                this.formData = { id: null, name: '', unit: '', packaging_unit: '', capacity_per_pack: 1, current_stock: '', status: 'In Stock', low_stock_threshold: 500 };
                 this.isModalOpen = true;
             },
             openEditModal(ingredient) {

@@ -142,29 +142,57 @@
                             </button>
                         </div>
 
-                        <div class="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                             <template x-for="(item, index) in items" :key="'delivery-item-'+index">
-                                <div class="flex gap-3 items-end bg-[#FDF8F5] p-3 rounded-xl border border-[#F0E6D2] group relative">
-                                    <div class="flex-[2]">
-                                        <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Ingredient</label>
-                                        <select :name="'items['+index+'][ingredient_id]'" x-model="item.ingredient_id" required class="w-full p-2 border border-[#F0E6D2] rounded-lg text-[10px] bg-white font-bold text-[#3E2723]">
-                                            <option value="">Select...</option>
-                                            @foreach($ingredients as $ingredient)
-                                                <option value="{{ $ingredient->id }}">{{ $ingredient->name }}</option>
-                                            @endforeach
-                                        </select>
+                                <div class="bg-[#FDF8F5] p-4 rounded-xl border border-[#F0E6D2] group relative space-y-3">
+                                    <div class="flex gap-3">
+                                        <div class="flex-[3]">
+                                            <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Ingredient</label>
+                                            <select :name="'items['+index+'][ingredient_id]'" x-model="item.ingredient_id" @change="item.use_packs = getIngredient(item.ingredient_id)?.packaging_unit ? true : false" required class="w-full p-2 border border-[#F0E6D2] rounded-lg text-[11px] bg-white font-bold text-[#3E2723] focus:border-[#3E2723] outline-none">
+                                                <option value="">Select...</option>
+                                                <template x-for="ing in ingredients" :key="ing.id">
+                                                    <option :value="ing.id" x-text="ing.name"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                        <div class="flex-1 text-right">
+                                            <button type="button" @click="removeItemRow(index)" class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                                <x-lucide-trash-2 class="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="flex-1">
-                                        <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Qty</label>
-                                        <input type="number" step="0.01" :name="'items['+index+'][quantity]'" x-model="item.quantity" required class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723]">
+
+                                    <div class="grid grid-cols-3 gap-3 items-end">
+                                        <!-- Pack Input (Conditional) -->
+                                        <div x-show="getIngredient(item.ingredient_id)?.packaging_unit" class="flex flex-col">
+                                            <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">
+                                                <span x-text="'# of ' + getIngredient(item.ingredient_id)?.packaging_unit + 's'"></span>
+                                            </label>
+                                            <input type="number" step="0.1" x-model="item.packs" @input="updateFromPacks(index)" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723] bg-white">
+                                        </div>
+
+                                        <!-- Total Quantity -->
+                                        <div class="flex flex-col">
+                                            <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">
+                                                Total Qty (<span x-text="getIngredient(item.ingredient_id)?.unit || '...'"></span>)
+                                            </label>
+                                            <input type="number" step="0.01" :name="'items['+index+'][quantity]'" x-model="item.quantity" @input="updateFromQty(index)" required class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723] bg-white">
+                                        </div>
+
+                                        <!-- Cost -->
+                                        <div class="flex flex-col">
+                                            <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Unit Cost</label>
+                                            <div class="relative">
+                                                <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-[#D7CCC8]">₱</span>
+                                                <input type="number" step="0.01" :name="'items['+index+'][cost_per_unit]'" x-model="item.cost_per_unit" required class="w-full pl-5 pr-2 py-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723] bg-white">
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="flex-1">
-                                        <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Unit Cost</label>
-                                        <input type="number" step="0.01" :name="'items['+index+'][cost_per_unit]'" x-model="item.cost_per_unit" required class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723]">
+                                    
+                                    <!-- Conversion Helper Text -->
+                                    <div x-show="getIngredient(item.ingredient_id)?.packaging_unit" class="text-[8px] font-black text-amber-800 uppercase tracking-tighter italic">
+                                        Note: 1 <span x-text="getIngredient(item.ingredient_id)?.packaging_unit"></span> = <span x-text="getIngredient(item.ingredient_id)?.capacity_per_pack"></span> <span x-text="getIngredient(item.ingredient_id)?.unit"></span>
                                     </div>
-                                    <button type="button" @click="removeItemRow(index)" class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
-                                        <x-lucide-x class="w-3 h-3" />
-                                    </button>
                                 </div>
                             </template>
                         </div>
@@ -190,15 +218,37 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('deliveryManager', () => ({
             isModalOpen: {{ request('action') === 'receive' ? 'true' : 'false' }},
-            items: [{ ingredient_id: '', quantity: '', cost_per_unit: '' }],
+            ingredients: @js($ingredients),
+            items: [{ ingredient_id: '', quantity: '', cost_per_unit: '', packs: '', use_packs: false }],
 
             openAddModal() {
-                this.items = [{ ingredient_id: '', quantity: '', cost_per_unit: '' }];
+                this.items = [{ ingredient_id: '', quantity: '', cost_per_unit: '', packs: '', use_packs: false }];
                 this.isModalOpen = true;
             },
             closeModal() { this.isModalOpen = false; },
-            addItemRow() { this.items.push({ ingredient_id: '', quantity: '', cost_per_unit: '' }); },
+            addItemRow() { this.items.push({ ingredient_id: '', quantity: '', cost_per_unit: '', packs: '', use_packs: false }); },
             removeItemRow(index) { if (this.items.length > 1) this.items.splice(index, 1); },
+            
+            getIngredient(id) {
+                return this.ingredients.find(i => i.id == id);
+            },
+
+            updateFromPacks(index) {
+                const item = this.items[index];
+                const ingredient = this.getIngredient(item.ingredient_id);
+                if (ingredient && item.packs) {
+                    item.quantity = (parseFloat(item.packs) * parseFloat(ingredient.capacity_per_pack)).toFixed(2);
+                }
+            },
+
+            updateFromQty(index) {
+                const item = this.items[index];
+                const ingredient = this.getIngredient(item.ingredient_id);
+                if (ingredient && item.quantity && ingredient.capacity_per_pack > 1) {
+                    item.packs = (parseFloat(item.quantity) / parseFloat(ingredient.capacity_per_pack)).toFixed(1);
+                }
+            },
+
             calculateTotal() {
                 return this.items.reduce((sum, item) => {
                     return sum + (parseFloat(item.quantity || 0) * parseFloat(item.cost_per_unit || 0));
