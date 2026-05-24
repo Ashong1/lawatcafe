@@ -29,11 +29,32 @@ class CaptivePortalController extends Controller
         })->first();
 
         if ($activeSession) {
-            return view('portal.status', [
-                'session' => $activeSession,
-                'startTime' => \Carbon\Carbon::createFromTimestamp($activeSession['startTime']),
-                'userName' => $activeSession['userName'] ?? 'Guest'
-            ]);
+            // VERIFY IF VOUCHER IS STILL VALID
+            $voucher = Voucher::where('is_used', true)
+                ->where(function($query) use ($ip, $mac) {
+                    $query->where('ip_address', $ip);
+                    if (!empty($mac)) {
+                        $query->orWhere('mac_address', $mac);
+                    }
+                })
+                ->orderBy('used_at', 'desc')
+                ->first();
+
+            if ($voucher) {
+                $expirationTime = $voucher->used_at->addMinutes($voucher->duration_minutes);
+                if (now()->greaterThan($expirationTime)) {
+                    // DISCONNECT EXPIRED SESSION
+                    $opnsense->disconnectDevice($activeSession['sessionId']);
+                    return redirect()->route('portal.index')->with('error', 'Your session has expired. Please enter a new voucher.');
+                }
+
+                return view('portal.status', [
+                    'session' => $activeSession,
+                    'startTime' => \Carbon\Carbon::createFromTimestamp($activeSession['startTime']),
+                    'expirationTime' => $expirationTime,
+                    'userName' => $activeSession['userName'] ?? 'Guest'
+                ]);
+            }
         }
 
         $qrCode = \App\Models\Setting::get('payment_qr_code');

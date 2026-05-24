@@ -187,7 +187,10 @@ class VoucherController extends Controller
                 'hostname' => $arp['hostname'] ?? 'Unknown',
                 'manufacturer' => $arp['manufacturer'] ?? 'Generic',
                 'cpSession' => $cp,
-                'isAuthorized' => (isset($cp['clientState']) && in_array(strtoupper($cp['clientState']), ['AUTHORIZED', 'CONNECTED'])) || (!empty($cp['ipAddress'])),
+                'isAuthorized' => $cp && (
+                    (isset($cp['clientState']) && in_array(strtoupper($cp['clientState']), ['AUTHORIZED', 'CONNECTED', 'ALREADY_AUTHORIZED'])) || 
+                    (!isset($cp['clientState']) && !empty($cp['ipAddress']))
+                ),
                 'sessionId' => $cp['sessionId'] ?? null,
                 'bytes_received' => $cp['bytes_received'] ?? 0,
                 'bytes_sent' => $cp['bytes_sent'] ?? 0,
@@ -297,7 +300,9 @@ class VoucherController extends Controller
                 $res->timeLeft = $timeLeft;
                 $res->progress = $progress;
                 $res->is_system = false;
-                $res->is_unauthorized = false;
+                
+                // CRITICAL FIX: If OPNsense has kicked them OR the voucher is expired, they are unauthorized
+                $res->is_unauthorized = !$device['isAuthorized'] || $timeLeft <= 0;
             }
 
             return $res;
