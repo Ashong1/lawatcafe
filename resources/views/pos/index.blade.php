@@ -74,30 +74,58 @@
                 @endif
 
                 @if($activeShift)
-                <div class="flex gap-3 shrink-0" x-data="{ showShiftModal: false, endingCash: '' }">
-                    <button type="button" @click="showShiftModal = true" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wider inline-flex items-center gap-2">
+                <div class="flex gap-3 shrink-0">
+                    <button type="button" 
+                            @click="Swal.fire({
+                                title: 'Cash Action',
+                                text: 'Add or remove cash from drawer.',
+                                html: `
+                                    <div class='flex flex-col gap-4 py-4'>
+                                        <select id='swal-type' class='w-full p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-xs'>
+                                            <option value='pay_in'>Cash Pay-In (+)</option>
+                                            <option value='pay_out'>Cash Pay-Out (-)</option>
+                                        </select>
+                                        <input id='swal-amount' type='number' step='0.01' placeholder='Amount (₱)' class='w-full p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-xs'>
+                                        <input id='swal-reason' type='text' placeholder='Reason (e.g. Change, Ice Purchase)' class='w-full p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-xs'>
+                                    </div>
+                                `,
+                                showCancelButton: true,
+                                confirmButtonText: 'Record Action',
+                                confirmButtonColor: '#3E2723',
+                                cancelButtonColor: '#8D6E63',
+                                preConfirm: () => {
+                                    const type = document.getElementById('swal-type').value;
+                                    const amount = document.getElementById('swal-amount').value;
+                                    const reason = document.getElementById('swal-reason').value;
+                                    if (!amount || amount <= 0 || !reason) {
+                                        Swal.showValidationMessage('Please fill all fields correctly');
+                                        return false;
+                                    }
+                                    return { type, amount, reason };
+                                }
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    const form = document.createElement('form');
+                                    form.method = 'POST';
+                                    form.action = '{{ route('shift.transaction', $activeShift->id) }}';
+                                    form.innerHTML = \`
+                                        @csrf
+                                        <input type='hidden' name='type' value='\${result.value.type}'>
+                                        <input type='hidden' name='amount' value='\${result.value.amount}'>
+                                        <input type='hidden' name='reason' value='\${result.value.reason}'>
+                                    \`;
+                                    document.body.appendChild(form);
+                                    form.submit();
+                                }
+                            })"
+                            class="bg-white hover:bg-[#FDF8F5] text-[#3E2723] px-5 py-3 rounded-full font-bold transition border border-[#F0E6D2] text-xs tracking-wider inline-flex items-center gap-2">
+                        <x-lucide-banknote class="w-4 h-4" />
+                        <span>Cash Action</span>
+                    </button>
+                    <a href="{{ route('shift.closing-report', $activeShift->id) }}" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wider inline-flex items-center gap-2">
                         <x-lucide-lock class="w-4 h-4" />
                         <span>End Shift</span>
-                    </button>
-
-                    <!-- Shift Modal -->
-                    <div x-show="showShiftModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @keydown.escape.window="showShiftModal = false">
-                        <div class="bg-white rounded-2xl p-6 w-96 shadow-xl" @click.outside="showShiftModal = false">
-                            <h3 class="text-xl font-bold text-[#3E2723] mb-4">Close Shift</h3>
-                            <p class="text-sm text-[#8D6E63] mb-4">Make sure you have counted the drawer.</p>
-                            <form action="{{ route('shift.end', $activeShift->id) }}" method="POST">
-                                @csrf
-                                <div class="mb-4">
-                                    <label class="block text-sm font-medium text-[#3E2723] mb-1">Ending Cash</label>
-                                    <input type="number" step="0.01" name="ending_cash" x-model="endingCash" class="w-full px-4 py-2 border border-[#F0E6D2] rounded-lg focus:ring-[#3E2723] focus:border-[#3E2723]" required placeholder="0.00">
-                                </div>
-                                <div class="flex justify-end gap-3 mt-6">
-                                    <button type="button" @click="showShiftModal = false" class="px-4 py-2 text-[#8D6E63] hover:text-[#3E2723] font-medium transition">Cancel</button>
-                                    <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold transition">Confirm Close</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    </a>
                 </div>
                 @endif
             </div>
@@ -270,10 +298,11 @@
                         </div>
                         
                         <div class="flex-1 min-w-0">
-                            <h4 class="font-bold text-sm text-[#3E2723] truncate pr-2 flex items-center">
+                            <h4 @click="editNote(index)" class="font-bold text-sm text-[#3E2723] truncate pr-2 flex items-center cursor-pointer hover:text-amber-800 transition-colors" title="Click to add note">
                                 <span x-text="cartItem.name"></span>
                                 <span x-show="cartItem.variant" class="ml-1.5 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full shrink-0" :class="cartItem.variant === 'Hot' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'" x-text="cartItem.variant"></span>
                             </h4>
+                            <p x-show="cartItem.note" x-text="cartItem.note" @click="editNote(index)" class="text-[9px] text-amber-700 font-bold italic truncate cursor-pointer"></p>
                             <div class="flex justify-between items-center mt-0.5">
                                 <p class="font-black text-xs text-[#8D6E63]" x-text="'₱' + (Number(cartItem.price) * cartItem.quantity).toFixed(2)"></p>
                                 
@@ -329,9 +358,19 @@
                 </div>
             </div>
 
-            <div>
-                <label class="block text-[9px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1.5">Amount Tendered (₱)</label>
-                <input type="number" x-model.number="amountTendered" class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-sm font-bold text-[#3E2723]" placeholder="Enter amount">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[9px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1.5">Payment Method</label>
+                    <select x-model="paymentMethod" class="w-full py-2 px-2 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[11px] font-bold text-[#3E2723]">
+                        <option value="Cash">Cash</option>
+                        <option value="GCash">GCash</option>
+                        <option value="Card">Credit/Debit</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[9px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1.5">Amount Tendered (₱)</label>
+                    <input type="number" x-model.number="amountTendered" class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-sm font-bold text-[#3E2723]" placeholder="0.00">
+                </div>
             </div>
 
             <div class="space-y-1">
@@ -451,6 +490,7 @@
             discountType: 'none',
             discountAmount: 0,
             amountTendered: 0,
+            paymentMethod: 'Cash',
             showModal: false,
             showVariantModal: false,
             pendingItem: null,
@@ -460,6 +500,24 @@
             isProcessing: false,
             freeWifiMinAmount: {{ $freeWifiMinAmount ?? 0 }},
             freeWifiDuration: {{ $freeWifiDuration ?? 0 }},
+
+            editNote(index) {
+                const item = this.cart[index];
+                Swal.fire({
+                    title: 'Item Note',
+                    input: 'text',
+                    inputPlaceholder: 'e.g. Oat Milk, Less Sugar...',
+                    inputValue: item.note || '',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3E2723',
+                    cancelButtonColor: '#8D6E63',
+                    confirmButtonText: 'Save Note'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.cart[index].note = result.value;
+                    }
+                });
+            },
 
             get filteredProducts() {
                 return this.products.filter(i => {
@@ -599,8 +657,8 @@
                             total_amount: this.grandTotal,
                             discount_type: this.discountType,
                             discount_amount: this.calculatedDiscount,
-                            payment_method: 'Cash',
-                            amount_received: this.amountTendered,
+                            payment_method: this.paymentMethod,
+                            amount_received: this.amountTendered || this.grandTotal,
                             order_type: this.orderType,
                             shift_id: {{ $activeShift ? $activeShift->id : 'null' }}
                         })

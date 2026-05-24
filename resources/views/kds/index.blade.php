@@ -42,11 +42,11 @@
 
                 // Categorize items
                 $drinks = $order->items->filter(function($item) {
-                    $cat = strtolower($item->product->category ?? $item->category ?? '');
+                    $cat = strtolower($item->category ?? $item->product->category ?? '');
                     return in_array($cat, ['coffee', 'tea', 'signature', 'cold brew', 'soda', 'beverage', 'wifi']);
                 });
                 $food = $order->items->filter(function($item) {
-                    $cat = strtolower($item->product->category ?? $item->category ?? '');
+                    $cat = strtolower($item->category ?? $item->product->category ?? '');
                     return !in_array($cat, ['coffee', 'tea', 'signature', 'cold brew', 'soda', 'beverage', 'wifi']);
                 });
             @endphp
@@ -56,7 +56,7 @@
                     <div>
                         <div class="flex items-center gap-2 mb-1">
                             <h3 class="font-black text-[#3E2723] text-xl">#{{ substr($order->transaction_number, -4) }}</h3>
-                            <span class="px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter {{ $order->order_type === 'takeaway' ? 'bg-amber-600 text-white' : 'bg-[#3E2723] text-white' }}">
+                            <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm {{ $order->order_type === 'takeaway' ? 'bg-amber-500 text-white' : 'bg-blue-600 text-white' }}">
                                 {{ $order->order_type === 'takeaway' ? 'TAKE AWAY' : 'DINE IN' }}
                             </span>
                         </div>

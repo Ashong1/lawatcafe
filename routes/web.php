@@ -49,8 +49,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/kds/{sale}/status', [\App\Http\Controllers\KdsController::class, 'updateStatus'])->name('kds.update');
     Route::post('/kds/item/{item}/status', [\App\Http\Controllers\KdsController::class, 'updateItemStatus'])->name('kds.item.update');
 
+    // Order History
+    Route::get('/pos/history', [\App\Http\Controllers\OrderHistoryController::class, 'index'])->name('pos.history');
+    Route::post('/pos/history/void/{sale}', [\App\Http\Controllers\OrderHistoryController::class, 'void'])->name('pos.history.void');
+
     // Shift Management
     Route::post('/shift/start', [\App\Http\Controllers\ShiftController::class, 'start'])->name('shift.start');
+    Route::get('/shift/closing-report/{shift}', [\App\Http\Controllers\ShiftController::class, 'showClosingReport'])->name('shift.closing-report');
+    Route::post('/shift/transaction/{shift}', [\App\Http\Controllers\ShiftController::class, 'recordTransaction'])->name('shift.transaction');
     Route::post('/shift/end/{shift}', [\App\Http\Controllers\ShiftController::class, 'end'])->name('shift.end');
 
     // Shared Profile Management

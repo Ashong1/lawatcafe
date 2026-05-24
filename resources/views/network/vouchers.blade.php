@@ -15,6 +15,31 @@
         </div>
     </div>
 
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
+        <form action="{{ route('network.vouchers.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="md:col-span-2">
+                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Search Code</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#A1887F]">
+                        <x-lucide-search class="w-4 h-4" />
+                    </div>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="LAWA-..." class="w-full pl-10 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Status</label>
+                <select name="status" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    <option value="">All Vouchers</option>
+                    <option value="available" {{ request('status') === 'available' ? 'selected' : '' }}>Available</option>
+                    <option value="used" {{ request('status') === 'used' ? 'selected' : '' }}>Used</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-[#3E2723] text-white py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-[#271815] transition shadow-md">Filter</button>
+            </div>
+        </form>
+    </div>
+
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -23,7 +48,6 @@
                 <p class="text-xs text-[#A1887F] mt-1 font-medium">Manage and track the status of all WiFi access codes.</p>
             </div>
             
-            @if(auth()->user()->role === 'admin')
             <div class="flex items-center gap-3 flex-wrap">
                 <!-- Batch Print -->
                 <button @click="printSelected()" 
@@ -31,16 +55,16 @@
                         class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-blue-600/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2"
                         style="display: none;">
                     <x-lucide-printer class="w-3.5 h-3.5" />
-                    <span x-text="'Print Selected (' + selectedVouchers.length + ')'"></span>
+                    <span x-text="'Print (' + selectedVouchers.length + ')'"></span>
                 </button>
 
+                @if(auth()->user()->role === 'admin')
                 <!-- Bulk Delete -->
                 <button @click="deleteSelected()" 
                         x-show="selectedVouchers.length > 0"
                         class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-red-500/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2"
                         style="display: none;">
                     <x-lucide-trash-2 class="w-3.5 h-3.5" />
-                    <span x-text="'Delete Selected (' + selectedVouchers.length + ')'"></span>
                 </button>
 
                 <!-- Auto Purge -->
@@ -59,13 +83,13 @@
                         Purge Used
                     </button>
                 </form>
+                @endif
 
                 <button @click="isModalOpen = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
                     <x-lucide-plus class="w-4 h-4" />
                     <span>Generate Vouchers</span>
                 </button>
             </div>
-            @endif
         </div>
 
         <div class="overflow-x-auto pr-2">
@@ -164,6 +188,7 @@
             <input type="hidden" name="ids[]" :value="id">
         </template>
     </form>
+    @endif
 
     <!-- Generation Modal -->
     <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
@@ -193,7 +218,6 @@
             </form>
         </div>
     </div>
-    @endif
     </div>
 </div>
 

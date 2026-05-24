@@ -214,12 +214,13 @@ class PosController extends Controller
                 SaleItem::create([
                     'sale_id' => $sale->id,
                     'product_id' => $item['type'] === 'product' ? $item['id'] : null,
-                    'item_name' => $item['name'], 
+                    'category' => $item['category'] ?? null,
+                    'type' => $item['type'],
+                    'item_name' => $item['name'] . ($item['variant'] ? ' (' . $item['variant'] . ')' : ''), 
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
-                    'type' => $item['type'],
                     'kds_status' => 'pending',
-                    'note' => $item['variant'] ?? ($item['note'] ?? null)
+                    'note' => $item['note'] ?? null,
                 ]);
 
                 // A. Handle Wi-Fi

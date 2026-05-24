@@ -28,6 +28,49 @@ class ShiftController extends Controller
         return redirect()->route('pos')->with('success', 'Shift started successfully.');
     }
 
+    public function showClosingReport(Shift $shift)
+    {
+        if ($shift->status !== 'open') {
+            return redirect()->back()->with('error', 'Shift is already closed.');
+        }
+
+        $summary = [
+            'starting_cash' => (float) $shift->starting_cash,
+            'cash_sales' => (float) $shift->sales()->where('status', 'completed')->where('payment_method', 'Cash')->sum('total_amount'),
+            'gcash_sales' => (float) $shift->sales()->where('status', 'completed')->where('payment_method', 'GCash')->sum('total_amount'),
+            'card_sales' => (float) $shift->sales()->where('status', 'completed')->where('payment_method', 'Card')->sum('total_amount'),
+            'void_total' => (float) $shift->sales()->where('status', 'cancelled')->sum('total_amount'),
+            'total_sales' => (float) $shift->sales()->where('status', 'completed')->sum('total_amount'),
+            'pay_ins' => (float) $shift->transactions()->where('type', 'pay_in')->sum('amount'),
+            'pay_outs' => (float) $shift->transactions()->where('type', 'pay_out')->sum('amount'),
+        ];
+
+        $expectedCash = $summary['starting_cash'] + $summary['cash_sales'] + $summary['pay_ins'] - $summary['pay_outs'];
+
+        $recentTransactions = $shift->transactions()->latest()->take(5)->get();
+
+        return view('pos.closing-report', compact('shift', 'summary', 'expectedCash', 'recentTransactions'));
+    }
+
+    public function recordTransaction(Request $request, Shift $shift)
+    {
+        $request->validate([
+            'type' => 'required|in:pay_in,pay_out',
+            'amount' => 'required|numeric|min:0.01',
+            'reason' => 'required|string|max:255'
+        ]);
+
+        \App\Models\ShiftTransaction::create([
+            'shift_id' => $shift->id,
+            'type' => $request->type,
+            'amount' => $request->amount,
+            'reason' => $request->reason,
+            'user_id' => auth()->id()
+        ]);
+
+        return redirect()->back()->with('success', strtoupper(str_replace('_', ' ', $request->type)) . ' recorded successfully.');
+    }
+
     public function end(Request $request, Shift $shift)
     {
         $request->validate([
@@ -35,9 +78,12 @@ class ShiftController extends Controller
         ]);
 
         // Calculate expected cash
-        // starting cash + all cash sales
-        $cashSales = $shift->sales()->where('payment_method', 'Cash')->sum('total_amount');
-        $expectedCash = $shift->starting_cash + $cashSales;
+        // starting cash + all cash sales + pay_ins - pay_outs
+        $cashSales = (float) $shift->sales()->where('status', 'completed')->where('payment_method', 'Cash')->sum('total_amount');
+        $payIns = (float) $shift->transactions()->where('type', 'pay_in')->sum('amount');
+        $payOuts = (float) $shift->transactions()->where('type', 'pay_out')->sum('amount');
+        
+        $expectedCash = (float) $shift->starting_cash + $cashSales + $payIns - $payOuts;
 
         $shift->update([
             'expected_cash' => $expectedCash,

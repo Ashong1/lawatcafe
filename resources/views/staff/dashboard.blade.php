@@ -19,35 +19,46 @@
     </div>
 
     <!-- Quick Action / Essential Metrics -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
         
         <!-- Big Action Button -->
         <div class="lg:col-span-2">
             <a href="{{ route('pos') }}" class="h-full bg-[#3E2723] hover:bg-[#271815] text-white p-8 rounded-2xl shadow-sm transition-all duration-300 flex items-center justify-between group relative overflow-hidden">
                 <div class="relative z-10">
-                    <h3 class="text-2xl font-black uppercase tracking-widest mb-2">Open POS Register</h3>
-                    <p class="text-amber-500/80 text-sm font-medium">Start ringing up customers.</p>
+                    <h3 class="text-2xl font-black uppercase tracking-widest mb-2">Open Register</h3>
+                    <p class="text-amber-500/80 text-sm font-medium">Ring up customers.</p>
                 </div>
                 <div class="relative z-10 w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center text-[#3E2723] group-hover:scale-110 transition duration-300 shadow-lg">
                     <x-lucide-shopping-cart class="w-10 h-10 ml-[-2px]" />
                 </div>
                 <!-- Background Decoration -->
                 <div class="absolute -right-12 -top-12 w-48 h-48 bg-white/5 rounded-full z-0 group-hover:scale-110 transition duration-500"></div>
-                <div class="absolute right-20 -bottom-10 w-32 h-32 bg-white/5 rounded-full z-0 group-hover:scale-125 transition duration-700"></div>
             </a>
+        </div>
+
+        <!-- Order History Link -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative flex flex-col justify-center items-center group hover:border-[#3E2723] transition-colors">
+            <a href="{{ route('pos.history') }}" class="absolute inset-0 z-10"></a>
+            <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-center w-full flex items-center justify-center gap-2 group-hover:text-[#3E2723] transition-colors">
+                <x-lucide-history class="w-4 h-4" /> Order History
+            </h3>
+            <div class="bg-[#FDF8F5] p-4 rounded-full group-hover:scale-110 transition-transform duration-300">
+                <x-lucide-receipt class="w-8 h-8 text-amber-800" />
+            </div>
+            <p class="text-[9px] text-[#A1887F] font-bold uppercase tracking-wider mt-4">View past orders</p>
         </div>
 
         <!-- Live Queue Snapshot -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative flex flex-col justify-center items-center group hover:border-amber-200 transition-colors">
             <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-center w-full flex items-center justify-center gap-2">
-                <x-lucide-clock class="w-4 h-4" /> Live Kitchen Queue
+                <x-lucide-clock class="w-4 h-4" /> Kitchen Queue
             </h3>
             <div class="flex items-baseline gap-2">
-                <span class="text-6xl font-black transition-colors duration-500" 
+                <span class="text-5xl font-black transition-colors duration-500" 
                       :class="pendingOrdersCount > 5 ? 'text-red-500' : (pendingOrdersCount > 0 ? 'text-amber-600' : 'text-green-600')"
                       x-text="pendingOrdersCount">{{ $pendingOrdersCount }}</span>
             </div>
-            <p class="text-xs text-[#A1887F] font-bold uppercase tracking-wider mt-2">Pending Orders</p>
+            <p class="text-[9px] text-[#A1887F] font-bold uppercase tracking-wider mt-2">Active Orders</p>
             <div x-show="pendingOrdersCount > 5" class="absolute top-4 right-4 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
         </div>
         
@@ -67,18 +78,28 @@
                     <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Shift Status</h3>
                 </div>
                 
-                <div x-show="activeShift" class="flex-1 space-y-4">
-                    <div>
-                        <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em]">Clocked In</p>
-                        <p class="text-sm font-bold text-[#3E2723]"><span x-text="activeShift?.started_at"></span> <span class="text-[#A1887F] text-xs font-medium" x-text="`(${activeShift?.duration})`"></span></p>
+                <div x-show="activeShift" class="flex-1 flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em]">Clocked In</p>
+                            <p class="text-sm font-bold text-[#3E2723]"><span x-text="activeShift?.started_at"></span> <span class="text-[#A1887F] text-xs font-medium" x-text="`(${activeShift?.duration})`"></span></p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em]">Starting Drawer</p>
+                            <p class="text-sm font-bold text-green-700" x-text="`₱${activeShift?.starting_cash}`"></p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em]">Role</p>
+                            <p class="text-sm font-bold text-[#3E2723] capitalize" x-text="activeShift?.role"></p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em]">Starting Drawer</p>
-                        <p class="text-sm font-bold text-green-700" x-text="`₱${activeShift?.starting_cash}`"></p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em]">Role</p>
-                        <p class="text-sm font-bold text-[#3E2723] capitalize" x-text="activeShift?.role"></p>
+
+                    <div class="mt-6 pt-4 border-t border-[#F0E6D2]">
+                        <a href="{{ route('shift.closing-report', $activeShift->id) }}"
+                                class="w-full py-3 bg-[#FAFAFA] border-2 border-red-100 text-red-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all flex items-center justify-center gap-2">
+                            <x-lucide-log-out class="w-4 h-4" />
+                            <span>Clock Out / End Shift</span>
+                        </a>
                     </div>
                 </div>
 

@@ -25,4 +25,9 @@ class Shift extends Model
     {
         return $this->hasMany(Sale::class);
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(ShiftTransaction::class);
+    }
 }

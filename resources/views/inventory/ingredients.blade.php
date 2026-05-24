@@ -82,27 +82,49 @@
                     <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors {{ $isLow ? 'bg-red-50/30' : '' }}">
                         <td class="py-4">
                             <span class="font-bold text-[#3E2723] text-base block">{{ $ingredient->name }}</span>
-                            <span class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest">Tracking Unit: {{ $ingredient->unit }}</span>
+                            <span class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest">
+                                @if($ingredient->packaging_unit && $ingredient->capacity_per_pack > 1)
+                                    1 {{ $ingredient->packaging_unit }} = {{ number_format($ingredient->capacity_per_pack) }}{{ $ingredient->unit }}
+                                @else
+                                    Tracking in {{ $ingredient->unit }}
+                                @endif
+                            </span>
                         </td>
                         <td class="py-4 text-right">
                             <div class="flex flex-col items-end">
                                 <div class="flex items-baseline gap-1">
-                                    <span class="font-extrabold text-base {{ $isLow ? 'text-red-600' : 'text-[#3E2723]' }}">
-                                        {{ $formattedStock }}
-                                    </span>
-                                    <span class="text-[10px] font-black uppercase text-[#8D6E63]">{{ $displayUnit }}</span>
+                                    @if($ingredient->packaging_unit && $ingredient->capacity_per_pack > 1)
+                                        <span class="font-extrabold text-base {{ $isLow ? 'text-red-600' : 'text-[#3E2723]' }}">
+                                            {{ number_format($ingredient->current_stock / $ingredient->capacity_per_pack, 1) }}
+                                        </span>
+                                        <span class="text-[10px] font-black uppercase text-[#8D6E63]">{{ \Illuminate\Support\Str::plural($ingredient->packaging_unit) }}</span>
+                                    @else
+                                        <span class="font-extrabold text-base {{ $isLow ? 'text-red-600' : 'text-[#3E2723]' }}">
+                                            {{ $formattedStock }}
+                                        </span>
+                                        <span class="text-[10px] font-black uppercase text-[#8D6E63]">{{ $displayUnit }}</span>
+                                    @endif
                                 </div>
                                 @if($ingredient->packaging_unit && $ingredient->capacity_per_pack > 1)
                                     <span class="text-[9px] font-bold text-[#A1887F] uppercase tracking-tighter">
-                                        ≈ {{ number_format($ingredient->current_stock / $ingredient->capacity_per_pack, 1) }} {{ $ingredient->packaging_unit }}(s)
+                                        Total: {{ $formattedStock }} {{ $displayUnit }}
                                     </span>
                                 @endif
                             </div>
                         </td>
                         <td class="py-4 text-right">
-                            <span class="text-xs font-bold text-[#8D6E63]">
-                                {{ number_format($ingredient->low_stock_threshold) }} {{ $ingredient->unit }}
-                            </span>
+                            <div class="flex flex-col items-end">
+                                @if($ingredient->packaging_unit && $ingredient->capacity_per_pack > 1)
+                                    <span class="text-xs font-bold text-[#8D6E63]">
+                                        {{ number_format($ingredient->low_stock_threshold / $ingredient->capacity_per_pack, 1) }} {{ \Illuminate\Support\Str::plural($ingredient->packaging_unit) }}
+                                    </span>
+                                    <span class="text-[8px] font-medium text-[#D7CCC8] uppercase">{{ number_format($ingredient->low_stock_threshold) }} {{ $ingredient->unit }}</span>
+                                @else
+                                    <span class="text-xs font-bold text-[#8D6E63]">
+                                        {{ number_format($ingredient->low_stock_threshold) }} {{ $ingredient->unit }}
+                                    </span>
+                                @endif
+                            </div>
                         </td>
                         <td class="py-4 text-center">
                             @if($isOut)
@@ -159,7 +181,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Base Unit</label>
-                            <select name="unit" x-model="formData.unit" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
+                            <select name="unit" x-model="formData.unit" @change="updateBaseValues()" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
                                 <option value="">Select...</option>
                                 <option value="ml">ml (Milliliters)</option>
                                 <option value="L">L (Liters)</option>
@@ -170,7 +192,7 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Packaging Unit</label>
-                            <select name="packaging_unit" x-model="formData.packaging_unit" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
+                            <select name="packaging_unit" x-model="formData.packaging_unit" @change="updateBaseValues()" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
                                 <option value="">None (Individual)</option>
                                 <option value="piece">Piece</option>
                                 <option value="bottle">Bottle</option>
@@ -187,7 +209,7 @@
                         <div>
                             <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Capacity per Pack</label>
                             <div class="relative">
-                                <input type="number" name="capacity_per_pack" x-model="formData.capacity_per_pack" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm" placeholder="1.00">
+                                <input type="number" name="capacity_per_pack" x-model="formData.capacity_per_pack" @input="updateBaseValues()" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm" placeholder="1.00">
                                 <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#A1887F]" x-text="formData.unit"></div>
                             </div>
                         </div>
@@ -203,32 +225,36 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Total Current Stock</label>
+                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1" x-text="formData.packaging_unit ? 'Current Stock (' + formData.packaging_unit + 's)' : 'Current Stock'"></label>
                             <div class="relative">
-                                <input type="number" name="current_stock" x-model="formData.current_stock" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
-                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#A1887F]" x-text="formData.unit"></div>
+                                <input type="number" x-model="stockInPacks" @input="updateBaseValues()" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
+                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#A1887F]" x-text="formData.packaging_unit || formData.unit"></div>
                             </div>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Low Alert At</label>
+                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1" x-text="formData.packaging_unit ? 'Low Alert At (' + formData.packaging_unit + 's)' : 'Low Alert At'"></label>
                             <div class="relative">
-                                <input type="number" name="low_stock_threshold" x-model="formData.low_stock_threshold" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
-                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#A1887F]" x-text="formData.unit"></div>
+                                <input type="number" x-model="thresholdInPacks" @input="updateBaseValues()" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
+                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#A1887F]" x-text="formData.packaging_unit || formData.unit"></div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Hidden Base Inputs for Database -->
+                    <input type="hidden" name="current_stock" :value="formData.current_stock">
+                    <input type="hidden" name="low_stock_threshold" :value="formData.low_stock_threshold">
+
                     <!-- Pack Calculation Helper -->
-                    <div x-show="formData.packaging_unit && formData.capacity_per_pack > 1" x-cloak class="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center justify-between">
+                    <div x-show="formData.packaging_unit" x-cloak class="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center justify-between">
                         <div class="flex flex-col">
-                            <span class="text-[8px] font-black text-amber-800 uppercase tracking-widest">Inventory Equivalent</span>
+                            <span class="text-[8px] font-black text-amber-800 uppercase tracking-widest">Total Base Volume</span>
                             <span class="text-xs font-bold text-[#3E2723]">
-                                <span x-text="(formData.current_stock / formData.capacity_per_pack).toFixed(1)"></span> 
-                                <span x-text="formData.packaging_unit + '(s)'"></span>
+                                <span x-text="parseFloat(formData.current_stock || 0).toLocaleString()"></span> 
+                                <span x-text="formData.unit"></span>
                             </span>
                         </div>
                         <div class="text-[10px] font-bold text-amber-700 italic">
-                            1 Pack = <span x-text="formData.capacity_per_pack"></span> <span x-text="formData.unit"></span>
+                            1 <span x-text="formData.packaging_unit"></span> = <span x-text="formData.capacity_per_pack"></span> <span x-text="formData.unit"></span>
                         </div>
                     </div>
                 </div>
@@ -250,13 +276,22 @@
             isEditing: false,
             modalTitle: 'Add New Ingredient',
             formAction: '{{ route('inventory.ingredients.store') }}',
-            formData: { id: null, name: '', unit: '', packaging_unit: '', capacity_per_pack: 1, current_stock: '', status: 'In Stock', low_stock_threshold: 500 },
+            formData: { id: null, name: '', unit: '', packaging_unit: '', capacity_per_pack: 1, current_stock: 0, status: 'In Stock', low_stock_threshold: 500 },
+            stockInPacks: 0,
+            thresholdInPacks: 0,
+
+            updateBaseValues() {
+                this.formData.current_stock = (parseFloat(this.stockInPacks || 0) * parseFloat(this.formData.capacity_per_pack || 1)).toFixed(2);
+                this.formData.low_stock_threshold = (parseFloat(this.thresholdInPacks || 0) * parseFloat(this.formData.capacity_per_pack || 1)).toFixed(2);
+            },
 
             openAddModal() {
                 this.isEditing = false;
                 this.modalTitle = 'Add New Ingredient';
                 this.formAction = '{{ route('inventory.ingredients.store') }}';
-                this.formData = { id: null, name: '', unit: '', packaging_unit: '', capacity_per_pack: 1, current_stock: '', status: 'In Stock', low_stock_threshold: 500 };
+                this.formData = { id: null, name: '', unit: '', packaging_unit: '', capacity_per_pack: 1, current_stock: 0, status: 'In Stock', low_stock_threshold: 500 };
+                this.stockInPacks = 0;
+                this.thresholdInPacks = 0;
                 this.isModalOpen = true;
             },
             openEditModal(ingredient) {
@@ -264,6 +299,8 @@
                 this.modalTitle = 'Edit/Restock Ingredient';
                 this.formAction = `/inventory/ingredients/${ingredient.id}`;
                 this.formData = { ...ingredient };
+                this.stockInPacks = (this.formData.current_stock / this.formData.capacity_per_pack).toFixed(2);
+                this.thresholdInPacks = (this.formData.low_stock_threshold / this.formData.capacity_per_pack).toFixed(2);
                 this.isModalOpen = true;
             },
             closeModal() { this.isModalOpen = false; }

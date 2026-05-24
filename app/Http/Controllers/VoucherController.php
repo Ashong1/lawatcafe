@@ -11,10 +11,25 @@ class VoucherController extends Controller
     /**
      * Display a listing of all generated vouchers.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Fetch vouchers with pagination (e.g. 50 per page)
-        $vouchers = Voucher::latest()->paginate(50);
+        $query = Voucher::latest();
+
+        // Search by Code
+        if ($request->filled('search')) {
+            $query->where('code', 'like', '%' . $request->search . '%');
+        }
+
+        // Filter by Status
+        if ($request->filled('status')) {
+            if ($request->status === 'used') {
+                $query->where('is_used', true);
+            } elseif ($request->status === 'available') {
+                $query->where('is_used', false);
+            }
+        }
+
+        $vouchers = $query->paginate(50);
 
         // Load Wi-Fi options from dynamic settings for the generation modal
         $durations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
