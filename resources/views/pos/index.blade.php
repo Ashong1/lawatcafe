@@ -148,9 +148,26 @@
                                             </template>
                                         </div>
                                     </template>
+
+                                    <!-- Out of Stock Overlay -->
+                                    <template x-if="item.type === 'product' && !item.inStock">
+                                        <div class="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-20">
+                                            <x-lucide-slash class="w-12 h-12 text-red-500 opacity-40 rotate-12" />
+                                        </div>
+                                    </template>
                                 </div>
 
-                                <div class="flex flex-col flex-1">
+                                <div class="flex flex-col flex-1 relative">
+                                    <!-- Status Badges -->
+                                    <div class="absolute -top-32 right-0 z-10 flex flex-col gap-1 items-end">
+                                        <template x-if="item.type === 'product' && !item.inStock">
+                                            <span class="bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-md uppercase tracking-widest shadow-sm">Out of Stock</span>
+                                        </template>
+                                        <template x-if="item.type === 'product' && item.inStock && item.isLowStock">
+                                            <span class="bg-amber-500 text-white text-[8px] font-black px-2 py-1 rounded-md uppercase tracking-widest shadow-sm animate-pulse">Low Stock</span>
+                                        </template>
+                                    </div>
+
                                     <h4 class="font-bold text-[#3E2723] text-base leading-tight mb-1" x-text="item.name"></h4>
                                     <p class="text-[11px] text-[#A1887F] font-medium mb-3 line-clamp-2" x-text="item.type === 'wifi' ? 'Seamless high-speed internet access.' : 'Freshly prepared for your enjoyment.'"></p>
                                     
@@ -160,7 +177,10 @@
                                             <span class="font-black text-[#3E2723] text-lg" x-text="'₱' + Number(item.price).toFixed(2)"></span>
                                         </div>
                                         
-                                        <button type="button" @click="addToCart(item)" class="w-11 h-11 rounded-full bg-[#3E2723] text-white flex items-center justify-center hover:bg-[#271815] transition-all active:scale-90 shadow-md shadow-[#3E2723]/30">
+                                        <button type="button" 
+                                                @click="addToCart(item)" 
+                                                :disabled="item.type === 'product' && !item.inStock"
+                                                class="w-11 h-11 rounded-full bg-[#3E2723] text-white flex items-center justify-center hover:bg-[#271815] transition-all active:scale-90 shadow-md shadow-[#3E2723]/30 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed">
                                             <x-lucide-plus class="w-5 h-5" />
                                         </button>
                                     </div>
@@ -407,6 +427,13 @@
                     <span>Open Shift</span>
                 </button>
             </form>
+
+            <div class="mt-6 text-center">
+                <a href="{{ auth()->user()->role === 'admin' ? route('dashboard') : route('staff.dashboard') }}" class="text-[10px] font-black text-[#A1887F] hover:text-[#3E2723] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group">
+                    <x-lucide-arrow-left class="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
+                    <span>Back to Hub</span>
+                </a>
+            </div>
         </div>
     </div>
     @endif
@@ -464,6 +491,13 @@
             },
 
             addToCart(product) {
+                // If it's a product, check total stock availability against current cart
+                if (product.type === 'product') {
+                    // Check if we can add one more
+                    const canAdd = this.checkStock(product, 1);
+                    if (!canAdd) return;
+                }
+
                 // If it's a Coffee or Tea, ask for variant first
                 if (product.type !== 'wifi' && (product.category === 'Coffee' || product.category === 'Tea' || product.category === 'Signature')) {
                     // Check if it's already a variant object from the cart + button
@@ -476,6 +510,35 @@
                 } else {
                     this.processAdd(product, null);
                 }
+            },
+
+            checkStock(product, additionalQty) {
+                if (product.type !== 'product' || !product.requirements) return true;
+
+                // Calculate current usage of each ingredient in the cart
+                const currentUsage = {};
+                this.cart.forEach(item => {
+                    if (item.type === 'product' && item.requirements) {
+                        item.requirements.forEach(req => {
+                            currentUsage[req.id] = (currentUsage[req.id] || 0) + (req.required * item.quantity);
+                        });
+                    }
+                });
+
+                // Check if adding the new item exceeds any ingredient stock
+                for (const req of product.requirements) {
+                    const projectedUsage = (currentUsage[req.id] || 0) + (req.required * additionalQty);
+                    if (projectedUsage > req.current) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Insufficient Stock',
+                            text: `Not enough ${req.name} available. Only ${Math.floor((req.current - (currentUsage[req.id] || 0)) / req.required)} more servings possible.`,
+                            confirmButtonColor: '#3E2723'
+                        });
+                        return false;
+                    }
+                }
+                return true;
             },
 
             confirmVariant(variant) {

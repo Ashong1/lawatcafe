@@ -20,7 +20,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Menu Items</h3>
-                <p class="text-xs text-[#A1887F] mt-1 font-medium">Manage and track your cafe's offerings.</p>
+                <p class="text-xs text-[#A1887F] mt-1 font-medium">Manage and track your kape's offerings.</p>
             </div>
             
             <div class="flex items-center gap-3">

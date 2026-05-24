@@ -23,7 +23,7 @@
 <body>
 
     <div class="voucher-card">
-        <div class="brand">Lawa't Cafe</div>
+        <div class="brand">Lawa't Kape</div>
         <div style="font-size: 12px; text-transform: uppercase;">WiFi Access Voucher</div>
         
         <div class="code">{{ $voucher->code }}</div>

@@ -221,16 +221,16 @@
         </div>
     </a>
 
-    {{-- System Nodes --}}
-    <a href="{{ route('network.sessions') }}" class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
-        <div class="absolute -right-6 -top-6 w-24 h-24 bg-slate-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
+    {{-- Today's Revenue --}}
+    <a href="{{ route('sales.index') }}" class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
-                <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">System Nodes</h3>
-                <x-lucide-server class="w-5 h-5 text-slate-600 opacity-50" />
+                <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Today's Revenue</h3>
+                <x-lucide-banknote class="w-5 h-5 text-green-600 opacity-50" />
             </div>
-            <p class="text-4xl font-black text-slate-700">{{ $systemNodes ?? 0 }}</p>
-            <p class="text-[9px] text-slate-500/60 font-bold uppercase mt-1">Infrastructure Overhead</p>
+            <p class="text-4xl font-black text-[#2E7D32]">₱{{ number_format($todaysSales, 0) }}</p>
+            <p class="text-[9px] text-green-800/60 font-bold uppercase mt-1">{{ $todaysOrders }} Orders Processed</p>
         </div>
     </a>
 

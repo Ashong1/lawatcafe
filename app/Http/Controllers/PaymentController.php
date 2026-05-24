@@ -12,7 +12,9 @@ class PaymentController extends Controller
      */
     public function logs()
     {
-        $payments = EwalletPayment::latest()->paginate(50);
+        $payments = EwalletPayment::where('sender_details', 'no-reply@gcash.com')
+            ->latest()
+            ->paginate(50);
         
         return view('network.verifications', compact('payments'));
     }

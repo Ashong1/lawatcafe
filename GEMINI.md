@@ -1,4 +1,4 @@
-# Lawat Cafe Project Instructions
+# Lawa't Kape Project Instructions
 
 This project is a Laravel-based Point of Sale (POS) and Captive Portal system.
 

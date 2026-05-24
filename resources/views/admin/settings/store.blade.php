@@ -28,7 +28,7 @@
                             </div>
                             <div>
                                 <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">E-Wallet QR Code</h3>
-                                <p class="text-[10px] text-[#A1887F] font-medium italic">Display this QR for GCash/Maya payments.</p>
+                                <p class="text-[10px] text-[#A1887F] font-medium italic">Display this QR for GCash payments.</p>
                             </div>
                         </div>
 

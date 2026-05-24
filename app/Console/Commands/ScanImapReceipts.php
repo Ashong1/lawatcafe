@@ -29,7 +29,10 @@ class ScanImapReceipts extends Command
      */
     public function handle()
     {
-        $this->info("Starting IMAP Scan...");
+        $this->info("Starting GCash-only IMAP Scan...");
+
+        // Cleanup: remove existing non-GCash records from logs to prevent confusion
+        EwalletPayment::where('sender_details', '!=', 'no-reply@gcash.com')->delete();
 
         // Fetch all needed settings at once to avoid multiple DB hits
         $configKeys = ['imap_host', 'imap_port', 'imap_encryption', 'imap_username', 'imap_password'];
@@ -66,20 +69,27 @@ class ScanImapReceipts extends Command
 
             $folder = $client->getFolder('INBOX');
             
-            // Search for unread emails from GCash or similar
-            $messages = $folder->query()->unseen()->get();
-
-            $this->info("Found " . $messages->count() . " unseen messages.");
+            // Search specifically for unread GCash notification emails
+            $messages = $folder->query()
+                ->where('FROM', 'no-reply@gcash.com')
+                ->unseen()
+                ->get();
 
             $ai = new \App\Services\AIService();
 
             foreach ($messages as $message) {
                 try {
+                    $from = $message->getFrom()[0]->mail;
+                    
+                    // Strict explicit check to only process GCash emails
+                    if (strtolower($from) !== 'no-reply@gcash.com') {
+                        continue;
+                    }
+
                     $subject = $message->getSubject();
                     $body = $message->getTextBody() ?: $message->getHTMLBody(true);
-                    $from = $message->getFrom()[0]->mail;
 
-                    $this->info("Processing email from: $from - Subject: $subject");
+                    $this->info("Processing GCash email: $subject");
 
                     $refNumber = null;
                     $amount = null;

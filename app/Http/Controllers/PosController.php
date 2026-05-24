@@ -15,12 +15,26 @@ class PosController extends Controller
     {
         // Fetch only Active products from the database with ingredients to check stock
         $products = Product::with('ingredients')->where('status', 'Active')->get()->map(function($product) {
-            // Check if we have enough ingredients for at least one serving
+            // Check if we have enough ingredients for at least one serving and if stock is low
             $inStock = true;
+            $isLowStock = false;
+            $requirements = [];
+
             foreach ($product->ingredients as $ingredient) {
-                if ($ingredient->current_stock < $ingredient->pivot->quantity) {
+                $requiredQty = (float) $ingredient->pivot->quantity;
+                $requirements[] = [
+                    'id' => $ingredient->id,
+                    'name' => $ingredient->name,
+                    'required' => $requiredQty,
+                    'current' => (float) $ingredient->current_stock
+                ];
+
+                if ($ingredient->current_stock < $requiredQty) {
                     $inStock = false;
-                    break;
+                }
+                
+                if ($ingredient->current_stock <= $ingredient->low_stock_threshold) {
+                    $isLowStock = true;
                 }
             }
 
@@ -30,7 +44,9 @@ class PosController extends Controller
                 'price' => (float) $product->price, // Ensure it's a number for JS math
                 'category' => $product->category,
                 'type' => 'product', // Distinguishes it from Wi-Fi add-ons
-                'inStock' => $inStock
+                'inStock' => $inStock,
+                'isLowStock' => $isLowStock,
+                'requirements' => $requirements
             ];
         });
 
@@ -225,31 +241,35 @@ class PosController extends Controller
                 // B. Handle Stock Deduction
                 if ($item['type'] === 'product' && isset($products[$item['id']])) {
                     $product = $products[$item['id']];
-                    foreach ($product->ingredients as $ingredient) {
-                        $quantityToDeduct = $ingredient->pivot->quantity * $item['quantity'];
+                    foreach ($product->ingredients as $ingredientPivot) {
+                        $quantityToDeduct = (float) $ingredientPivot->pivot->quantity * (int) $item['quantity'];
                         
-                        // Deduct from stock
-                        $ingredient->current_stock -= $quantityToDeduct;
-                        $ingredient->save();
+                        // RE-FETCH the ingredient to get the absolute latest stock and ensure we don't overwrite other deductions
+                        $ingredient = \App\Models\Ingredient::find($ingredientPivot->id);
+                        
+                        if ($ingredient) {
+                            $ingredient->current_stock -= $quantityToDeduct;
+                            $ingredient->save();
 
-                        // Log the deduction
-                        \App\Models\InventoryLog::create([
-                            'ingredient_id' => $ingredient->id,
-                            'change_amount' => -$quantityToDeduct,
-                            'after_amount' => $ingredient->current_stock,
-                            'reason' => 'Sale: ' . $product->name . ' (#' . substr($sale->transaction_number, -4) . ')',
-                            'user_id' => auth()->id()
-                        ]);
+                            // Log the deduction
+                            \App\Models\InventoryLog::create([
+                                'ingredient_id' => $ingredient->id,
+                                'change_amount' => -$quantityToDeduct,
+                                'after_amount' => $ingredient->current_stock,
+                                'reason' => 'Sale: ' . $product->name . ' (#' . substr($sale->transaction_number, -4) . ')',
+                                'user_id' => auth()->id()
+                            ]);
 
-                        // Check for Low Stock
-                        if ($ingredient->current_stock <= $ingredient->low_stock_threshold) {
-                            $admins = \App\Models\User::where('role', 'admin')->get();
-                            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\SystemAlert(
-                                'Inventory Warning',
-                                "{$ingredient->name} reached low stock during a sale.",
-                                'package-x',
-                                route('inventory.ingredients.index')
-                            ));
+                            // Check for Low Stock
+                            if ($ingredient->current_stock <= $ingredient->low_stock_threshold) {
+                                $admins = \App\Models\User::where('role', 'admin')->get();
+                                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\SystemAlert(
+                                    'Inventory Warning',
+                                    "{$ingredient->name} reached low stock during a sale.",
+                                    'package-x',
+                                    route('inventory.ingredients.index')
+                                ));
+                            }
                         }
                     }
                 }

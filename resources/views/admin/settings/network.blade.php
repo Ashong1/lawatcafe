@@ -7,7 +7,7 @@
     <div class="max-w-6xl mx-auto">
         <div class="mb-8 border-b border-[#E6D5C3] pb-6">
             <h2 class="text-3xl font-black text-[#3E2723] tracking-wider uppercase italic" style="font-family: 'Dancing Script', cursive;">Lawa't <span class="font-sans not-italic font-bold text-[#4A3B32] text-2xl tracking-[0.2em]">Network Config</span></h2>
-            <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Manage your router connection and configure permanent internet access for cafe equipment.</p>
+            <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Manage your router connection and configure permanent internet access for kape equipment.</p>
         </div>
 
         <form action="{{ route('admin.settings.update') }}" method="POST">
@@ -26,7 +26,7 @@
                                 <x-lucide-monitor-smartphone class="w-6 h-6 text-blue-600" />
                             </div>
                             <div>
-                                <h3 class="font-black text-[#3E2723] uppercase tracking-wider text-sm">Permanent Cafe Devices</h3>
+                                <h3 class="font-black text-[#3E2723] uppercase tracking-wider text-sm">Permanent Kape Devices</h3>
                                 <p class="text-[11px] text-[#A1887F] font-medium">Devices that never need a voucher.</p>
                             </div>
                         </div>

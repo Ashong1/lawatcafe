@@ -28,7 +28,7 @@
                             </div>
                             <div>
                                 <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">Gmail IMAP Audit</h3>
-                                <p class="text-[10px] text-[#A1887F] font-medium italic">Credentials for automated GCash/Maya receipt parsing.</p>
+                                <p class="text-[10px] text-[#A1887F] font-medium italic">Credentials for automated GCash receipt parsing.</p>
                             </div>
                         </div>
 

@@ -19,7 +19,7 @@ class SettingController extends Controller
             'low_stock_threshold' => Setting::get('low_stock_threshold', '500'),
             'store_open_time' => Setting::get('store_open_time', '08:00'),
             'store_close_time' => Setting::get('store_close_time', '22:00'),
-            'receipt_header' => Setting::get('receipt_header', 'Thank you for visiting Lawa\'t Cafe!'),
+            'receipt_header' => Setting::get('receipt_header', 'Thank you for visiting Lawa\'t Kape!'),
         ];
 
         return view('admin.settings.store', compact('settings'));

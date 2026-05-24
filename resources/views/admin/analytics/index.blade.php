@@ -47,7 +47,7 @@
                                 <span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg uppercase">Estimated</span>
                             </div>
                             <p class="text-xs text-[#8D6E63] font-medium leading-relaxed max-w-md mb-6">
-                                {{ $aiForecast['trend_analysis'] ?? 'Gathering historical data to generate a precise financial outlook for your cafe.' }}
+                                {{ $aiForecast['trend_analysis'] ?? 'Gathering historical data to generate a precise financial outlook for your kape.' }}
                             </p>
                             
                             <div class="bg-[#FAFAFA] rounded-2xl p-5 border border-[#F0E6D2]">
@@ -105,7 +105,7 @@
                     <div>
                         <h3 class="text-amber-200 text-[10px] font-black uppercase tracking-[0.3em] mb-4">Barista AI Strategic Growth Tip</h3>
                         <p class="text-lg md:text-xl text-white font-medium italic leading-relaxed">
-                            "{{ $aiForecast['strategic_advice'] ?? 'Focus on gathering more sales data to unlock advanced AI-driven business strategies tailored to Lawa\'t Cafe.' }}"
+                            "{{ $aiForecast['strategic_advice'] ?? 'Focus on gathering more sales data to unlock advanced AI-driven business strategies tailored to Lawa\'t Kape.' }}"
                         </p>
                         <div class="mt-8 flex items-center gap-4 text-white/40 text-[9px] font-bold uppercase tracking-widest">
                             <span class="flex items-center gap-1"><x-lucide-check-circle class="w-3 h-3" /> Real-time Data</span>

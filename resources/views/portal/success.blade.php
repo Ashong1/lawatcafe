@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Connected - Lawa't Cafe</title>
+<title>Connected - Lawa't Kape</title>
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -35,7 +35,7 @@
                     <h1 class="text-7xl font-bold text-white drop-shadow-md leading-none" style="font-family: 'Dancing Script', cursive;">Lawa't</h1>
                     <div class="flex items-center justify-center gap-3">
                         <div class="h-[1px] w-8 bg-amber-500/50"></div>
-                        <p class="text-amber-500 text-[11px] font-black tracking-[0.5em] uppercase">Cafe</p>
+                        <p class="text-amber-500 text-[11px] font-black tracking-[0.5em] uppercase">Kape</p>
                         <div class="h-[1px] w-8 bg-amber-500/50"></div>
                     </div>
                 </div>

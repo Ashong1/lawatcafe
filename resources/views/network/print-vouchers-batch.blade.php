@@ -38,7 +38,7 @@
     <div class="voucher-grid">
         @foreach($vouchers as $voucher)
             <div class="voucher-card">
-                <div class="brand">Lawa't Cafe</div>
+                <div class="brand">Lawa't Kape</div>
                 <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">WiFi Access Voucher</div>
                 
                 <div class="code">{{ $voucher->code }}</div>

@@ -19,13 +19,13 @@
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">E-Wallet Audit Trail</h3>
-                <p class="text-xs text-[#A1887F] mt-1 font-medium">History of extracted GCash/Maya reference numbers and payment amounts.</p>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">GCash Audit Trail</h3>
+                <p class="text-xs text-[#A1887F] mt-1 font-medium">History of extracted GCash reference numbers and payment amounts.</p>
             </div>
             
             <div class="flex items-center gap-3 px-5 py-2.5 bg-blue-50 border border-blue-200 rounded-full shadow-sm">
                 <x-lucide-mail class="w-4 h-4 text-blue-600" />
-                <span class="text-[10px] font-bold text-blue-700 uppercase tracking-widest">IMAP Listener Active</span>
+                <span class="text-[10px] font-bold text-blue-700 uppercase tracking-widest">GCash Listener Active</span>
             </div>
         </div>
 
@@ -56,7 +56,7 @@
                             <div class="flex flex-col">
                                 <span class="text-xs font-bold text-[#4A3B32]">{{ $payment->sender_details }}</span>
                                 <span class="text-[9px] uppercase font-black tracking-tighter text-[#A1887F] mt-0.5">
-                                    {{ str_contains(strtolower($payment->sender_details), 'gcash') ? 'GCash Email' : (str_contains(strtolower($payment->sender_details), 'maya') ? 'Maya Email' : 'External Source') }}
+                                    GCash Payment
                                 </span>
                             </div>
                         </td>

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta http-equiv="refresh" content="60">
-<title>Active Session - Lawa't Cafe</title>
+<title>Active Session - Lawa't Kape</title>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -50,7 +50,7 @@
                     <h1 class="text-7xl font-bold text-white drop-shadow-md leading-none" style="font-family: 'Dancing Script', cursive;">Lawa't</h1>
                     <div class="flex items-center justify-center gap-3">
                         <div class="h-[1px] w-8 bg-amber-500/50"></div>
-                        <p class="text-amber-500 text-[11px] font-black tracking-[0.5em] uppercase">Cafe</p>
+                        <p class="text-amber-500 text-[11px] font-black tracking-[0.5em] uppercase">Kape</p>
                         <div class="h-[1px] w-8 bg-amber-500/50"></div>
                     </div>
                 </div>
@@ -89,7 +89,7 @@
                             <x-lucide-shield-check class="w-8 h-8 text-green-600" stroke-width="2.5" />
                         </div>
                         <h2 class="text-3xl lg:text-5xl font-black text-[#3E2723] mb-3 tracking-tight">You're Online</h2>
-                        <p class="text-xs lg:text-base text-[#8D6E63] font-medium max-w-md mx-auto px-4">Your device is authenticated. Enjoy your premium stay at Lawa't Cafe!</p>
+                        <p class="text-xs lg:text-base text-[#8D6E63] font-medium max-w-md mx-auto px-4">Your device is authenticated. Enjoy your premium stay at Lawa't Kape!</p>
                     </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 max-w-4xl mx-auto w-full px-2">

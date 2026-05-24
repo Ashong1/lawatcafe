@@ -95,7 +95,7 @@ class CaptivePortalController extends Controller
                                                  ->first();
 
             if (!$payment) {
-                return back()->with('error', 'Payment not found or already verified. If you just paid, please wait a minute for the system to process the email.');
+                return back()->with('error', 'GCash payment not found or already verified. If you just paid, please wait a minute for the system to process the GCash notification email.');
             }
 
             // Determine duration based on amount from dynamic settings

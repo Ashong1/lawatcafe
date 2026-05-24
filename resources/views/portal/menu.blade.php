@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Digital Menu - Lawa't Cafe</title>
+    <title>Digital Menu - Lawa't Kape</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -49,124 +49,124 @@
             </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto px-6 py-10 lg:px-24 lg:py-16 no-scrollbar relative z-10 flex flex-col overflow-hidden">
+        <div class="flex-1 overflow-y-auto px-6 py-8 lg:px-24 lg:py-12 no-scrollbar relative z-10 flex flex-col">
             <!-- Subtle background pattern -->
             <div class="absolute inset-0 opacity-[0.015] pointer-events-none z-0 bg-[url('https://www.transparenttextures.com/patterns/pinstripe-dark.png')]"></div>
             
-            <div class="relative z-10">
-                <div class="text-center mb-12 lg:mb-20">
+            <div class="relative z-10 max-w-2xl mx-auto w-full">
+                <div class="text-center mb-10 lg:mb-16">
                     <h2 class="text-[8px] lg:text-[10px] font-black text-amber-800 uppercase tracking-[0.5em] mb-4">Savor the Moment</h2>
-                    <h3 class="text-4xl lg:text-7xl font-black text-[#3E2723] tracking-tighter leading-none mb-6">Our Signature Blends</h3>
-                    <div class="w-24 h-1 bg-amber-500 mx-auto rounded-full mb-6 opacity-30"></div>
-                    <p class="text-sm lg:text-lg text-[#8D6E63] font-medium italic max-w-2xl mx-auto px-4 leading-relaxed">Browsing is free. Enjoy our signature selections while you decide on your internet plan.</p>
+                    <h3 class="text-4xl lg:text-6xl font-black text-[#3E2723] tracking-tighter leading-none mb-6">Our Signature Blends</h3>
+                    <div class="w-16 h-1 bg-amber-500 mx-auto rounded-full mb-6 opacity-30"></div>
+                    <p class="text-sm lg:text-base text-[#8D6E63] font-medium italic px-4 leading-relaxed">Browsing is free. Enjoy our signature selections while you decide on your internet plan.</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 lg:gap-x-24 gap-y-12 lg:gap-y-20 max-w-5xl mx-auto w-full">
+                <div class="space-y-12">
                     
                     <!-- Category: Coffee -->
-                    <div class="space-y-8 lg:space-y-12">
-                        <div class="flex items-center w-full mb-6">
-                            <div class="flex-1 h-[1px] bg-gradient-to-r from-transparent to-amber-200"></div>
-                            <h4 class="flex items-center gap-3 text-xl lg:text-2xl font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap px-6">
-                                <x-lucide-coffee class="w-6 h-6 text-amber-800" stroke-width="2" />
+                    <div class="space-y-6">
+                        <div class="flex items-center w-full mb-8">
+                            <h4 class="flex items-center gap-3 text-xl font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap pr-4">
+                                <x-lucide-coffee class="w-5 h-5 text-amber-800" stroke-width="2.5" />
                                 Coffee
                             </h4>
-                            <div class="flex-1 h-[1px] bg-gradient-to-l from-transparent to-amber-200"></div>
+                            <div class="flex-1 h-[1px] bg-amber-200/50"></div>
                         </div>
                         
-                        <div class="space-y-6 lg:space-y-10">
-                            <div class="flex justify-between items-start group cursor-default">
-                                <div class="pr-6">
-                                    <p class="text-base lg:text-xl font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Barista's Special Latte</p>
-                                    <p class="text-[9px] lg:text-[11px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest mt-2">Signature blend with locally sourced beans</p>
+                        <div class="space-y-8">
+                            <div class="group cursor-default">
+                                <div class="flex justify-between items-baseline mb-1">
+                                    <p class="text-base lg:text-lg font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Barista's Special Latte</p>
+                                    <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
+                                    <span class="font-black text-[#3E2723] text-lg tabular-nums tracking-tighter transition-transform block">₱120</span>
                                 </div>
-                                <div class="text-right">
-                                    <span class="font-black text-[#3E2723] text-lg lg:text-2xl tabular-nums tracking-tighter group-hover:scale-110 transition-transform block">₱120</span>
-                                </div>
+                                <p class="text-[9px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest">Signature blend with locally sourced beans</p>
                             </div>
-                            <div class="flex justify-between items-start group cursor-default">
-                                <div class="pr-6">
-                                    <p class="text-base lg:text-xl font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Classic Cappuccino</p>
-                                    <p class="text-[9px] lg:text-[11px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest mt-2">Double shot with velvety foam</p>
+                            <div class="group cursor-default">
+                                <div class="flex justify-between items-baseline mb-1">
+                                    <p class="text-base lg:text-lg font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Classic Cappuccino</p>
+                                    <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
+                                    <span class="font-black text-[#3E2723] text-lg tabular-nums tracking-tighter transition-transform block">₱110</span>
                                 </div>
-                                <div class="text-right">
-                                    <span class="font-black text-[#3E2723] text-lg lg:text-2xl tabular-nums tracking-tighter group-hover:scale-110 transition-transform block">₱110</span>
-                                </div>
+                                <p class="text-[9px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest">Double shot with velvety foam</p>
                             </div>
-                            <div class="flex justify-between items-start group cursor-default">
-                                <div class="pr-6">
-                                    <p class="text-base lg:text-xl font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Iced Americano</p>
-                                    <p class="text-[9px] lg:text-[11px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest mt-2">Bold and refreshing cold brew</p>
+                            <div class="group cursor-default">
+                                <div class="flex justify-between items-baseline mb-1">
+                                    <p class="text-base lg:text-lg font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Iced Americano</p>
+                                    <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
+                                    <span class="font-black text-[#3E2723] text-lg tabular-nums tracking-tighter transition-transform block">₱95</span>
                                 </div>
-                                <div class="text-right">
-                                    <span class="font-black text-[#3E2723] text-lg lg:text-2xl tabular-nums tracking-tighter group-hover:scale-110 transition-transform block">₱95</span>
-                                </div>
+                                <p class="text-[9px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest">Bold and refreshing cold brew</p>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Subtle Divider -->
+                    <div class="flex justify-center py-4">
+                        <div class="w-12 h-1 border-t-2 border-dotted border-amber-200"></div>
                     </div>
 
                     <!-- Category: Meals -->
-                    <div class="space-y-8 lg:space-y-12">
-                        <div class="flex items-center w-full mb-6">
-                            <div class="flex-1 h-[1px] bg-gradient-to-r from-transparent to-amber-200"></div>
-                            <h4 class="flex items-center gap-3 text-xl lg:text-2xl font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap px-6">
-                                <x-lucide-utensils class="w-6 h-6 text-amber-800" stroke-width="2" />
+                    <div class="space-y-6">
+                        <div class="flex items-center w-full mb-8">
+                            <h4 class="flex items-center gap-3 text-xl font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap pr-4">
+                                <x-lucide-utensils class="w-5 h-5 text-amber-800" stroke-width="2.5" />
                                 Meals
                             </h4>
-                            <div class="flex-1 h-[1px] bg-gradient-to-l from-transparent to-amber-200"></div>
+                            <div class="flex-1 h-[1px] bg-amber-200/50"></div>
                         </div>
                         
-                        <div class="space-y-6 lg:space-y-10">
-                            <div class="flex justify-between items-start group cursor-default">
-                                <div class="pr-6">
-                                    <p class="text-base lg:text-xl font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Butter Croissant</p>
-                                    <p class="text-[9px] lg:text-[11px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest mt-2">Flaky and golden-brown</p>
+                        <div class="space-y-8">
+                            <div class="group cursor-default">
+                                <div class="flex justify-between items-baseline mb-1">
+                                    <p class="text-base lg:text-lg font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Butter Croissant</p>
+                                    <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
+                                    <span class="font-black text-[#3E2723] text-lg tabular-nums tracking-tighter transition-transform block">₱85</span>
                                 </div>
-                                <div class="text-right">
-                                    <span class="font-black text-[#3E2723] text-lg lg:text-2xl tabular-nums tracking-tighter group-hover:scale-110 transition-transform block">₱85</span>
-                                </div>
+                                <p class="text-[9px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest">Flaky and golden-brown</p>
                             </div>
-                            <div class="flex justify-between items-start group cursor-default">
-                                <div class="pr-6">
-                                    <p class="text-base lg:text-xl font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Lawa't Beef Tapa</p>
-                                    <p class="text-[9px] lg:text-[11px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest mt-2">Served with garlic rice and egg</p>
+                            <div class="group cursor-default">
+                                <div class="flex justify-between items-baseline mb-1">
+                                    <p class="text-base lg:text-lg font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Lawa't Beef Tapa</p>
+                                    <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
+                                    <span class="font-black text-[#3E2723] text-lg tabular-nums tracking-tighter transition-transform block">₱185</span>
                                 </div>
-                                <div class="text-right">
-                                    <span class="font-black text-[#3E2723] text-lg lg:text-2xl tabular-nums tracking-tighter group-hover:scale-110 transition-transform block">₱185</span>
-                                </div>
+                                <p class="text-[9px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest">Served with garlic rice and egg</p>
                             </div>
-                            <div class="flex justify-between items-start group cursor-default">
-                                <div class="pr-6">
-                                    <p class="text-base lg:text-xl font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Classic Carbonara</p>
-                                    <p class="text-[9px] lg:text-[11px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest mt-2">Creamy pasta with bacon and egg</p>
+                            <div class="group cursor-default">
+                                <div class="flex justify-between items-baseline mb-1">
+                                    <p class="text-base lg:text-lg font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Classic Carbonara</p>
+                                    <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
+                                    <span class="font-black text-[#3E2723] text-lg tabular-nums tracking-tighter transition-transform block">₱165</span>
                                 </div>
-                                <div class="text-right">
-                                    <span class="font-black text-[#3E2723] text-lg lg:text-2xl tabular-nums tracking-tighter group-hover:scale-110 transition-transform block">₱165</span>
-                                </div>
+                                <p class="text-[9px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest">Creamy pasta with bacon and egg</p>
                             </div>
                         </div>
                     </div>
 
                 </div>
 
-                <!-- Hungry for Internet CTA -->
-                <div class="mt-12 lg:mt-16 mb-6 p-6 lg:p-10 bg-[#3E2723] rounded-3xl lg:rounded-[2.5rem] text-white text-center shadow-2xl relative overflow-hidden max-w-3xl mx-auto border border-[#4A3B32] group">
+                <!-- Hungry for Internet CTA (Horizontal Space-Saver) -->
+                <div class="mt-12 mb-6 p-5 lg:p-8 bg-[#3E2723] rounded-[2rem] text-white shadow-2xl relative overflow-hidden max-w-3xl mx-auto border border-[#4A3B32] group flex flex-col sm:flex-row items-center gap-6">
                     <div class="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                     <div class="absolute top-0 left-0 w-full h-1 bg-amber-500/30"></div>
                     
-                    <div class="relative z-10">
-                        <div class="bg-white/5 w-12 h-12 lg:w-16 lg:h-16 rounded-full flex items-center justify-center mx-auto mb-4 lg:mb-6 border border-white/10 group-hover:scale-110 transition-transform duration-500">
-                            <x-lucide-sparkles class="w-6 h-6 lg:w-8 lg:h-8 text-amber-500" stroke-width="1.5" />
+                    <div class="relative z-10 flex flex-row items-center gap-4 flex-1">
+                        <div class="bg-white/5 w-12 h-12 lg:w-14 lg:h-14 rounded-2xl flex items-center justify-center border border-white/10 shrink-0 group-hover:rotate-12 transition-transform duration-500">
+                            <x-lucide-sparkles class="w-6 h-6 text-amber-500" stroke-width="1.5" />
                         </div>
-                        
-                        <h4 class="text-xl lg:text-3xl font-black mb-3 tracking-tighter uppercase tracking-[0.1em]">Hungry for Internet?</h4>
-                        <p class="text-white/70 text-[11px] lg:text-base mb-8 max-w-md mx-auto leading-relaxed font-medium">
-                            Get a high-speed Wi-Fi voucher instantly with every purchase. Find your code at the bottom of your receipt.
-                        </p>
-                        
-                        <a href="{{ route('portal.index') }}" class="group relative inline-flex items-center gap-3 bg-amber-500 hover:bg-amber-600 text-[#3E2723] px-8 py-4 lg:px-10 lg:py-5 rounded-full font-black uppercase tracking-[0.2em] text-[10px] lg:text-xs transition-all active:scale-95 shadow-2xl overflow-hidden">
-                            <span class="relative z-10">Enter Passcode Now</span>
-                            <x-lucide-arrow-right class="w-4 h-4 lg:w-5 lg:h-5 relative z-10 group-hover:translate-x-2 transition-transform" stroke-width="3" />
+                        <div class="text-left">
+                            <h4 class="text-lg lg:text-xl font-black tracking-tight uppercase mb-0.5">Hungry for Internet?</h4>
+                            <p class="text-white/60 text-[10px] lg:text-xs font-medium leading-tight">
+                                Get a high-speed Wi-Fi voucher instantly with every purchase. Check your receipt.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="relative z-10 shrink-0 w-full sm:w-auto">
+                        <a href="{{ route('portal.index') }}" class="group relative flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-[#3E2723] px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[9px] lg:text-[10px] transition-all active:scale-95 shadow-xl overflow-hidden whitespace-nowrap">
+                            <span class="relative z-10">Enter Passcode</span>
+                            <x-lucide-arrow-right class="w-3.5 h-3.5 relative z-10 group-hover:translate-x-1 transition-transform" stroke-width="3" />
                             <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
                         </a>
                     </div>
@@ -182,12 +182,12 @@
                 <x-lucide-keyboard class="w-6 h-6 text-[#D7CCC8] group-hover:text-amber-600 transition-colors" stroke-width="2.5" />
                 <span>Connect</span>
             </a>
-            <a href="{{ route('portal.index') }}" 
+            <a href="{{ route('portal.index') }}?tab=ewallet" 
                class="flex-1 max-w-[140px] py-4 px-3 rounded-2xl lg:rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex flex-col items-center gap-2.5 text-[#A1887F] hover:bg-[#FAF7F2] hover:text-[#3E2723] group">
                 <x-lucide-credit-card class="w-6 h-6 text-[#D7CCC8] group-hover:text-amber-600 transition-colors" stroke-width="2.5" />
-                <span>Top-Up</span>
+                <span>GCash</span>
             </a>
-            <a href="{{ route('portal.index') }}" 
+            <a href="{{ route('portal.index') }}?tab=help" 
                class="flex-1 max-w-[140px] py-4 px-3 rounded-2xl lg:rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex flex-col items-center gap-2.5 text-[#A1887F] hover:bg-[#FAF7F2] hover:text-[#3E2723] group">
                 <x-lucide-message-square class="w-6 h-6 text-[#D7CCC8] group-hover:text-amber-600 transition-colors" stroke-width="2.5" />
                 <span>AI Chat</span>

@@ -80,7 +80,7 @@
         
         <!-- Header -->
         <div class="header text-center">
-            <h1>Lawa't Cafe</h1>
+            <h1>Lawa't Kape</h1>
             <p>123 Coffee Lane, Brew City</p>
             <p>VAT Reg TIN: 123-456-789-000</p>
         </div>
