@@ -35,8 +35,8 @@
                     <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
                         <th class="pb-4 font-black">Date</th>
                         <th class="pb-4 font-black">Supplier</th>
-                        <th class="pb-4 font-black">Ref #</th>
-                        <th class="pb-4 font-black">Items</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Ref #</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Items</th>
                         <th class="pb-4 font-black">Total Cost</th>
                         <th class="pb-4 font-black text-right">Actions</th>
                     </tr>
@@ -47,14 +47,15 @@
                         <td class="py-4">
                             <span class="font-bold text-[#3E2723] block">{{ $delivery->delivery_date->format('M d, Y') }}</span>
                             <span class="text-[10px] text-[#A1887F] font-medium uppercase tracking-widest">{{ $delivery->delivery_date->format('h:i A') }}</span>
+                            <span class="text-[10px] text-[#A1887F] font-mono font-bold block md:hidden">Ref: {{ $delivery->reference_number ?: 'N/A' }}</span>
                         </td>
                         <td class="py-4">
                             <span class="font-bold text-[#4A3B32]">{{ $delivery->supplier_name }}</span>
                         </td>
-                        <td class="py-4">
+                        <td class="py-4 hidden md:table-cell">
                             <span class="text-xs font-mono font-bold text-[#8D6E63]">{{ $delivery->reference_number ?: 'N/A' }}</span>
                         </td>
-                        <td class="py-4">
+                        <td class="py-4 hidden md:table-cell">
                             <div class="flex flex-col gap-0.5">
                                 @foreach($delivery->items->take(2) as $item)
                                     <span class="text-[10px] font-bold text-[#3E2723]">
@@ -68,6 +69,7 @@
                         </td>
                         <td class="py-4">
                             <span class="font-extrabold text-[#3E2723]">₱{{ number_format($delivery->total_cost, 2) }}</span>
+                            <span class="text-[10px] text-[#A1887F] font-bold block md:hidden">{{ $delivery->items->count() }} item{{ $delivery->items->count() === 1 ? '' : 's' }}</span>
                         </td>
                         <td class="py-4 text-right">
                             <form action="{{ route('inventory.deliveries.destroy', $delivery->id) }}" method="POST" id="delete-delivery-{{ $delivery->id }}" class="inline">
@@ -107,15 +109,14 @@
     </div>
 
     {{-- Receive Delivery Modal --}}
-    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden border-t-8 border-[#3E2723]">
-            
+    <x-modal-shell show="isModalOpen" max-width="2xl" panel-class="border-t-8 border-[#3E2723]" labelled-by="receive-delivery-heading">
+
             <div class="px-8 py-6 border-b border-[#FDF8F5]">
-                <h2 class="text-xl font-black text-[#3E2723] uppercase tracking-widest">Receive Supplies</h2>
+                <h2 id="receive-delivery-heading" class="text-xl font-black text-[#3E2723] uppercase tracking-widest">Receive Supplies</h2>
                 <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter">Input vendor details to update inventory.</p>
             </div>
-            
-            <form action="{{ route('inventory.deliveries.store') }}" method="POST">
+
+            <form action="{{ route('inventory.deliveries.store') }}" method="POST" @submit="submitting = true"
                 @csrf
                 <div class="p-8 space-y-6">
                     <div class="grid grid-cols-2 gap-4">
@@ -179,12 +180,12 @@
                                             <input type="number" step="0.01" :name="'items['+index+'][quantity]'" x-model="item.quantity" @input="updateFromQty(index)" required class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723] bg-white">
                                         </div>
 
-                                        <!-- Cost -->
+                        <!-- Cost -->
                                         <div class="flex flex-col">
                                             <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Unit Cost</label>
-                                            <div class="relative">
-                                                <span class="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-[#D7CCC8]">₱</span>
-                                                <input type="number" step="0.01" :name="'items['+index+'][cost_per_unit]'" x-model="item.cost_per_unit" required class="w-full pl-5 pr-2 py-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723] bg-white">
+                                            <div class="flex items-center gap-1 w-full border border-[#F0E6D2] rounded-lg bg-white pl-2 focus-within:border-[#3E2723] transition-all">
+                                                <span class="shrink-0 text-[9px] font-bold text-[#D7CCC8]">₱</span>
+                                                <input type="number" step="0.01" :name="'items['+index+'][cost_per_unit]'" x-model="item.cost_per_unit" required class="flex-1 min-w-0 py-2 pr-2 border-0 bg-transparent focus:outline-none focus:ring-0 text-xs font-bold text-[#3E2723]">
                                             </div>
                                         </div>
                                     </div>
@@ -206,11 +207,10 @@
 
                 <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
                     <button type="button" @click="closeModal()" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-[#FDF8F5] font-black transition text-[10px] uppercase tracking-widest whitespace-nowrap">Cancel</button>
-                    <button type="submit" class="flex-2 py-4 bg-[#3E2723] text-white rounded-2xl hover:bg-[#271815] font-black transition shadow-lg shadow-[#3E2723]/20 text-[10px] uppercase tracking-widest whitespace-nowrap">Record Delivery</button>
+                    <x-submit-button label="Record Delivery" />
                 </div>
             </form>
-        </div>
-    </div>
+    </x-modal-shell>
     </div>
 </div>
 
@@ -218,11 +218,13 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('deliveryManager', () => ({
             isModalOpen: {{ request('action') === 'receive' ? 'true' : 'false' }},
+            submitting: false,
             ingredients: @js($ingredients),
             items: [{ ingredient_id: '', quantity: '', cost_per_unit: '', packs: '', use_packs: false }],
 
             openAddModal() {
                 this.items = [{ ingredient_id: '', quantity: '', cost_per_unit: '', packs: '', use_packs: false }];
+                this.submitting = false;
                 this.isModalOpen = true;
             },
             closeModal() { this.isModalOpen = false; },

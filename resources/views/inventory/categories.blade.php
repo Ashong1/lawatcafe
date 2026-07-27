@@ -34,8 +34,8 @@
                     <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
                         <th class="pb-4 font-black w-10"></th>
                         <th class="pb-4 font-black">Category</th>
-                        <th class="pb-4 font-black">Products</th>
-                        <th class="pb-4 font-black">Description</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Products</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Description</th>
                         <th class="pb-4 font-black text-right">Actions</th>
                     </tr>
                 </thead>
@@ -56,15 +56,18 @@
                                 <div>
                                     <span class="font-bold text-[#3E2723] text-base block">{{ $category->name }}</span>
                                     <span class="text-[10px] text-[#8D6E63] font-mono uppercase tracking-widest">{{ $category->slug }}</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-[9px] font-bold bg-[#FDF8F5] text-amber-900 border border-amber-100 md:hidden">
+                                        {{ $category->products_count ?? 0 }} Items
+                                    </span>
                                 </div>
                             </div>
                         </td>
-                        <td class="py-4">
+                        <td class="py-4 hidden md:table-cell">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FDF8F5] text-amber-900 border border-amber-100">
                                 {{ $category->products_count ?? 0 }} Items
                             </span>
                         </td>
-                        <td class="py-4 text-[#8D6E63] font-medium max-w-[200px] truncate">{{ $category->description ?: 'No description provided.' }}</td>
+                        <td class="py-4 text-[#8D6E63] font-medium max-w-[200px] truncate hidden md:table-cell">{{ $category->description ?: 'No description provided.' }}</td>
                         <td class="py-4 text-right">
                             <div class="flex justify-end gap-2">
                                 <button @click="openEditModal({{ $category }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit">
@@ -104,15 +107,13 @@
         </div>
     </div>
 
-    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl w-full max-w-xl overflow-hidden border-t-8 border-[#3E2723]">
-            
+    <x-modal-shell show="isModalOpen" max-width="xl" panel-class="border-t-8 border-[#3E2723]" labelled-by="category-modal-title">
             <div class="px-8 py-6 border-b border-[#FDF8F5]">
-                <h2 class="text-xl font-black text-[#3E2723] uppercase tracking-widest" x-text="modalTitle"></h2>
+                <h2 id="category-modal-title" class="text-xl font-black text-[#3E2723] uppercase tracking-widest" x-text="modalTitle"></h2>
                 <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter">Organize products into logical groups.</p>
             </div>
-            
-            <form :action="formAction" method="POST">
+
+            <form :action="formAction" method="POST" @submit="submitting = true">
                 @csrf
                 <template x-if="isEditing">
                     <input type="hidden" name="_method" value="PUT">
@@ -161,11 +162,10 @@
 
                 <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
                     <button type="button" @click="closeModal()" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-[#FDF8F5] font-black transition text-[10px] uppercase tracking-widest whitespace-nowrap">Cancel</button>
-                    <button type="submit" class="flex-1 py-4 bg-[#3E2723] text-white rounded-2xl hover:bg-[#271815] font-black transition shadow-lg shadow-[#3E2723]/20 text-[10px] uppercase tracking-widest whitespace-nowrap">Save Category</button>
+                    <x-submit-button label="Save Category" />
                 </div>
             </form>
-        </div>
-    </div>
+    </x-modal-shell>
     </div>
 </div>
 
@@ -174,6 +174,7 @@
         Alpine.data('categoryManager', () => ({
             isModalOpen: false,
             isEditing: false,
+            submitting: false,
             modalTitle: 'Add New Category',
             formAction: '{{ route('inventory.categories.store') }}',
             formData: { id: null, name: '', description: '', icon: 'coffee', color: '#3E2723' },
@@ -183,6 +184,7 @@
                 this.modalTitle = 'Add New Category';
                 this.formAction = '{{ route('inventory.categories.store') }}';
                 this.formData = { id: null, name: '', description: '', icon: 'coffee', color: '#3E2723' };
+                this.submitting = false;
                 this.isModalOpen = true;
             },
             openEditModal(category) {
@@ -190,6 +192,7 @@
                 this.modalTitle = 'Edit Category';
                 this.formAction = `/inventory/categories/${category.id}`;
                 this.formData = { ...category };
+                this.submitting = false;
                 this.isModalOpen = true;
             },
             closeModal() { this.isModalOpen = false; }

@@ -24,10 +24,10 @@ Route::get('/', function () {
 
 Route::prefix('portal')->name('portal.')->group(function () {
     Route::get('/', [CaptivePortalController::class, 'index'])->name('index');
-    Route::post('/authenticate', [CaptivePortalController::class, 'authenticate'])->name('authenticate');
-    Route::post('/verify-payment', [CaptivePortalController::class, 'verifyPayment'])->name('verify-payment');
-    Route::post('/upload', [CaptivePortalController::class, 'uploadReceipt'])->name('upload');
-    Route::post('/chat', [CaptivePortalController::class, 'chat'])->name('chat');
+    Route::post('/authenticate', [CaptivePortalController::class, 'authenticate'])->name('authenticate')->middleware('throttle:voucher-auth');
+    Route::post('/verify-payment', [CaptivePortalController::class, 'verifyPayment'])->name('verify-payment')->middleware('throttle:portal-payment');
+    Route::post('/upload', [CaptivePortalController::class, 'uploadReceipt'])->name('upload')->middleware('throttle:portal-upload');
+    Route::post('/chat', [CaptivePortalController::class, 'chat'])->name('chat')->middleware('throttle:portal-chat');
     Route::get('/menu', [CaptivePortalController::class, 'menu'])->name('menu'); // Added menu route
     Route::post('/disconnect', [CaptivePortalController::class, 'disconnect'])->name('disconnect');
     Route::get('/unlock', [CaptivePortalController::class, 'unlock'])->name('unlock');
@@ -46,6 +46,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Kitchen Display System
     Route::get('/kds', [\App\Http\Controllers\KdsController::class, 'index'])->name('kds.index');
+    Route::get('/kds/data', [\App\Http\Controllers\KdsController::class, 'data'])->name('kds.data');
     Route::post('/kds/{sale}/status', [\App\Http\Controllers\KdsController::class, 'updateStatus'])->name('kds.update');
     Route::post('/kds/item/{item}/status', [\App\Http\Controllers\KdsController::class, 'updateItemStatus'])->name('kds.item.update');
 
@@ -77,17 +78,32 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
     });
 
+    // AI Agent proposed-action confirm/reject (shared: staff can confirm their own
+    // confirm-tier proposals; ToolCallOrchestrator itself blocks staff from
+    // confirming admin_only actions regardless of route access). NOTE: the
+    // "admin." route-name prefix here is just namespacing, not an access gate —
+    // do not "fix" these into an admin-only middleware group, that would break
+    // staff's only mechanism for approving their own proposed actions and their
+    // pending-action badge below.
+    Route::prefix('admin/ai/actions')->name('admin.ai.actions.')->group(function () {
+        Route::post('/{audit}/confirm', [\App\Http\Controllers\AiActionController::class, 'confirm'])->name('confirm');
+        Route::post('/{audit}/reject', [\App\Http\Controllers\AiActionController::class, 'reject'])->name('reject');
+        Route::get('/pending-count', [\App\Http\Controllers\AiActionController::class, 'pendingCount'])->name('pending-count');
+        Route::get('/pending-preview', [\App\Http\Controllers\AiActionController::class, 'pendingPreview'])->name('pending-preview');
+    });
+
     // ==========================================
     // ADMIN ONLY ROUTES
     // ==========================================
     Route::middleware([RoleMiddleware::class . ':admin'])->group(function () {
-        
+
         // Admin Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/admin/live-stats', [DashboardController::class, 'liveStats'])->name('admin.live-stats'); // Added live-stats route
         Route::post('/admin/ai/chat', [DashboardController::class, 'adminChat'])->name('admin.ai.chat');
         Route::get('/admin/ai/insights', [DashboardController::class, 'getAIInsights'])->name('admin.ai.insights');
         Route::get('/admin/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('admin.analytics');
+        Route::get('/admin/ai/actions', [\App\Http\Controllers\AiActionController::class, 'index'])->name('admin.ai.actions.index');
 
         // Inventory Management
         Route::prefix('inventory')->name('inventory.')->group(function () {
@@ -96,6 +112,7 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('products', ProductController::class)->except(['create', 'show', 'edit']);
             Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
             Route::resource('ingredients', IngredientController::class)->except(['create', 'show', 'edit']);
+            Route::post('ingredients/{ingredient}/add-stock', [IngredientController::class, 'addStock'])->name('ingredients.add-stock');
             
             // Supplier Deliveries (Receiving)
             Route::resource('deliveries', \App\Http\Controllers\IngredientDeliveryController::class)->only(['index', 'store', 'destroy']);
@@ -146,6 +163,8 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/store', [\App\Http\Controllers\Admin\SettingController::class, 'store'])->name('store');
             Route::get('/integrations', [\App\Http\Controllers\Admin\SettingController::class, 'integrations'])->name('integrations');
             Route::get('/network', [\App\Http\Controllers\Admin\SettingController::class, 'network'])->name('network');
+            Route::get('/agent', [\App\Http\Controllers\Admin\SettingController::class, 'agent'])->name('agent');
+            Route::post('/agent', [\App\Http\Controllers\Admin\SettingController::class, 'updateAgentPermissions'])->name('agent.update');
             Route::post('/update', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('update');
         });
     });
@@ -158,6 +177,7 @@ Route::middleware(['auth'])->group(function () {
         // Staff Hub
         Route::get('/staff-dashboard', [StaffController::class, 'index'])->name('staff.dashboard');
         Route::get('/staff-dashboard/live', [StaffController::class, 'getLiveData'])->name('staff.dashboard.live');
+        Route::post('/staff/ai/chat', [StaffController::class, 'staffChat'])->name('staff.ai.chat');
 
     });
 });

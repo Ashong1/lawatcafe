@@ -85,7 +85,9 @@
                 </form>
                 @endif
 
-                <button @click="isModalOpen = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
+                <x-ask-ai-button prompt="Generate a new voucher batch." label="Ask AI to generate" />
+
+                <button @click="submitting = false; isModalOpen = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
                     <x-lucide-plus class="w-4 h-4" />
                     <span>Generate Vouchers</span>
                 </button>
@@ -102,9 +104,9 @@
                         </th>
                         @endif
                         <th class="pb-4 font-black">Voucher Code</th>
-                        <th class="pb-4 font-black">Duration</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Duration</th>
                         <th class="pb-4 font-black text-center">Status</th>
-                        <th class="pb-4 font-black">Created At</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Created At</th>
                         <th class="pb-4 font-black text-right">Actions</th>
                     </tr>
                 </thead>
@@ -116,8 +118,11 @@
                                 <input type="checkbox" value="{{ $voucher->id }}" x-model="selectedVouchers" class="rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
                             </td>
                             @endif
-                            <td class="py-4 font-extrabold text-amber-700 text-base tracking-widest font-mono">{{ $voucher->code }}</td>
-                            <td class="py-4 text-[#8D6E63] font-bold">
+                            <td class="py-4 font-extrabold text-amber-700 text-base tracking-widest font-mono">
+                                {{ $voucher->code }}
+                                <span class="block text-[10px] text-[#A1887F] font-medium tracking-normal md:hidden">{{ $voucher->duration_minutes }} Mins</span>
+                            </td>
+                            <td class="py-4 text-[#8D6E63] font-bold hidden md:table-cell">
                                 {{ $voucher->duration_minutes }} Mins
                             </td>
                             <td class="py-4 text-center">
@@ -126,8 +131,9 @@
                                 @else
                                     <span class="px-4 py-1.5 bg-[#FFF3E0] text-[#E65100] text-[10px] font-bold uppercase tracking-wider rounded-full">Available</span>
                                 @endif
+                                <span class="block text-[10px] text-[#A1887F] font-medium mt-1 md:hidden">{{ $voucher->created_at->format('M d, Y') }}</span>
                             </td>
-                            <td class="py-4 text-[#8D6E63] text-xs font-medium">
+                            <td class="py-4 text-[#8D6E63] text-xs font-medium hidden md:table-cell">
                                 {{ $voucher->created_at->format('M d, Y') }}
                                 <span class="block text-[10px] text-[#A1887F]">{{ $voucher->created_at->format('h:i A') }}</span>
                             </td>
@@ -191,11 +197,10 @@
     @endif
 
     <!-- Generation Modal -->
-    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-        <div @click.away="isModalOpen = false" class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-xl border-t-8 border-[#3E2723]">
-            <h2 class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-widest">Generate Vouchers</h2>
-            
-            <form action="{{ route('network.vouchers.generate') }}" method="POST">
+    <x-modal-shell show="isModalOpen" max-width="xl" panel-class="rounded-2xl p-8 border-t-8 border-[#3E2723]" labelled-by="generate-vouchers-heading">
+            <h2 id="generate-vouchers-heading" class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-widest">Generate Vouchers</h2>
+
+            <form action="{{ route('network.vouchers.generate') }}" method="POST" @submit="submitting = true">
                 @csrf
                 <div class="mb-4">
                     <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Quantity (Max 100)</label>
@@ -213,11 +218,10 @@
 
                 <div class="flex gap-4">
                     <button type="button" @click="isModalOpen = false" class="flex-1 py-3.5 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#8D6E63] hover:bg-[#FDF8F5] font-bold transition text-sm tracking-wide">Cancel</button>
-                    <button type="submit" class="flex-1 py-3.5 bg-[#3E2723] text-white rounded-full hover:bg-[#271815] font-bold transition shadow-md shadow-[#3E2723]/20 text-sm tracking-wide">Generate Now</button>
+                    <x-submit-button label="Generate Now" />
                 </div>
             </form>
-        </div>
-    </div>
+    </x-modal-shell>
     </div>
 </div>
 
@@ -225,6 +229,7 @@
     function voucherManager() {
         return {
             isModalOpen: {{ request('action') === 'generate' ? 'true' : 'false' }},
+            submitting: false,
             selectedVouchers: [],
             vouchers: {!! json_encode($vouchers->pluck('id')) !!},
             get allSelected() {

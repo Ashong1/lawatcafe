@@ -7,8 +7,11 @@
 
     <title>{{ config('app.name', "Lawa't Kape") }}</title>
 
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="antialiased min-h-screen flex items-center justify-center relative bg-[#271815]"

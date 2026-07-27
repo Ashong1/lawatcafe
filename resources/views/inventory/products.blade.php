@@ -37,7 +37,7 @@
                 <thead>
                     <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
                         <th class="pb-4 font-black">Product</th>
-                        <th class="pb-4 font-black">Category</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Category</th>
                         <th class="pb-4 font-black">Price</th>
                         <th class="pb-4 font-black">Status</th>
                         <th class="pb-4 font-black text-right">Actions</th>
@@ -57,11 +57,11 @@
                                     </div>
                                     <div class="flex flex-col">
                                         <span class="font-bold text-[#3E2723] text-sm">{{ $product->name }}</span>
-                                        <span class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest">{{ $product->category }}</span>
+                                        <span class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest md:hidden">{{ $product->category }}</span>
                                     </div>
                                 </div>
                             </td>
-                            <td class="py-4">
+                            <td class="py-4 hidden md:table-cell">
                                 @php
                                     $ingCount = $product->ingredients->count();
                                 @endphp
@@ -137,12 +137,10 @@
     </div>
 
     {{-- Add/Edit Modal (Refactored for space) --}}
-    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden border-t-8 border-[#3E2723]">
-            
+    <x-modal-shell show="isModalOpen" max-width="2xl" panel-class="border-t-8 border-[#3E2723]" labelled-by="product-modal-title">
             <div class="px-8 py-6 border-b border-[#FDF8F5] flex justify-between items-center">
                 <div>
-                    <h2 class="text-xl font-black text-[#3E2723] uppercase tracking-widest" x-text="modalTitle"></h2>
+                    <h2 id="product-modal-title" class="text-xl font-black text-[#3E2723] uppercase tracking-widest" x-text="modalTitle"></h2>
                     <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter">Configure product details and required ingredients.</p>
                 </div>
                 <div class="flex bg-[#FDF8F5] p-1 rounded-xl border border-[#F0E6D2] shrink-0 ml-4">
@@ -155,7 +153,7 @@
                 </div>
             </div>
             
-            <form :action="formAction" method="POST">
+            <form :action="formAction" method="POST" @submit="submitting = true">
                 @csrf
                 <template x-if="isEditing">
                     <input type="hidden" name="_method" value="PUT">
@@ -237,12 +235,10 @@
 
                 <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
                     <button type="button" @click="closeModal()" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-[#FDF8F5] font-black transition text-[10px] uppercase tracking-widest whitespace-nowrap">Cancel</button>
-                    <button type="submit" class="flex-1 py-4 bg-[#3E2723] text-white rounded-2xl hover:bg-[#271815] font-black transition shadow-lg shadow-[#3E2723]/20 text-[10px] uppercase tracking-widest whitespace-nowrap">Save Product</button>
+                    <x-submit-button label="Save Product" />
                 </div>
             </form>
-        </div>
-    </div>
-    </div>
+    </x-modal-shell>
 </div>
 
 <script>
@@ -250,6 +246,7 @@
         Alpine.data('productManager', () => ({
             isModalOpen: false,
             isEditing: false,
+            submitting: false,
             activeTab: 'general',
             modalTitle: 'Add New Product',
             formAction: '{{ route('inventory.products.store') }}',
@@ -264,6 +261,7 @@
                 this.formAction = '{{ route('inventory.products.store') }}';
                 this.formData = { id: null, name: '', category: '', price: '', status: 'Active' };
                 this.currentRecipe = [];
+                this.submitting = false;
                 this.isModalOpen = true;
             },
 
@@ -277,6 +275,7 @@
                     id: ing.id,
                     quantity: ing.pivot.quantity
                 }));
+                this.submitting = false;
                 this.isModalOpen = true;
             },
 

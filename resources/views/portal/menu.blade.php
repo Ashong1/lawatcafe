@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Digital Menu - Lawa't Kape</title>
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; scroll-behavior: smooth; }
@@ -58,7 +61,7 @@
         <div class="shrink-0 bg-[#3E2723] px-6 py-5 border-b border-[#271815] flex items-center justify-between relative overflow-hidden">
             <div class="absolute -top-12 -left-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
             
-            <a href="{{ route('portal.index') }}" class="relative z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all active:scale-90">
+            <a href="{{ route('portal.index') }}" aria-label="Back to portal" class="relative z-10 flex items-center justify-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all active:scale-90">
                 <x-lucide-arrow-left class="w-5 h-5" />
             </a>
             

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Setting;
+use App\Services\Agent\PermissionResolver;
+use App\Services\Agent\ToolRegistry;
 use Illuminate\Support\Facades\Storage;
 
 class SettingController extends Controller
@@ -26,13 +28,11 @@ class SettingController extends Controller
     }
 
     /**
-     * Display API Integrations (Gmail IMAP).
+     * Display API Integrations.
      */
     public function integrations()
     {
         $settings = [
-            'imap_username' => Setting::get('imap_username', ''),
-            'imap_password' => Setting::get('imap_password', ''),
             'active_ai_model' => Setting::get('active_ai_model', 'gemini-1.5-pro'),
             'ai_api_key' => Setting::get('ai_api_key', ''),
         ];
@@ -56,13 +56,60 @@ class SettingController extends Controller
     }
 
     /**
+     * Display AI Agent tool permission tiers.
+     */
+    public function agent(ToolRegistry $registry, PermissionResolver $permissions)
+    {
+        $overrides = $permissions->currentOverrides();
+
+        $tools = array_map(function (string $class) use ($overrides, $permissions) {
+            $tool = app($class);
+            $name = $tool->name();
+
+            $tier = $tool->permissionTier();
+            foreach (['auto_approved' => 'auto', 'confirm_required' => 'confirm', 'admin_only' => 'admin_only'] as $bucket => $bucketTier) {
+                if (in_array($name, $overrides[$bucket], true)) {
+                    $tier = $bucketTier;
+                }
+            }
+
+            return [
+                'name' => $name,
+                'description' => $tool->description(),
+                'default_tier' => $tool->permissionTier(),
+                'configurable' => $permissions->isConfigurable($tool),
+                'tier' => $permissions->isConfigurable($tool) ? $tier : $tool->permissionTier(),
+            ];
+        }, $registry->allToolClasses());
+
+        return view('admin.settings.agent', compact('tools'));
+    }
+
+    /**
+     * Update AI Agent tool permission tiers.
+     */
+    public function updateAgentPermissions(Request $request, ToolRegistry $registry, PermissionResolver $permissions)
+    {
+        $validTiers = [PermissionResolver::TIER_AUTO, PermissionResolver::TIER_CONFIRM, PermissionResolver::TIER_ADMIN_ONLY];
+        $knownTools = array_map(fn ($class) => app($class)->name(), $registry->allToolClasses());
+
+        $validated = $request->validate([
+            'tiers' => 'required|array',
+            'tiers.*' => 'required|string|in:' . implode(',', $validTiers),
+        ]);
+
+        $tierByToolName = array_intersect_key($validated['tiers'], array_flip($knownTools));
+        $permissions->saveOverrides($tierByToolName);
+
+        return redirect()->back()->with('success', 'AI agent permissions updated.');
+    }
+
+    /**
      * Update specified settings.
      */
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'imap_username' => 'nullable|email',
-            'imap_password' => 'nullable|string',
             'active_ai_model' => 'nullable|string',
             'ai_api_key' => 'nullable|string',
             'payment_qr_code' => 'nullable|image|max:2048',

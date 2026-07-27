@@ -4,9 +4,50 @@ namespace App\Http\Controllers;
 
 use App\Models\Voucher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CaptivePortalController extends Controller
 {
+    /**
+     * Resolve the (ip, mac) pair to trust for authorization/binding decisions.
+     *
+     * The IP is taken from the actual request (never a client-suppliable
+     * query string), and the MAC is cross-checked against OPNsense's own ARP
+     * table rather than trusting whatever `clientMac` the guest's browser
+     * carried in from the redirect. This closes the gap where a guest could
+     * previously pass `?clientIp=<victim-ip>` and have that IP authorized
+     * outright.
+     */
+    private function resolveTrustedIdentity(Request $request, \App\Services\OpnSenseService $opnsense): array
+    {
+        $ip = $request->ip();
+        $mac = $opnsense->resolveMacForIp($ip);
+
+        if (!$mac) {
+            Log::warning("MAC binding: could not resolve MAC for IP {$ip} via ARP table; falling back to redirect-supplied value.");
+            $mac = session('clientMac');
+        }
+
+        return [$ip, $mac];
+    }
+
+    /**
+     * Whether this MAC is on the (BlocklistController-managed) ban list.
+     * Compared with separators/case stripped so "AA:BB:.." and "aa-bb-.."
+     * are treated as the same address regardless of how each was stored.
+     */
+    private function isMacBanned(?string $mac): bool
+    {
+        if (!$mac) {
+            return false;
+        }
+
+        $clean = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac));
+
+        return \App\Models\BannedDevice::get()->contains(function ($device) use ($clean) {
+            return strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $device->mac_address)) === $clean;
+        });
+    }
     // Show the main captive portal page
     public function index(Request $request, \App\Services\OpnSenseService $opnsense)
     {
@@ -15,9 +56,8 @@ class CaptivePortalController extends Controller
         if ($request->has('clientMac')) session(['clientMac' => $request->query('clientMac')]);
         if ($request->has('zone')) session(['zone' => $request->query('zone')]);
 
-        $ip = session('clientIp', $request->ip());
-        $mac = session('clientMac', $request->query('clientMac'));
-        
+        [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
+
         // 2. Check if already connected
         $sessions = $opnsense->listSessions();
         $activeSession = collect($sessions)->filter(function($s) use ($ip, $mac) {
@@ -75,9 +115,27 @@ class CaptivePortalController extends Controller
     public function disconnect(Request $request, \App\Services\OpnSenseService $opnsense)
     {
         $sessionId = $request->input('session_id');
+
         if ($sessionId) {
-            $opnsense->disconnectDevice($sessionId);
+            [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
+            $cleanMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac ?? ''));
+
+            $ownsSession = collect($opnsense->listSessions())->contains(function ($s) use ($sessionId, $ip, $cleanMac) {
+                if (($s['sessionId'] ?? null) != $sessionId) {
+                    return false;
+                }
+                $sessionIp = str_replace('/32', '', $s['ipAddress'] ?? '');
+                $sessionMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $s['macAddress'] ?? ''));
+                return $sessionIp === $ip || (!empty($cleanMac) && $sessionMac === $cleanMac);
+            });
+
+            if ($ownsSession) {
+                $opnsense->disconnectDevice($sessionId);
+            } else {
+                Log::warning("Portal disconnect: rejected attempt by {$ip} to disconnect session {$sessionId} it does not own.");
+            }
         }
+
         return redirect()->route('portal.index')->with('message', 'Successfully disconnected.');
     }
 
@@ -116,10 +174,15 @@ class CaptivePortalController extends Controller
                 return back()->with('error', 'Insufficient amount for a Wi-Fi voucher. Minimum is ₱20.00.');
             }
 
-            // Authorize device on OPNsense
-            $ip = session('clientIp', $request->ip());
-            $mac = session('clientMac', $request->query('clientMac') ?? $request->input('mac'));
-            
+            // Authorize device on OPNsense — IP/MAC resolved from the gateway,
+            // never trusted from client-suppliable input.
+            [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
+
+            if ($this->isMacBanned($mac)) {
+                Log::warning("Portal verify-payment: rejected banned device {$mac} ({$ip}).");
+                return back()->with('error', 'This device has been blocked from network access. Please see staff for assistance.');
+            }
+
             // Generate the voucher
             $code = 'LAWA-' . strtoupper(\Illuminate\Support\Str::random(4));
             
@@ -161,8 +224,12 @@ class CaptivePortalController extends Controller
                 return back()->with('error', 'Invalid or expired voucher code.');
             }
 
-            $ip = session('clientIp', $request->ip());
-            $mac = session('clientMac', $request->query('clientMac') ?? $request->input('mac'));
+            [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
+
+            if ($this->isMacBanned($mac)) {
+                Log::warning("Portal authenticate: rejected banned device {$mac} ({$ip}).");
+                return back()->with('error', 'This device has been blocked from network access. Please see staff for assistance.');
+            }
 
             // 2. Authorize via backend API first
             $authorized = $opnsense->authorizeDevice($ip, $voucher->code);
@@ -208,15 +275,25 @@ class CaptivePortalController extends Controller
         return back()->with('error', 'Could not clearly read the reference number from the receipt. Please enter it manually.');
     }
 
-    public function chat(Request $request, \App\Services\AIService $ai)
+    public function chat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator, \App\Services\OpnSenseService $opnsense)
     {
         $request->validate([
             'message' => 'required|string|max:500',
             'history' => 'nullable|array'
         ]);
 
-        $reply = $ai->chat($request->message, $request->history ?? []);
-        return response()->json(['reply' => $reply]);
+        $messages = [['role' => 'system', 'content' => $ai->buildGuestSystemPrompt()]];
+        foreach ($request->history ?? [] as $msg) {
+            $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
+        }
+        $messages[] = ['role' => 'user', 'content' => $request->message];
+
+        [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
+        $context = ['ip' => $ip, 'mac' => $mac];
+
+        $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_GUEST, null, $context);
+
+        return response()->json(['reply' => $result['reply'] ?? "☕ Serving guests! Check Menu or Wi-Fi tabs!"]);
     }
 
     // Show the digital menu for Walled Garden access

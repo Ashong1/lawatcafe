@@ -36,9 +36,9 @@
                         <th class="pb-4 font-black">Reference Number</th>
                         <th class="pb-4 font-black">Amount</th>
                         <th class="pb-4 font-black">Source / Sender</th>
-                        <th class="pb-4 font-black">Email Date</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Email Date</th>
                         <th class="pb-4 font-black">Status</th>
-                        <th class="pb-4 font-black">Processed At</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Processed At</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
@@ -58,9 +58,10 @@
                                 <span class="text-[9px] uppercase font-black tracking-tighter text-[#A1887F] mt-0.5">
                                     GCash Payment
                                 </span>
+                                <span class="text-[10px] text-[#A1887F] font-medium md:hidden mt-0.5">{{ $payment->email_date ? $payment->email_date->format('M d, Y h:i A') : 'N/A' }}</span>
                             </div>
                         </td>
-                        <td class="py-4 text-[#8D6E63] text-xs font-medium">
+                        <td class="py-4 text-[#8D6E63] text-xs font-medium hidden md:table-cell">
                             {{ $payment->email_date ? $payment->email_date->format('M d, Y h:i A') : 'N/A' }}
                         </td>
                         <td class="py-4">
@@ -73,8 +74,9 @@
                                     Unclaimed
                                 </span>
                             @endif
+                            <span class="block text-[10px] text-[#A1887F] font-medium mt-1 md:hidden">{{ $payment->created_at->diffForHumans() }}</span>
                         </td>
-                        <td class="py-4 text-[#A1887F] text-xs font-bold">
+                        <td class="py-4 text-[#A1887F] text-xs font-bold hidden md:table-cell">
                             {{ $payment->created_at->diffForHumans() }}
                         </td>
                     </tr>

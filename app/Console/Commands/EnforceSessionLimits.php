@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Setting;
 use App\Models\Voucher;
 use App\Services\OpnSenseService;
 use Carbon\Carbon;
@@ -27,17 +28,31 @@ class EnforceSessionLimits extends Command
     /**
      * Execute the console command.
      */
+    /**
+     * Minutes an app-authorized session may sit with no matching voucher
+     * (and no traffic since) before it's treated as orphaned and disconnected.
+     */
+    protected const ORPHAN_GRACE_MINUTES = 60;
+
     public function handle(OpnSenseService $opnsense)
     {
         $this->info("Fetching active sessions from OPNsense...");
         $sessions = $opnsense->listSessions();
-        
+
         if (empty($sessions)) {
             $this->warn("No active sessions found.");
             return;
         }
 
         $this->info("Scanning " . count($sessions) . " sessions for expiration...");
+
+        // Never touch statically-permitted / infrastructure / VIP devices —
+        // these intentionally have no voucher and are not meant to expire.
+        $protectedIps = array_merge(
+            explode(',', Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.1')),
+            explode(',', Setting::get('network_vip_ips', '192.168.2.100,192.168.2.5,192.168.2.4,192.168.2.99')),
+            explode(',', Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4')),
+        );
 
         foreach ($sessions as $session) {
             $ip = str_replace('/32', '', $session['ipAddress'] ?? '');
@@ -59,18 +74,38 @@ class EnforceSessionLimits extends Command
                 ->first();
 
             if (!$voucher) {
-                $this->line(" - Session {$ip}: No matching voucher found. Skipping.");
+                $this->handleOrphanedSession($opnsense, $session, $ip, $sessionId, $protectedIps);
+                continue;
+            }
+
+            // Anti-sharing: the voucher was bound to whichever MAC redeemed it
+            // (App\Http\Controllers\CaptivePortalController, resolved via ARP
+            // at redemption time). If the MAC now attached to this IP's live
+            // session doesn't match, either the IP got reassigned to a
+            // different device or someone is riding an authorized IP with a
+            // different MAC — either way, kick it rather than trust the IP alone.
+            $boundMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $voucher->mac_address ?? ''));
+            if (!empty($boundMac) && !empty($mac) && $boundMac !== $mac) {
+                $this->warn(" - Session {$ip}: MAC MISMATCH (voucher {$voucher->code} bound to {$boundMac}, live session is {$mac}). Disconnecting...");
+
+                $disconnected = $opnsense->disconnectDevice($sessionId);
+
+                if ($disconnected) {
+                    Log::warning("EnforceSessions: Disconnected {$ip} due to MAC binding violation (voucher {$voucher->code} bound to {$boundMac}, saw {$mac}).");
+                } else {
+                    $this->error("   [FAILED] Could not kick device for MAC mismatch.");
+                }
                 continue;
             }
 
             // Calculate expiration
             $expirationTime = $voucher->used_at->addMinutes($voucher->duration_minutes);
-            
+
             if (now()->greaterThan($expirationTime)) {
                 $this->warn(" - Session {$ip}: EXPIRED (Allotted: {$voucher->duration_minutes}m). Disconnecting...");
-                
+
                 $disconnected = $opnsense->disconnectDevice($sessionId);
-                
+
                 if ($disconnected) {
                     $this->info("   [SUCCESS] Device kicked.");
                     Log::info("EnforceSessions: Disconnected {$ip} (Voucher: {$voucher->code}) due to expiration.");
@@ -84,5 +119,48 @@ class EnforceSessionLimits extends Command
         }
 
         $this->info("Session enforcement complete.");
+    }
+
+    /**
+     * Handle a live OPNsense session with no matching Voucher row.
+     *
+     * Static/firewall-permit entries (authenticated_via ---ip---/---mac---)
+     * and anything on the ignored/VIP/infrastructure allowlist are left
+     * alone — they're expected to have no voucher. A session the app itself
+     * authorized (authenticated_via API) with no voucher is orphaned, most
+     * likely because its voucher was purged while it was still connected —
+     * disconnect it once it's been idle past the grace period so it can't
+     * linger indefinitely.
+     */
+    protected function handleOrphanedSession(OpnSenseService $opnsense, array $session, string $ip, string $sessionId, array $protectedIps): void
+    {
+        if (in_array($ip, $protectedIps)) {
+            $this->line(" - Session {$ip}: Allowlisted (ignored/VIP/infrastructure). Skipping.");
+            return;
+        }
+
+        if (($session['authenticated_via'] ?? null) !== 'API') {
+            $this->line(" - Session {$ip}: Static/firewall-permit entry, not app-authorized. Skipping.");
+            return;
+        }
+
+        $lastAccessed = $session['last_accessed'] ?? $session['startTime'] ?? null;
+        $idleMinutes = $lastAccessed ? abs(now()->diffInMinutes(Carbon::createFromTimestamp($lastAccessed))) : 0;
+
+        if ($idleMinutes < self::ORPHAN_GRACE_MINUTES) {
+            $this->line(" - Session {$ip}: No matching voucher, idle {$idleMinutes}m (grace " . self::ORPHAN_GRACE_MINUTES . "m). Skipping.");
+            return;
+        }
+
+        $this->warn(" - Session {$ip}: ORPHANED (no voucher, idle {$idleMinutes}m). Disconnecting...");
+
+        $disconnected = $opnsense->disconnectDevice($sessionId);
+
+        if ($disconnected) {
+            $this->info("   [SUCCESS] Orphaned device kicked.");
+            Log::info("EnforceSessions: Disconnected orphaned session {$ip} (idle {$idleMinutes}m, no voucher record).");
+        } else {
+            $this->error("   [FAILED] Could not kick orphaned device.");
+        }
     }
 }

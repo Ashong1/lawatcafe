@@ -43,6 +43,7 @@ return [
         'zone' => env('OPNSENSE_ZONE', 0),
         'guest_user' => env('OPNSENSE_GUEST_USER', 'laravel_guest'),
         'guest_pass' => env('OPNSENSE_GUEST_PASS', 'Laravel123'),
+        'block_alias' => env('OPNSENSE_BLOCK_ALIAS', 'guest_blocklist'),
     ],
 
 ];

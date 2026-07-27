@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Connect to Wi-Fi - Lawa't Kape</title>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Favicons -->
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
+<link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
+<link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
 @vite(['resources/css/app.css', 'resources/js/app.js'])
-<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-    [x-cloak] { display: none !important; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; scroll-behavior: smooth; }
     
@@ -247,24 +248,32 @@
 
                     <form action="{{ route('portal.verify-payment') }}" method="POST" class="space-y-3 shrink-0" @submit.prevent="submitForm($event)">
                         @csrf
-                        <div class="relative">
+                        <div>
                             <label class="flex justify-between items-end mb-1 ml-1">
                                 <span class="text-[9px] font-black text-[#A1887F] uppercase tracking-widest">Reference No.</span>
                             </label>
-                            <div class="relative group">
+                            <div class="flex items-center bg-white border-2 border-[#F0E6D2] rounded-2xl shadow-sm focus-within:border-[#3E2723] transition-all">
                                 <input type="text" name="reference_number" required placeholder="G-Cash Ref #" value="{{ session('ai_ref') }}"
                                         :disabled="!{{ $qrCode ? 'true' : 'false' }}"
-                                        class="w-full bg-white border-2 border-[#F0E6D2] rounded-2xl py-3 px-4 text-center text-base font-mono font-black text-[#3E2723] tracking-widest focus:outline-none focus:border-[#3E2723] shadow-sm disabled:bg-gray-100 disabled:text-[#D7CCC8] disabled:cursor-not-allowed">
-                                
-                                <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                    <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
-                                    <div class="relative overflow-hidden inline-block group cursor-pointer">
-                                        <input type="file" name="receipt" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="this.form.action='{{ route('portal.upload') }}'; this.form.submit()">
-                                        <x-lucide-sparkles class="w-4 h-4 text-amber-600 hover:scale-110 transition-transform" />
-                                    </div>
+                                        class="flex-1 min-w-0 border-0 bg-transparent py-3 pl-4 text-center text-base font-mono font-black text-[#3E2723] tracking-widest focus:outline-none focus:ring-0 disabled:bg-[#F5EFE8] disabled:text-[#8D6E63] disabled:cursor-not-allowed rounded-2xl">
+
+                                <div class="h-4 w-[1px] bg-[#F0E6D2] shrink-0"></div>
+                                <div class="relative overflow-hidden shrink-0 inline-flex items-center justify-center w-11 h-11 group cursor-pointer">
+                                    <input type="file" name="receipt" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                           @change="uploadingReceipt = true; $nextTick(() => $event.target.form.action = '{{ route('portal.upload') }}'); $nextTick(() => $event.target.form.submit())">
+                                    <x-lucide-sparkles x-show="!uploadingReceipt" class="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
+                                    <x-lucide-loader-2 x-show="uploadingReceipt" x-cloak class="w-4 h-4 text-amber-600 animate-spin" />
                                 </div>
                             </div>
+                            @if(!$qrCode)
+                                <p class="text-[9px] text-[#A1887F] font-medium text-center mt-2 px-2">QR payment is temporarily unavailable — please pay at the counter and ask staff to confirm.</p>
+                            @endif
                         </div>
+
+                        <p x-show="uploadingReceipt" x-cloak class="text-[9px] text-amber-700 font-black uppercase tracking-widest text-center flex items-center justify-center gap-1.5">
+                            <x-lucide-loader-2 class="w-3 h-3 animate-spin" />
+                            Uploading &amp; reading receipt&hellip;
+                        </p>
 
                         <button type="submit" :disabled="isSubmitting || !{{ $qrCode ? 'true' : 'false' }}"
                                 class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 text-[10px] flex items-center justify-center gap-2 disabled:opacity-50 disabled:bg-gray-400">
@@ -289,25 +298,15 @@
                         </div>
                     </div>
 
-                    <div class="flex-1 min-h-0 w-full bg-white/50 border-2 border-[#F0E6D2] rounded-[1.5rem] p-4 mb-4 flex flex-col justify-end shadow-inner relative overflow-hidden" id="chat-container">
-                        <div class="overflow-y-auto space-y-3 pr-1 w-full flex flex-col justify-start z-10 max-h-full no-scrollbar">
-                            <template x-for="(msg, index) in chatHistory" :key="index">
-                                <div class="p-3 rounded-2xl shadow-sm text-xs font-medium relative w-fit max-w-[85%] break-words whitespace-normal mx-1"
-                                        :class="msg.role === 'user' ? 'bg-[#3E2723] text-white self-end rounded-br-sm' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] self-start rounded-bl-sm'">
-                                    <span x-text="msg.content" class="leading-relaxed"></span>
-                                </div>
-                            </template>
-                            <div x-show="isThinking" class="bg-white p-3 rounded-2xl rounded-bl-sm shadow-sm border border-[#F0E6D2] self-start w-fit mx-1">
-                                <span class="text-[9px] text-[#8D6E63] font-black tracking-widest uppercase animate-pulse">Typing...</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-2 shrink-0 pb-1">
-                        <input type="text" x-model="chatMessage" @keydown.enter="sendChat()" placeholder="Ask something..." class="flex-1 bg-white border-2 border-[#F0E6D2] rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all shadow-sm text-[#3E2723] placeholder:font-medium" :disabled="isThinking">
-                        <button @click="sendChat()" class="bg-[#3E2723] text-white px-4 py-3 rounded-2xl hover:bg-[#271815] transition shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center shrink-0" :disabled="isThinking || !chatMessage.trim()">
-                            <x-lucide-send class="w-5 h-5" />
-                        </button>
+                    <div class="flex-1 min-h-0 w-full bg-white/50 border-2 border-[#F0E6D2] rounded-[1.5rem] p-4 mb-4 flex flex-col shadow-inner relative overflow-hidden" id="chat-container">
+                        <x-agent-chat
+                            mode="embedded"
+                            :endpoint="route('portal.chat')"
+                            anchor-id="portal"
+                            greeting="Hi! ☕ I am Barista AI. How can I help you today?"
+                            :csrf="false"
+                            rate-limit-message="☕ Sorry, I am a bit busy serving other guests. Please try again in a minute!"
+                        />
                     </div>
                 </div>
 
@@ -317,24 +316,24 @@
         <!-- 3. Footer (Fixed Navigation) -->
         <div class="shrink-0 bg-white/90 backdrop-blur-lg border-t border-[#F0E6D2] px-3 py-3 flex flex-row justify-evenly items-center gap-1.5">
             <button x-on:click="activeTab = 'code'" 
-                    class="flex-1 py-3 px-1 rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
+                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
                     :class="activeTab === 'code' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#A1887F] hover:bg-gray-50/50 border border-transparent'">
                 <x-lucide-keyboard class="w-5 h-5" />
                 <span>Connect</span>
             </button>
             <a href="{{ route('portal.menu') }}" 
-                    class="flex-1 py-3 px-1 rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5 text-[#A1887F] hover:bg-gray-50/50 border border-transparent">
+                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5 text-[#A1887F] hover:bg-gray-50/50 border border-transparent">
                 <x-lucide-coffee class="w-5 h-5" />
                 <span>Menu</span>
             </a>
             <button x-on:click="activeTab = 'ewallet'" 
-                    class="flex-1 py-3 px-1 rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
+                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
                     :class="activeTab === 'ewallet' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#A1887F] hover:bg-gray-50/50 border border-transparent'">
                 <x-lucide-credit-card class="w-5 h-5" />
                 <span>GCash</span>
             </button>
             <button x-on:click="activeTab = 'help'" 
-                    class="flex-1 py-3 px-1 rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
+                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
                     :class="activeTab === 'help' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#A1887F] hover:bg-gray-50/50 border border-transparent'">
                 <x-lucide-message-square class="w-5 h-5" />
                 <span>AI Chat</span>
@@ -343,40 +342,35 @@
     </div>
 
     <!-- TOS Modal -->
-    <div x-show="showTOS" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-md" @click="showTOS = false"></div>
-        <div class="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-xs overflow-hidden border border-[#F0E6D2]">
+    <x-modal-shell show="showTOS" max-width="sm" panel-class="border border-[#F0E6D2]" labelled-by="tos-modal-title">
             <div class="bg-[#3E2723] p-6 text-center">
-                <h3 class="text-white text-sm font-black uppercase tracking-widest">Terms of Service</h3>
+                <h3 id="tos-modal-title" class="text-white text-sm font-black uppercase tracking-widest">Terms of Service</h3>
             </div>
             <div class="p-6 max-h-[40vh] overflow-y-auto no-scrollbar text-[11px] text-[#4A3B32] leading-relaxed space-y-4">
                 <p>This network is provided for the convenience of our customers. Users agree not to engage in illegal activities.</p>
                 <p>Traffic is monitored for security threats. Connection metadata is logged for compliance.</p>
             </div>
             <div class="p-4 bg-[#FAF7F2] border-t border-[#F0E6D2] text-center">
-                <button @click="showTOS = false" class="bg-[#3E2723] text-white px-8 py-2 rounded-full font-black uppercase tracking-widest text-[9px]">I Understand</button>
+                <button @click="showTOS = false" class="bg-[#3E2723] text-white px-8 py-3.5 rounded-full font-black uppercase tracking-widest text-[9px]">I Understand</button>
             </div>
-        </div>
-    </div>
+    </x-modal-shell>
 
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('portalSystem', () => ({
         activeTab: new URLSearchParams(window.location.search).get('tab') || 'code',
         selectedPlan: null,
-        chatMessage: '',
-        isThinking: false,
         isSubmitting: false,
+        uploadingReceipt: false,
         showTOS: false,
         connectionStatus: 'disconnected',
-        chatHistory: [
-            { role: 'assistant', content: 'Hi! ☕ I am Barista AI. How can I help you today?' }
-        ],
 
         init() {
+            // The embedded agent-chat component instance owns its own chat state/scrolling now —
+            // just tell it when the "help" tab becomes visible so it can scroll itself.
             this.$watch('activeTab', value => {
                 if (value === 'help') {
-                    this.scrollToBottom();
+                    window.dispatchEvent(new CustomEvent('portal-tab-changed'));
                 }
             });
         },
@@ -390,49 +384,6 @@ document.addEventListener('alpine:init', () => {
             this.isSubmitting = true;
             this.connectionStatus = 'authenticating';
             e.target.submit();
-        },
-
-        async sendChat() {
-            if (!this.chatMessage.trim() || this.isThinking) return;
-
-            let userMsg = this.chatMessage;
-            this.chatHistory.push({ role: 'user', content: userMsg });
-            this.chatMessage = '';
-            this.isThinking = true;
-
-            this.scrollToBottom();
-
-            try {
-                let response = await fetch('{{ route("portal.chat") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json', 
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}' 
-                    },
-                    body: JSON.stringify({
-                        message: userMsg,
-                        history: this.chatHistory.slice(0, -1) 
-                    })
-                });
-
-                let data = await response.json();
-                this.chatHistory.push({ role: 'assistant', content: data.reply });
-            } catch (error) {
-                this.chatHistory.push({ role: 'assistant', content: 'Sorry, I am having network issues right now.' });
-            } finally {
-                this.isThinking = false;
-                this.scrollToBottom();
-            }
-        },
-
-        scrollToBottom() {
-            setTimeout(() => {
-                const container = document.querySelector('#chat-container .overflow-y-auto');
-                if (container) {
-                    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-            }
-            }, 100);
         }
 }));
 

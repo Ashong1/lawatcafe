@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta http-equiv="refresh" content="60">
 <title>Active Session - Lawa't Kape</title>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Favicons -->
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
+<link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
+<link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
 @vite(['resources/css/app.css', 'resources/js/app.js'])
-<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-    [x-cloak] { display: none !important; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
@@ -201,7 +202,7 @@
                         <p class="text-[11px] text-[#8D6E63] font-bold uppercase tracking-[0.3em]">Your Digital Concierge</p>
                     </div>
 
-                    <div class="flex-1 bg-white border-2 border-[#F0E6D2] rounded-[2.5rem] lg:rounded-[3.5rem] p-6 lg:p-8 mb-6 flex flex-col justify-end min-h-[300px] shadow-2xl relative overflow-hidden w-full" id="chat-container">
+                    <div class="flex-1 bg-white border-2 border-[#F0E6D2] rounded-[2.5rem] lg:rounded-[3.5rem] p-6 lg:p-8 mb-6 flex flex-col min-h-[300px] shadow-2xl relative overflow-hidden w-full" id="chat-container">
                         <!-- Chat texture overlay -->
                         <div class="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')]"></div>
                         
@@ -210,32 +211,14 @@
                             <span class="text-[9px] font-black uppercase tracking-[0.2em] text-[#3E2723]">AI Agent Active</span>
                         </div>
 
-                        <div class="overflow-y-auto space-y-5 pr-2 flex-1 w-full flex flex-col justify-end pt-12 z-10 no-scrollbar">
-                            <template x-for="(msg, index) in chatHistory" :key="index">
-                                <div class="p-4 lg:p-5 rounded-[2rem] shadow-md text-sm font-medium relative w-fit max-w-[88%] lg:max-w-[80%]"
-                                        :class="msg.role === 'user' ? 'bg-[#3E2723] text-white self-end rounded-br-sm shadow-amber-900/10' : 'bg-[#FAF7F2] text-[#4A3B32] border border-[#F0E6D2] self-start rounded-bl-sm'">
-                                    <span x-text="msg.content" class="leading-relaxed"></span>
-                                </div>
-                            </template>
-                            <div x-show="isThinking" class="bg-[#FAF7F2] p-4 lg:p-5 rounded-[2rem] rounded-bl-sm shadow-md border border-[#F0E6D2] self-start w-fit">
-                                <div class="flex gap-1.5 items-center">
-                                    <div class="w-1.5 h-1.5 bg-[#8D6E63] rounded-full animate-bounce"></div>
-                                    <div class="w-1.5 h-1.5 bg-[#8D6E63] rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                                    <div class="w-1.5 h-1.5 bg-[#8D6E63] rounded-full animate-bounce [animation-delay:0.4s]"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-4 shrink-0 mt-auto w-full px-2">
-                        <div class="relative flex-1 group">
-                            <input type="text" x-model="chatMessage" @keydown.enter="sendChat()" placeholder="Ask me anything..." 
-                                   class="w-full bg-white border-2 border-[#F0E6D2] group-hover:border-[#E6D5C3] rounded-2xl px-8 py-5 text-sm font-bold uppercase tracking-widest focus:outline-none focus:border-[#3E2723] focus:ring-4 focus:ring-[#3E2723]/5 transition-all shadow-lg text-[#3E2723]" 
-                                   :disabled="isThinking">
-                        </div>
-                        <button @click="sendChat()" class="bg-[#3E2723] text-white p-5 rounded-2xl hover:bg-[#271815] transition-all shadow-2xl shadow-amber-900/20 active:scale-90 disabled:opacity-50 flex items-center justify-center w-20" :disabled="isThinking || !chatMessage.trim()">
-                            <x-lucide-send class="w-7 h-7" stroke-width="2.5" />
-                        </button>
+                        <x-agent-chat
+                            mode="embedded"
+                            :endpoint="route('portal.chat')"
+                            anchor-id="portal"
+                            greeting="Hi! ☕ I am Barista AI. I can help you with your current connection, extending your session, or even tell you about our latest coffee and meals! How can I help you?"
+                            :csrf="false"
+                            rate-limit-message="☕ Sorry, I am a bit busy serving other guests. Please try again in a minute!"
+                        />
                     </div>
                 </div>
 
@@ -272,58 +255,17 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('portalSystem', () => ({
         activeTab: 'status',
         selectedPlan: null,
-        chatMessage: '',
-        isThinking: false,
         isSubmitting: false,
         connectionStatus: 'connected',
-        chatHistory: [
-            { role: 'assistant', content: 'Hi! ☕ I am Barista AI. I can help you with your current connection, extending your session, or even tell you about our latest coffee and meals! How can I help you?' }
-        ],
 
-        async sendChat() {
-            if (!this.chatMessage.trim() || this.isThinking) return;
-
-            let userMsg = this.chatMessage;
-            this.chatHistory.push({ role: 'user', content: userMsg });
-            this.chatMessage = '';
-            this.isThinking = true;
-
-            this.scrollToBottom();
-
-            try {
-                let response = await fetch('{{ route("portal.chat") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json', 
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}' 
-                    },
-                    body: JSON.stringify({
-                        message: userMsg,
-                        history: this.chatHistory.slice(0, -1) 
-                    })
-                });
-
-                let data = await response.json();
-                this.chatHistory.push({ role: 'assistant', content: data.reply });
-            } catch (error) {
-                this.chatHistory.push({ role: 'assistant', content: 'Sorry, I am having network issues right now.' });
-            } finally {
-                this.isThinking = false;
-                this.scrollToBottom();
-            }
-        },
-
-        scrollToBottom() {
-            setTimeout(() => {
-                const container = document.querySelector('#chat-container .overflow-y-auto');
-                if (container) {
-                    container.scrollTo({
-                        top: container.scrollHeight,
-                        behavior: 'smooth'
-                    });
+        init() {
+            // The embedded agent-chat component instance owns its own chat state/scrolling now —
+            // just tell it when the "help" tab becomes visible so it can scroll itself.
+            this.$watch('activeTab', value => {
+                if (value === 'help') {
+                    window.dispatchEvent(new CustomEvent('portal-tab-changed'));
                 }
-            }, 100);
+            });
         }
     }));
 });

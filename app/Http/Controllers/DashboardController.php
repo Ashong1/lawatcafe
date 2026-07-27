@@ -13,10 +13,28 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function index(\App\Services\OpnSenseService $opnsense)
+    public function index(Request $request, \App\Services\OpnSenseService $opnsense)
     {
+        $range = $request->get('range', 'today');
+        
         // 1. Basic Stats for the Top Cards
-        $stats = Cache::remember('dashboard_stats', 60, function () {
+        $stats = Cache::remember("dashboard_stats_{$range}", 60, function () use ($range) {
+            $startDate = Carbon::today();
+            $endDate = Carbon::now();
+
+            switch ($range) {
+                case 'yesterday':
+                    $startDate = Carbon::yesterday();
+                    $endDate = Carbon::yesterday()->endOfDay();
+                    break;
+                case 'week':
+                    $startDate = Carbon::now()->startOfWeek();
+                    break;
+                case 'month':
+                    $startDate = Carbon::now()->startOfMonth();
+                    break;
+            }
+
             $lowStockThreshold = (int) \App\Models\Setting::get('low_stock_threshold', 500);
             
             // System Alerts Logic
@@ -48,18 +66,19 @@ class DashboardController extends Controller
 
             return [
                 'availableVouchers' => Voucher::where('is_used', false)->count(),
-                'todaysSales' => Sale::where('created_at', '>=', Carbon::today())->sum('total_amount'),
-                'todaysOrders' => Sale::where('created_at', '>=', Carbon::today())->count(),
+                'todaysSales' => Sale::whereBetween('created_at', [$startDate, $endDate])->sum('total_amount'),
+                'todaysOrders' => Sale::whereBetween('created_at', [$startDate, $endDate])->count(),
                 'lowStockCount' => $lowStockItems->count(),
                 'systemAlerts' => $alerts,
                 'recentVouchers' => Voucher::orderBy('created_at', 'desc')->take(5)->get(),
                 'recentSales' => Sale::with('user')->orderBy('created_at', 'desc')->take(5)->get(),
-                'topProducts' => \App\Models\SaleItem::select('item_name', DB::raw('SUM(quantity) as total_qty'))
+                'topProducts' => \App\Models\SaleItem::select('item_name', DB::raw('SUM(quantity) as total_qty'), DB::raw('SUM(quantity * price) as total_revenue'))
+                    ->whereBetween('created_at', [$startDate, $endDate])
                     ->groupBy('item_name')
                     ->orderByDesc('total_qty')
                     ->take(5)
                     ->get(),
-                'paymentBreakdown' => Sale::where('created_at', '>=', Carbon::today())
+                'paymentBreakdown' => Sale::whereBetween('created_at', [$startDate, $endDate])
                     ->select('payment_method', DB::raw('SUM(total_amount) as total'))
                     ->groupBy('payment_method')
                     ->pluck('total', 'payment_method')
@@ -70,18 +89,16 @@ class DashboardController extends Controller
         // 2. Network & Sessions ( Mbps speed calculation removed from server, raw counters sent)
         $networkPulse = Cache::remember('network_pulse_initial', 15, function () use ($opnsense) {
             try {
-                $sessions = collect($opnsense->listSessions());
                 $arpTable = collect($opnsense->getArpTable());
+                $allConnected = $arpTable->filter(fn($entry) => !empty($entry['mac']) && $entry['mac'] !== '(incomplete)');
                 
                 $infraIpsStr = \App\Models\Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4');
                 $infraIps = explode(',', $infraIpsStr);
 
-                $activeGuests = $sessions->filter(function($s) use ($infraIps) {
-                    $ip = str_replace('/32', '', $s['ipAddress'] ?? '');
-                    return !empty($ip) && !in_array($ip, $infraIps);
-                })->unique('ipAddress')->count();
-                
-                $systemNodes = $arpTable->filter(fn($s) => in_array($s['ip'] ?? '', $infraIps))
+                $systemNodes = $allConnected->filter(fn($s) => in_array($s['ip'] ?? '', $infraIps))
+                    ->unique('mac')->count();
+                    
+                $activeGuests = $allConnected->filter(fn($s) => !in_array($s['ip'] ?? '', $infraIps))
                     ->unique('mac')->count();
                 
                 $stats = $opnsense->getInterfaceStats();
@@ -219,19 +236,50 @@ class DashboardController extends Controller
 
     public function getAIInsights(\App\Services\AIService $ai)
     {
-        $insights = Cache::remember('barista_forecast_deep', 3600, function() use ($ai) {
-            $thirtyDaysAgo = Carbon::now()->subDays(30);
-            $transactionCount = Sale::where('created_at', '>=', $thirtyDaysAgo)->count();
-            $historicalSales = Sale::selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
-                ->where('created_at', '>=', $thirtyDaysAgo)
-                ->groupBy('date')
+        $thirtyDaysAgo = Carbon::now()->subDays(30);
+        
+        $historicalSales = Sale::where('status', 'completed')
+            ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
+            ->where('created_at', '>=', $thirtyDaysAgo)
+            ->groupBy('date')
                 ->orderBy('date', 'ASC')
                 ->get()
                 ->pluck('total', 'date')
                 ->toArray();
             
-            $daysOfData = count($historicalSales);
-            $productPerformance = \App\Models\SaleItem::select('item_name', DB::raw('SUM(quantity) as total_qty'))
+        $daysOfData = count($historicalSales);
+        $transactionCount = Sale::where('status', 'completed')
+            ->where('created_at', '>=', $thirtyDaysAgo)
+            ->count();
+
+        // --- ADAPTIVE DATA GATE ---
+        // We now allow AI analysis even with 1 day of data, but we flag it as "Calibrating"
+        if ($daysOfData < 1) {
+            return response()->json([
+                'is_calibrating' => true,
+                'calibration_days_remaining' => 14 - $daysOfData,
+                'meta' => [
+                    'transaction_count' => $transactionCount,
+                    'days_of_data' => $daysOfData,
+                    'is_calibrating' => true,
+                    'confidence_score' => 1,
+                    'confidence_label' => 'Awaiting First Sale',
+                    'confidence_max' => 7
+                ],
+                'forecast_total' => 0,
+                'daily_forecast' => [],
+                'trend_analysis' => 'Waiting for the first transaction to begin analysis...',
+                'predicted_top_products' => [],
+                'demand_risk_alerts' => [],
+                'strategic_advice' => 'Start recording sales to activate Barista AI.',
+                'context_tags' => ['Setup Mode']
+            ]);
+        }
+
+        $insights = Cache::remember('barista_forecast_deep', 3600, function() use ($ai, $historicalSales, $daysOfData, $thirtyDaysAgo, $transactionCount) {
+            $seventyTwoHoursAgo = Carbon::now()->subHours(72);
+            $productPerformance = \App\Models\SaleItem::whereHas('sale', fn($q) => $q->where('status', 'completed'))
+                ->select('item_name', DB::raw('SUM(quantity) as total_qty'))
                 ->where('created_at', '>=', $thirtyDaysAgo)
                 ->groupBy('item_name')
                 ->orderByDesc('total_qty')
@@ -239,33 +287,85 @@ class DashboardController extends Controller
                 ->pluck('total_qty', 'item_name')
                 ->toArray();
 
-            $aiResult = $ai->analyzeSalesTrends($historicalSales, $productPerformance);
+            // New: 72-hour window for sharp demand risk detection
+            $recentPerformance = \App\Models\SaleItem::whereHas('sale', fn($q) => $q->where('status', 'completed'))
+                ->select('item_name', DB::raw('SUM(quantity) as total_qty'))
+                ->where('created_at', '>=', $seventyTwoHoursAgo)
+                ->groupBy('item_name')
+                ->get()
+                ->pluck('total_qty', 'item_name')
+                ->toArray();
+
+            // Fetch recent wastage for AI context
+            $wastageData = \App\Models\Wastage::with('ingredient')
+                ->where('created_at', '>=', Carbon::now()->subDays(7))
+                ->get()
+                ->map(fn($w) => [
+                    'item' => $w->ingredient->name ?? 'Unknown',
+                    'quantity' => $w->quantity,
+                    'reason' => $w->reason,
+                    'date' => $w->created_at->format('Y-m-d')
+                ])->toArray();
+
+            $aiResult = $ai->analyzeSalesTrends($historicalSales, $productPerformance, $wastageData, $daysOfData, $recentPerformance);
             
             if ($aiResult) {
+                // Formatting Daily Forecast Days (Backend side cleanup)
+                if (isset($aiResult['daily_forecast']) && is_array($aiResult['daily_forecast'])) {
+                    foreach ($aiResult['daily_forecast'] as &$df) {
+                        try {
+                            if (isset($df['day']) && strlen($df['day']) > 3) {
+                                $df['day'] = Carbon::parse($df['day'])->format('D');
+                            }
+                        } catch (\Exception $e) {}
+                    }
+                }
+
                 if (isset($aiResult['strategic_advice'])) {
                     Cache::put('barista_ai_brief', $aiResult['strategic_advice'], 3600);
                 }
+                
+                // Calibration & Confidence Logic
                 $targetTransactions = 50;
-                $progress = min($transactionCount, $targetTransactions);
-                $targetDays = 7;
-                $confidenceScore = min($daysOfData, $targetDays);
+                $targetDays = 14;
+                
+                // Volatility Penalty
+                $volatilityScore = 0;
+                $mean = array_sum($historicalSales) / $daysOfData;
+                $variance = 0;
+                foreach ($historicalSales as $val) $variance += pow($val - $mean, 2);
+                $stdDev = sqrt($variance / $daysOfData);
+                $cv = $mean > 0 ? ($stdDev / $mean) : 0;
+                
+                if ($cv > 0.4) $volatilityScore = 2;
+                elseif ($cv > 0.2) $volatilityScore = 1;
+
+                $confidenceScore = max(1, min($daysOfData, 7) - $volatilityScore);
+                
+                if ($transactionCount > 200 && $daysOfData >= 14 && $volatilityScore === 0) {
+                    $confidenceScore = 7;
+                }
+
                 $confidenceLabels = [
-                    0 => 'None', 1 => 'Very Low', 2 => 'Low', 3 => 'Moderate', 4 => 'Good', 5 => 'High', 6 => 'Very High', 7 => 'Excellent'
+                    0 => 'None', 1 => 'Insecure', 2 => 'Low', 3 => 'Emerging', 4 => 'Moderate', 5 => 'Good', 6 => 'High', 7 => 'Excellent'
                 ];
                 
+                $aiResult['is_calibrating'] = $daysOfData < $targetDays;
+                $aiResult['calibration_days_remaining'] = max(0, $targetDays - $daysOfData);
                 $aiResult['meta'] = [
                     'transaction_count' => $transactionCount,
-                    'target_transactions' => $targetTransactions,
-                    'progress_percent' => $targetTransactions > 0 ? ($progress / $targetTransactions) * 100 : 0,
                     'days_of_data' => $daysOfData,
+                    'is_calibrating' => $daysOfData < $targetDays,
+                    'calibration_days_remaining' => max(0, $targetDays - $daysOfData),
                     'confidence_score' => $confidenceScore,
                     'confidence_label' => $confidenceLabels[min($confidenceScore, 7)] ?? 'Unknown',
-                    'confidence_max' => $targetDays,
+                    'confidence_max' => 7,
+                    'volatility_detected' => $volatilityScore > 0
                 ];
                 
                 if (isset($aiResult['forecast_total'])) {
                     $total = $aiResult['forecast_total'];
-                    $variance = max(0.1, (1.0 - ($confidenceScore / $targetDays)) * 0.4);
+                    $variance = max(0.1, (1.0 - ($confidenceScore / 7)) * 0.4);
                     $aiResult['forecast_range_low'] = $total * (1 - $variance);
                     $aiResult['forecast_range_high'] = $total * (1 + $variance);
                 }
@@ -276,14 +376,26 @@ class DashboardController extends Controller
         return response()->json($insights);
     }
 
-    public function adminChat(Request $request, \App\Services\AIService $ai)
+    public function adminChat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator)
     {
         $request->validate([
             'message' => 'required|string|max:1000',
             'history' => 'nullable|array'
         ]);
-        $reply = $ai->adminChat($request->message, $request->history ?? []);
-        return response()->json(['reply' => $reply]);
+
+        $messages = [['role' => 'system', 'content' => $ai->buildAdminSystemPrompt()]];
+        foreach ($request->history ?? [] as $msg) {
+            $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
+        }
+        $messages[] = ['role' => 'user', 'content' => $request->message];
+
+        $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_ADMIN, $request->user());
+
+        return response()->json([
+            'reply' => $result['reply'] ?? "☕ I'm having trouble connecting to our business intelligence stack right now.",
+            'pending' => $result['pending'],
+            'executed' => $result['executed'],
+        ]);
     }
 
     /**
@@ -318,16 +430,16 @@ class DashboardController extends Controller
             }
         }
 
-        // 3. Active Guests
+        // 3. Active Guests (Real-time from ARP)
         $activeGuests = Cache::remember('active_guests_count', 5, function() use ($opnsense) {
-            $sessions = collect($opnsense->listSessions());
+            $arpTable = collect($opnsense->getArpTable());
             $infraIpsStr = \App\Models\Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4');
             $infraIps = explode(',', $infraIpsStr);
             
-            return $sessions->filter(function($s) use ($infraIps) {
-                $ip = str_replace('/32', '', $s['ipAddress'] ?? '');
-                return !empty($ip) && !in_array($ip, $infraIps);
-            })->unique('ipAddress')->count();
+            return $arpTable->filter(function($entry) use ($infraIps) {
+                $ip = $entry['ip'] ?? '';
+                return !empty($ip) && !in_array($ip, $infraIps) && !empty($entry['mac']) && $entry['mac'] !== '(incomplete)';
+            })->unique('mac')->count();
         });
 
         return response()->json([

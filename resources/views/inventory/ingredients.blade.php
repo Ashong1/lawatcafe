@@ -40,7 +40,7 @@
                     <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
                         <th class="pb-4 font-black">Ingredient</th>
                         <th class="pb-4 font-black text-right">Current Stock</th>
-                        <th class="pb-4 font-black text-right">Threshold</th>
+                        <th class="pb-4 font-black text-right hidden md:table-cell">Threshold</th>
                         <th class="pb-4 font-black text-center">Status</th>
                         <th class="pb-4 font-black text-right">Actions</th>
                     </tr>
@@ -110,9 +110,16 @@
                                         Total: {{ $formattedStock }} {{ $displayUnit }}
                                     </span>
                                 @endif
+                                <span class="text-[9px] font-medium text-[#D7CCC8] uppercase md:hidden">
+                                    @if($ingredient->packaging_unit && $ingredient->capacity_per_pack > 1)
+                                        Threshold: {{ number_format($ingredient->low_stock_threshold / $ingredient->capacity_per_pack, 1) }} {{ \Illuminate\Support\Str::plural($ingredient->packaging_unit) }}
+                                    @else
+                                        Threshold: {{ number_format($ingredient->low_stock_threshold) }} {{ $ingredient->unit }}
+                                    @endif
+                                </span>
                             </div>
                         </td>
-                        <td class="py-4 text-right">
+                        <td class="py-4 text-right hidden md:table-cell">
                             <div class="flex flex-col items-end">
                                 @if($ingredient->packaging_unit && $ingredient->capacity_per_pack > 1)
                                     <span class="text-xs font-bold text-[#8D6E63]">
@@ -136,7 +143,13 @@
                             @endif
                         </td>
                         <td class="py-4 text-right">
-                            <div class="flex justify-end gap-1">
+                            <div class="flex justify-end items-center gap-1">
+                                @if($isLow)
+                                    <x-ask-ai-button :prompt="'Restock ' . $ingredient->name . ', it is low on stock.'" label="Ask AI" />
+                                @endif
+                                <button @click="openQuickAddModal({{ $ingredient }})" class="p-2 text-[#8D6E63] hover:text-green-700 hover:bg-green-100 rounded-lg transition" title="Quick Add Stock">
+                                    <x-lucide-plus-circle class="w-4 h-4" />
+                                </button>
                                 <button @click="openEditModal({{ $ingredient }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit / Restock">
                                     <x-lucide-pencil class="w-4 h-4" />
                                 </button>
@@ -158,15 +171,13 @@
         </div>
     </div>
 
-    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl w-full max-w-xl overflow-hidden border-t-8 border-[#3E2723]">
-            
+    <x-modal-shell show="isModalOpen" max-width="xl" panel-class="border-t-8 border-[#3E2723]" labelled-by="ingredient-modal-title">
             <div class="px-8 py-6 border-b border-[#FDF8F5]">
-                <h2 class="text-xl font-black text-[#3E2723] uppercase tracking-widest" x-text="modalTitle"></h2>
+                <h2 id="ingredient-modal-title" class="text-xl font-black text-[#3E2723] uppercase tracking-widest" x-text="modalTitle"></h2>
                 <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter">Configure tracking units and stock thresholds.</p>
             </div>
-            
-            <form :action="formAction" method="POST">
+
+            <form :action="formAction" method="POST" @submit="submitting = true">
                 @csrf
                 <template x-if="isEditing">
                     <input type="hidden" name="_method" value="PUT">
@@ -208,9 +219,9 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Capacity per Pack</label>
-                            <div class="relative">
-                                <input type="number" name="capacity_per_pack" x-model="formData.capacity_per_pack" @input="updateBaseValues()" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm" placeholder="1.00">
-                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#A1887F]" x-text="formData.unit"></div>
+                            <div class="flex items-center gap-2 w-full px-3 border-2 border-[#F0E6D2] rounded-xl bg-[#FAFAFA] focus-within:border-[#3E2723] transition-all">
+                                <input type="number" name="capacity_per_pack" x-model="formData.capacity_per_pack" @input="updateBaseValues()" required step="0.01" class="flex-1 min-w-0 py-3 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="1.00">
+                                <span class="shrink-0 text-[10px] font-bold text-[#A1887F]" x-text="formData.unit"></span>
                             </div>
                         </div>
                         <div>
@@ -226,16 +237,16 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1" x-text="formData.packaging_unit ? 'Current Stock (' + formData.packaging_unit + 's)' : 'Current Stock'"></label>
-                            <div class="relative">
-                                <input type="number" x-model="stockInPacks" @input="updateBaseValues()" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
-                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#A1887F]" x-text="formData.packaging_unit || formData.unit"></div>
+                            <div class="flex items-center gap-2 w-full px-3 border-2 border-[#F0E6D2] rounded-xl bg-[#FAFAFA] focus-within:border-[#3E2723] transition-all">
+                                <input type="number" x-model="stockInPacks" @input="updateBaseValues()" required step="0.01" class="flex-1 min-w-0 py-3 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                                <span class="shrink-0 text-[10px] font-bold text-[#A1887F]" x-text="formData.packaging_unit || formData.unit"></span>
                             </div>
                         </div>
                         <div>
                             <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1" x-text="formData.packaging_unit ? 'Low Alert At (' + formData.packaging_unit + 's)' : 'Low Alert At'"></label>
-                            <div class="relative">
-                                <input type="number" x-model="thresholdInPacks" @input="updateBaseValues()" required step="0.01" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
-                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#A1887F]" x-text="formData.packaging_unit || formData.unit"></div>
+                            <div class="flex items-center gap-2 w-full px-3 border-2 border-[#F0E6D2] rounded-xl bg-[#FAFAFA] focus-within:border-[#3E2723] transition-all">
+                                <input type="number" x-model="thresholdInPacks" @input="updateBaseValues()" required step="0.01" class="flex-1 min-w-0 py-3 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                                <span class="shrink-0 text-[10px] font-bold text-[#A1887F]" x-text="formData.packaging_unit || formData.unit"></span>
                             </div>
                         </div>
                     </div>
@@ -261,12 +272,36 @@
 
                 <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
                     <button type="button" @click="closeModal()" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-[#FDF8F5] font-black transition text-[10px] uppercase tracking-widest">Cancel</button>
-                    <button type="submit" class="flex-1 py-4 bg-[#3E2723] text-white rounded-2xl hover:bg-[#271815] font-black transition shadow-lg shadow-[#3E2723]/20 text-[10px] uppercase tracking-widest">Save Item</button>
+                    <x-submit-button label="Save Item" />
                 </div>
             </form>
-        </div>
-    </div>
-    </div>
+    </x-modal-shell>
+
+    <!-- Quick Add Stock Modal -->
+    <x-modal-shell show="isQuickAddModalOpen" max-width="md" panel-class="border-t-8 border-green-800" labelled-by="quick-add-modal-title">
+            <div class="px-8 py-6 border-b border-[#FDF8F5]">
+                <h2 id="quick-add-modal-title" class="text-xl font-black text-[#3E2723] uppercase tracking-widest">Quick Add Stock</h2>
+                <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter" x-text="selectedIngredient?.name"></p>
+            </div>
+
+            <form :action="quickAddAction" method="POST" @submit="quickAddSubmitting = true">
+                @csrf
+                <div class="p-8 space-y-6">
+                    <div>
+                        <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1" x-text="selectedIngredient?.packaging_unit ? 'Add quantity in ' + selectedIngredient.packaging_unit + 's' : 'Add quantity'"></label>
+                        <div class="flex items-center gap-2 w-full px-4 border-2 border-[#F0E6D2] rounded-xl bg-[#FAFAFA] focus-within:border-green-800 transition-all">
+                            <input type="number" name="added_amount" required step="0.01" autofocus class="flex-1 min-w-0 py-4 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-lg text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="0.00">
+                            <span class="shrink-0 text-xs font-bold text-[#A1887F]" x-text="selectedIngredient?.packaging_unit || selectedIngredient?.unit"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
+                    <button type="button" @click="isQuickAddModalOpen = false" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-[#FDF8F5] font-black transition text-[10px] uppercase tracking-widest">Cancel</button>
+                    <x-submit-button label="Add Stock" variant="success" state="quickAddSubmitting" />
+                </div>
+            </form>
+    </x-modal-shell>
 </div>
 
 <script>
@@ -274,8 +309,13 @@
         Alpine.data('ingredientManager', () => ({
             isModalOpen: false,
             isEditing: false,
+            isQuickAddModalOpen: false,
+            submitting: false,
+            quickAddSubmitting: false,
             modalTitle: 'Add New Ingredient',
             formAction: '{{ route('inventory.ingredients.store') }}',
+            quickAddAction: '',
+            selectedIngredient: null,
             formData: { id: null, name: '', unit: '', packaging_unit: '', capacity_per_pack: 1, current_stock: 0, status: 'In Stock', low_stock_threshold: 500 },
             stockInPacks: 0,
             thresholdInPacks: 0,
@@ -292,6 +332,7 @@
                 this.formData = { id: null, name: '', unit: '', packaging_unit: '', capacity_per_pack: 1, current_stock: 0, status: 'In Stock', low_stock_threshold: 500 };
                 this.stockInPacks = 0;
                 this.thresholdInPacks = 0;
+                this.submitting = false;
                 this.isModalOpen = true;
             },
             openEditModal(ingredient) {
@@ -301,7 +342,14 @@
                 this.formData = { ...ingredient };
                 this.stockInPacks = (this.formData.current_stock / this.formData.capacity_per_pack).toFixed(2);
                 this.thresholdInPacks = (this.formData.low_stock_threshold / this.formData.capacity_per_pack).toFixed(2);
+                this.submitting = false;
                 this.isModalOpen = true;
+            },
+            openQuickAddModal(ingredient) {
+                this.selectedIngredient = ingredient;
+                this.quickAddAction = `/inventory/ingredients/${ingredient.id}/add-stock`;
+                this.quickAddSubmitting = false;
+                this.isQuickAddModalOpen = true;
             },
             closeModal() { this.isModalOpen = false; }
         }))

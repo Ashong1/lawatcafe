@@ -54,9 +54,9 @@
                 <x-lucide-clock class="w-4 h-4" /> Kitchen Queue
             </h3>
             <div class="flex items-baseline gap-2">
-                <span class="text-5xl font-black transition-colors duration-500" 
+                <span class="text-5xl font-black transition-colors duration-500"
                       :class="pendingOrdersCount > 5 ? 'text-red-500' : (pendingOrdersCount > 0 ? 'text-amber-600' : 'text-green-600')"
-                      x-text="pendingOrdersCount">{{ $pendingOrdersCount }}</span>
+                      x-text="pendingOrdersCount" aria-live="polite" aria-atomic="true">{{ $pendingOrdersCount }}</span>
             </div>
             <p class="text-[9px] text-[#A1887F] font-bold uppercase tracking-wider mt-2">Active Orders</p>
             <div x-show="pendingOrdersCount > 5" class="absolute top-4 right-4 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
@@ -95,7 +95,7 @@
                     </div>
 
                     <div class="mt-6 pt-4 border-t border-[#F0E6D2]">
-                        <a href="{{ route('shift.closing-report', $activeShift->id) }}"
+                        <a href="{{ $activeShift ? route('shift.closing-report', $activeShift->id) : '#' }}"
                                 class="w-full py-3 bg-[#FAFAFA] border-2 border-red-100 text-red-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-all flex items-center justify-center gap-2">
                             <x-lucide-log-out class="w-4 h-4" />
                             <span>Clock Out / End Shift</span>

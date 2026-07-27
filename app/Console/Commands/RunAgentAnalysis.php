@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Console\Commands;
+
+use App\Models\User;
+use App\Notifications\SystemAlert;
+use App\Services\Agent\CrossDomainCorrelationService;
+use App\Services\Agent\ToolCallOrchestrator;
+use App\Services\Agent\ToolRegistry;
+use App\Services\AIService;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Notification;
+
+class RunAgentAnalysis extends Command
+{
+    protected $signature = 'agent:analyze';
+
+    protected $description = 'Run cross-domain POS + network correlation and let Barista AI narrate/act on any signals found.';
+
+    public function handle(CrossDomainCorrelationService $correlation, AIService $ai, ToolCallOrchestrator $orchestrator): int
+    {
+        $signals = $correlation->run()['signals'];
+
+        if (empty($signals)) {
+            $this->info('No signals detected.');
+            return self::SUCCESS;
+        }
+
+        $this->info(count($signals) . ' signal(s) detected. Asking Barista AI to review...');
+
+        $interpretation = $ai->interpretSignals($signals);
+        $narrative = $interpretation['narrative'] ?? 'Barista AI detected operational signals that need review.';
+
+        $messages = [
+            ['role' => 'system', 'content' => "You are Barista AI reviewing automatically-detected operational signals for Lawa't Kape. For each signal, if a tool exists that addresses it (e.g. draftSupplierPo for a low_stock_high_demand signal, blockDevice for a banned_device_reentry or repeat_mac_abuse signal), call it with the specific IDs/values from the signal. Do not invent data or act on anything not listed in the signals below."],
+            ['role' => 'user', 'content' => "Signals detected:\n" . json_encode($signals)],
+        ];
+
+        // actor is null (scheduled, not chat-triggered) — reuses the exact same
+        // permission/audit pipeline as interactive admin chat, so a proposed
+        // admin_only action still lands as 'proposed', not auto-bypassed.
+        $result = $orchestrator->run($messages, ToolRegistry::AUDIENCE_ADMIN, null);
+
+        $admins = User::where('role', 'admin')->get();
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new SystemAlert(
+                'Barista AI: Operational Review',
+                $narrative,
+                'bot',
+                route('admin.ai.actions.index')
+            ));
+        }
+
+        $this->info(sprintf(
+            'Signals: %d | Executed: %d | Pending confirmation: %d',
+            count($signals),
+            count($result['executed']),
+            count($result['pending']),
+        ));
+
+        return self::SUCCESS;
+    }
+}

@@ -85,11 +85,11 @@
                         </td>
                         <td class="py-4 text-center">
                             @if($sale->status === 'completed')
-                                <span class="px-3 py-1 bg-green-50 text-green-700 text-[9px] font-black uppercase tracking-widest rounded-full">Completed</span>
+                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 text-[9px] font-black uppercase tracking-widest rounded-full"><x-lucide-check class="w-3 h-3" />Completed</span>
                             @elseif($sale->status === 'cancelled')
-                                <span class="px-3 py-1 bg-red-50 text-red-700 text-[9px] font-black uppercase tracking-widest rounded-full">Voided</span>
+                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-50 text-red-700 text-[9px] font-black uppercase tracking-widest rounded-full"><x-lucide-x class="w-3 h-3" />Voided</span>
                             @else
-                                <span class="px-3 py-1 bg-amber-50 text-amber-700 text-[9px] font-black uppercase tracking-widest rounded-full">{{ $sale->status }}</span>
+                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-amber-50 text-amber-700 text-[9px] font-black uppercase tracking-widest rounded-full"><x-lucide-clock class="w-3 h-3" />{{ $sale->status }}</span>
                             @endif
                         </td>
                         <td class="py-4 text-right">
@@ -99,6 +99,7 @@
                                 </a>
                                 
                                 @if($sale->status !== 'cancelled')
+                                    <x-ask-ai-button :prompt="'Review sale with ID ' . $sale->id . ' (transaction #' . substr($sale->transaction_number, -8) . ') for anything unusual, and void it if warranted.'" label="Review" />
                                     <form action="{{ route('pos.history.void', $sale->id) }}" method="POST" id="void-form-{{ $sale->id }}" class="inline">
                                         @csrf
                                         <button type="button" 

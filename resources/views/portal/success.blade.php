@@ -4,8 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Connected - Lawa't Kape</title>
+<!-- Favicons -->
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
+<link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
+<link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
 @vite(['resources/css/app.css', 'resources/js/app.js'])
-<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -80,7 +83,7 @@
                     </a>
                     
                     <p id="countdown" class="text-center text-[10px] font-black text-[#A1887F] uppercase tracking-[0.3em] animate-pulse">
-                        Redirecting in 5s...
+                        Redirecting in 5s... <button type="button" id="cancel-redirect" class="underline decoration-dotted ml-1 normal-case tracking-normal font-bold">Cancel</button>
                     </p>
                 </div>
 
@@ -90,16 +93,29 @@
     </div>
 
     <script>
-        let timeLeft = 5;
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const countdownEl = document.getElementById('countdown');
-        const interval = setInterval(() => {
-            timeLeft--;
-            countdownEl.innerText = `Redirecting in ${timeLeft}s...`;
-            if (timeLeft <= 0) {
+
+        if (reducedMotion) {
+            // Auto-navigation is a motion/vestibular concern too, not just animated visuals —
+            // skip it entirely and rely on the "Start Browsing" button as the only way forward.
+            countdownEl.style.display = 'none';
+        } else {
+            let timeLeft = 5;
+            const interval = setInterval(() => {
+                timeLeft--;
+                countdownEl.firstChild.textContent = `Redirecting in ${timeLeft}s... `;
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    window.location.href = "http://neverssl.com";
+                }
+            }, 1000);
+
+            document.getElementById('cancel-redirect').addEventListener('click', () => {
                 clearInterval(interval);
-                window.location.href = "http://neverssl.com";
-            }
-        }, 1000);
+                countdownEl.style.display = 'none';
+            });
+        }
     </script>
 
 </body>

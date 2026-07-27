@@ -5,17 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff - Lawa't Kape</title>
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body x-data="{ sidebarOpen: true }" 
+<body x-data="staffLayout()" 
       x-init="
         @if(session('success'))
             Swal.fire({
@@ -89,9 +86,19 @@
       "
       class="bg-[#FDF8F5] text-[#4A3B32] flex h-screen overflow-hidden font-sans" style="font-family: 'Montserrat', sans-serif;">
 
-    <aside 
+    <!-- Staff Support AI Floating Chat -->
+    <x-agent-chat
+        :endpoint="route('staff.ai.chat')"
+        title="Barista Support"
+        subtitle="Staff Assistance"
+        greeting="Hello! I am Barista Support. Ask me about preparation, stock, or POS tips."
+        anchor-id="staff"
+        mode="floating"
+    />
+
+    <aside
         :class="sidebarOpen ? 'w-64' : 'w-20'"
-        class="bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out shrink-0 relative">
+        class="bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out shrink-0 relative [view-transition-name:app-sidebar]">
         
         <div class="h-20 flex items-center px-6 border-b border-[#5D4037] shrink-0 overflow-hidden relative">
             <x-lucide-coffee class="w-8 h-8 text-amber-500 mr-2 shrink-0 absolute left-6" />
@@ -132,7 +139,7 @@
 
     <div class="flex-1 flex flex-col overflow-hidden">
         
-        <header class="h-14 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center justify-between px-6 z-10 shrink-0">
+        <header class="h-14 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center justify-between px-6 z-10 shrink-0 [view-transition-name:app-header]">
             
             <button @click="sidebarOpen = !sidebarOpen" class="text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none flex items-center justify-center">
                 <x-lucide-menu class="w-6 h-6" />
@@ -140,6 +147,7 @@
             
             <div class="flex items-center space-x-6">
                 <x-notification-bell />
+                <x-agent-pending-badge :is-admin="false" />
 
                 <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
 
@@ -189,6 +197,16 @@
                 }
             });
         };
+
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('staffLayout', () => ({
+                sidebarOpen: true,
+                menus: {
+                    inventory: {{ request()->is('inventory*') ? 'true' : 'false' }},
+                    network: {{ request()->is('network*') ? 'true' : 'false' }}
+                }
+            }))
+        })
     </script>
 </body>
 </html>

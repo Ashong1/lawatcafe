@@ -14,19 +14,18 @@
             <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Manage permanently restricted devices by their physical MAC address.</p>
         </div>
 
-        <div x-data="{ showModal: false }">
-            <button @click="showModal = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-lg flex items-center gap-2 text-xs uppercase tracking-widest">
+        <div x-data="{ showModal: false, submitting: false }">
+            <button @click="submitting = false; showModal = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-lg flex items-center gap-2 text-xs uppercase tracking-widest">
                 <x-lucide-user-x class="w-4 h-4" />
                 <span>Ban New Device</span>
             </button>
 
             <!-- Ban Modal -->
-            <div x-show="showModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                <div @click.outside="showModal = false" class="bg-white rounded-[2rem] p-8 w-full max-w-xl shadow-2xl border-t-8 border-red-600">
-                    <h3 class="text-xl font-black text-[#3E2723] mb-2 uppercase tracking-tight">Restrict Network Access</h3>
+            <x-modal-shell show="showModal" max-width="xl" panel-class="p-8 border-t-8 border-red-600" labelled-by="ban-device-heading">
+                    <h3 id="ban-device-heading" class="text-xl font-black text-[#3E2723] mb-2 uppercase tracking-tight">Restrict Network Access</h3>
                     <p class="text-xs text-[#8D6E63] mb-8 font-medium leading-relaxed">Enter the device details to permanently block it from connecting to the guest Wi-Fi.</p>
-                    
-                    <form action="{{ route('network.blocklist.store') }}" method="POST" class="space-y-6">
+
+                    <form action="{{ route('network.blocklist.store') }}" method="POST" class="space-y-6" @submit="submitting = true">
                         @csrf
                         <div>
                             <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">MAC Address</label>
@@ -43,11 +42,10 @@
 
                         <div class="flex gap-3 pt-4">
                             <button type="button" @click="showModal = false" class="flex-1 py-4 bg-[#FDF8F5] text-[#8D6E63] rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#F0E6D2] transition">Cancel</button>
-                            <button type="submit" class="flex-2 px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-600/20">Confirm Ban</button>
+                            <x-submit-button label="Confirm Ban" variant="danger" />
                         </div>
                     </form>
-                </div>
-            </div>
+            </x-modal-shell>
         </div>
     </div>
 
@@ -69,8 +67,8 @@
                     <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
                         <th class="pb-4 font-black">MAC Address</th>
                         <th class="pb-4 font-black">Identity / Note</th>
-                        <th class="pb-4 font-black">Reason</th>
-                        <th class="pb-4 font-black">Banned On</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Reason</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Banned On</th>
                         <th class="pb-4 font-black text-right">Actions</th>
                     </tr>
                 </thead>
@@ -83,12 +81,13 @@
                             </span>
                         </td>
                         <td class="py-4">
-                            <span class="text-xs font-bold text-[#3E2723]">{{ $device->hostname ?: 'Unnamed Device' }}</span>
+                            <span class="text-xs font-bold text-[#3E2723] block">{{ $device->hostname ?: 'Unnamed Device' }}</span>
+                            <span class="text-[10px] text-[#A1887F] font-medium md:hidden">{{ $device->created_at->format('M d, Y') }}</span>
                         </td>
-                        <td class="py-4">
+                        <td class="py-4 hidden md:table-cell">
                             <span class="text-xs text-[#8D6E63] font-medium italic">{{ $device->reason ?: 'No reason provided' }}</span>
                         </td>
-                        <td class="py-4 text-[#A1887F] text-xs font-bold">
+                        <td class="py-4 text-[#A1887F] text-xs font-bold hidden md:table-cell">
                             {{ $device->created_at->format('M d, Y') }}
                         </td>
                         <td class="py-4 text-right">

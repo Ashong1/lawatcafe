@@ -38,6 +38,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Idle Timeout (Staff/Admin)
+    |--------------------------------------------------------------------------
+    |
+    | Minutes of inactivity before an authenticated staff/admin session is
+    | force-logged-out, independent of the absolute session lifetime above.
+    | Enforced by App\Http\Middleware\IdleSessionTimeout. Kept short since
+    | POS terminals are shared physical devices at a counter.
+    |
+    */
+
+    'idle_timeout' => (int) env('SESSION_IDLE_TIMEOUT', 20),
+
+    /*
+    |--------------------------------------------------------------------------
     | Session Encryption
     |--------------------------------------------------------------------------
     |

@@ -201,25 +201,13 @@
         </div>
     </div>
 
-    <div x-show="modalOpen" 
-         class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         x-cloak>
-         
-        <div class="bg-white rounded-[2rem] border border-[#F0E6D2] shadow-2xl w-full max-w-md overflow-hidden transform transition-all"
-             @click.away="modalOpen = false">
-            
+    <x-modal-shell show="modalOpen" max-width="md" labelled-by="plan-modal-title">
             <div class="bg-[#FDF8F5] border-b border-[#F0E6D2] px-6 py-5 flex items-center justify-between">
-                <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest flex items-center gap-2">
+                <h3 id="plan-modal-title" class="text-sm font-black text-[#3E2723] uppercase tracking-widest flex items-center gap-2">
                     <x-lucide-wifi class="w-4 h-4 text-amber-600" />
                     <span x-text="isEditingComplimentary ? 'Modify Complimentary Tier' : (isEditMode ? 'Modify Pricing Tier' : 'Add New Pricing Tier')"></span>
                 </h3>
-                <button type="button" @click="modalOpen = false" class="text-[#A1887F] hover:text-[#3E2723] transition-colors">
+                <button type="button" @click="modalOpen = false" aria-label="Close dialog" class="text-[#A1887F] hover:text-[#3E2723] transition-colors">
                     <x-lucide-x class="w-5 h-5" />
                 </button>
             </div>
@@ -261,9 +249,7 @@
                     Save Tier
                 </button>
             </div>
-
-        </div>
-    </div>
+    </x-modal-shell>
 
 </div>
 

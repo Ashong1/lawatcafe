@@ -3,17 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\BannedDevice;
+use App\Services\BlocklistService;
 use Illuminate\Http\Request;
 
 class BlocklistController extends Controller
 {
+    public function __construct(protected BlocklistService $blocklist)
+    {
+    }
+
     public function index()
     {
         $devices = BannedDevice::latest()->get();
         return view('network.blocklist', compact('devices'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, \App\Services\OpnSenseService $opnsense)
     {
         $validated = $request->validate([
             'mac_address' => 'required|string|unique:banned_devices,mac_address|regex:/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/',
@@ -21,14 +26,14 @@ class BlocklistController extends Controller
             'hostname' => 'nullable|string|max:255',
         ]);
 
-        BannedDevice::create($validated);
+        $this->blocklist->banDevice($validated['mac_address'], $validated['reason'] ?? null, $validated['hostname'] ?? null, $opnsense);
 
         return redirect()->back()->with('success', 'Device has been permanently banned from the network.');
     }
 
-    public function destroy(BannedDevice $device)
+    public function destroy(BannedDevice $device, \App\Services\OpnSenseService $opnsense)
     {
-        $device->delete();
+        $this->blocklist->unbanDevice($device, $opnsense);
         return redirect()->back()->with('success', 'Device has been unbanned.');
     }
 }

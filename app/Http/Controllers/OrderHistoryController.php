@@ -3,10 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sale;
+use App\Services\SaleService;
 use Illuminate\Http\Request;
 
 class OrderHistoryController extends Controller
 {
+    public function __construct(protected SaleService $sales)
+    {
+    }
+
     public function index(Request $request)
     {
         $query = Sale::with(['items', 'user'])->latest();
@@ -41,13 +46,8 @@ class OrderHistoryController extends Controller
 
     public function void(Sale $sale)
     {
-        if ($sale->status === 'cancelled') {
-            return redirect()->back()->with('error', 'Order is already voided.');
-        }
+        $result = $this->sales->void($sale, auth()->id());
 
-        // Implement refund logic here if needed (e.g. restocking)
-        $sale->update(['status' => 'cancelled']);
-
-        return redirect()->back()->with('success', 'Order #' . substr($sale->transaction_number, -4) . ' has been voided.');
+        return redirect()->back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }
 }

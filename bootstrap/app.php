@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'portal/authenticate',
             'portal/verify-payment',
             'portal/upload',
+            'portal/chat',
+        ]);
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\IdleSessionTimeout::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

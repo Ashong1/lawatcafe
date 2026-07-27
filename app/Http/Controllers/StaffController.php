@@ -69,4 +69,26 @@ class StaffController extends Controller
             'currentTime' => now()->format('l, F jS - h:i A'),
         ]);
     }
+
+    public function staffChat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator)
+    {
+        $request->validate([
+            'message' => 'required|string|max:1000',
+            'history' => 'nullable|array'
+        ]);
+
+        $messages = [['role' => 'system', 'content' => $ai->buildStaffSystemPrompt()]];
+        foreach ($request->history ?? [] as $msg) {
+            $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
+        }
+        $messages[] = ['role' => 'user', 'content' => $request->message];
+
+        $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_STAFF, $request->user());
+
+        return response()->json([
+            'reply' => $result['reply'] ?? "☕ Staff AI stack offline.",
+            'pending' => $result['pending'],
+            'executed' => $result['executed'],
+        ]);
+    }
 }

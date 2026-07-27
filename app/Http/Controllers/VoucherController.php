@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Voucher;
+use App\Services\VoucherService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class VoucherController extends Controller
 {
+    public function __construct(protected VoucherService $vouchers)
+    {
+    }
+
     /**
      * Display a listing of all generated vouchers.
      */
@@ -47,29 +51,13 @@ class VoucherController extends Controller
             'duration_minutes' => 'required|integer|min:1',
         ]);
 
-        $vouchersCreated = 0;
-        $batchSize = (int) $request->quantity;
-        $duration = (int) $request->duration_minutes;
+        $result = $this->vouchers->generateBatch(
+            (int) $request->quantity,
+            (int) $request->duration_minutes,
+            auth()->id(),
+        );
 
-        // Loop until we successfully create the requested unique vouchers
-        while ($vouchersCreated < $batchSize) {
-            $code = 'LAWA-' . strtoupper(Str::random(4));
-
-            // Collision check: only create if the code doesn't already exist
-            if (!Voucher::where('code', $code)->exists()) {
-                Voucher::create([
-                    'code' => $code,
-                    'duration_minutes' => $duration,
-                    'is_used' => false,
-                ]);
-                $vouchersCreated++;
-            }
-        }
-
-        // Clear dashboard cache
-        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
-
-        return redirect()->back()->with('success', "{$vouchersCreated} new vouchers generated successfully!");
+        return redirect()->back()->with('success', "{$result['count']} new vouchers generated successfully!");
     }
 
     /**
@@ -118,10 +106,7 @@ class VoucherController extends Controller
             'ids.*' => 'exists:vouchers,id',
         ]);
 
-        Voucher::whereIn('id', $request->ids)->delete();
-
-        // Clear dashboard cache
-        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+        $this->vouchers->deleteVouchers($request->ids);
 
         return redirect()->back()->with('success', 'Selected vouchers have been removed.');
     }
@@ -131,15 +116,7 @@ class VoucherController extends Controller
      */
     public function purge()
     {
-        // 1. Used vouchers
-        $usedCount = Voucher::where('is_used', true)->count();
-        
-        // 2. Expired vouchers (if we have an expires_at or calculate from used_at)
-        // For now, let's just purge all used vouchers as a safe start
-        Voucher::where('is_used', true)->delete();
-
-        // Clear dashboard cache
-        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+        $usedCount = $this->vouchers->purgeUsed();
 
         return redirect()->back()->with('success', "Cleaned up {$usedCount} used/expired vouchers.");
     }
@@ -210,6 +187,7 @@ class VoucherController extends Controller
                 'bytes_received' => $cp['bytes_received'] ?? 0,
                 'bytes_sent' => $cp['bytes_sent'] ?? 0,
                 'startTime' => $cp['startTime'] ?? null,
+                'authenticatedVia' => $cp['authenticated_via'] ?? null,
             ];
         })->filter();
 
@@ -296,12 +274,20 @@ class VoucherController extends Controller
                 $res->progress = 100;
                 $res->is_system = true;
                 $res->is_unauthorized = false;
+                $res->is_orphaned = false;
             } elseif (!$voucher) {
-                $res->code = $device['isAuthorized'] ? 'SYSTEM/STATIC' : 'UNAUTHORIZED';
-                $res->timeLeft = '∞';
+                // App-authorized (real captive-portal auth) but no voucher record left —
+                // most likely its voucher was purged while it was still connected.
+                // Static/firewall-permit entries (---ip---/---mac---) are expected to
+                // have no voucher and are NOT orphaned.
+                $isOrphaned = $device['isAuthorized'] && $device['authenticatedVia'] === 'API';
+
+                $res->code = $isOrphaned ? 'ORPHANED' : ($device['isAuthorized'] ? 'SYSTEM/STATIC' : 'UNAUTHORIZED');
+                $res->timeLeft = $isOrphaned ? 'Stale' : '∞';
                 $res->progress = $device['isAuthorized'] ? 100 : 0;
-                $res->is_system = $device['isAuthorized'];
+                $res->is_system = $device['isAuthorized'] && !$isOrphaned;
                 $res->is_unauthorized = !$device['isAuthorized'];
+                $res->is_orphaned = $isOrphaned;
             } else {
                 // Calculate time remaining
                 $usedAt = \Carbon\Carbon::parse($voucher->used_at);
@@ -315,7 +301,8 @@ class VoucherController extends Controller
                 $res->timeLeft = $timeLeft;
                 $res->progress = $progress;
                 $res->is_system = false;
-                
+                $res->is_orphaned = false;
+
                 // CRITICAL FIX: If OPNsense has kicked them OR the voucher is expired, they are unauthorized
                 $res->is_unauthorized = !$device['isAuthorized'] || $timeLeft <= 0;
             }

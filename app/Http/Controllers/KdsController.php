@@ -11,10 +11,7 @@ class KdsController extends Controller
     public function index()
     {
         // Fetch pending and preparing orders
-        $orders = Sale::with(['items.product', 'user'])
-            ->whereIn('status', ['pending', 'preparing'])
-            ->oldest()
-            ->get();
+        $orders = $this->pendingAndPreparingOrders();
 
         // Fetch recently completed orders for recall (last 10)
         $recentlyCompleted = Sale::with(['items.product', 'user'])
@@ -24,6 +21,20 @@ class KdsController extends Controller
             ->get();
 
         return view('kds.index', compact('orders', 'recentlyCompleted'));
+    }
+
+    /**
+     * JSON endpoint for the AJAX poll — returns the order-grid partial pre-rendered
+     * server-side, so the polled markup and the first-paint markup are byte-identical.
+     */
+    public function data()
+    {
+        $orders = $this->pendingAndPreparingOrders();
+
+        return response()->json([
+            'html' => view('kds.partials.order-grid', compact('orders'))->render(),
+            'count' => $orders->count(),
+        ]);
     }
 
     public function updateStatus(Request $request, Sale $sale)
@@ -37,6 +48,15 @@ class KdsController extends Controller
         // If sale is completed, mark all items as completed too
         if ($request->status === 'completed') {
             $sale->items()->update(['kds_status' => 'completed']);
+        }
+
+        if ($request->wantsJson()) {
+            $orders = $this->pendingAndPreparingOrders();
+
+            return response()->json([
+                'html' => view('kds.partials.order-grid', compact('orders'))->render(),
+                'count' => $orders->count(),
+            ]);
         }
 
         return redirect()->back()->with('success', 'Order status updated.');
@@ -56,6 +76,23 @@ class KdsController extends Controller
             $sale->update(['status' => 'completed']);
         }
 
+        if ($request->wantsJson()) {
+            $orders = $this->pendingAndPreparingOrders();
+
+            return response()->json([
+                'html' => view('kds.partials.order-grid', compact('orders'))->render(),
+                'count' => $orders->count(),
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Item status updated.');
+    }
+
+    private function pendingAndPreparingOrders()
+    {
+        return Sale::with(['items.product', 'user'])
+            ->whereIn('status', ['pending', 'preparing'])
+            ->oldest()
+            ->get();
     }
 }

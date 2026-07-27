@@ -31,7 +31,7 @@
                         <th class="pb-4 px-4 font-black">Name</th>
                         <th class="pb-4 px-4 font-black">Email Address</th>
                         <th class="pb-4 px-4 font-black">Role / Access</th>
-                        <th class="pb-4 px-4 font-black">Joined Date</th>
+                        <th class="pb-4 px-4 font-black hidden md:table-cell">Joined Date</th>
                         <th class="pb-4 px-4 font-black text-right">Actions</th>
                     </tr>
                 </thead>
@@ -45,6 +45,7 @@
                                         <span class="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded text-[9px] font-black uppercase tracking-wider">You</span>
                                     @endif
                                 </div>
+                                <span class="text-[10px] text-[#A1887F] font-medium md:hidden">Joined {{ $user->created_at->format('M d, Y') }}</span>
                             </td>
                             <td class="py-4 px-4 text-[#8D6E63] font-medium font-mono text-xs">
                                 {{ $user->email }}
@@ -60,7 +61,7 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="py-4 px-4 text-[#A1887F] font-bold text-xs">
+                            <td class="py-4 px-4 text-[#A1887F] font-bold text-xs hidden md:table-cell">
                                 {{ $user->created_at->format('M d, Y') }}
                             </td>
                             <td class="py-4 px-4 text-right">
@@ -105,12 +106,11 @@
     </div>
 
     <!-- Account Modal -->
-    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl p-8 w-full max-w-xl border-t-8 border-[#3E2723] transform transition-all">
-            <h2 class="text-2xl font-black text-[#3E2723] mb-2 uppercase tracking-tight" x-text="modalTitle"></h2>
+    <x-modal-shell show="isModalOpen" max-width="xl" panel-class="p-8 border-t-8 border-[#3E2723]" labelled-by="account-modal-title">
+            <h2 id="account-modal-title" class="text-2xl font-black text-[#3E2723] mb-2 uppercase tracking-tight" x-text="modalTitle"></h2>
             <p class="text-xs text-[#8D6E63] mb-8 font-medium">Configure authentication and system permission levels.</p>
-            
-            <form :action="formAction" method="POST" class="space-y-6">
+
+            <form :action="formAction" method="POST" class="space-y-6" @submit="submitting = true">
                 @csrf
                 <template x-if="isEditing">
                     <input type="hidden" name="_method" value="PUT">
@@ -141,11 +141,10 @@
 
                 <div class="flex gap-3 pt-4">
                     <button type="button" @click="closeModal()" class="flex-1 py-4 bg-[#FDF8F5] text-[#8D6E63] rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#F0E6D2] transition">Cancel</button>
-                    <button type="submit" class="flex-2 px-8 py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-amber-900/20 active:scale-95">Save Account</button>
+                    <x-submit-button label="Save Account" />
                 </div>
             </form>
-        </div>
-    </div>
+    </x-modal-shell>
 </div>
 
 <script>
@@ -153,6 +152,7 @@
         Alpine.data('accountManager', () => ({
             isModalOpen: false,
             isEditing: false,
+            submitting: false,
             modalTitle: 'Add New Staff',
             formAction: '{{ route('accounts.store') }}',
             formData: { id: null, name: '', email: '', role: 'staff' },
@@ -162,6 +162,7 @@
                 this.modalTitle = 'Add New Staff';
                 this.formAction = '{{ route('accounts.store') }}';
                 this.formData = { id: null, name: '', email: '', role: 'staff' };
+                this.submitting = false;
                 this.isModalOpen = true;
             },
 
@@ -170,6 +171,7 @@
                 this.modalTitle = 'Edit Account';
                 this.formAction = `/accounts/${user.id}`;
                 this.formData = { ...user };
+                this.submitting = false;
                 this.isModalOpen = true;
             },
 

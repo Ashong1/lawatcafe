@@ -36,8 +36,8 @@
                         <th class="pb-4 font-black">Date</th>
                         <th class="pb-4 font-black">Ingredient</th>
                         <th class="pb-4 font-black">Quantity</th>
-                        <th class="pb-4 font-black">Reason</th>
-                        <th class="pb-4 font-black text-right">Logged By</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Reason</th>
+                        <th class="pb-4 font-black text-right hidden md:table-cell">Logged By</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
@@ -46,21 +46,23 @@
                         <td class="py-4">
                             <span class="font-bold text-[#3E2723] block">{{ $waste->created_at->format('M d, Y') }}</span>
                             <span class="text-[10px] text-[#A1887F] font-medium uppercase tracking-widest">{{ $waste->created_at->format('h:i A') }}</span>
+                            <span class="text-[10px] text-[#A1887F] font-bold block md:hidden">by {{ $waste->user->name }}</span>
                         </td>
                         <td class="py-4">
                             <span class="font-bold text-[#4A3B32]">{{ $waste->ingredient->name }}</span>
+                            <span class="text-[10px] text-[#8D6E63] font-bold block md:hidden">{{ $waste->reason }}</span>
                         </td>
                         <td class="py-4">
                             <span class="font-extrabold text-red-600">-{{ number_format($waste->quantity, 1) }}</span>
                             <span class="text-[10px] font-black uppercase text-[#8D6E63] ml-1">{{ $waste->ingredient->unit }}</span>
                         </td>
-                        <td class="py-4">
+                        <td class="py-4 hidden md:table-cell">
                             <span class="px-3 py-1 bg-red-50 text-red-700 text-[10px] font-bold rounded-lg border border-red-100 uppercase tracking-tighter">{{ $waste->reason }}</span>
                             @if($waste->note)
                                 <p class="text-[10px] text-[#8D6E63] mt-1 italic leading-tight">{{ $waste->note }}</p>
                             @endif
                         </td>
-                        <td class="py-4 text-right">
+                        <td class="py-4 text-right hidden md:table-cell">
                             <span class="text-xs font-bold text-[#3E2723]">{{ $waste->user->name }}</span>
                         </td>
                     </tr>
@@ -84,14 +86,13 @@
     </div>
 
     {{-- Log Wastage Modal --}}
-    <div x-show="isModalOpen" style="display: none;" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div @click.away="closeModal()" class="bg-white rounded-[2rem] shadow-2xl w-full max-w-xl overflow-hidden border-t-8 border-red-600">
+    <x-modal-shell show="isModalOpen" max-width="xl" panel-class="border-t-8 border-red-600" labelled-by="wastage-modal-title">
             <div class="p-8 pb-4">
-                <h2 class="text-2xl font-bold text-[#3E2723] uppercase tracking-widest">Log operational loss</h2>
+                <h2 id="wastage-modal-title" class="text-2xl font-bold text-[#3E2723] uppercase tracking-widest">Log operational loss</h2>
                 <p class="text-xs text-[#8D6E63] font-medium mt-1">Deduct spoiled or damaged stock from inventory.</p>
             </div>
-            
-            <form action="{{ route('inventory.wastage.store') }}" method="POST" class="p-8 pt-4">
+
+            <form action="{{ route('inventory.wastage.store') }}" method="POST" class="p-8 pt-4" @submit="submitting = true">
                 @csrf
                 <div class="space-y-6">
                     <div>
@@ -128,11 +129,10 @@
 
                 <div class="flex gap-4 mt-8">
                     <button type="button" @click="closeModal()" class="flex-1 py-4 bg-[#FDF8F5] border border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-white font-bold transition text-xs uppercase tracking-widest whitespace-nowrap">Cancel</button>
-                    <button type="submit" class="flex-2 py-4 bg-red-600 text-white rounded-2xl hover:bg-red-700 font-black transition shadow-lg shadow-red-600/20 text-[10px] uppercase tracking-[0.2em] whitespace-nowrap px-8 flex items-center justify-center">Log Wastage</button>
+                    <x-submit-button label="Log Wastage" variant="danger" />
                 </div>
             </form>
-        </div>
-    </div>
+    </x-modal-shell>
     </div>
 </div>
 
@@ -140,7 +140,8 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('wastageManager', () => ({
             isModalOpen: false,
-            openAddModal() { this.isModalOpen = true; },
+            submitting: false,
+            openAddModal() { this.submitting = false; this.isModalOpen = true; },
             closeModal() { this.isModalOpen = false; }
         }))
     });

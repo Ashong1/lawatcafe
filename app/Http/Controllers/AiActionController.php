@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\AiActionAudit;
+use App\Services\Agent\ToolCallOrchestrator;
+use Illuminate\Http\Request;
+
+class AiActionController extends Controller
+{
+    public function index()
+    {
+        $actions = AiActionAudit::with(['actor', 'approvedBy'])->latest()->paginate(30);
+
+        return view('admin.agent.activity', compact('actions'));
+    }
+
+    /**
+     * Admins see every pending action org-wide; staff see only their own
+     * proposals (they have no page to triage anyone else's, and their role
+     * floor means most of their mutating tool calls land here needing
+     * confirmation — this is often their only path to get an action to run).
+     */
+    public function pendingCount(Request $request)
+    {
+        $query = AiActionAudit::pending();
+        if ($request->user()->role !== 'admin') {
+            $query->where('actor_user_id', $request->user()->id);
+        }
+
+        return response()->json(['count' => $query->count()]);
+    }
+
+    public function pendingPreview(Request $request)
+    {
+        $query = AiActionAudit::pending()->with('actor')->latest()->limit(8);
+        if ($request->user()->role !== 'admin') {
+            $query->where('actor_user_id', $request->user()->id);
+        }
+
+        return response()->json($query->get(['id', 'tool_name', 'actor_user_id', 'input_params', 'created_at'])
+            ->map(fn ($a) => [
+                'id' => $a->id,
+                'tool_name' => $a->tool_name,
+                'actor' => $a->actor ? ['name' => $a->actor->name] : null,
+                'input_params' => $a->input_params,
+                'created_at' => $a->created_at->toIso8601String(),
+            ]));
+    }
+
+    public function confirm(Request $request, AiActionAudit $audit, ToolCallOrchestrator $orchestrator)
+    {
+        $result = $orchestrator->confirmPending($audit, $request->user());
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => $result->success, 'message' => $result->message], $result->success ? 200 : 422);
+        }
+
+        return redirect()->back()->with($result->success ? 'success' : 'error', $result->message);
+    }
+
+    public function reject(Request $request, AiActionAudit $audit, ToolCallOrchestrator $orchestrator)
+    {
+        $orchestrator->rejectPending($audit, $request->user());
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Proposed action rejected.']);
+        }
+
+        return redirect()->back()->with('success', 'Proposed action rejected.');
+    }
+}

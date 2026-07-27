@@ -64,8 +64,8 @@
                         <th class="pb-4 font-black">Ingredient</th>
                         <th class="pb-4 font-black">Change</th>
                         <th class="pb-4 font-black">Final Stock</th>
-                        <th class="pb-4 font-black">Reason</th>
-                        <th class="pb-4 font-black">Admin</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Reason</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Admin</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
@@ -74,8 +74,12 @@
                         <td class="py-4 text-[#8D6E63] text-xs font-medium">
                             {{ $log->created_at->format('M d, Y') }}
                             <span class="block text-[10px] text-[#A1887F]">{{ $log->created_at->format('h:i A') }}</span>
+                            <span class="block text-[10px] text-[#A1887F] font-medium md:hidden">By: {{ $log->user->name ?? 'System' }}</span>
                         </td>
-                        <td class="py-4 font-bold text-[#3E2723]">{{ $log->ingredient->name ?? 'N/A' }}</td>
+                        <td class="py-4 font-bold text-[#3E2723]">
+                            {{ $log->ingredient->name ?? 'N/A' }}
+                            <span class="block text-[10px] text-[#A1887F] font-medium md:hidden normal-case">{{ $log->reason }}</span>
+                        </td>
                         <td class="py-4 font-extrabold">
                             @if($log->change_amount > 0)
                                 <span class="text-green-600">+{{ number_format($log->change_amount) }}</span>
@@ -85,12 +89,12 @@
                             <span class="text-[10px] text-[#8D6E63] ml-1">{{ $log->ingredient->unit ?? '' }}</span>
                         </td>
                         <td class="py-4 font-bold text-[#3E2723]">{{ number_format($log->after_amount) }}</td>
-                        <td class="py-4">
+                        <td class="py-4 hidden md:table-cell">
                             <span class="px-3 py-1 bg-amber-50 text-amber-800 text-[10px] font-bold uppercase tracking-wide rounded-lg">
                                 {{ $log->reason }}
                             </span>
                         </td>
-                        <td class="py-4 text-[#8D6E63] text-xs font-medium">{{ $log->user->name ?? 'System' }}</td>
+                        <td class="py-4 text-[#8D6E63] text-xs font-medium hidden md:table-cell">{{ $log->user->name ?? 'System' }}</td>
                     </tr>
                     @empty
                     <tr>

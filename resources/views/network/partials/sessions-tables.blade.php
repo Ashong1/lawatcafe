@@ -10,8 +10,8 @@
                 <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
                     <th class="pb-4 font-black">Device</th>
                     <th class="pb-4 font-black">Voucher Code</th>
-                    <th class="pb-4 font-black">Usage & Speed</th>
-                    <th class="pb-4 font-black">Connected</th>
+                    <th class="pb-4 font-black hidden md:table-cell">Usage & Speed</th>
+                    <th class="pb-4 font-black hidden md:table-cell">Connected</th>
                     <th class="pb-4 font-black">Time Left</th>
                     <th class="pb-4 font-black text-right">Actions</th>
                 </tr>
@@ -39,14 +39,25 @@
                             @if($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '')
                                 <span class="text-[10px] text-[#8D6E63] font-bold mt-0.5 italic">{{ $session->hostname }}</span>
                             @endif
+                            <div class="flex items-center gap-2 mt-1 md:hidden">
+                                <span class="text-[9px] font-bold text-blue-600 font-mono">&uarr;{{ $session->speed_in }}</span>
+                                <span class="text-[9px] font-bold text-green-600 font-mono">&darr;{{ $session->speed_out }}</span>
+                            </div>
                         </div>
                     </td>
                     <td class="py-4">
-                        <span class="px-3 py-1 bg-amber-50 text-amber-800 border-amber-100 rounded-lg font-bold text-xs tracking-widest font-mono border">
-                            {{ $session->code }}
-                        </span>
+                        @if($session->is_orphaned ?? false)
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 border-red-100 rounded-lg font-bold text-xs tracking-widest border" title="Voucher record missing (likely purged while still connected) — no way to compute real time-left. Safe to disconnect.">
+                                <x-lucide-alert-triangle class="w-3 h-3" />
+                                ORPHANED
+                            </span>
+                        @else
+                            <span class="px-3 py-1 bg-amber-50 text-amber-800 border-amber-100 rounded-lg font-bold text-xs tracking-widest font-mono border">
+                                {{ $session->code }}
+                            </span>
+                        @endif
                     </td>
-                    <td class="py-4">
+                    <td class="py-4 hidden md:table-cell">
                         <div class="flex flex-col gap-1.5">
                             <div class="flex items-center justify-between min-w-[120px]">
                                 <div class="flex items-center gap-1.5 text-[9px] font-black text-[#8D6E63] uppercase">
@@ -64,18 +75,23 @@
                             </div>
                         </div>
                     </td>
-                    <td class="py-4">
+                    <td class="py-4 hidden md:table-cell">
                         <span class="text-xs font-medium text-[#4A3B32]">{{ $session->connected_at }}</span>
                     </td>
                     <td class="py-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-full bg-[#FDF8F5] border border-[#F0E6D2] rounded-full h-2.5 max-w-[80px] overflow-hidden">
-                                <div class="bg-amber-600 h-full rounded-full transition-all duration-500" style="width: {{ $session->progress }}%"></div>
+                        @if($session->is_orphaned ?? false)
+                            <span class="text-xs font-bold text-red-600">Stale — no voucher</span>
+                        @else
+                            <div class="flex items-center gap-3">
+                                <div class="w-full bg-[#FDF8F5] border border-[#F0E6D2] rounded-full h-2.5 max-w-[80px] overflow-hidden">
+                                    <div class="bg-amber-600 h-full rounded-full transition-all duration-500" style="width: {{ $session->progress }}%"></div>
+                                </div>
+                                <span class="text-xs font-bold text-[#3E2723]">
+                                    {{ is_numeric($session->timeLeft) ? $session->timeLeft . 'm' : $session->timeLeft }}
+                                </span>
                             </div>
-                            <span class="text-xs font-bold text-[#3E2723]">
-                                {{ is_numeric($session->timeLeft) ? $session->timeLeft . 'm' : $session->timeLeft }}
-                            </span>
-                        </div>
+                        @endif
+                        <span class="text-[10px] text-[#A1887F] font-medium md:hidden">{{ $session->connected_at }}</span>
                     </td>
                     <td class="py-4 text-right">
                         @if($session->sessionId)

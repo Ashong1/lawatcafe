@@ -150,6 +150,42 @@ class OpnSenseService
     }
 
     /**
+     * Resolve the MAC address OPNsense's own ARP table has on file for an IP.
+     *
+     * This is the authoritative source for "which device is this IP" — unlike
+     * a clientMac value handed to us by the guest's browser (redirect query
+     * string, form field, etc.), the ARP table reflects what the gateway
+     * itself observed on the wire and cannot be forged by the client.
+     *
+     * @return string|null Uppercase MAC address, or null if unresolvable.
+     */
+    public function resolveMacForIp(string $ip): ?string
+    {
+        $arp = $this->getArpTable();
+        $entries = $arp['arp'] ?? $arp;
+
+        if (!is_array($entries)) {
+            return null;
+        }
+
+        foreach ($entries as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $entryIp = $entry['ip'] ?? $entry['ipaddress'] ?? $entry['ip_address'] ?? null;
+            if ($entryIp !== $ip) {
+                continue;
+            }
+
+            $mac = $entry['mac'] ?? $entry['macaddr'] ?? $entry['mac_addr'] ?? null;
+            return $mac ? strtoupper($mac) : null;
+        }
+
+        return null;
+    }
+
+    /**
      * Get the gateway status from OPNsense.
      */
     public function getGatewayStatus()
@@ -230,6 +266,58 @@ class OpnSenseService
         } catch (\Exception $e) {
             Log::error("OPNsense: Exception fetching interface stats: " . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Add a MAC address to the guest-blocklist firewall alias so it's
+     * dropped at the pf layer, not just kicked from its current session.
+     *
+     * Requires a MAC-type alias (named per `services.opnsense.block_alias`)
+     * and a block rule on the guest interface referencing it to already
+     * exist in OPNsense — this only manages the alias's membership.
+     */
+    public function addMacToBlockAlias(string $macAddress): bool
+    {
+        return $this->alterBlockAlias('add', $macAddress);
+    }
+
+    /**
+     * Remove a MAC address from the guest-blocklist firewall alias.
+     */
+    public function removeMacFromBlockAlias(string $macAddress): bool
+    {
+        return $this->alterBlockAlias('delete', $macAddress);
+    }
+
+    protected function alterBlockAlias(string $action, string $macAddress): bool
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            Log::warning("OPNsense: API credentials not configured, cannot {$action} MAC on block alias.");
+            return false;
+        }
+
+        try {
+            $alias = config('services.opnsense.block_alias', 'guest_blocklist');
+            $url = "{$this->baseUrl}/api/firewall/alias_util/{$action}/{$alias}";
+
+            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
+                ->withoutVerifying()
+                ->post($url, ['address' => $macAddress]);
+
+            if ($response->successful()) {
+                Log::info("OPNsense: {$action} {$macAddress} on block alias '{$alias}'.");
+                return true;
+            }
+
+            Log::error("OPNsense: Failed to {$action} {$macAddress} on block alias '{$alias}'.", [
+                'status' => $response->status(),
+                'response' => $response->json(),
+            ]);
+            return false;
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception during block-alias {$action} for {$macAddress}: " . $e->getMessage());
+            return false;
         }
     }
 

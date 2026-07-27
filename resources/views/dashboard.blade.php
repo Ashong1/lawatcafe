@@ -90,123 +90,7 @@
 </div>
 @endif
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- System Health -->
-    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col h-full justify-center">
-        <div class="flex justify-between items-center w-full mb-6">
-            <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap">System Pulse</h3>
-            <div class="flex items-center gap-2">
-                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Operational</span>
-            </div>
-        </div>
-        
-        <div class="flex flex-row justify-center items-center w-full gap-4 md:gap-6 flex-1">
-            <div class="group flex flex-row items-center gap-2">
-                <div class="relative w-10 h-10 md:w-12 md:h-12">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="text-amber-600 transition-all duration-1000 ease-out" :stroke-dasharray="liveData.cpuLoad + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="text-[9px] font-black text-amber-700" x-text="Math.round(liveData.cpuLoad) + '%'">{{ number_format($cpuLoad, 0) }}%</span>
-                    </div>
-                </div>
-                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Load</span>
-            </div>
-            
-            <div class="group flex flex-row items-center gap-2">
-                <div class="relative w-10 h-10 md:w-12 md:h-12">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="text-blue-500 transition-all duration-1000 ease-out" :stroke-dasharray="liveData.memoryUsage + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="text-[9px] font-black text-blue-700" x-text="Math.round(liveData.memoryUsage) + '%'">{{ number_format($memoryUsage, 0) }}%</span>
-                    </div>
-                </div>
-                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">Mem<br>Usage</span>
-            </div>
-
-            <div class="group flex flex-row items-center gap-2">
-                <div class="relative w-10 h-10 md:w-12 md:h-12">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="{{ $diskUsage > 90 ? 'text-red-500' : 'text-slate-500' }} transition-all duration-1000 ease-out" stroke-dasharray="{{ $diskUsage }}, 100" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="text-[9px] font-black {{ $diskUsage > 90 ? 'text-red-700' : 'text-slate-700' }}">{{ number_format($diskUsage, 0) }}%</span>
-                    </div>
-                </div>
-                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">Disk<br>Usage</span>
-            </div>
-
-            <div class="group flex flex-row items-center gap-2">
-                <div class="relative w-10 h-10 md:w-12 md:h-12">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="text-red-500 transition-all duration-1000 ease-out" :stroke-dasharray="Math.min(liveData.cpuTemp, 100) + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="text-[9px] font-black text-red-600" x-text="liveData.cpuTemp + '°'">{{ $cpuTemp ?? 0 }}°</span>
-                    </div>
-                </div>
-                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Temp</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Network Pulse -->
-    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col relative overflow-hidden group h-full justify-center">
-        <div class="absolute -right-4 -top-4 w-20 h-20 bg-blue-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
-        <div class="relative z-10 w-full h-full flex flex-col">
-            <div class="flex justify-between items-center w-full mb-6">
-                <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em]">Network Throughput</h3>
-                <div class="flex items-center gap-2 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100">
-                    @forelse($gateways ?? [] as $gw)
-                        <div class="flex items-center gap-1.5" title="{{ $gw['name'] }}: {{ $gw['status'] }}">
-                            <div class="w-1.5 h-1.5 rounded-full {{ $gw['status'] === 'none' || $gw['status'] === 'online' ? 'bg-green-500' : 'bg-red-500' }}"></div>
-                            <span class="text-[7px] font-black uppercase text-slate-400">{{ substr($gw['name'], 0, 4) }}</span>
-                        </div>
-                    @empty
-                        <div class="flex items-center gap-2 opacity-80">
-                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
-                            <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Live Monitoring</span>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-            
-            <div class="flex flex-row justify-center items-center w-full gap-8 md:gap-12 flex-1">
-                <div class="flex flex-col items-center">
-                    <div class="flex items-baseline gap-1 mb-1">
-                        <span class="text-xl font-black text-[#1565C0]" x-text="liveData.bandwidthDown.toFixed(2)">{{ number_format($bandwidthDown ?? 0, 2) }}</span>
-                        <span class="text-[10px] font-bold text-[#A1887F] uppercase">Mbps</span>
-                    </div>
-                    <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Download</span>
-                </div>
-
-                <div class="flex flex-col items-center">
-                    <div class="flex items-baseline gap-1 mb-1">
-                        <span class="text-xl font-black text-[#059669]" x-text="liveData.bandwidthUp.toFixed(2)">{{ number_format($bandwidthUp ?? 0, 2) }}</span>
-                        <span class="text-[10px] font-bold text-[#A1887F] uppercase">Mbps</span>
-                    </div>
-                    <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Upload</span>
-                </div>
-
-                <div class="flex flex-col items-center">
-                    <div class="flex items-baseline gap-1 mb-1">
-                        <span class="text-xl font-black text-[#3E2723]" x-text="liveData.activeGuests">{{ $activeGuests ?? 0 }}</span>
-                        <span class="text-[10px] font-bold text-[#A1887F] uppercase">Active</span>
-                    </div>
-                    <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Guest Units</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Row 2: Specialized Split Stats --}}
+{{-- Row 1: Key Metrics --}}
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     {{-- Active Guests --}}
     <a href="{{ route('network.sessions') }}" class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#1565C0]/30 transition-all duration-300">
@@ -216,7 +100,7 @@
                 <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Active Guests</h3>
                 <x-lucide-users class="w-5 h-5 text-blue-600 opacity-50" />
             </div>
-            <p class="text-4xl font-black text-[#1565C0]" x-text="liveData.activeGuests">{{ $activeGuests ?? 0 }}</p>
+            <p class="text-4xl font-black text-[#1565C0]" x-text="liveData.activeGuests" aria-live="polite" aria-atomic="true">{{ $activeGuests ?? 0 }}</p>
             <p class="text-[9px] text-blue-800/60 font-bold uppercase mt-1">Monetized Sessions</p>
         </div>
     </a>
@@ -264,7 +148,7 @@
     </a>
 </div>
 
-{{-- Row 3: Revenue Trend --}}
+{{-- Row 2: Revenue Trend --}}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md transition-shadow">
         <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest mb-6">7-Day Revenue Trend</h3>
@@ -304,8 +188,126 @@
     </div>
 </div>
 
+{{-- Row 3: System Health & Network --}}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    {{-- System Health --}}
+    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col h-full justify-center">
+        <div class="flex justify-between items-center w-full mb-6">
+            <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap">System Pulse</h3>
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Operational</span>
+            </div>
+        </div>
+        
+        <div class="flex flex-row justify-center items-center w-full gap-4 md:gap-6 flex-1">
+            <div class="group flex flex-row items-center gap-2">
+                <div class="relative w-10 h-10 md:w-12 md:h-12">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="text-amber-600" :class="ringsReady ? 'transition-all duration-1000 ease-out' : ''" :stroke-dasharray="liveData.cpuLoad + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="text-[9px] font-black text-amber-700" x-text="Math.round(liveData.cpuLoad) + '%'">{{ number_format($cpuLoad, 0) }}%</span>
+                    </div>
+                </div>
+                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Load</span>
+            </div>
+            
+            <div class="group flex flex-row items-center gap-2">
+                <div class="relative w-10 h-10 md:w-12 md:h-12">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="text-blue-500" :class="ringsReady ? 'transition-all duration-1000 ease-out' : ''" :stroke-dasharray="liveData.memoryUsage + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="text-[9px] font-black text-blue-700" x-text="Math.round(liveData.memoryUsage) + '%'">{{ number_format($memoryUsage, 0) }}%</span>
+                    </div>
+                </div>
+                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">Mem<br>Usage</span>
+            </div>
+
+            <div class="group flex flex-row items-center gap-2">
+                <div class="relative w-10 h-10 md:w-12 md:h-12">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="{{ $diskUsage > 90 ? 'text-red-500' : 'text-slate-500' }} transition-all duration-1000 ease-out" stroke-dasharray="{{ $diskUsage }}, 100" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="text-[9px] font-black {{ $diskUsage > 90 ? 'text-red-700' : 'text-slate-700' }}">{{ number_format($diskUsage, 0) }}%</span>
+                    </div>
+                </div>
+                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">Disk<br>Usage</span>
+            </div>
+
+            <div class="group flex flex-row items-center gap-2">
+                <div class="relative w-10 h-10 md:w-12 md:h-12">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="text-red-500" :class="ringsReady ? 'transition-all duration-1000 ease-out' : ''" :stroke-dasharray="Math.min(liveData.cpuTemp, 100) + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="text-[9px] font-black text-red-600" x-text="liveData.cpuTemp + '°'">{{ $cpuTemp ?? 0 }}°</span>
+                    </div>
+                </div>
+                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Temp</span>
+            </div>
+        </div>
+    </div>
+
+    {{-- Network Pulse --}}
+    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col relative overflow-hidden group h-full justify-center">
+        <div class="absolute -right-4 -top-4 w-20 h-20 bg-blue-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
+        <div class="relative z-10 w-full h-full flex flex-col">
+            <div class="flex justify-between items-center w-full mb-6">
+                <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em]">Network Throughput</h3>
+                <div class="flex items-center gap-2 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100">
+                    @forelse($gateways ?? [] as $gw)
+                        <div class="flex items-center gap-1.5" title="{{ $gw['name'] }}: {{ $gw['status'] }}">
+                            <div class="w-1.5 h-1.5 rounded-full {{ $gw['status'] === 'none' || $gw['status'] === 'online' ? 'bg-green-500' : 'bg-red-500' }}"></div>
+                            <span class="text-[7px] font-black uppercase text-slate-400">{{ substr($gw['name'], 0, 4) }}</span>
+                        </div>
+                    @empty
+                        <div class="flex items-center gap-2 opacity-80">
+                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+                            <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Live Monitoring</span>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+            
+            <div class="flex flex-row justify-around items-center w-full flex-1">
+                <div class="flex flex-col items-center">
+                    <div class="flex items-baseline gap-1 mb-1">
+                        <span class="text-xl font-black text-[#1565C0]" x-text="liveData.bandwidthDown.toFixed(2)">{{ number_format($bandwidthDown ?? 0, 2) }}</span>
+                        <span class="text-[10px] font-bold text-[#A1887F] uppercase">Mbps</span>
+                    </div>
+                    <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Download</span>
+                </div>
+
+                <div class="flex flex-col items-center">
+                    <div class="flex items-baseline gap-1 mb-1">
+                        <span class="text-xl font-black text-[#059669]" x-text="liveData.bandwidthUp.toFixed(2)">{{ number_format($bandwidthUp ?? 0, 2) }}</span>
+                        <span class="text-[10px] font-bold text-[#A1887F] uppercase">Mbps</span>
+                    </div>
+                    <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Upload</span>
+                </div>
+
+                <div class="flex flex-col items-center">
+                    <div class="flex items-baseline gap-1 mb-1">
+                        <span class="text-xl font-black text-[#3E2723]" x-text="liveData.activeGuests">{{ $activeGuests ?? 0 }}</span>
+                        <span class="text-[10px] font-bold text-[#A1887F] uppercase">Active</span>
+                    </div>
+                    <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Guest Units</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Row 4: Recent Activity & Splits --}}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <!-- Recent Transactions -->
+    {{-- Recent Transactions --}}
     <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
         <div class="flex justify-between items-center mb-6">
             <div>
@@ -333,7 +335,14 @@
                                 <span class="text-[10px] text-[#A1887F] font-bold">{{ $sale->user->name ?? 'POS Register' }}</span>
                             </td>
                             <td class="py-4">
-                                <span class="px-2 py-0.5 bg-[#FAFAFA] border border-[#F0E6D2] text-[9px] font-black uppercase rounded text-[#8D6E63]">
+                                @php
+                                    $methodColor = match($sale->payment_method) {
+                                        'Cash' => 'bg-gray-100 text-gray-500 border-gray-200',
+                                        'E-Wallet', 'GCash' => 'bg-blue-50 text-blue-700 border-blue-100',
+                                        default => 'bg-amber-50 text-amber-700 border-amber-100',
+                                    };
+                                @endphp
+                                <span class="px-2 py-0.5 {{ $methodColor }} border text-[9px] font-black uppercase rounded">
                                     {{ $sale->payment_method }}
                                 </span>
                             </td>
@@ -401,6 +410,7 @@
     </div>
 </div>
 
+{{-- Row 5: Vouchers & Performance --}}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     {{-- Recent Vouchers --}}
     <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
@@ -466,7 +476,7 @@
             </div>
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Top Selling Performance</h3>
-                <p class="text-xs text-[#A1887F] font-medium mt-1">Most popular items by volume.</p>
+                <p class="text-xs text-[#A1887F] font-medium mt-1">Units sold vs. Revenue impact.</p>
             </div>
         </div>
 
@@ -477,11 +487,19 @@
                         <span class="text-xs font-black text-[#8D6E63] bg-[#FDF8F5] w-8 h-8 rounded-lg flex items-center justify-center border border-[#F0E6D2]">0{{ $loop->iteration }}</span>
                         <span class="text-sm font-bold text-[#3E2723] capitalize">{{ $item->item_name }}</span>
                     </div>
-                    <div class="flex flex-col items-end">
-                        <span class="text-xs font-black text-[#3E2723]">
-                            {{ (int)$item->total_qty }}
-                        </span>
-                        <span class="text-[9px] font-bold text-[#A1887F] uppercase tracking-tighter">Units Sold</span>
+                    <div class="flex gap-6 items-center">
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs font-black text-[#3E2723]">
+                                {{ (int)$item->total_qty }}
+                            </span>
+                            <span class="text-[9px] font-bold text-[#A1887F] uppercase tracking-tighter">Units</span>
+                        </div>
+                        <div class="flex flex-col items-end min-w-[70px]">
+                            <span class="text-xs font-black text-[#2E7D32]">
+                                ₱{{ number_format($item->total_revenue, 0) }}
+                            </span>
+                            <span class="text-[9px] font-bold text-green-800/60 uppercase tracking-tighter">Revenue</span>
+                        </div>
                     </div>
                 </a>
             @empty
@@ -492,7 +510,7 @@
 </div>
 
     <!-- AI Insights Modal -->
-    <div x-show="showInsightsModal" x-cloak class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50" style="display: none;">
+    <div x-show="showInsightsModal" x-cloak class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
         <div @click.away="showInsightsModal = false" class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full border-t-8 border-[#3E2723] max-h-[90vh] flex flex-col relative z-50">
             <button @click="showInsightsModal = false" class="absolute top-6 right-6 text-[#A1887F] hover:text-[#3E2723] transition">
                 <x-lucide-x class="w-6 h-6" />
@@ -565,7 +583,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-baseline gap-2">
+                        <div class="flex items-baseline gap-2" :class="(insights?.meta?.is_calibrating && !insights?.forecast_total) ? 'blur-sm select-none' : ''">
                             <template x-if="insights?.forecast_range_low">
                                 <p class="text-2xl font-black text-[#2E7D32]" x-text="'₱' + Number(insights?.forecast_range_low || 0).toLocaleString(undefined, {maximumFractionDigits: 0})"></p>
                             </template>
@@ -574,12 +592,47 @@
                             </template>
                             <p class="text-2xl font-black text-[#2E7D32]" x-text="'₱' + Number(insights?.forecast_range_high || insights?.forecast_total || 0).toLocaleString(undefined, {maximumFractionDigits: 0})"></p>
                         </div>
+                        <template x-if="insights?.meta?.is_calibrating">
+                            <div class="absolute top-2 right-2 flex items-center justify-center pointer-events-none">
+                                <div class="bg-[#3E2723] text-white px-2 py-1 rounded-full shadow-lg border border-amber-500/30">
+                                    <p class="text-[7px] font-black uppercase tracking-widest flex items-center gap-1">
+                                        <x-lucide-clock class="w-2.5 h-2.5 animate-spin text-amber-500" /> Calibrating
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
                         <p class="text-[10px] text-[#A1887F] font-medium mt-1">7-Day Projected Range</p>
                     </div>
-                    <div class="bg-[#FDF8F5] border border-[#F0E6D2] p-4 rounded-2xl">
+                    <div class="bg-[#FDF8F5] border border-[#F0E6D2] p-4 rounded-2xl relative">
                         <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1">Trend Analysis</p>
-                        <p class="text-sm font-bold text-[#3E2723]" x-text="insights?.trend_analysis"></p>
+                        <p class="text-sm font-bold text-[#3E2723]" :class="(insights?.meta?.is_calibrating && !insights?.forecast_total) ? 'blur-sm select-none' : ''" x-text="insights?.trend_analysis"></p>
                     </div>
+                </div>
+
+                <!-- Demand Risk Alerts -->
+                <template x-if="(insights?.demand_risk_alerts || []).length > 0">
+                    <div class="space-y-3 shrink-0">
+                        <h4 class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] flex items-center gap-2">
+                            <x-lucide-alert-octagon class="w-3 h-3 text-red-500" /> Demand Risk Alerts
+                        </h4>
+                        <div class="grid grid-cols-1 gap-3">
+                            <template x-for="alert in insights.demand_risk_alerts" :key="alert.item">
+                                <div class="flex items-center justify-between p-3 rounded-xl border" :class="alert.severity === 'danger' ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-1.5 rounded-lg" :class="alert.severity === 'danger' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'">
+                                            <x-lucide-package-x class="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-black text-[#3E2723]" x-text="alert.item"></p>
+                                            <p class="text-[10px] font-bold opacity-70" :class="alert.severity === 'danger' ? 'text-red-800' : 'text-amber-800'" x-text="alert.reason"></p>
+                                        </div>
+                                    </div>
+                                    <x-lucide-chevron-right class="w-4 h-4 opacity-30" />
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
                 </div>
 
                 <div class="bg-amber-50 border border-amber-200/50 p-5 rounded-2xl shrink-0">
@@ -615,7 +668,9 @@
                                 <li class="bg-white border border-[#F0E6D2] px-3 py-2 rounded-xl text-xs font-bold text-[#3E2723] flex items-center before:content-[''] before:w-1.5 before:h-1.5 before:bg-green-500 before:rounded-full before:mr-2" x-text="item"></li>
                             </template>
                             <template x-if="(insights?.predicted_top_products || []).length === 0">
-                                <li class="text-xs text-[#A1887F] italic">Gathering more data...</li>
+                                <li class="text-[10px] text-[#A1887F] italic flex items-center gap-2">
+                                    <x-lucide-activity class="w-3 h-3 animate-pulse" /> Analyzing performance...
+                                </li>
                             </template>
                         </ul>
                     </div>
@@ -628,7 +683,9 @@
                                 <li class="bg-white border border-[#F0E6D2] px-3 py-2 rounded-xl text-xs font-bold text-[#8D6E63] flex items-center before:content-[''] before:w-1.5 before:h-1.5 before:bg-red-400 before:rounded-full before:mr-2" x-text="item"></li>
                             </template>
                             <template x-if="(insights?.predicted_low_products || []).length === 0">
-                                <li class="text-xs text-[#A1887F] italic">Gathering more data...</li>
+                                <li class="text-[10px] text-[#A1887F] italic flex items-center gap-2">
+                                    <x-lucide-activity class="w-3 h-3 animate-pulse" /> Analyzing performance...
+                                </li>
                             </template>
                         </ul>
                     </div>
@@ -658,8 +715,14 @@ document.addEventListener('alpine:init', () => {
             lastRawOut: {{ $rawOut ?? 0 }},
             lastTime: Date.now()
         },
+        // Starts false so the rings' first paint lands directly on the correct value with
+        // no CSS transition active (avoids animating from the SVG's unset-stroke-dasharray
+        // default, which renders as a full ring, down to the real value on every page load).
+        // Only flips true after that first paint, so later live-poll updates still animate.
+        ringsReady: false,
 
         init() {
+            this.$nextTick(() => { this.ringsReady = true; });
             // Start polling for live stats every 3 seconds
             setInterval(() => this.fetchLiveStats(), 3000);
         },
@@ -701,16 +764,26 @@ document.addEventListener('alpine:init', () => {
             if (this.insights) return;
             this.loadingInsights = true;
             this.errorInsights = null;
+            
             try {
+                console.log('Fetching AI insights...');
                 const response = await fetch('{{ route("admin.ai.insights") }}');
+                
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                }
+
                 const data = await response.json();
-                if (data && data.forecast_total !== undefined) {
+                console.log('AI insights received:', data);
+
+                if (data && (data.forecast_total !== undefined || data.is_calibrating)) {
                     this.insights = data;
                 } else {
-                    this.errorInsights = "Unable to generate insights. Service unavailable.";
+                    this.errorInsights = "Unable to generate insights. Data schema mismatch.";
                 }
             } catch (error) {
-                this.errorInsights = "Failed to connect to analytical servers.";
+                console.error('AI Insights Error:', error);
+                this.errorInsights = error.message || "Failed to connect to analytical servers.";
             } finally {
                 this.loadingInsights = false;
             }

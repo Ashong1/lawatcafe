@@ -3,10 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ingredient;
+use App\Services\IngredientService;
 use Illuminate\Http\Request;
 
 class IngredientController extends Controller
 {
+    public function __construct(protected IngredientService $ingredients)
+    {
+    }
+
     // 1. Display the ingredients
     public function index()
     {
@@ -87,6 +92,17 @@ class IngredientController extends Controller
         }
 
         return redirect()->route('inventory.ingredients.index')->with('success', 'Ingredient updated!');
+    }
+
+    public function addStock(Request $request, Ingredient $ingredient)
+    {
+        $request->validate([
+            'added_amount' => 'required|numeric|min:0.01',
+        ]);
+
+        $result = $this->ingredients->addStock($ingredient, (float) $request->added_amount, auth()->id());
+
+        return redirect()->route('inventory.ingredients.index')->with('success', $result['message']);
     }
 
     public function logs(Request $request)

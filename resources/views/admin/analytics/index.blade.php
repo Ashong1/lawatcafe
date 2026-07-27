@@ -40,7 +40,7 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-col md:flex-row items-stretch gap-12">
+                    <div class="flex flex-col md:flex-row items-stretch gap-12 {{ (($aiForecast['is_calibrating'] ?? false) && !($aiForecast['forecast_total'] ?? 0)) ? 'blur-sm select-none pointer-events-none' : '' }}">
                         <div class="flex-1 flex flex-col justify-center">
                             <div class="flex items-baseline gap-3 mb-2">
                                 <span class="text-6xl font-black text-[#3E2723] tracking-tighter">₱{{ number_format($aiForecast['forecast_total'] ?? 0, 0) }}</span>
@@ -55,7 +55,7 @@
                                 <div class="grid grid-cols-4 md:grid-cols-7 gap-2">
                                     @foreach($aiForecast['daily_forecast'] ?? [] as $day)
                                         <div class="text-center">
-                                            <p class="text-[8px] font-bold text-[#A1887F] uppercase mb-1">{{ substr($day['day'], 0, 3) }}</p>
+                                            <p class="text-[8px] font-bold text-[#A1887F] uppercase mb-1">{{ $day['day'] }}</p>
                                             <p class="text-[10px] font-black text-[#3E2723]">₱{{ number_format($day['amount'], 0) }}</p>
                                         </div>
                                     @endforeach
@@ -72,9 +72,13 @@
                                 <div class="h-[1px] w-full bg-[#F0E6D2]"></div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-[9px] font-black text-[#A1887F] uppercase tracking-widest">Confidence Score</span>
-                                    <div class="flex gap-1">
-                                        @for($i = 0; $i < 5; $i++)
-                                            <div class="w-1.5 h-1.5 rounded-full {{ $i < 4 ? 'bg-amber-500' : 'bg-gray-200' }}"></div>
+                                    @php
+                                        $confScore = $aiForecast['meta']['confidence_score'] ?? 1;
+                                        $confStars = ceil(($confScore / 7) * 5);
+                                    @endphp
+                                    <div class="flex gap-1" title="Confidence: {{ $aiForecast['meta']['confidence_label'] ?? 'Gathering' }}">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            <div class="w-1.5 h-1.5 rounded-full {{ $i <= $confStars ? 'bg-amber-500' : 'bg-gray-200' }}"></div>
                                         @endfor
                                     </div>
                                 </div>
@@ -91,6 +95,17 @@
                             </div>
                         </div>
                     </div>
+                    @if($aiForecast['is_calibrating'] ?? false)
+                        <div class="absolute top-4 right-4 flex flex-col items-end gap-2 z-20 pointer-events-none">
+                            <div class="bg-[#3E2723] text-white px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-3 border border-amber-500/30 animate-in slide-in-from-right duration-500">
+                                <x-lucide-clock class="w-4 h-4 text-amber-500 animate-spin" />
+                                <div class="text-right">
+                                    <p class="text-[8px] font-black uppercase tracking-[0.2em] leading-none mb-0.5">Calibrating</p>
+                                    <p class="text-[7px] font-medium text-amber-200/60 leading-none">{{ $aiForecast['calibration_days_remaining'] ?? 7 }} days left</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -142,7 +157,7 @@
                             </div>
                         @endforeach
                     </div>
-                    <p class="text-[9px] text-green-700/60 mt-3 font-bold uppercase tracking-tighter">Expected to see +15% volume increase</p>
+                    <p class="text-[9px] text-green-700/60 mt-3 font-bold uppercase tracking-tighter">Expected to see volume increase based on trend</p>
                 </div>
 
                 <!-- Low Demand Risk -->
@@ -153,15 +168,23 @@
                             Demand Risk Alert
                         </span>
                     </div>
-                    <div class="space-y-2">
-                        @foreach($aiForecast['predicted_low_products'] ?? ['Analyzing historical dips...'] as $prod)
+                    <div class="space-y-4">
+                        @forelse($aiForecast['demand_risk_alerts'] ?? [] as $alert)
                             <div class="bg-red-50/50 border border-red-100 rounded-2xl p-4 flex items-center justify-between group/item hover:bg-red-50 transition-colors">
-                                <span class="text-sm font-bold text-red-800 capitalize">{{ $prod }}</span>
-                                <x-lucide-alert-triangle class="w-3 h-3 text-red-400 opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                                <div>
+                                    <span class="text-sm font-bold text-red-800 capitalize block">{{ $alert['item'] }}</span>
+                                    <span class="text-[10px] font-bold text-red-600 uppercase">{{ $alert['reason'] }}</span>
+                                </div>
+                                <x-lucide-alert-triangle class="w-4 h-4 text-red-400 group-hover/item:scale-110 transition-transform" />
                             </div>
-                        @endforeach
+                        @empty
+                            <div class="p-6 border-2 border-dashed border-[#F0E6D2] rounded-3xl text-center">
+                                <x-lucide-shield-check class="w-8 h-8 text-green-200 mx-auto mb-3" />
+                                <p class="text-[10px] font-bold text-[#8D6E63] uppercase tracking-widest leading-tight">Demand Stable</p>
+                                <p class="text-[9px] text-[#A1887F] font-medium mt-1">No major risks detected in existing data.</p>
+                            </div>
+                        @endforelse
                     </div>
-                    <p class="text-[9px] text-red-700/60 mt-3 font-bold uppercase tracking-tighter">Recommendation: Review pricing or stock levels</p>
                 </div>
             </div>
 

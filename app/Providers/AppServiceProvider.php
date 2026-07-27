@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,5 +27,25 @@ class AppServiceProvider extends ServiceProvider
         // if (str_starts_with(config('app.url'), 'https://') && !filter_var(request()->getHost(), FILTER_VALIDATE_IP)) {
         //     \Illuminate\Support\Facades\URL::forceScheme('https');
         // }
+
+        // Guest captive-portal endpoints have no Laravel auth and (by design,
+        // since guests land here via a cross-origin redirect) are CSRF-exempt,
+        // so these limiters are the only thing standing between them and
+        // automated abuse (voucher brute-forcing, AI cost draining, etc).
+        RateLimiter::for('voucher-auth', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
+
+        RateLimiter::for('portal-payment', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
+
+        RateLimiter::for('portal-upload', function (Request $request) {
+            return Limit::perMinute(5)->by($request->ip());
+        });
+
+        RateLimiter::for('portal-chat', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
     }
 }
