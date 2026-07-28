@@ -404,8 +404,8 @@
                     inventory: {{ request()->is('inventory*') ? 'true' : 'false' }},
                     network: {{ request()->is('network*') ? 'true' : 'false' }},
                     finance: {{ request()->is('sales*') ? 'true' : 'false' }},
-                    settings: {{ request()->is('accounts*') || request()->routeIs('admin.settings.store') ? 'true' : 'false' }},
-                    system: {{ request()->routeIs('admin.settings.ai-providers*') || request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'true' : 'false' }}
+                    settings: {{ request()->is('accounts*') || request()->routeIs('admin.settings.store') || request()->routeIs('admin.settings.ai-providers*') ? 'true' : 'false' }},
+                    system: {{ request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'true' : 'false' }}
                 }
             }))
         })
