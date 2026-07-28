@@ -108,7 +108,15 @@
             </div>
         </div>
 
-        <nav class="flex-1 px-3 py-6 space-y-2 overflow-y-auto overflow-x-hidden">
+        {{-- See the matching comment in layouts/admin.blade.php: clicking a
+             nav link inside this scrollable container gives it focus by
+             default browser behavior, instantly scrolling the nav if the
+             link is below the fold. Suppressing focus-on-mousedown avoids
+             that jump without affecting the click's own navigation. --}}
+        <nav x-ref="sidebarNav"
+             class="flex-1 px-3 py-6 space-y-2 overflow-y-auto overflow-x-hidden"
+             @mousedown="if ($event.target.closest('a')) $event.preventDefault()"
+             @scroll.passive="saveNavScroll($event.target.scrollTop)">
             <a href="{{ route('staff.dashboard') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('staff.dashboard') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Staff Hub">
                 <x-lucide-layout-dashboard class="w-6 h-6 shrink-0 {{ request()->routeIs('staff.dashboard') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen"
@@ -251,6 +259,18 @@
                 menus: {
                     inventory: {{ request()->is('inventory*') ? 'true' : 'false' }},
                     network: {{ request()->is('network*') ? 'true' : 'false' }}
+                },
+                init() {
+                    // See the matching logic in layouts/admin.blade.php: a fresh
+                    // page load always starts the sidebar nav scrolled to the top,
+                    // which resets any scroll position the user had — restore it.
+                    const savedScroll = parseInt(localStorage.getItem('lawatkape_staff_nav_scroll'), 10);
+                    if (!isNaN(savedScroll)) {
+                        this.$refs.sidebarNav.scrollTop = savedScroll;
+                    }
+                },
+                saveNavScroll(top) {
+                    localStorage.setItem('lawatkape_staff_nav_scroll', top);
                 }
             }))
         })

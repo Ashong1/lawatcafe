@@ -108,7 +108,19 @@
             </div>
         </div>
 
-        <nav class="flex-1 px-3 py-6 space-y-1 overflow-y-auto overflow-x-hidden">
+        {{-- When a submenu is expanded this nav overflows and becomes its own
+             scroll container. Clicking a link inside it gives that link
+             focus by default browser behavior, and if it's below the fold
+             the browser instantly scrolls the nav to reveal it — a visible
+             jump that happens on the OLD page an instant before the click's
+             navigation actually takes over. mousedown.preventDefault()
+             suppresses focus-on-click (a standard technique) without
+             affecting the click's own default action, so the link still
+             navigates normally. --}}
+        <nav x-ref="sidebarNav"
+             class="flex-1 px-3 py-6 space-y-1 overflow-y-auto overflow-x-hidden"
+             @mousedown="if ($event.target.closest('a')) $event.preventDefault()"
+             @scroll.passive="saveNavScroll($event.target.scrollTop)">
             <a href="/dashboard" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('dashboard') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Dashboard">
                 <x-lucide-layout-dashboard class="w-5 h-5 shrink-0 {{ request()->is('dashboard') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen"
@@ -449,6 +461,21 @@
                     this.$watch('menus', (value) => {
                         localStorage.setItem('lawatkape_admin_menus', JSON.stringify(value));
                     });
+
+                    // The sidebar nav is a fresh DOM node on every full page load, so
+                    // its scrollTop always starts at 0 — if a submenu is expanded and
+                    // the user was scrolled down to see a link near the bottom,
+                    // clicking that link resets the new page's sidebar to the top.
+                    // That reset reads as the sidebar "auto-scrolling up" on every
+                    // navigation. Restore whatever position was last saved, before the
+                    // user has a chance to see the reset.
+                    const savedScroll = parseInt(localStorage.getItem('lawatkape_admin_nav_scroll'), 10);
+                    if (!isNaN(savedScroll)) {
+                        this.$refs.sidebarNav.scrollTop = savedScroll;
+                    }
+                },
+                saveNavScroll(top) {
+                    localStorage.setItem('lawatkape_admin_nav_scroll', top);
                 }
             }))
         })
