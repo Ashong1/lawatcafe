@@ -71,29 +71,30 @@
 </div>
 
 {{-- Row 0: System Alerts Ticker --}}
-@if(count($systemAlerts ?? []) > 0)
-<div class="mb-8 space-y-3">
-    @foreach($systemAlerts as $alert)
-    <a href="{{ $alert['action'] }}" class="flex items-center justify-between p-4 {{ $alert['type'] === 'danger' ? 'bg-red-50 border-red-100 text-red-700' : 'bg-amber-50 border-amber-100 text-amber-800' }} border rounded-2xl shadow-sm hover:shadow-md transition-all group">
-        <div class="flex items-center gap-4">
-            <div class="p-2 {{ $alert['type'] === 'danger' ? 'bg-red-100' : 'bg-amber-100' }} rounded-xl group-hover:scale-110 transition-transform">
-                <x-dynamic-component :component="'lucide-' . $alert['icon']" class="w-5 h-5" />
+<div class="mb-8 space-y-3" x-show="live.systemAlerts.length > 0" x-cloak>
+    <template x-for="(alert, index) in live.systemAlerts" :key="index">
+        <a :href="alert.action" class="flex items-center justify-between p-4 border rounded-2xl shadow-sm hover:shadow-md transition-all group"
+           :class="alert.type === 'danger' ? 'bg-red-50 border-red-100 text-red-700' : 'bg-amber-50 border-amber-100 text-amber-800'">
+            <div class="flex items-center gap-4">
+                <div class="p-2 rounded-xl group-hover:scale-110 transition-transform" :class="alert.type === 'danger' ? 'bg-red-100' : 'bg-amber-100'">
+                    <template x-if="alert.icon === 'package-x'"><x-lucide-package-x class="w-5 h-5" /></template>
+                    <template x-if="alert.icon === 'receipt'"><x-lucide-receipt class="w-5 h-5" /></template>
+                    <template x-if="alert.icon !== 'package-x' && alert.icon !== 'receipt'"><x-lucide-alert-triangle class="w-5 h-5" /></template>
+                </div>
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-widest opacity-60">System Attention Required</p>
+                    <p class="text-sm font-bold" x-text="alert.message"></p>
+                </div>
             </div>
-            <div>
-                <p class="text-[10px] font-black uppercase tracking-widest opacity-60">System Attention Required</p>
-                <p class="text-sm font-bold">{{ $alert['message'] }}</p>
-            </div>
-        </div>
-        <x-lucide-chevron-right class="w-5 h-5 opacity-40 group-hover:translate-x-1 transition-transform" />
-    </a>
-    @endforeach
+            <x-lucide-chevron-right class="w-5 h-5 opacity-40 group-hover:translate-x-1 transition-transform" />
+        </a>
+    </template>
 </div>
-@endif
 
 {{-- Row 1: Key Metrics --}}
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     {{-- Active Guests --}}
-    <a href="{{ route('network.sessions') }}" class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#1565C0]/30 transition-all duration-300">
+    <a href="{{ route('network.sessions') }}" class="dash-card-in bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#1565C0]/30 transition-all duration-300">
         <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -106,20 +107,20 @@
     </a>
 
     {{-- Today's Revenue --}}
-    <a href="{{ route('sales.index') }}" class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
+    <a href="{{ route('sales.index') }}" class="dash-card-in [animation-delay:75ms] bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300" :class="flash.todaysSales ? 'ring-2 ring-green-300' : ''">
         <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
                 <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Today's Revenue</h3>
                 <x-lucide-banknote class="w-5 h-5 text-green-600 opacity-50" />
             </div>
-            <p class="text-4xl font-black text-[#2E7D32]">₱{{ number_format($todaysSales, 0) }}</p>
-            <p class="text-[9px] text-green-800/60 font-bold uppercase mt-1">{{ $todaysOrders }} Orders Processed</p>
+            <p class="text-4xl font-black text-[#2E7D32]" x-text="'₱' + Math.round(live.todaysSales).toLocaleString()">₱{{ number_format($todaysSales, 0) }}</p>
+            <p class="text-[9px] text-green-800/60 font-bold uppercase mt-1" x-text="Math.round(live.todaysOrders) + ' Orders Processed'">{{ $todaysOrders }} Orders Processed</p>
         </div>
     </a>
 
     {{-- Wifi Voucher Stock --}}
-    <a href="{{ route('network.vouchers.index') }}" class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
+    <a href="{{ route('network.vouchers.index') }}" class="dash-card-in [animation-delay:150ms] bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300" :class="flash.availableVouchers ? 'ring-2 ring-amber-300' : ''">
         <div class="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -127,7 +128,7 @@
                 <x-lucide-ticket class="w-5 h-5 text-amber-600 opacity-50" />
             </div>
             <div class="flex items-baseline gap-2">
-                <p class="text-4xl font-black text-[#3E2723]">{{ $availableVouchers ?? 0 }}</p>
+                <p class="text-4xl font-black text-[#3E2723]" x-text="Math.round(live.availableVouchers)">{{ $availableVouchers ?? 0 }}</p>
                 <p class="text-xs text-[#A1887F] font-bold uppercase tracking-tighter">Codes</p>
             </div>
             <p class="text-[9px] text-amber-800/60 font-bold uppercase mt-1">Ready for issuance</p>
@@ -135,15 +136,16 @@
     </a>
 
     {{-- Low Stock Alert --}}
-    <a href="{{ route('inventory.ingredients.index') }}" class="bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-red-200 transition-all duration-300 {{ $lowStockCount > 0 ? 'bg-red-50/20' : '' }}">
-        <div class="absolute -right-6 -top-6 w-24 h-24 {{ $lowStockCount > 0 ? 'bg-red-100' : 'bg-green-50' }} rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
+    <a href="{{ route('inventory.ingredients.index') }}" class="dash-card-in [animation-delay:225ms] bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-red-200 transition-all duration-300"
+       :class="[live.lowStockCount > 0 ? 'bg-red-50/20' : '', flash.lowStockCount ? 'ring-2 ring-red-300' : '']">
+        <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full z-0 group-hover:scale-125 transition duration-500" :class="live.lowStockCount > 0 ? 'bg-red-100' : 'bg-green-50'"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
                 <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Low Stock Alert</h3>
-                <x-lucide-alert-triangle class="w-5 h-5 {{ $lowStockCount > 0 ? 'text-red-600' : 'text-green-600' }} opacity-50" />
+                <x-lucide-alert-triangle class="w-5 h-5 opacity-50" x-bind:class="live.lowStockCount > 0 ? 'text-red-600' : 'text-green-600'" />
             </div>
-            <p class="text-4xl font-black {{ $lowStockCount > 0 ? 'text-[#C62828]' : 'text-green-700' }}">{{ $lowStockCount ?? 0 }}</p>
-            <p class="text-[9px] {{ $lowStockCount > 0 ? 'text-red-800/60' : 'text-green-800/60' }} font-bold uppercase mt-1">{{ $lowStockCount > 0 ? 'Restock Required' : 'Inventory Healthy' }}</p>
+            <p class="text-4xl font-black" :class="live.lowStockCount > 0 ? 'text-[#C62828]' : 'text-green-700'" x-text="Math.round(live.lowStockCount)">{{ $lowStockCount ?? 0 }}</p>
+            <p class="text-[9px] font-bold uppercase mt-1" :class="live.lowStockCount > 0 ? 'text-red-800/60' : 'text-green-800/60'" x-text="live.lowStockCount > 0 ? 'Restock Required' : 'Inventory Healthy'">{{ $lowStockCount > 0 ? 'Restock Required' : 'Inventory Healthy' }}</p>
         </div>
     </a>
 </div>
@@ -175,7 +177,7 @@
                 </div>
             </div>
             <p class="text-sm font-medium leading-relaxed text-amber-50/90 italic">
-                "{{ $aiBrief }}"
+                "<span x-text="live.aiBrief">{{ $aiBrief }}</span>"
             </p>
         </div>
 
@@ -189,8 +191,7 @@
 </div>
 
 {{-- Row 2.5: Proactive AI Findings (from the agent:analyze scheduled job) --}}
-@if(($aiFindings ?? collect())->isNotEmpty())
-<div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
+<div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8" x-show="live.aiFindings.length > 0" x-cloak>
     <div class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-3">
             <div class="p-2 bg-amber-100 rounded-xl">
@@ -198,9 +199,7 @@
             </div>
             <div>
                 <h3 class="text-sm font-black uppercase tracking-widest text-[#3E2723]">Barista AI Findings</h3>
-                @if($latestAiNarrative ?? null)
-                    <p class="text-[10px] text-[#8D6E63] font-medium mt-0.5">{{ $latestAiNarrative }}</p>
-                @endif
+                <p class="text-[10px] text-[#8D6E63] font-medium mt-0.5" x-show="live.latestAiNarrative" x-text="live.latestAiNarrative"></p>
             </div>
         </div>
         <div class="flex items-center gap-4 shrink-0">
@@ -213,18 +212,17 @@
         </div>
     </div>
     <div class="space-y-2">
-        @foreach($aiFindings as $finding)
-        <div class="flex items-start gap-3 p-3 rounded-xl {{ $finding->severity === 'danger' ? 'bg-red-50' : 'bg-amber-50' }}">
-            <span class="w-2 h-2 rounded-full mt-1.5 shrink-0 {{ $finding->severity === 'danger' ? 'bg-red-500' : 'bg-amber-500' }}"></span>
-            <div class="flex-1 min-w-0">
-                <p class="text-xs font-bold {{ $finding->severity === 'danger' ? 'text-red-800' : 'text-amber-900' }}">{{ $finding->summary }}</p>
-                <p class="text-[9px] font-bold uppercase tracking-widest {{ $finding->severity === 'danger' ? 'text-red-500/70' : 'text-amber-700/60' }} mt-0.5">{{ $finding->created_at->diffForHumans() }}</p>
+        <template x-for="(finding, index) in live.aiFindings" :key="index">
+            <div class="flex items-start gap-3 p-3 rounded-xl" :class="finding.severity === 'danger' ? 'bg-red-50' : 'bg-amber-50'">
+                <span class="w-2 h-2 rounded-full mt-1.5 shrink-0" :class="finding.severity === 'danger' ? 'bg-red-500' : 'bg-amber-500'"></span>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold" :class="finding.severity === 'danger' ? 'text-red-800' : 'text-amber-900'" x-text="finding.summary"></p>
+                    <p class="text-[9px] font-bold uppercase tracking-widest mt-0.5" :class="finding.severity === 'danger' ? 'text-red-500/70' : 'text-amber-700/60'" x-text="finding.created_at"></p>
+                </div>
             </div>
-        </div>
-        @endforeach
+        </template>
     </div>
 </div>
-@endif
 
 {{-- Row 3: System Health & Network --}}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -366,32 +364,22 @@
                     </tr>
                 </thead>
                 <tbody class="text-sm">
-                    @forelse($recentSales ?? [] as $sale)
+                    <template x-for="(sale, index) in live.recentSales" :key="index">
                         <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                             <td class="py-4">
-                                <span class="font-black text-[#3E2723] block">{{ substr($sale->transaction_number, -8) }}</span>
-                                <span class="text-[10px] text-[#A1887F] font-bold">{{ $sale->user->name ?? 'POS Register' }}</span>
+                                <span class="font-black text-[#3E2723] block" x-text="sale.transaction_number.slice(-8)"></span>
+                                <span class="text-[10px] text-[#A1887F] font-bold" x-text="sale.user_name"></span>
                             </td>
                             <td class="py-4">
-                                @php
-                                    $methodColor = match($sale->payment_method) {
-                                        'Cash' => 'bg-gray-100 text-gray-500 border-gray-200',
-                                        'E-Wallet', 'GCash' => 'bg-blue-50 text-blue-700 border-blue-100',
-                                        default => 'bg-amber-50 text-amber-700 border-amber-100',
-                                    };
-                                @endphp
-                                <span class="px-2 py-0.5 {{ $methodColor }} border text-[9px] font-black uppercase rounded">
-                                    {{ $sale->payment_method }}
-                                </span>
+                                <span class="px-2 py-0.5 border text-[9px] font-black uppercase rounded" :class="paymentMethodClass(sale.payment_method)" x-text="sale.payment_method"></span>
                             </td>
-                            <td class="py-4 text-right font-black text-[#2E7D32]">₱{{ number_format($sale->total_amount, 2) }}</td>
-                            <td class="py-4 text-[#A1887F] text-xs font-medium text-right">{{ $sale->created_at->diffForHumans() }}</td>
+                            <td class="py-4 text-right font-black text-[#2E7D32]" x-text="'₱' + sale.total_amount.toFixed(2)"></td>
+                            <td class="py-4 text-[#A1887F] text-xs font-medium text-right" x-text="sale.created_at"></td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="py-16 text-center text-[#A1887F] text-xs italic">No transactions recorded today.</td>
-                        </tr>
-                    @endforelse
+                    </template>
+                    <tr x-show="live.recentSales.length === 0">
+                        <td colspan="4" class="py-16 text-center text-[#A1887F] text-xs italic">No transactions recorded today.</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -404,31 +392,23 @@
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Revenue Split</h3>
             </div>
             <div class="space-y-4">
-                @php
-                    $cashTotal = $paymentBreakdown['Cash'] ?? 0;
-                    $ewalletTotal = $paymentBreakdown['E-Wallet'] ?? 0;
-                    $total = $cashTotal + $ewalletTotal;
-                    $cashPct = $total > 0 ? ($cashTotal / $total) * 100 : 0;
-                    $ewalletPct = $total > 0 ? ($ewalletTotal / $total) * 100 : 0;
-                @endphp
-                
                 <div>
                     <div class="flex justify-between text-[10px] mb-2 font-black uppercase tracking-widest">
                         <span class="text-[#8D6E63]">Physical Cash</span>
-                        <span class="text-[#3E2723]">₱{{ number_format($cashTotal, 0) }}</span>
+                        <span class="text-[#3E2723]" x-text="'₱' + Math.round(live.paymentBreakdown['Cash'] || 0).toLocaleString()"></span>
                     </div>
                     <div class="w-full bg-[#FAFAFA] rounded-full h-1.5 overflow-hidden">
-                        <div class="bg-[#3E2723] h-full transition-all duration-700" style="width: {{ $cashPct }}%"></div>
+                        <div class="bg-[#3E2723] h-full transition-all duration-700" :style="'width: ' + cashPct() + '%'"></div>
                     </div>
                 </div>
 
                 <div>
                     <div class="flex justify-between text-[10px] mb-2 font-black uppercase tracking-widest">
                         <span class="text-[#8D6E63]">E-Wallet Automation</span>
-                        <span class="text-[#3E2723]">₱{{ number_format($ewalletTotal, 0) }}</span>
+                        <span class="text-[#3E2723]" x-text="'₱' + Math.round(live.paymentBreakdown['E-Wallet'] || 0).toLocaleString()"></span>
                     </div>
                     <div class="w-full bg-[#FAFAFA] rounded-full h-1.5 overflow-hidden">
-                        <div class="bg-blue-600 h-full transition-all duration-700" style="width: {{ $ewalletPct }}%"></div>
+                        <div class="bg-blue-600 h-full transition-all duration-700" :style="'width: ' + ewalletPct() + '%'"></div>
                     </div>
                 </div>
             </div>
@@ -440,7 +420,7 @@
             <div class="relative flex justify-center items-center h-48">
                 <canvas id="categoryChart"></canvas>
                 <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-12">
-                    <span class="text-2xl font-black text-[#3E2723] leading-none">{{ $totalItemsSold ?? 0 }}</span>
+                    <span class="text-2xl font-black text-[#3E2723] leading-none" x-text="live.totalItemsSold">{{ $totalItemsSold ?? 0 }}</span>
                     <span class="text-[7px] font-black text-[#8D6E63] uppercase tracking-widest mt-1">Total Items</span>
                 </div>
             </div>
@@ -470,37 +450,25 @@
                     </tr>
                 </thead>
                 <tbody class="text-sm">
-                    @forelse($recentVouchers ?? [] as $voucher)
+                    <template x-for="(voucher, index) in live.recentVouchers" :key="index">
                         <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
-                            <td class="py-4 font-black text-amber-700 tracking-widest font-mono">{{ $voucher->code }}</td>
+                            <td class="py-4 font-black text-amber-700 tracking-widest font-mono" x-text="voucher.code"></td>
                             <td class="py-4">
                                 <div class="flex flex-col items-center">
-                                    <span class="text-[#8D6E63] font-bold text-center">{{ $voucher->duration_minutes }}m</span>
-                                    @if($voucher->is_used && $voucher->used_at)
-                                        @php
-                                            $totalSecs = $voucher->duration_minutes * 60;
-                                            $elapsed = $voucher->used_at->diffInSeconds(now());
-                                            $remaining = max(0, $totalSecs - $elapsed);
-                                            $percent = $totalSecs > 0 ? ($remaining / $totalSecs) * 100 : 0;
-                                            $color = $percent > 50 ? 'bg-green-500' : ($percent > 20 ? 'bg-amber-500' : 'bg-red-500');
-                                        @endphp
-                                        @if($remaining > 0)
-                                            <div class="w-12 bg-gray-100 rounded-full h-1 mt-1 overflow-hidden" title="{{ round($remaining/60) }} mins remaining">
-                                                <div class="{{ $color }} h-full transition-all duration-1000" style="width: {{ $percent }}%"></div>
-                                            </div>
-                                        @endif
-                                    @endif
+                                    <span class="text-[#8D6E63] font-bold text-center" x-text="voucher.duration_minutes + 'm'"></span>
+                                    <template x-if="voucher.percent !== null && voucher.percent > 0">
+                                        <div class="w-12 bg-gray-100 rounded-full h-1 mt-1 overflow-hidden" :title="voucher.remaining_minutes + ' mins remaining'">
+                                            <div class="h-full transition-all duration-1000" :class="voucher.color" :style="'width: ' + voucher.percent + '%'"></div>
+                                        </div>
+                                    </template>
                                 </div>
                             </td>
                             <td class="py-4 text-right">
-                                <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest {{ $voucher->is_used ? 'bg-gray-100 text-gray-400' : 'bg-green-50 text-green-700 border border-green-100' }}">
-                                    {{ $voucher->is_used ? 'Claimed' : 'Valid' }}
-                                </span>
+                                <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest" :class="voucher.is_used ? 'bg-gray-100 text-gray-400' : 'bg-green-50 text-green-700 border border-green-100'" x-text="voucher.is_used ? 'Claimed' : 'Valid'"></span>
                             </td>
                         </tr>
-                    @empty
-                        <tr><td colspan="3" class="py-16 text-center text-[#A1887F] text-xs italic">No vouchers found.</td></tr>
-                    @endforelse
+                    </template>
+                    <tr x-show="live.recentVouchers.length === 0"><td colspan="3" class="py-16 text-center text-[#A1887F] text-xs italic">No vouchers found.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -519,30 +487,25 @@
         </div>
 
         <div class="space-y-5">
-            @forelse($topProducts ?? [] as $item)
-                <a href="{{ route('inventory.products.index', ['search' => $item->item_name]) }}" class="flex items-center justify-between group p-3 hover:bg-[#FDF8F5] rounded-2xl border border-transparent hover:border-[#F0E6D2] transition-all cursor-pointer">
+            <template x-for="(item, index) in live.topProducts" :key="index">
+                <a :href="'{{ route('inventory.products.index') }}?search=' + encodeURIComponent(item.item_name)" class="flex items-center justify-between group p-3 hover:bg-[#FDF8F5] rounded-2xl border border-transparent hover:border-[#F0E6D2] transition-all cursor-pointer">
                     <div class="flex items-center gap-4">
-                        <span class="text-xs font-black text-[#8D6E63] bg-[#FDF8F5] w-8 h-8 rounded-lg flex items-center justify-center border border-[#F0E6D2]">0{{ $loop->iteration }}</span>
-                        <span class="text-sm font-bold text-[#3E2723] capitalize">{{ $item->item_name }}</span>
+                        <span class="text-xs font-black text-[#8D6E63] bg-[#FDF8F5] w-8 h-8 rounded-lg flex items-center justify-center border border-[#F0E6D2]" x-text="'0' + (index + 1)"></span>
+                        <span class="text-sm font-bold text-[#3E2723] capitalize" x-text="item.item_name"></span>
                     </div>
                     <div class="flex gap-6 items-center">
                         <div class="flex flex-col items-end">
-                            <span class="text-xs font-black text-[#3E2723]">
-                                {{ (int)$item->total_qty }}
-                            </span>
+                            <span class="text-xs font-black text-[#3E2723]" x-text="Math.round(item.total_qty)"></span>
                             <span class="text-[9px] font-bold text-[#A1887F] uppercase tracking-tighter">Units</span>
                         </div>
                         <div class="flex flex-col items-end min-w-[70px]">
-                            <span class="text-xs font-black text-[#2E7D32]">
-                                ₱{{ number_format($item->total_revenue, 0) }}
-                            </span>
+                            <span class="text-xs font-black text-[#2E7D32]" x-text="'₱' + Math.round(item.total_revenue).toLocaleString()"></span>
                             <span class="text-[9px] font-bold text-green-800/60 uppercase tracking-tighter">Revenue</span>
                         </div>
                     </div>
                 </a>
-            @empty
-                <p class="text-xs text-[#A1887F] text-center italic py-4">No sales data yet.</p>
-            @endforelse
+            </template>
+            <p class="text-xs text-[#A1887F] text-center italic py-4" x-show="live.topProducts.length === 0">No sales data yet.</p>
         </div>
     </div>
 </div>
@@ -759,20 +722,82 @@ document.addEventListener('alpine:init', () => {
         // Only flips true after that first paint, so later live-poll updates still animate.
         ringsReady: false,
 
+        // Business/AI data — polled far less often than the system pulse above,
+        // since revenue/orders/AI findings don't need 3s granularity. Seeded
+        // from the same data the initial page render already used.
+        live: {
+            todaysSales: {{ (float) ($todaysSales ?? 0) }},
+            todaysOrders: {{ (int) ($todaysOrders ?? 0) }},
+            availableVouchers: {{ (int) ($availableVouchers ?? 0) }},
+            lowStockCount: {{ (int) ($lowStockCount ?? 0) }},
+            systemAlerts: @js($systemAlerts ?? []),
+            aiBrief: @js($aiBrief ?? ''),
+            aiFindings: @js(($aiFindings ?? collect())->map(fn ($f) => [
+                'summary' => $f->summary,
+                'severity' => $f->severity,
+                'created_at' => $f->created_at->diffForHumans(),
+            ])->all()),
+            latestAiNarrative: @js($latestAiNarrative ?? null),
+            recentSales: @js(($recentSales ?? collect())->map(fn ($s) => [
+                'transaction_number' => $s->transaction_number,
+                'total_amount' => (float) $s->total_amount,
+                'payment_method' => $s->payment_method,
+                'user_name' => $s->user->name ?? 'POS Register',
+                'created_at' => $s->created_at->diffForHumans(),
+            ])->all()),
+            recentVouchers: @js(($recentVouchers ?? collect())->map(function ($v) {
+                $percent = null; $remainingMinutes = null; $color = null;
+                if ($v->is_used && $v->used_at) {
+                    $totalSecs = $v->duration_minutes * 60;
+                    $elapsed = $v->used_at->diffInSeconds(now());
+                    $remaining = max(0, $totalSecs - $elapsed);
+                    $percent = $totalSecs > 0 ? ($remaining / $totalSecs) * 100 : 0;
+                    $remainingMinutes = round($remaining / 60);
+                    $color = $percent > 50 ? 'bg-green-500' : ($percent > 20 ? 'bg-amber-500' : 'bg-red-500');
+                }
+                return [
+                    'code' => $v->code,
+                    'duration_minutes' => $v->duration_minutes,
+                    'is_used' => $v->is_used,
+                    'percent' => $percent,
+                    'remaining_minutes' => $remainingMinutes,
+                    'color' => $color,
+                ];
+            })->all()),
+            topProducts: @js(($topProducts ?? collect())->map(fn ($p) => [
+                'item_name' => $p->item_name,
+                'total_qty' => (float) $p->total_qty,
+                'total_revenue' => (float) $p->total_revenue,
+            ])->all()),
+            paymentBreakdown: @js($paymentBreakdown ?? []),
+            chartLabels: @js($chartLabels ?? []),
+            chartValues: @js($chartValues ?? []),
+            lastWeekValues: @js($lastWeekValues ?? []),
+            categoryData: @js($categoryData ?? []),
+            totalItemsSold: {{ (int) ($totalItemsSold ?? 0) }},
+        },
+        // Briefly true right after a headline number changes, so a subtle
+        // highlight ring can flash on the stat card — cleared via setTimeout.
+        flash: {},
+        charts: { sales: null, category: null },
+
         init() {
             this.$nextTick(() => { this.ringsReady = true; });
             // Start polling for live stats every 3 seconds
             setInterval(() => this.fetchLiveStats(), 3000);
+
+            this.initCharts();
+            setInterval(() => this.fetchBusinessData(), 20000);
         },
 
         async fetchLiveStats() {
             try {
                 const response = await fetch('{{ route("admin.live-stats") }}', { headers: { 'Accept': 'application/json' } });
                 const data = await response.json();
-                
+
                 const now = Date.now();
                 const deltaT = (now - this.liveData.lastTime) / 1000;
-                
+
                 if (deltaT > 0 && this.liveData.lastRawIn > 0) {
                     const inDelta = data.rawIn - this.liveData.lastRawIn;
                     const outDelta = data.rawOut - this.liveData.lastRawOut;
@@ -786,7 +811,7 @@ document.addEventListener('alpine:init', () => {
                 this.liveData.lastRawIn = data.rawIn;
                 this.liveData.lastRawOut = data.rawOut;
                 this.liveData.lastTime = now;
-                
+
                 this.liveData.cpuLoad = data.cpuLoad;
                 this.liveData.memoryUsage = data.memoryUsage;
                 this.liveData.cpuTemp = data.cpuTemp;
@@ -797,16 +822,203 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        initCharts() {
+            const ctxSales = document.getElementById('salesTrendChart');
+            if (ctxSales) {
+                const contextSales = ctxSales.getContext('2d');
+                let gradientFill = contextSales.createLinearGradient(0, 0, 0, 300);
+                gradientFill.addColorStop(0, 'rgba(62, 39, 35, 0.2)');
+                gradientFill.addColorStop(1, 'rgba(62, 39, 35, 0)');
+
+                this.charts.sales = new Chart(contextSales, {
+                    type: 'line',
+                    data: {
+                        labels: this.live.chartLabels,
+                        datasets: [
+                            {
+                                label: 'Current Week (₱)',
+                                data: this.live.chartValues,
+                                borderColor: '#3E2723',
+                                backgroundColor: gradientFill,
+                                borderWidth: 4,
+                                pointBackgroundColor: '#FFFFFF',
+                                pointBorderColor: '#3E2723',
+                                pointHoverBackgroundColor: '#3E2723',
+                                pointHoverBorderColor: '#FFFFFF',
+                                pointHoverBorderWidth: 2,
+                                pointRadius: 5,
+                                pointHoverRadius: 7,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Previous Week (₱)',
+                                data: this.live.lastWeekValues,
+                                borderColor: '#A1887F',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                fill: false,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                align: 'end',
+                                labels: {
+                                    boxWidth: 10,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle',
+                                    font: { family: 'Montserrat', size: 10, weight: 'bold' }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: '#3E2723',
+                                titleFont: { family: 'Montserrat', size: 13 },
+                                bodyFont: { family: 'Montserrat', size: 14, weight: 'bold' },
+                                padding: 12,
+                                displayColors: false,
+                                cornerRadius: 12,
+                                callbacks: {
+                                    label: function(context) {
+                                        return '₱ ' + context.parsed.y.toFixed(2);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { font: { family: 'Montserrat', weight: '500' }, color: '#8D6E63' } },
+                            y: { beginAtZero: true, grid: { borderDash: [5, 5], color: '#F0E6D2' }, ticks: { font: { family: 'Montserrat', weight: '500' }, color: '#8D6E63', callback: function(value) { return '₱' + value; } } }
+                        }
+                    }
+                });
+            }
+
+            const ctxCategory = document.getElementById('categoryChart');
+            if (ctxCategory) {
+                this.charts.category = new Chart(ctxCategory.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(this.live.categoryData),
+                        datasets: [{
+                            data: Object.values(this.live.categoryData),
+                            backgroundColor: ['#3E2723', '#8D6E63', '#D7CCC8', '#EFEBE9'],
+                            borderWidth: 3,
+                            borderColor: '#FFFFFF',
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { family: 'Montserrat', usePointStyle: true, pointStyle: 'circle', padding: 15, color: '#4A3B32', font: { weight: '600', size: 10 } }
+                            }
+                        }
+                    }
+                });
+            }
+        },
+
+        flashKey(key) {
+            this.flash[key] = true;
+            setTimeout(() => { this.flash[key] = false; }, 700);
+        },
+
+        // Tweens live[key] from its current value to `to` over `duration`ms
+        // (ease-out cubic) instead of jumping straight to the new number —
+        // the text-content equivalent of the ring gauges' CSS transitions.
+        animateNumber(key, to, duration = 600) {
+            const from = this.live[key] ?? 0;
+            if (from === to) return;
+            const start = performance.now();
+            const step = (now) => {
+                const progress = Math.min((now - start) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                this.live[key] = from + (to - from) * eased;
+                if (progress < 1) requestAnimationFrame(step);
+                else this.live[key] = to;
+            };
+            requestAnimationFrame(step);
+        },
+
+        async fetchBusinessData() {
+            try {
+                const qs = window.location.search;
+                const response = await fetch('{{ route("admin.dashboard.live-data") }}' + qs, { headers: { 'Accept': 'application/json' } });
+                const data = await response.json();
+
+                ['todaysSales', 'todaysOrders', 'availableVouchers', 'lowStockCount'].forEach((key) => {
+                    if (Math.round(this.live[key]) !== Math.round(data[key])) {
+                        this.flashKey(key);
+                        this.animateNumber(key, data[key]);
+                    }
+                });
+
+                this.live.systemAlerts = data.systemAlerts;
+                this.live.aiBrief = data.aiBrief;
+                this.live.aiFindings = data.aiFindings;
+                this.live.latestAiNarrative = data.latestAiNarrative;
+                this.live.recentSales = data.recentSales;
+                this.live.recentVouchers = data.recentVouchers;
+                this.live.topProducts = data.topProducts;
+                this.live.paymentBreakdown = data.paymentBreakdown;
+                this.live.totalItemsSold = data.totalItemsSold;
+
+                // Chart.js animates the data transition itself via update().
+                if (this.charts.sales) {
+                    this.charts.sales.data.labels = data.chartLabels;
+                    this.charts.sales.data.datasets[0].data = data.chartValues;
+                    this.charts.sales.data.datasets[1].data = data.lastWeekValues;
+                    this.charts.sales.update();
+                }
+                if (this.charts.category) {
+                    this.charts.category.data.labels = Object.keys(data.categoryData);
+                    this.charts.category.data.datasets[0].data = Object.values(data.categoryData);
+                    this.charts.category.update();
+                }
+            } catch (error) {
+                console.error('Failed to fetch dashboard business data:', error);
+            }
+        },
+
+        cashPct() {
+            const cash = this.live.paymentBreakdown['Cash'] || 0;
+            const ewallet = this.live.paymentBreakdown['E-Wallet'] || 0;
+            const total = cash + ewallet;
+            return total > 0 ? (cash / total) * 100 : 0;
+        },
+        ewalletPct() {
+            const cash = this.live.paymentBreakdown['Cash'] || 0;
+            const ewallet = this.live.paymentBreakdown['E-Wallet'] || 0;
+            const total = cash + ewallet;
+            return total > 0 ? (ewallet / total) * 100 : 0;
+        },
+        paymentMethodClass(method) {
+            if (method === 'Cash') return 'bg-gray-100 text-gray-500 border-gray-200';
+            if (method === 'E-Wallet' || method === 'GCash') return 'bg-blue-50 text-blue-700 border-blue-100';
+            return 'bg-amber-50 text-amber-700 border-amber-100';
+        },
+
         async getInsights() {
             this.showInsightsModal = true;
             if (this.insights) return;
             this.loadingInsights = true;
             this.errorInsights = null;
-            
+
             try {
                 console.log('Fetching AI insights...');
                 const response = await fetch('{{ route("admin.ai.insights") }}', { headers: { 'Accept': 'application/json' } });
-                
+
                 if (!response.ok) {
                     throw new Error(`Server returned ${response.status}: ${response.statusText}`);
                 }
@@ -827,119 +1039,6 @@ document.addEventListener('alpine:init', () => {
             }
         }
     }));
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // 1. Initialize Line Chart (Sales Trend)
-    const ctxSales = document.getElementById('salesTrendChart');
-    if (ctxSales) {
-        const contextSales = ctxSales.getContext('2d');
-        let gradientFill = contextSales.createLinearGradient(0, 0, 0, 300);
-        gradientFill.addColorStop(0, 'rgba(62, 39, 35, 0.2)'); 
-        gradientFill.addColorStop(1, 'rgba(62, 39, 35, 0)');
-
-        new Chart(contextSales, {
-            type: 'line',
-            data: {
-                labels: {!! json_encode($chartLabels ?? []) !!},
-                datasets: [
-                    {
-                        label: 'Current Week (₱)',
-                        data: {!! json_encode($chartValues ?? []) !!},
-                        borderColor: '#3E2723', 
-                        backgroundColor: gradientFill,
-                        borderWidth: 4,
-                        pointBackgroundColor: '#FFFFFF',
-                        pointBorderColor: '#3E2723',
-                        pointHoverBackgroundColor: '#3E2723',
-                        pointHoverBorderColor: '#FFFFFF',
-                        pointHoverBorderWidth: 2,
-                        pointRadius: 5,
-                        pointHoverRadius: 7,
-                        fill: true,
-                        tension: 0.4 
-                    },
-                    {
-                        label: 'Previous Week (₱)',
-                        data: {!! json_encode($lastWeekValues ?? []) !!},
-                        borderColor: '#A1887F',
-                        borderWidth: 2,
-                        borderDash: [5, 5],
-                        pointRadius: 0,
-                        fill: false,
-                        tension: 0.4
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { 
-                        display: true,
-                        position: 'top',
-                        align: 'end',
-                        labels: {
-                            boxWidth: 10,
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            font: { family: 'Montserrat', size: 10, weight: 'bold' }
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: '#3E2723', 
-                        titleFont: { family: 'Montserrat', size: 13 },
-                        bodyFont: { family: 'Montserrat', size: 14, weight: 'bold' },
-                        padding: 12,
-                        displayColors: false,
-                        cornerRadius: 12,
-                        callbacks: {
-                            label: function(context) {
-                                return '₱ ' + context.parsed.y.toFixed(2);
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: { grid: { display: false }, ticks: { font: { family: 'Montserrat', weight: '500' }, color: '#8D6E63' } },
-                    y: { beginAtZero: true, grid: { borderDash: [5, 5], color: '#F0E6D2' }, ticks: { font: { family: 'Montserrat', weight: '500' }, color: '#8D6E63', callback: function(value) { return '₱' + value; } } }
-                }
-            }
-        });
-    }
-
-    // 2. Initialize Doughnut Chart (Categories)
-    const ctxCategory = document.getElementById('categoryChart');
-    if (ctxCategory) {
-        const categoryData = {!! json_encode($categoryData ?? []) !!};
-        new Chart(ctxCategory.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(categoryData),
-                datasets: [{
-                    data: Object.values(categoryData),
-                    backgroundColor: ['#3E2723', '#8D6E63', '#D7CCC8', '#EFEBE9'],
-                    borderWidth: 3,
-                    borderColor: '#FFFFFF',
-                    hoverOffset: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '75%', 
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { family: 'Montserrat', usePointStyle: true, pointStyle: 'circle', padding: 15, color: '#4A3B32', font: { weight: '600', size: 10 } }
-                    }
-                }
-            }
-        });
-    }
 });
 </script>
 @endsection

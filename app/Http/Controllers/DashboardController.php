@@ -16,75 +16,9 @@ class DashboardController extends Controller
     public function index(Request $request, \App\Services\OpnSenseService $opnsense)
     {
         $range = $request->get('range', 'today');
-        
+
         // 1. Basic Stats for the Top Cards
-        $stats = Cache::remember("dashboard_stats_{$range}", 60, function () use ($range) {
-            $startDate = Carbon::today();
-            $endDate = Carbon::now();
-
-            switch ($range) {
-                case 'yesterday':
-                    $startDate = Carbon::yesterday();
-                    $endDate = Carbon::yesterday()->endOfDay();
-                    break;
-                case 'week':
-                    $startDate = Carbon::now()->startOfWeek();
-                    break;
-                case 'month':
-                    $startDate = Carbon::now()->startOfMonth();
-                    break;
-            }
-
-            $lowStockThreshold = (int) \App\Models\Setting::get('low_stock_threshold', 500);
-            
-            // System Alerts Logic
-            $alerts = [];
-            
-            // Low Stock Alert
-            $lowStockItems = Ingredient::where('current_stock', '<', $lowStockThreshold)->get();
-            if ($lowStockItems->count() > 0) {
-                $alerts[] = [
-                    'type' => 'warning',
-                    'icon' => 'package-x',
-                    'message' => $lowStockItems->count() . ' items reaching low stock threshold.',
-                    'action' => route('inventory.ingredients.index')
-                ];
-            }
-
-            // Failed Payments Alert (Unclaimed for > 24 hours)
-            $unclaimedPayments = \App\Models\EwalletPayment::where('is_used', false)
-                ->where('created_at', '<', now()->subHours(24))
-                ->count();
-            if ($unclaimedPayments > 0) {
-                $alerts[] = [
-                    'type' => 'danger',
-                    'icon' => 'receipt',
-                    'message' => $unclaimedPayments . ' payment verifications pending > 24h.',
-                    'action' => route('network.verifications')
-                ];
-            }
-
-            return [
-                'availableVouchers' => Voucher::where('is_used', false)->count(),
-                'todaysSales' => Sale::whereBetween('created_at', [$startDate, $endDate])->sum('total_amount'),
-                'todaysOrders' => Sale::whereBetween('created_at', [$startDate, $endDate])->count(),
-                'lowStockCount' => $lowStockItems->count(),
-                'systemAlerts' => $alerts,
-                'recentVouchers' => Voucher::orderBy('created_at', 'desc')->take(5)->get(),
-                'recentSales' => Sale::with('user')->orderBy('created_at', 'desc')->take(5)->get(),
-                'topProducts' => \App\Models\SaleItem::select('item_name', DB::raw('SUM(quantity) as total_qty'), DB::raw('SUM(quantity * price) as total_revenue'))
-                    ->whereBetween('created_at', [$startDate, $endDate])
-                    ->groupBy('item_name')
-                    ->orderByDesc('total_qty')
-                    ->take(5)
-                    ->get(),
-                'paymentBreakdown' => Sale::whereBetween('created_at', [$startDate, $endDate])
-                    ->select('payment_method', DB::raw('SUM(total_amount) as total'))
-                    ->groupBy('payment_method')
-                    ->pluck('total', 'payment_method')
-                    ->toArray()
-            ];
-        });
+        $stats = $this->getStats($range);
 
         // 2. Network & Sessions ( Mbps speed calculation removed from server, raw counters sent)
         $networkPulse = Cache::remember('network_pulse_initial', 15, function () use ($opnsense) {
@@ -127,55 +61,7 @@ class DashboardController extends Controller
         });
 
         // 3. Chart Data
-        $charts = Cache::remember('dashboard_charts', 300, function () {
-            $salesData = Sale::selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
-                ->where('created_at', '>=', Carbon::now()->subDays(6))
-                ->groupBy('date')
-                ->orderBy('date', 'ASC')
-                ->get()
-                ->pluck('total', 'date')
-                ->toArray();
-            
-            $lastWeekSales = Sale::selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
-                ->where('created_at', '>=', Carbon::now()->subDays(13))
-                ->where('created_at', '<', Carbon::now()->subDays(6))
-                ->groupBy('date')
-                ->orderBy('date', 'ASC')
-                ->get()
-                ->pluck('total', 'date')
-                ->toArray();
-
-            $chartLabels = [];
-            $chartValues = [];
-            $lastWeekValues = [];
-            for ($i = 6; $i >= 0; $i--) {
-                $date = Carbon::now()->subDays($i)->format('Y-m-d');
-                $lastWeekDate = Carbon::now()->subDays($i + 7)->format('Y-m-d');
-                
-                $chartLabels[] = Carbon::parse($date)->format('M d');
-                $chartValues[] = $salesData[$date] ?? 0;
-                $lastWeekValues[] = $lastWeekSales[$lastWeekDate] ?? 0;
-            }
-
-            $categoryData = Product::selectRaw('category, COUNT(*) as count')
-                ->groupBy('category')
-                ->pluck('count', 'category')
-                ->toArray();
-                
-            if (empty($categoryData)) {
-                $categoryData = \App\Models\Category::pluck('name')->mapWithKeys(function($name) {
-                    return [$name => 0];
-                })->toArray();
-            }
-
-            return [
-                'chartLabels' => $chartLabels,
-                'chartValues' => $chartValues,
-                'lastWeekValues' => $lastWeekValues,
-                'categoryData' => $categoryData,
-                'totalItemsSold' => array_sum($categoryData)
-            ];
-        });
+        $charts = $this->getCharts();
 
         // 4. System Health
         $systemHealth = Cache::remember('system_health', 30, function () {
@@ -222,25 +108,207 @@ class DashboardController extends Controller
             ];
         });
 
-        // 5. AI Brief Summary
-        $aiBrief = Cache::get('barista_ai_brief', 'Store data is being analyzed for strategic insights...');
+        // 5-6. AI Brief + proactive findings feed
+        $ai = $this->getAiData();
 
-        // 6. Proactive AI findings feed (from the agent:analyze scheduled job) —
-        // admins see every audience, staff (see StaffController) only 'staff'-tagged ones.
+        return view('dashboard', array_merge($stats, $networkPulse, $charts, $systemHealth, $ai));
+    }
+
+    /**
+     * Basic stats for the top cards + tables — extracted from index() so the
+     * same cached computation can be reused by liveBusinessData() for polling.
+     */
+    private function getStats(string $range): array
+    {
+        return Cache::remember("dashboard_stats_{$range}", 60, function () use ($range) {
+            $startDate = Carbon::today();
+            $endDate = Carbon::now();
+
+            switch ($range) {
+                case 'yesterday':
+                    $startDate = Carbon::yesterday();
+                    $endDate = Carbon::yesterday()->endOfDay();
+                    break;
+                case 'week':
+                    $startDate = Carbon::now()->startOfWeek();
+                    break;
+                case 'month':
+                    $startDate = Carbon::now()->startOfMonth();
+                    break;
+            }
+
+            $lowStockThreshold = (int) \App\Models\Setting::get('low_stock_threshold', 500);
+
+            // System Alerts Logic
+            $alerts = [];
+
+            // Low Stock Alert
+            $lowStockItems = Ingredient::where('current_stock', '<', $lowStockThreshold)->get();
+            if ($lowStockItems->count() > 0) {
+                $alerts[] = [
+                    'type' => 'warning',
+                    'icon' => 'package-x',
+                    'message' => $lowStockItems->count() . ' items reaching low stock threshold.',
+                    'action' => route('inventory.ingredients.index')
+                ];
+            }
+
+            // Failed Payments Alert (Unclaimed for > 24 hours)
+            $unclaimedPayments = \App\Models\EwalletPayment::where('is_used', false)
+                ->where('created_at', '<', now()->subHours(24))
+                ->count();
+            if ($unclaimedPayments > 0) {
+                $alerts[] = [
+                    'type' => 'danger',
+                    'icon' => 'receipt',
+                    'message' => $unclaimedPayments . ' payment verifications pending > 24h.',
+                    'action' => route('network.verifications')
+                ];
+            }
+
+            return [
+                'availableVouchers' => Voucher::where('is_used', false)->count(),
+                'todaysSales' => Sale::whereBetween('created_at', [$startDate, $endDate])->sum('total_amount'),
+                'todaysOrders' => Sale::whereBetween('created_at', [$startDate, $endDate])->count(),
+                'lowStockCount' => $lowStockItems->count(),
+                'systemAlerts' => $alerts,
+                'recentVouchers' => Voucher::orderBy('created_at', 'desc')->take(5)->get(),
+                'recentSales' => Sale::with('user')->orderBy('created_at', 'desc')->take(5)->get(),
+                'topProducts' => \App\Models\SaleItem::select('item_name', DB::raw('SUM(quantity) as total_qty'), DB::raw('SUM(quantity * price) as total_revenue'))
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->groupBy('item_name')
+                    ->orderByDesc('total_qty')
+                    ->take(5)
+                    ->get(),
+                'paymentBreakdown' => Sale::whereBetween('created_at', [$startDate, $endDate])
+                    ->select('payment_method', DB::raw('SUM(total_amount) as total'))
+                    ->groupBy('payment_method')
+                    ->pluck('total', 'payment_method')
+                    ->toArray()
+            ];
+        });
+    }
+
+    /** Chart Data (7-day revenue trend + category distribution) — extracted from index(). */
+    private function getCharts(): array
+    {
+        return Cache::remember('dashboard_charts', 300, function () {
+            $salesData = Sale::selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
+                ->where('created_at', '>=', Carbon::now()->subDays(6))
+                ->groupBy('date')
+                ->orderBy('date', 'ASC')
+                ->get()
+                ->pluck('total', 'date')
+                ->toArray();
+
+            $lastWeekSales = Sale::selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
+                ->where('created_at', '>=', Carbon::now()->subDays(13))
+                ->where('created_at', '<', Carbon::now()->subDays(6))
+                ->groupBy('date')
+                ->orderBy('date', 'ASC')
+                ->get()
+                ->pluck('total', 'date')
+                ->toArray();
+
+            $chartLabels = [];
+            $chartValues = [];
+            $lastWeekValues = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i)->format('Y-m-d');
+                $lastWeekDate = Carbon::now()->subDays($i + 7)->format('Y-m-d');
+
+                $chartLabels[] = Carbon::parse($date)->format('M d');
+                $chartValues[] = $salesData[$date] ?? 0;
+                $lastWeekValues[] = $lastWeekSales[$lastWeekDate] ?? 0;
+            }
+
+            $categoryData = Product::selectRaw('category, COUNT(*) as count')
+                ->groupBy('category')
+                ->pluck('count', 'category')
+                ->toArray();
+
+            if (empty($categoryData)) {
+                $categoryData = \App\Models\Category::pluck('name')->mapWithKeys(function($name) {
+                    return [$name => 0];
+                })->toArray();
+            }
+
+            return [
+                'chartLabels' => $chartLabels,
+                'chartValues' => $chartValues,
+                'lastWeekValues' => $lastWeekValues,
+                'categoryData' => $categoryData,
+                'totalItemsSold' => array_sum($categoryData)
+            ];
+        });
+    }
+
+    /** AI brief + proactive findings feed — extracted from index(). */
+    private function getAiData(): array
+    {
         $aiFindings = \App\Models\AiFinding::latest()->take(6)->get();
         $latestAiRun = \App\Models\AiAnalysisRun::latest()->first();
 
-        return view('dashboard', array_merge(
-            $stats,
-            $networkPulse,
-            $charts,
-            $systemHealth,
-            [
-                'aiBrief' => $aiBrief,
-                'aiFindings' => $aiFindings,
-                'latestAiNarrative' => $latestAiRun?->narrative,
-            ]
-        ));
+        return [
+            'aiBrief' => Cache::get('barista_ai_brief', 'Store data is being analyzed for strategic insights...'),
+            'aiFindings' => $aiFindings,
+            'latestAiNarrative' => $latestAiRun?->narrative,
+        ];
+    }
+
+    /**
+     * JSON polling endpoint for the admin dashboard's business/AI data
+     * (revenue, orders, alerts, AI brief/findings, tables, charts) — the
+     * slower-changing counterpart to liveStats() below, which only covers
+     * system/network gauges. Reuses the same cached computations index()
+     * uses, so frequent polling is cheap (hits cache, not fresh queries).
+     */
+    public function liveBusinessData(Request $request)
+    {
+        $range = $request->get('range', 'today');
+        $stats = $this->getStats($range);
+        $charts = $this->getCharts();
+        $ai = $this->getAiData();
+
+        return response()->json([
+            'availableVouchers' => $stats['availableVouchers'],
+            'todaysSales' => (float) $stats['todaysSales'],
+            'todaysOrders' => $stats['todaysOrders'],
+            'lowStockCount' => $stats['lowStockCount'],
+            'systemAlerts' => $stats['systemAlerts'],
+            'recentVouchers' => $stats['recentVouchers']->map(fn ($v) => [
+                'code' => $v->code,
+                'duration_minutes' => $v->duration_minutes,
+                'tier' => $v->tier,
+                'is_used' => $v->is_used,
+                'created_at' => $v->created_at->format('M d, h:i A'),
+            ]),
+            'recentSales' => $stats['recentSales']->map(fn ($s) => [
+                'transaction_number' => $s->transaction_number,
+                'total_amount' => (float) $s->total_amount,
+                'payment_method' => $s->payment_method,
+                'user_name' => $s->user?->name ?? 'N/A',
+                'created_at' => $s->created_at->format('h:i A'),
+            ]),
+            'topProducts' => $stats['topProducts']->map(fn ($p) => [
+                'item_name' => $p->item_name,
+                'total_qty' => (float) $p->total_qty,
+                'total_revenue' => (float) $p->total_revenue,
+            ]),
+            'paymentBreakdown' => $stats['paymentBreakdown'],
+            'chartLabels' => $charts['chartLabels'],
+            'chartValues' => $charts['chartValues'],
+            'lastWeekValues' => $charts['lastWeekValues'],
+            'categoryData' => $charts['categoryData'],
+            'totalItemsSold' => $charts['totalItemsSold'],
+            'aiBrief' => $ai['aiBrief'],
+            'aiFindings' => $ai['aiFindings']->map(fn ($f) => [
+                'summary' => $f->summary,
+                'severity' => $f->severity,
+                'created_at' => $f->created_at->diffForHumans(),
+            ]),
+            'latestAiNarrative' => $ai['latestAiNarrative'],
+        ]);
     }
 
     public function getAIInsights(\App\Services\AIService $ai)

@@ -105,6 +105,7 @@ Route::middleware(['auth'])->group(function () {
         // Admin Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/admin/live-stats', [DashboardController::class, 'liveStats'])->name('admin.live-stats'); // Added live-stats route
+        Route::get('/admin/dashboard/live-data', [DashboardController::class, 'liveBusinessData'])->name('admin.dashboard.live-data');
         Route::post('/admin/ai/chat', [DashboardController::class, 'adminChat'])->name('admin.ai.chat')->middleware('throttle:admin-ai-chat');
         Route::get('/admin/ai/insights', [DashboardController::class, 'getAIInsights'])->name('admin.ai.insights');
         Route::get('/admin/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('admin.analytics');
