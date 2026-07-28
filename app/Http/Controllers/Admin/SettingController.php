@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Setting;
 use App\Services\Agent\PermissionResolver;
 use App\Services\Agent\ToolRegistry;
+use App\Services\AIService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
@@ -39,6 +40,30 @@ class SettingController extends Controller
         ];
 
         return view('admin.settings.integrations', compact('settings'));
+    }
+
+    /**
+     * Display AI provider/model configuration and availability status.
+     */
+    public function aiProviders(AIService $ai)
+    {
+        $providers = $ai->getProviderStatuses();
+
+        return view('admin.settings.ai-providers', compact('providers'));
+    }
+
+    /**
+     * Ping every model under a provider right now and record fresh status.
+     */
+    public function testAiProvider(string $provider, AIService $ai)
+    {
+        if (!in_array($provider, ['gemini', 'groq', 'openrouter'], true)) {
+            abort(404);
+        }
+
+        $result = $ai->testProvider($provider);
+
+        return redirect()->back()->with('success', "Tested {$provider}: {$result['ok']} model(s) healthy, {$result['failed']} failed.");
     }
 
     /**

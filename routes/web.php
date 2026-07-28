@@ -178,6 +178,10 @@ Route::middleware(['auth'])->group(function () {
             Route::middleware([RoleMiddleware::class . ':super_admin'])->group(function () {
                 Route::get('/integrations', [\App\Http\Controllers\Admin\SettingController::class, 'integrations'])->name('integrations');
                 Route::post('/integrations', [\App\Http\Controllers\Admin\SettingController::class, 'updateIntegrations'])->name('integrations.update');
+                Route::get('/ai-providers', [\App\Http\Controllers\Admin\SettingController::class, 'aiProviders'])->name('ai-providers');
+                Route::post('/ai-providers/{provider}/test', [\App\Http\Controllers\Admin\SettingController::class, 'testAiProvider'])
+                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->name('ai-providers.test');
                 Route::get('/network', [\App\Http\Controllers\Admin\SettingController::class, 'network'])->name('network');
                 Route::post('/network', [\App\Http\Controllers\Admin\SettingController::class, 'updateNetwork'])->name('network.update');
                 Route::get('/agent', [\App\Http\Controllers\Admin\SettingController::class, 'agent'])->name('agent');

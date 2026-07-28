@@ -122,6 +122,172 @@ class AIService
         return Cache::has("ai_circuit_open_{$provider}");
     }
 
+    /**
+     * Per-model status cache key. Model names can contain '/' and ':'
+     * (e.g. "openai/gpt-oss-20b:free"), which aren't safe in every cache
+     * backend's key format, so non-alphanumerics are collapsed to '_'.
+     */
+    private function modelStatusCacheKey(string $provider, string $model): string
+    {
+        return 'ai_model_status_' . $provider . '_' . preg_replace('/[^A-Za-z0-9_]/', '_', $model);
+    }
+
+    /**
+     * Records the outcome of a single model attempt, independent of the
+     * provider-level circuit breaker above. Purely additive/observational —
+     * read by AIService::getProviderStatuses() for the admin status page,
+     * never consulted by the cascade itself.
+     */
+    private function recordModelResult(string $provider, string $model, bool $success, ?string $reason = null): void
+    {
+        Cache::put($this->modelStatusCacheKey($provider, $model), [
+            'status' => $success ? 'ok' : 'failed',
+            'reason' => $reason,
+            'at' => now()->timestamp,
+        ], now()->addDays(7));
+    }
+
+    /**
+     * Read-only view of every provider's configuration/circuit-breaker state
+     * and each of its models' last-known status, for the super-admin AI
+     * Provider Status page.
+     */
+    public function getProviderStatuses(): array
+    {
+        $providers = [
+            'gemini' => ['label' => 'Google AI Studio (Gemini)', 'key' => $this->geminiKey, 'models' => $this->geminiModels],
+            'groq' => ['label' => 'Groq', 'key' => $this->groqKey, 'models' => $this->groqModels],
+            'openrouter' => ['label' => 'OpenRouter', 'key' => $this->openRouterKey, 'models' => $this->openRouterModels],
+        ];
+
+        $result = [];
+        foreach ($providers as $provider => $info) {
+            $open = Cache::has("ai_circuit_open_{$provider}");
+
+            $models = array_map(function (string $model) use ($provider) {
+                $cached = Cache::get($this->modelStatusCacheKey($provider, $model));
+                return [
+                    'name' => $model,
+                    'status' => $cached['status'] ?? 'never_tested',
+                    'reason' => $cached['reason'] ?? null,
+                    'at' => isset($cached['at']) ? \Carbon\Carbon::createFromTimestamp($cached['at']) : null,
+                ];
+            }, $info['models']);
+
+            $result[$provider] = [
+                'label' => $info['label'],
+                'configured' => (bool) $info['key'],
+                'circuit' => [
+                    // Laravel's cache drivers don't expose remaining TTL uniformly,
+                    // so "open" is shown without an exact countdown.
+                    'open' => $open,
+                    'failure_count' => (int) Cache::get("ai_circuit_failures_{$provider}", 0),
+                ],
+                'models' => $models,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * On-demand full check: pings every model in a provider's list (not the
+     * shuffled/limited subset the real cascade uses) with a trivial prompt,
+     * recording per-model results and feeding the aggregate into the same
+     * circuit-breaker bookkeeping real traffic uses. Self-contained — does
+     * not call or alter callGeminiLoop()/callGroqLoop()/callOpenRouterLoop(),
+     * so it can't affect real chat/analysis traffic.
+     *
+     * @return array{ok: int, failed: int}
+     */
+    public function testProvider(string $provider): array
+    {
+        $messages = [['role' => 'user', 'content' => 'Reply with the single word: OK.']];
+        $ok = 0;
+        $failed = 0;
+
+        $models = match ($provider) {
+            'gemini' => $this->geminiModels,
+            'groq' => $this->groqModels,
+            'openrouter' => $this->openRouterModels,
+            default => [],
+        };
+
+        foreach ($models as $model) {
+            $success = match ($provider) {
+                'gemini' => $this->testGeminiModel($model, $messages),
+                'groq' => $this->testOpenAiCompatibleModel(
+                    $model,
+                    'https://api.groq.com/openai/v1/chat/completions',
+                    ['Authorization' => 'Bearer ' . $this->groqKey],
+                    $messages,
+                    'groq',
+                ),
+                'openrouter' => $this->testOpenAiCompatibleModel(
+                    $model,
+                    'https://openrouter.ai/api/v1/chat/completions',
+                    ['Authorization' => 'Bearer ' . $this->openRouterKey, 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')],
+                    $messages,
+                    'openrouter',
+                ),
+                default => false,
+            };
+
+            $success ? $ok++ : $failed++;
+        }
+
+        if (in_array($provider, ['gemini', 'groq', 'openrouter'], true) && !empty($models)) {
+            $this->recordProviderResult($provider, $ok > 0);
+        }
+
+        return ['ok' => $ok, 'failed' => $failed];
+    }
+
+    private function testGeminiModel(string $model, array $messages): bool
+    {
+        try {
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . $this->geminiKey;
+            $response = Http::timeout(8)->post($url, ['contents' => $this->buildGeminiContents($messages)]);
+
+            if ($response->successful()) {
+                $normalized = $this->normalizeGeminiResponse($response->json());
+                $msg = $normalized['choices'][0]['message'] ?? null;
+                if ($msg && ($msg['content'] || !empty($msg['tool_calls']))) {
+                    $this->recordModelResult('gemini', $model, true);
+                    return true;
+                }
+            }
+
+            $this->recordModelResult('gemini', $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
+            return false;
+        } catch (\Exception $e) {
+            $this->recordModelResult('gemini', $model, false, 'exception');
+            return false;
+        }
+    }
+
+    private function testOpenAiCompatibleModel(string $model, string $url, array $headers, array $messages, string $provider): bool
+    {
+        try {
+            $response = Http::timeout(8)->withHeaders($headers)->post($url, ['model' => $model, 'messages' => $messages]);
+
+            if ($response->successful()) {
+                $normalized = $this->normalizeOpenAiResponse($response->json());
+                $msg = $normalized['choices'][0]['message'] ?? null;
+                if ($msg && ($msg['content'] || !empty($msg['tool_calls']))) {
+                    $this->recordModelResult($provider, $model, true);
+                    return true;
+                }
+            }
+
+            $this->recordModelResult($provider, $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
+            return false;
+        } catch (\Exception $e) {
+            $this->recordModelResult($provider, $model, false, 'exception');
+            return false;
+        }
+    }
+
     private function recordProviderResult(string $provider, bool $success): void
     {
         $failureKey = "ai_circuit_failures_{$provider}";
@@ -169,7 +335,8 @@ class AIService
                 ['Authorization' => 'Bearer ' . $this->groqKey],
                 $messages,
                 $tools,
-                $onTextDelta
+                $onTextDelta,
+                'groq'
             );
             $this->recordProviderResult('groq', (bool) $response);
             if ($response) return $response;
@@ -182,7 +349,8 @@ class AIService
                 ['Authorization' => 'Bearer ' . $this->openRouterKey, 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')],
                 $messages,
                 $tools,
-                $onTextDelta
+                $onTextDelta,
+                'openrouter'
             );
             $this->recordProviderResult('openrouter', (bool) $response);
             if ($response) return $response;
@@ -215,6 +383,7 @@ class AIService
                 $response = Http::timeout($timeout)->withOptions(['stream' => true])->post($url, $payload);
 
                 if (!$response->successful()) {
+                    $this->recordModelResult('gemini', $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
                     if ($response->status() === 401) break;
                     continue;
                 }
@@ -242,17 +411,20 @@ class AIService
                 });
 
                 if ($sawAny) {
+                    $this->recordModelResult('gemini', $model, true);
                     return ['choices' => [['message' => ['content' => $text ?: null, 'tool_calls' => $toolCalls]]]];
                 }
+                $this->recordModelResult('gemini', $model, false, 'empty_response');
             } catch (\Exception $e) {
                 Log::error("Gemini Stream Loop Exception ({$model}): " . $e->getMessage());
+                $this->recordModelResult('gemini', $model, false, 'exception');
             }
         }
         return null;
     }
 
     /** Shared by Groq and OpenRouter — both speak the OpenAI-compatible streaming delta format. */
-    private function streamOpenAiCompatibleLoop(array $models, string $url, array $headers, array $messages, array $tools, callable $onTextDelta): ?array
+    private function streamOpenAiCompatibleLoop(array $models, string $url, array $headers, array $messages, array $tools, callable $onTextDelta, string $provider): ?array
     {
         $modelsList = $models;
         shuffle($modelsList);
@@ -270,6 +442,7 @@ class AIService
                 $response = Http::timeout($timeout)->withOptions(['stream' => true])->withHeaders($headers)->post($url, $payload);
 
                 if (!$response->successful()) {
+                    $this->recordModelResult($provider, $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
                     if ($response->status() === 401) break;
                     continue;
                 }
@@ -304,10 +477,13 @@ class AIService
                         'arguments' => json_decode($tc['arguments'] ?: '{}', true) ?? [],
                     ], array_values($toolCallsByIndex));
 
+                    $this->recordModelResult($provider, $model, true);
                     return ['choices' => [['message' => ['content' => $text ?: null, 'tool_calls' => $toolCalls]]]];
                 }
+                $this->recordModelResult($provider, $model, false, 'empty_response');
             } catch (\Exception $e) {
                 Log::error("OpenAI-compatible Stream Loop Exception ({$model} @ {$url}): " . $e->getMessage());
+                $this->recordModelResult($provider, $model, false, 'exception');
             }
         }
         return null;
@@ -380,11 +556,16 @@ class AIService
                     $normalized = $this->normalizeGeminiResponse($response->json());
                     $msg = $normalized['choices'][0]['message'];
                     if ($msg['content'] || !empty($msg['tool_calls'])) {
+                        $this->recordModelResult('gemini', $model, true);
                         return $normalized;
                     }
                 }
+                $this->recordModelResult('gemini', $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
                 if ($response->status() === 401) break;
-            } catch (\Exception $e) { Log::error("Gemini Loop Exception ({$model}): " . $e->getMessage()); }
+            } catch (\Exception $e) {
+                Log::error("Gemini Loop Exception ({$model}): " . $e->getMessage());
+                $this->recordModelResult('gemini', $model, false, 'exception');
+            }
         }
         return null;
     }
@@ -406,9 +587,16 @@ class AIService
                     $payload['tools'] = $this->toOpenAiTools($tools);
                 }
                 $response = Http::timeout($timeout)->withHeaders(['Authorization' => 'Bearer ' . $this->groqKey])->post('https://api.groq.com/openai/v1/chat/completions', $payload);
-                if ($response->successful()) return $this->normalizeOpenAiResponse($response->json());
+                if ($response->successful()) {
+                    $this->recordModelResult('groq', $model, true);
+                    return $this->normalizeOpenAiResponse($response->json());
+                }
+                $this->recordModelResult('groq', $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
                 if ($response->status() === 401) break;
-            } catch (\Exception $e) { Log::error("Groq Loop Exception ({$model}): " . $e->getMessage()); }
+            } catch (\Exception $e) {
+                Log::error("Groq Loop Exception ({$model}): " . $e->getMessage());
+                $this->recordModelResult('groq', $model, false, 'exception');
+            }
         }
         return null;
     }
@@ -432,9 +620,16 @@ class AIService
                     $payload['tools'] = $this->toOpenAiTools($tools);
                 }
                 $response = Http::timeout($timeout)->withHeaders(['Authorization' => 'Bearer ' . $this->openRouterKey, 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')])->post('https://openrouter.ai/api/v1/chat/completions', $payload);
-                if ($response->successful()) return $this->normalizeOpenAiResponse($response->json());
+                if ($response->successful()) {
+                    $this->recordModelResult('openrouter', $model, true);
+                    return $this->normalizeOpenAiResponse($response->json());
+                }
+                $this->recordModelResult('openrouter', $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
                 if ($response->status() === 401) break;
-            } catch (\Exception $e) { Log::error("OpenRouter Loop Exception ({$model}): " . $e->getMessage()); }
+            } catch (\Exception $e) {
+                Log::error("OpenRouter Loop Exception ({$model}): " . $e->getMessage());
+                $this->recordModelResult('openrouter', $model, false, 'exception');
+            }
         }
         return null;
     }

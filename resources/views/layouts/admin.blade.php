@@ -216,6 +216,7 @@
                 </button>
                 <div x-show="menus.system && sidebarOpen" x-transition class="pl-11 space-y-1">
                     <a href="{{ route('admin.settings.integrations') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.integrations') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">API Integrations</a>
+                    <a href="{{ route('admin.settings.ai-providers') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.ai-providers*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">AI Providers</a>
                     <a href="{{ route('admin.settings.network') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.network') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Network Config</a>
                     <a href="{{ route('admin.settings.agent') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.agent') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Agent Permissions</a>
                 </div>
