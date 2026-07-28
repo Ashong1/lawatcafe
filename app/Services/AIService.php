@@ -20,10 +20,19 @@ class AIService
 
     // --- FULL FREE MODEL STACK (MAY 2026) ---
 
+    // Corrected 2026-07-28 after a real "Change Model" attempt surfaced that
+    // this whole list was stale: gemini-1.5-pro and gemini-1.5-flash both now
+    // return a genuine 404 ("not found for API version v1beta, or is not
+    // supported for generateContent") against this project's actual API
+    // key — deprecated, not a transient failure. Verified live (both plain
+    // generateContent and function-calling) before replacing them.
+    // gemini-2.0-flash itself is fine — a 429 seen during this same
+    // investigation was a per-minute free-tier rate limit on that specific
+    // model (confirmed via the error's retryDelay/quotaId), not deprecation.
     protected $geminiModels = [
-        'gemini-2.0-flash',           // Latest Primary
-        'gemini-1.5-pro',            // Pro Logic (Free Tier)
-        'gemini-1.5-flash',          // Legacy High-Speed
+        'gemini-2.0-flash',
+        'gemini-flash-latest',       // verified 2026-07-28; Google's stable-alias pointer
+        'gemini-flash-lite-latest',  // verified 2026-07-28; Google's stable-alias pointer
     ];
 
     // Verified 2026-07-27 against the real Groq /models endpoint and each
@@ -79,14 +88,18 @@ class AIService
     // have concrete functional blockers, not just flakiness, so suggesting
     // them would just set an admin up to pick something that can't work.
     protected $additionalFreeModelsCatalog = [
-        // Other Gemini API models with a free AI Studio tier, not yet run
-        // through the same verification pass as the curated three above —
-        // offered as opt-in, clearly-labeled "untested here" suggestions.
+        // Other Gemini API models with a free AI Studio tier. The original
+        // version of this list (gemini-2.5-flash, gemini-2.5-flash-lite,
+        // gemini-1.5-flash-8b, gemini-2.0-flash-lite) was guessed from
+        // general model-naming knowledge, not verified — and turned out to
+        // be mostly wrong (404 "no longer available to new users" for this
+        // project). Replaced 2026-07-28 with models actually confirmed live
+        // (both plain generateContent and function-calling tested) against
+        // this project's real API key.
         'gemini' => [
-            'gemini-2.5-flash',
-            'gemini-2.5-flash-lite',
-            'gemini-2.0-flash-lite',
-            'gemini-1.5-flash-8b',
+            'gemini-3.5-flash-lite',
+            'gemini-3.1-flash-lite',
+            'gemini-3.6-flash',
         ],
         // Left empty deliberately: Groq's hosted-model lineup changes/retires
         // frequently and there's no verified backlog for it the way there is

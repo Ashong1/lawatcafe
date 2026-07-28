@@ -46,15 +46,15 @@ class AiProviderStatusTest extends TestCase
         // Still offers all three curated defaults, including the two that
         // remain active — a plain string list untouched by the active list.
         $this->assertContains('gemini-2.0-flash', $catalog);
-        $this->assertContains('gemini-1.5-pro', $catalog);
-        $this->assertContains('gemini-1.5-flash', $catalog);
+        $this->assertContains('gemini-flash-latest', $catalog);
+        $this->assertContains('gemini-flash-lite-latest', $catalog);
     }
 
     public function test_more_free_models_lists_gemini_and_openrouter_backlogs_but_not_groq(): void
     {
         $statuses = app(AIService::class)->getProviderStatuses();
 
-        $this->assertContains('gemini-2.5-flash', $statuses['gemini']['more_free_models']);
+        $this->assertContains('gemini-3.5-flash-lite', $statuses['gemini']['more_free_models']);
         $this->assertContains('poolside/laguna-s-2.1:free', $statuses['openrouter']['more_free_models']);
         // No verified backlog exists for Groq (see AIService property comment).
         $this->assertEmpty($statuses['groq']['more_free_models']);
