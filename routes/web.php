@@ -181,6 +181,12 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('/ai-providers/{provider}/test', [\App\Http\Controllers\Admin\SettingController::class, 'testAiProvider'])
                     ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
                     ->name('ai-providers.test');
+                Route::post('/ai-providers/{provider}/models/replace', [\App\Http\Controllers\Admin\SettingController::class, 'replaceProviderModel'])
+                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->name('ai-providers.models.replace');
+                Route::post('/ai-providers/{provider}/models/reset', [\App\Http\Controllers\Admin\SettingController::class, 'resetProviderModels'])
+                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->name('ai-providers.models.reset');
                 Route::get('/network', [\App\Http\Controllers\Admin\SettingController::class, 'network'])->name('network');
                 Route::post('/network', [\App\Http\Controllers\Admin\SettingController::class, 'updateNetwork'])->name('network.update');
                 Route::get('/agent', [\App\Http\Controllers\Admin\SettingController::class, 'agent'])->name('agent');

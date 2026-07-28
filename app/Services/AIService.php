@@ -136,6 +136,76 @@ class AIService
     }
 
     /**
+     * The model list actually in use for a provider — an admin-saved override
+     * (Setting "ai_models_{provider}", a JSON array) if one exists, else the
+     * hardcoded default list. Same override-with-code-default pattern as
+     * PermissionResolver's tool-tier overrides.
+     */
+    public function activeModels(string $provider): array
+    {
+        $default = match ($provider) {
+            'gemini' => $this->geminiModels,
+            'groq' => $this->groqModels,
+            'openrouter' => $this->openRouterModels,
+            default => [],
+        };
+
+        $override = json_decode((string) \App\Models\Setting::get("ai_models_{$provider}"), true);
+
+        return (is_array($override) && !empty($override)) ? array_values($override) : $default;
+    }
+
+    /**
+     * Swap one model for another in a provider's active list, then
+     * immediately verify the replacement so the caller gets real feedback
+     * instead of a blind "saved". Reuses the same single-model test helpers
+     * testProvider() uses, so the new model's status is recorded exactly
+     * like any other test.
+     *
+     * @return array{replaced: bool, new_model_ok?: bool}
+     */
+    public function replaceModel(string $provider, string $oldModel, string $newModel): array
+    {
+        $models = $this->activeModels($provider);
+        $index = array_search($oldModel, $models, true);
+        if ($index === false) {
+            return ['replaced' => false];
+        }
+
+        $newModel = trim($newModel);
+        $models[$index] = $newModel;
+        \App\Models\Setting::set("ai_models_{$provider}", json_encode(array_values($models)));
+
+        $messages = [['role' => 'user', 'content' => 'Reply with the single word: OK.']];
+        $ok = match ($provider) {
+            'gemini' => $this->testGeminiModel($newModel, $messages),
+            'groq' => $this->testOpenAiCompatibleModel(
+                $newModel,
+                'https://api.groq.com/openai/v1/chat/completions',
+                ['Authorization' => 'Bearer ' . $this->groqKey],
+                $messages,
+                'groq',
+            ),
+            'openrouter' => $this->testOpenAiCompatibleModel(
+                $newModel,
+                'https://openrouter.ai/api/v1/chat/completions',
+                ['Authorization' => 'Bearer ' . $this->openRouterKey, 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')],
+                $messages,
+                'openrouter',
+            ),
+            default => false,
+        };
+
+        return ['replaced' => true, 'new_model_ok' => $ok];
+    }
+
+    /** Clear a provider's model-list override, reverting to the hardcoded defaults. */
+    public function resetModels(string $provider): void
+    {
+        \App\Models\Setting::set("ai_models_{$provider}", null);
+    }
+
+    /**
      * Records the outcome of a single model attempt, independent of the
      * provider-level circuit breaker above. Purely additive/observational —
      * read by AIService::getProviderStatuses() for the admin status page,
@@ -158,9 +228,9 @@ class AIService
     public function getProviderStatuses(): array
     {
         $providers = [
-            'gemini' => ['label' => 'Google AI Studio (Gemini)', 'key' => $this->geminiKey, 'models' => $this->geminiModels],
-            'groq' => ['label' => 'Groq', 'key' => $this->groqKey, 'models' => $this->groqModels],
-            'openrouter' => ['label' => 'OpenRouter', 'key' => $this->openRouterKey, 'models' => $this->openRouterModels],
+            'gemini' => ['label' => 'Google AI Studio (Gemini)', 'key' => $this->geminiKey, 'models' => $this->activeModels('gemini')],
+            'groq' => ['label' => 'Groq', 'key' => $this->groqKey, 'models' => $this->activeModels('groq')],
+            'openrouter' => ['label' => 'OpenRouter', 'key' => $this->openRouterKey, 'models' => $this->activeModels('openrouter')],
         ];
 
         $result = [];
@@ -209,12 +279,7 @@ class AIService
         $ok = 0;
         $failed = 0;
 
-        $models = match ($provider) {
-            'gemini' => $this->geminiModels,
-            'groq' => $this->groqModels,
-            'openrouter' => $this->openRouterModels,
-            default => [],
-        };
+        $models = in_array($provider, ['gemini', 'groq', 'openrouter'], true) ? $this->activeModels($provider) : [];
 
         foreach ($models as $model) {
             $success = match ($provider) {
@@ -333,7 +398,7 @@ class AIService
 
         if ($this->groqKey && !$this->providerIsOpen('groq')) {
             $response = $this->streamOpenAiCompatibleLoop(
-                $this->groqModels,
+                $this->activeModels('groq'),
                 'https://api.groq.com/openai/v1/chat/completions',
                 ['Authorization' => 'Bearer ' . $this->groqKey],
                 $messages,
@@ -347,7 +412,7 @@ class AIService
 
         if ($this->openRouterKey && !$this->providerIsOpen('openrouter')) {
             $response = $this->streamOpenAiCompatibleLoop(
-                $this->openRouterModels,
+                $this->activeModels('openrouter'),
                 'https://openrouter.ai/api/v1/chat/completions',
                 ['Authorization' => 'Bearer ' . $this->openRouterKey, 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')],
                 $messages,
@@ -364,7 +429,7 @@ class AIService
 
     private function streamGeminiLoop(array $messages, array $tools, callable $onTextDelta): ?array
     {
-        $models = $this->geminiModels;
+        $models = $this->activeModels('gemini');
         shuffle($models);
         $budget = $this->fastPathBudget();
         $models = array_slice($models, 0, max(1, $budget['modelLimit']));
@@ -535,7 +600,7 @@ class AIService
 
     private function callGeminiLoop($messages, $useVision, array $tools = [], bool $fast = false)
     {
-        $models = $this->geminiModels;
+        $models = $this->activeModels('gemini');
         shuffle($models);
         $timeout = 15;
         if ($fast) {
@@ -575,7 +640,7 @@ class AIService
 
     private function callGroqLoop($messages, array $tools = [], bool $fast = false)
     {
-        $models = $this->groqModels;
+        $models = $this->activeModels('groq');
         shuffle($models);
         $timeout = 10;
         if ($fast) {
@@ -606,7 +671,7 @@ class AIService
 
     private function callOpenRouterLoop($messages, array $tools = [], bool $fast = false)
     {
-        $models = $this->openRouterModels;
+        $models = $this->activeModels('openrouter');
         $first = array_shift($models);
         shuffle($models);
         array_unshift($models, $first);
@@ -949,7 +1014,10 @@ OPERATIONAL GUIDELINES:
         }
 
         try {
-            $model = $this->geminiModels[0];
+            $model = $this->activeModels('gemini')[0] ?? null;
+            if (!$model) {
+                return null;
+            }
             $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . $this->geminiKey;
             $prompt = "A customer just ordered '{$itemName}'. In under 12 words, write a friendly one-line suggestion to also get '{$suggestedName}'. No markdown, no quotes.";
 

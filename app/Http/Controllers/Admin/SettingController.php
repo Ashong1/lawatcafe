@@ -80,6 +80,47 @@ class SettingController extends Controller
     }
 
     /**
+     * Swap a model in a provider's active list for a different model ID,
+     * verifying the replacement immediately.
+     */
+    public function replaceProviderModel(Request $request, string $provider, AIService $ai)
+    {
+        if (!in_array($provider, ['gemini', 'groq', 'openrouter'], true)) {
+            abort(404);
+        }
+
+        $validated = $request->validate([
+            'old_model' => 'required|string',
+            'new_model' => 'required|string|max:255',
+        ]);
+
+        $result = $ai->replaceModel($provider, $validated['old_model'], $validated['new_model']);
+
+        if (!$result['replaced']) {
+            return redirect()->back()->with('error', "Couldn't find {$validated['old_model']} in the {$provider} model list.");
+        }
+
+        return redirect()->back()->with(
+            $result['new_model_ok'] ? 'success' : 'error',
+            "Replaced {$validated['old_model']} with {$validated['new_model']} — " . ($result['new_model_ok'] ? 'it tested healthy.' : 'but it failed too. Try a different model ID.')
+        );
+    }
+
+    /**
+     * Clear a provider's model-list override, reverting to the hardcoded defaults.
+     */
+    public function resetProviderModels(string $provider, AIService $ai)
+    {
+        if (!in_array($provider, ['gemini', 'groq', 'openrouter'], true)) {
+            abort(404);
+        }
+
+        $ai->resetModels($provider);
+
+        return redirect()->back()->with('success', ucfirst($provider) . "'s model list reset to defaults.");
+    }
+
+    /**
      * Display Network Configuration.
      */
     public function network()

@@ -125,4 +125,122 @@ class AiProviderStatusTest extends TestCase
         $this->actingAs($superAdmin)->post('/admin/settings/ai-providers/gpt5/test')
             ->assertNotFound();
     }
+
+    public function test_active_models_falls_back_to_defaults_when_no_override_saved(): void
+    {
+        $models = app(AIService::class)->activeModels('gemini');
+
+        $this->assertContains('gemini-2.0-flash', $models);
+    }
+
+    public function test_replace_model_swaps_and_verifies_with_a_healthy_result(): void
+    {
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [['content' => ['parts' => [['text' => 'OK']]]]],
+            ], 200),
+        ]);
+
+        $defaultModel = app(AIService::class)->activeModels('gemini')[0];
+
+        $result = app(AIService::class)->replaceModel('gemini', $defaultModel, 'gemini-2.5-flash');
+
+        $this->assertTrue($result['replaced']);
+        $this->assertTrue($result['new_model_ok']);
+
+        $models = app(AIService::class)->activeModels('gemini');
+        $this->assertContains('gemini-2.5-flash', $models);
+        $this->assertNotContains($defaultModel, $models);
+    }
+
+    public function test_replace_model_reports_unhealthy_replacement(): void
+    {
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([], 500),
+        ]);
+
+        $defaultModel = app(AIService::class)->activeModels('gemini')[0];
+
+        $result = app(AIService::class)->replaceModel('gemini', $defaultModel, 'still-broken-model');
+
+        $this->assertTrue($result['replaced']);
+        $this->assertFalse($result['new_model_ok']);
+    }
+
+    public function test_replace_model_fails_for_a_model_not_in_the_list(): void
+    {
+        $result = app(AIService::class)->replaceModel('gemini', 'nonexistent-model', 'gemini-2.5-flash');
+
+        $this->assertFalse($result['replaced']);
+    }
+
+    public function test_reset_models_restores_the_default_list(): void
+    {
+        $ai = app(AIService::class);
+        $defaultModel = $ai->activeModels('gemini')[0];
+
+        \App\Models\Setting::set('ai_models_gemini', json_encode(['some-custom-model']));
+        $this->assertSame(['some-custom-model'], $ai->activeModels('gemini'));
+
+        $ai->resetModels('gemini');
+
+        $this->assertContains($defaultModel, $ai->activeModels('gemini'));
+    }
+
+    public function test_super_admin_can_replace_a_failed_model_via_the_route(): void
+    {
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [['content' => ['parts' => [['text' => 'OK']]]]],
+            ], 200),
+        ]);
+
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+        $defaultModel = app(AIService::class)->activeModels('gemini')[0];
+
+        $response = $this->actingAs($superAdmin)->post(
+            route('admin.settings.ai-providers.models.replace', 'gemini'),
+            ['old_model' => $defaultModel, 'new_model' => 'gemini-2.5-flash']
+        );
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertContains('gemini-2.5-flash', app(AIService::class)->activeModels('gemini'));
+    }
+
+    public function test_replace_route_flashes_error_for_unknown_old_model(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+        $response = $this->actingAs($superAdmin)->post(
+            route('admin.settings.ai-providers.models.replace', 'gemini'),
+            ['old_model' => 'nonexistent-model', 'new_model' => 'gemini-2.5-flash']
+        );
+
+        $response->assertSessionHas('error');
+    }
+
+    public function test_super_admin_can_reset_provider_models_via_the_route(): void
+    {
+        \App\Models\Setting::set('ai_models_gemini', json_encode(['some-custom-model']));
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+        $response = $this->actingAs($superAdmin)->post(route('admin.settings.ai-providers.models.reset', 'gemini'));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $this->assertContains('gemini-2.0-flash', app(AIService::class)->activeModels('gemini'));
+    }
+
+    public function test_plain_admin_is_blocked_from_replacing_models(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->post(
+            route('admin.settings.ai-providers.models.replace', 'gemini'),
+            ['old_model' => 'gemini-2.0-flash', 'new_model' => 'gemini-2.5-flash']
+        );
+
+        $response->assertRedirect(route('dashboard'));
+    }
 }

@@ -100,30 +100,62 @@
 
                 <div class="divide-y divide-[#F0E6D2]">
                     @foreach ($provider['models'] as $model)
-                        <div class="py-3 flex items-center justify-between gap-3">
-                            <div class="flex items-center gap-2 min-w-0">
-                                <span class="w-2 h-2 rounded-full shrink-0 {{ match($model['status']) {
-                                    'ok' => 'bg-green-500',
-                                    'failed' => 'bg-red-500',
-                                    default => 'bg-gray-300',
-                                } }}"></span>
-                                <span class="text-xs font-mono font-bold text-[#3E2723] truncate">{{ $model['name'] }}</span>
+                        <div class="py-3" x-data="{ editing: false, saving: false }">
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="w-2 h-2 rounded-full shrink-0 {{ match($model['status']) {
+                                        'ok' => 'bg-green-500',
+                                        'failed' => 'bg-red-500',
+                                        default => 'bg-gray-300',
+                                    } }}"></span>
+                                    <span class="text-xs font-mono font-bold text-[#3E2723] truncate">{{ $model['name'] }}</span>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    @if ($model['status'] === 'ok')
+                                        <span class="text-[10px] font-bold text-green-700 uppercase tracking-wider">Healthy</span>
+                                    @elseif ($model['status'] === 'failed')
+                                        <span class="text-[10px] font-bold text-red-600 uppercase tracking-wider">Failed{{ $model['reason'] ? ' — ' . $model['reason'] : '' }}</span>
+                                    @else
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Never tested</span>
+                                    @endif
+                                    @if ($model['at'])
+                                        <span class="block text-[9px] text-[#A1887F]">{{ $model['at']->diffForHumans() }}</span>
+                                    @endif
+                                    @if ($model['status'] === 'failed')
+                                        <button type="button" @click="editing = !editing" class="block text-[9px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-800 mt-1 ml-auto">
+                                            Change Model
+                                        </button>
+                                    @endif
+                                </div>
                             </div>
-                            <div class="text-right shrink-0">
-                                @if ($model['status'] === 'ok')
-                                    <span class="text-[10px] font-bold text-green-700 uppercase tracking-wider">Healthy</span>
-                                @elseif ($model['status'] === 'failed')
-                                    <span class="text-[10px] font-bold text-red-600 uppercase tracking-wider">Failed{{ $model['reason'] ? ' — ' . $model['reason'] : '' }}</span>
-                                @else
-                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Never tested</span>
-                                @endif
-                                @if ($model['at'])
-                                    <span class="block text-[9px] text-[#A1887F]">{{ $model['at']->diffForHumans() }}</span>
-                                @endif
-                            </div>
+
+                            @if ($model['status'] === 'failed')
+                                <form x-show="editing" x-cloak @submit="saving = true" action="{{ route('admin.settings.ai-providers.models.replace', $key) }}" method="POST" class="mt-3 flex items-center gap-2">
+                                    @csrf
+                                    <input type="hidden" name="old_model" value="{{ $model['name'] }}">
+                                    <input type="text" name="new_model" required placeholder="e.g. gemini-2.5-flash" class="flex-1 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-lg px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                                    <button type="submit" :disabled="saving" class="px-3 py-2 bg-[#3E2723] hover:bg-[#271815] text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0">
+                                        <svg x-show="saving" x-cloak class="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+                                        <span x-text="saving ? 'Saving...' : 'Save'">Save</span>
+                                    </button>
+                                    <button type="button" @click="editing = false" class="px-3 py-2 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-lg text-[10px] font-black uppercase tracking-widest text-[#8D6E63] hover:bg-white transition shrink-0">
+                                        Cancel
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     @endforeach
                 </div>
+
+                <form action="{{ route('admin.settings.ai-providers.models.reset', $key) }}" method="POST" class="mt-4 pt-4 border-t border-[#F0E6D2]">
+                    @csrf
+                    <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-[#A1887F] hover:text-[#3E2723] transition">
+                        Reset to default models
+                    </button>
+                </form>
             </div>
             @endforeach
         </div>
