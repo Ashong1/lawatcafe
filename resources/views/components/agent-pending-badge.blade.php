@@ -1,6 +1,18 @@
 @props(['isAdmin' => false])
 
-<div x-data="agentPendingBadge({ isAdmin: @js($isAdmin) })" x-init="init()" class="relative">
+@php
+    // Seed the initial pending count server-side (same query as
+    // AiActionController::pendingCount()) so the badge is correct on first
+    // paint instead of popping in once the client-side fetch resolves —
+    // that delayed pop is a real, if brief, visible change right next to the
+    // sidebar a few hundred ms after every page load.
+    $initialPendingQuery = \App\Models\AiActionAudit::pending();
+    if (!$isAdmin) {
+        $initialPendingQuery->where('actor_user_id', auth()->id());
+    }
+    $initialPendingCount = $initialPendingQuery->count();
+@endphp
+<div x-data="agentPendingBadge({ isAdmin: @js($isAdmin), initialCount: {{ $initialPendingCount }} })" x-init="init()" class="relative">
     <button @click="toggle()" class="p-2 text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-full transition relative focus:outline-none">
         <x-lucide-bot class="w-6 h-6" />
         <template x-if="count > 0">
@@ -58,12 +70,14 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('agentPendingBadge', (config) => ({
         isAdmin: config.isAdmin,
         open: false,
-        count: 0,
+        count: config.initialCount ?? 0,
         items: [],
 
         init() {
-            this.fetchCount();
             this.fetchPreview();
+            // The initial count is seeded server-side (see
+            // agent-pending-badge.blade.php), so only the periodic refresh
+            // needs to re-fetch it.
             setInterval(() => this.fetchCount(), 60000);
         },
 

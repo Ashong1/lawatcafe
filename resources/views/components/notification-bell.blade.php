@@ -1,4 +1,12 @@
-<div x-data="notificationBell()" x-init="init()" class="relative">
+@php
+    // Seed the initial unread count server-side so the badge is correct on
+    // first paint. Without this, the badge only appears once the client-side
+    // fetchUnreadCount() call resolves — a real (if brief) delayed DOM change
+    // a few hundred ms after every page load, which shows up as a visible
+    // "flicker" right next to the sidebar.
+    $initialUnreadCount = auth()->user()->unreadNotifications->count();
+@endphp
+<div x-data="notificationBell({{ $initialUnreadCount }})" x-init="init()" class="relative">
     <button @click="toggle()" class="p-2 text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-full transition relative focus:outline-none">
         <x-lucide-bell class="w-6 h-6" />
         <template x-if="unreadCount > 0">
@@ -71,15 +79,16 @@
 
 <script>
 document.addEventListener('alpine:init', () => {
-    Alpine.data('notificationBell', () => ({
+    Alpine.data('notificationBell', (initialUnreadCount = 0) => ({
         open: false,
-        unreadCount: 0,
+        unreadCount: initialUnreadCount,
         notifications: [],
 
         init() {
-            this.fetchUnreadCount();
             this.fetchNotifications();
-            // Refresh count every minute
+            // Refresh count every minute — the initial count is seeded
+            // server-side (see notification-bell.blade.php), so no need to
+            // re-fetch it immediately on load.
             setInterval(() => this.fetchUnreadCount(), 60000);
         },
 
