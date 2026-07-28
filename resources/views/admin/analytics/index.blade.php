@@ -209,7 +209,7 @@
                         </tr>
                     </thead>
                     <tbody class="text-xs">
-                        @foreach($categoryPerformance as $cp)
+                        @forelse($categoryPerformance as $cp)
                             <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                                 <td class="py-4">
                                     <span class="px-3 py-1 bg-amber-50 text-amber-800 text-[9px] font-black uppercase tracking-widest rounded-full border border-amber-100">
@@ -219,7 +219,15 @@
                                 <td class="py-4 text-center font-bold text-[#8D6E63]">{{ (int)$cp->total_qty }} units</td>
                                 <td class="py-4 text-right font-black text-[#3E2723]">₱{{ number_format($cp->revenue, 2) }}</td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="3" class="py-10 text-center">
+                                    <x-lucide-package-search class="w-7 h-7 text-[#F0E6D2] mx-auto mb-2" />
+                                    <p class="text-[10px] font-black text-[#A1887F] uppercase tracking-widest">No category sales yet</p>
+                                    <p class="text-[9px] text-[#D7CCC8] font-medium mt-1">Data appears once completed sales are recorded.</p>
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -238,13 +246,21 @@
                         </tr>
                     </thead>
                     <tbody class="text-xs">
-                        @foreach($weeklyStats as $ws)
+                        @forelse($weeklyStats as $ws)
                             <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                                 <td class="py-4 font-bold text-[#3E2723]">{{ $ws->day }}</td>
                                 <td class="py-4 text-center font-bold text-[#8D6E63]">{{ $ws->count }} orders</td>
                                 <td class="py-4 text-right font-black text-[#3E2723]">₱{{ number_format($ws->revenue, 2) }}</td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="3" class="py-10 text-center">
+                                    <x-lucide-calendar-x class="w-7 h-7 text-[#F0E6D2] mx-auto mb-2" />
+                                    <p class="text-[10px] font-black text-[#A1887F] uppercase tracking-widest">No transactions this week</p>
+                                    <p class="text-[9px] text-[#D7CCC8] font-medium mt-1">Daily activity will appear here once sales come in.</p>
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

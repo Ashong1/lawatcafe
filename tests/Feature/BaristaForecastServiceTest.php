@@ -34,6 +34,10 @@ class BaristaForecastServiceTest extends TestCase
         $analyticsResponse = $this->actingAs($admin)->get(route('admin.analytics'));
         $analyticsResponse->assertOk();
         $analyticsResponse->assertSee('Awaiting First Sale');
+        // Zero sales also means both breakdown tables are empty — assert
+        // their empty states render instead of a silently blank tbody.
+        $analyticsResponse->assertSee('No category sales yet');
+        $analyticsResponse->assertSee('No transactions this week');
     }
 
     public function test_staff_cannot_reach_admin_analytics_or_ai_insights(): void
