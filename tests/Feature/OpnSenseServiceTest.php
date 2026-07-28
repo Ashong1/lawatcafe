@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Services\OpnSenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class OpnSenseServiceTest extends TestCase
@@ -58,5 +59,48 @@ class OpnSenseServiceTest extends TestCase
 
         $this->assertTrue($result);
         Http::assertSentCount(1);
+    }
+
+    public function test_get_arp_table_is_cached_across_calls(): void
+    {
+        Http::fake([
+            'opnsense.test/api/diagnostics/interface/getArp' => Http::response(['arp' => [['ip' => '10.0.0.5', 'mac' => 'aa:bb:cc:dd:ee:ff']]], 200),
+        ]);
+
+        $service = app(OpnSenseService::class);
+        $first = $service->getArpTable();
+        $second = $service->getArpTable();
+
+        $this->assertEquals($first, $second);
+        Http::assertSentCount(1);
+    }
+
+    public function test_list_sessions_is_cached_across_calls(): void
+    {
+        Http::fake([
+            'opnsense.test/api/captiveportal/session/list/*' => Http::response(['rows' => [['sessionId' => 'sess-1']]], 200),
+        ]);
+
+        $service = app(OpnSenseService::class);
+        $service->listSessions();
+        $service->listSessions();
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_disconnecting_a_device_clears_the_cached_sessions_list(): void
+    {
+        Http::fake([
+            'opnsense.test/api/captiveportal/session/list/*' => Http::response(['rows' => [['sessionId' => 'sess-1']]], 200),
+            'opnsense.test/api/captiveportal/session/disconnect/*' => Http::response(['result' => 'ok'], 200),
+        ]);
+
+        $service = app(OpnSenseService::class);
+        $service->listSessions();
+        $this->assertTrue(Cache::has('opnsense_sessions_list_0'));
+
+        $service->disconnectDevice('sess-1');
+
+        $this->assertFalse(Cache::has('opnsense_sessions_list_0'));
     }
 }

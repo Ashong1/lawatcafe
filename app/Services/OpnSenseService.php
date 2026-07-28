@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -75,6 +76,7 @@ class OpnSenseService
                 // If we get a sessionId or a successful state, the device is authorized
                 if (isset($data['sessionId']) || (isset($data['clientState']) && in_array($data['clientState'], ['AUTHORIZED', 'CONNECTED', 'ALREADY_AUTHORIZED']))) {
                     Log::info("OPNsense: Successfully authorized IP {$ip} via session/connect. Session: " . ($data['sessionId'] ?? 'N/A'));
+                    $this->forgetSessionsCache();
                     return true;
                 }
             }
@@ -94,6 +96,11 @@ class OpnSenseService
     /**
      * Get the ARP table from OPNsense.
      *
+     * Cached for a few seconds: this is called on nearly every captive-portal
+     * page load (directly, and indirectly via resolveMacForIp()), so without
+     * caching a burst of guest requests turns into a burst of OPNsense API
+     * calls for data that's already good for a few seconds.
+     *
      * @return array
      */
     public function getArpTable()
@@ -102,24 +109,31 @@ class OpnSenseService
             return [];
         }
 
-        try {
-            $url = "{$this->baseUrl}/api/diagnostics/interface/getArp";
-            
-            $response = $this->client()->get($url);
+        return Cache::remember('opnsense_arp_table', 5, function () {
+            try {
+                $url = "{$this->baseUrl}/api/diagnostics/interface/getArp";
 
-            if ($response->successful()) {
-                return $response->json();
+                $response = $this->client()->get($url);
+
+                if ($response->successful()) {
+                    return $response->json();
+                }
+
+                return [];
+            } catch (\Exception $e) {
+                Log::error("OPNsense: Exception fetching ARP table: " . $e->getMessage());
+                return [];
             }
-
-            return [];
-        } catch (\Exception $e) {
-            Log::error("OPNsense: Exception fetching ARP table: " . $e->getMessage());
-            return [];
-        }
+        });
     }
 
     /**
      * Get the list of active sessions from OPNsense.
+     *
+     * Cached for a few seconds per zone — hit on every portal page load and
+     * repeatedly within the same admin sessions-page request (session list +
+     * ARP lookups), so a short TTL avoids redundant round-trips without
+     * meaningfully staling the "who's connected" view.
      *
      * @return array
      */
@@ -129,35 +143,49 @@ class OpnSenseService
             return [];
         }
 
-        try {
-            $zone = session('zone', $this->zone);
-            $url = "{$this->baseUrl}/api/captiveportal/session/list/{$zone}/";
-            
-            $response = $this->client()->get($url);
+        $zone = session('zone', $this->zone);
 
-            if ($response->successful()) {
-                $data = $response->json();
-                $rows = $data['rows'] ?? $data['sessions'] ?? $data;
-                
-                if (!is_array($rows)) return [];
+        return Cache::remember("opnsense_sessions_list_{$zone}", 5, function () use ($zone) {
+            try {
+                $url = "{$this->baseUrl}/api/captiveportal/session/list/{$zone}/";
 
-                return array_map(function($session) {
-                    // Normalize byte keys
-                    if (isset($session['bytes_in']) && !isset($session['bytes_received'])) {
-                        $session['bytes_received'] = $session['bytes_in'];
-                    }
-                    if (isset($session['bytes_out']) && !isset($session['bytes_sent'])) {
-                        $session['bytes_sent'] = $session['bytes_out'];
-                    }
-                    return $session;
-                }, $rows);
+                $response = $this->client()->get($url);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $rows = $data['rows'] ?? $data['sessions'] ?? $data;
+
+                    if (!is_array($rows)) return [];
+
+                    return array_map(function($session) {
+                        // Normalize byte keys
+                        if (isset($session['bytes_in']) && !isset($session['bytes_received'])) {
+                            $session['bytes_received'] = $session['bytes_in'];
+                        }
+                        if (isset($session['bytes_out']) && !isset($session['bytes_sent'])) {
+                            $session['bytes_sent'] = $session['bytes_out'];
+                        }
+                        return $session;
+                    }, $rows);
+                }
+
+                return [];
+            } catch (\Exception $e) {
+                Log::error("OPNsense: Exception fetching sessions: " . $e->getMessage());
+                return [];
             }
+        });
+    }
 
-            return [];
-        } catch (\Exception $e) {
-            Log::error("OPNsense: Exception fetching sessions: " . $e->getMessage());
-            return [];
-        }
+    /**
+     * Drop the cached session list for the current zone — call after any
+     * action that changes who's connected (authorize/disconnect) so the
+     * admin sessions page and the next portal check reflect it immediately
+     * instead of waiting out the cache TTL.
+     */
+    protected function forgetSessionsCache(): void
+    {
+        Cache::forget('opnsense_sessions_list_' . session('zone', $this->zone));
     }
 
     /**
@@ -472,7 +500,8 @@ class OpnSenseService
 
             if ($response->successful()) {
                 Log::info("OPNsense: Disconnect request sent for session {$sessionId}. Response: " . json_encode($data));
-                
+                $this->forgetSessionsCache();
+
                 // If the session was deleted or returned successfully
                 return true;
             }

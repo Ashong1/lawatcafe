@@ -17,10 +17,10 @@ use App\Http\Middleware\RoleMiddleware;
 // ==========================================
 // PUBLIC CAPTIVE PORTAL ROUTES
 // ==========================================
-// Initial Redirect - Send guests to the login page by default
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+// Initial Redirect - Send guests to the login page by default.
+// Uses Route::redirect() (not a closure) so this route stays compatible with
+// `php artisan route:cache` — closure-based route actions can't be cached.
+Route::redirect('/', '/login');
 
 Route::prefix('portal')->name('portal.')->group(function () {
     Route::get('/', [CaptivePortalController::class, 'index'])->name('index');
