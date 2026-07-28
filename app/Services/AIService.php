@@ -79,7 +79,20 @@ class AIService
     // have concrete functional blockers, not just flakiness, so suggesting
     // them would just set an admin up to pick something that can't work.
     protected $additionalFreeModelsCatalog = [
-        'gemini' => [],
+        // Other Gemini API models with a free AI Studio tier, not yet run
+        // through the same verification pass as the curated three above —
+        // offered as opt-in, clearly-labeled "untested here" suggestions.
+        'gemini' => [
+            'gemini-2.5-flash',
+            'gemini-2.5-flash-lite',
+            'gemini-2.0-flash-lite',
+            'gemini-1.5-flash-8b',
+        ],
+        // Left empty deliberately: Groq's hosted-model lineup changes/retires
+        // frequently and there's no verified backlog for it the way there is
+        // for Gemini/OpenRouter — guessing model IDs here risks suggesting
+        // one that's already been sunset, which is worse than suggesting
+        // nothing. The curated 4 plus "type manually" cover this provider.
         'groq' => [],
         'openrouter' => [
             'poolside/laguna-s-2.1:free',
@@ -280,15 +293,19 @@ class AIService
                 ];
             }, $info['models']);
 
-            // Curated defaults not already in the active list — offered as
-            // dropdown suggestions when swapping out a failed model, so the
-            // admin isn't stuck typing a model ID from memory.
-            $catalog = array_values(array_diff($this->defaultModels($provider), $info['models']));
+            // Full curated default list — offered as dropdown suggestions when
+            // swapping out a failed model, so the admin isn't stuck typing a
+            // model ID from memory. Deliberately NOT filtered against the
+            // active list here: with only 3-4 models per provider, excluding
+            // every currently-active one left nothing to suggest in the
+            // common case (a fresh install with no prior swaps). The view
+            // excludes just the specific model being replaced, per row.
+            $catalog = $this->defaultModels($provider);
 
             // Other genuinely free models not in the curated list (see
             // $additionalFreeModelsCatalog) — shown as a separate, clearly
             // labeled group since they're unverified for tool-calling here.
-            $moreFreeModels = array_values(array_diff($this->additionalFreeModels($provider), $info['models']));
+            $moreFreeModels = $this->additionalFreeModels($provider);
 
             $result[$provider] = [
                 'label' => $info['label'],

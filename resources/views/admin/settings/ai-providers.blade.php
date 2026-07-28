@@ -139,21 +139,29 @@
                             </div>
 
                             @if ($model['status'] === 'failed' && auth()->user()->isSuperAdmin())
+                                @php
+                                    // Every default/free model is offered EXCEPT the one currently
+                                    // being replaced — suggesting a sibling that's already active
+                                    // elsewhere in the list is still useful (better than an empty
+                                    // dropdown), even if it means that model gets tried twice.
+                                    $rowCatalog = array_values(array_diff($provider['catalog'], [$model['name']]));
+                                    $rowMoreFree = array_values(array_diff($provider['more_free_models'], [$model['name']]));
+                                @endphp
                                 <form x-show="editing" x-cloak @submit="saving = true" action="{{ route('admin.settings.ai-providers.models.replace', $key) }}" method="POST" class="mt-3 flex items-center gap-2">
                                     @csrf
                                     <input type="hidden" name="old_model" value="{{ $model['name'] }}">
                                     <select name="new_model" :disabled="isCustom" :required="!isCustom" @change="isCustom = ($event.target.value === '__custom__')" class="flex-1 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-lg px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                                         <option value="">Choose a model...</option>
-                                        @if (!empty($provider['catalog']))
+                                        @if (!empty($rowCatalog))
                                             <optgroup label="Suggested">
-                                                @foreach ($provider['catalog'] as $catalogModel)
+                                                @foreach ($rowCatalog as $catalogModel)
                                                     <option value="{{ $catalogModel }}">{{ $catalogModel }}</option>
                                                 @endforeach
                                             </optgroup>
                                         @endif
-                                        @if (!empty($provider['more_free_models']))
+                                        @if (!empty($rowMoreFree))
                                             <optgroup label="Other Free Models (untested here)">
-                                                @foreach ($provider['more_free_models'] as $freeModel)
+                                                @foreach ($rowMoreFree as $freeModel)
                                                     <option value="{{ $freeModel }}">{{ $freeModel }}</option>
                                                 @endforeach
                                             </optgroup>
