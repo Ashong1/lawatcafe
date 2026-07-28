@@ -152,36 +152,26 @@ class VoucherController extends Controller
 
         // 3. Create maps for quick lookup
         $arpByMac = $arpTable->keyBy(fn($item) => $normalizeMac($item['mac'] ?? ''));
+        $arpByIp = $arpTable->keyBy(fn($item) => $item['ip'] ?? '');
         $cpByMac = $opnSessions->keyBy(fn($item) => $normalizeMac($item['macAddress'] ?? ''));
         $cpByIp = $opnSessions->keyBy(fn($item) => str_replace('/32', '', $item['ipAddress'] ?? ''));
 
-        // 4. Combine all unique MAC addresses from ARP table and CP sessions (that have MACs)
-        $allMacs = $arpByMac->keys()->concat($cpByMac->keys()->filter())->unique()->filter();
-
-        $combinedDevices = $allMacs->map(function($mac) use ($arpByMac, $cpByMac, $cpByIp, $ignoredIps, $normalizeMac) {
-            $arp = $arpByMac->get($mac);
-            $cp = $cpByMac->get($mac);
-            
-            // If no match by MAC, try matching by the IP from the ARP table
-            if (!$cp && $arp && isset($arp['ip'])) {
-                $cp = $cpByIp->get($arp['ip']);
-            }
-            
-            $ip = $arp['ip'] ?? ($cp['ipAddress'] ?? 'N/A');
-            $ip = str_replace('/32', '', $ip);
-
-            // Skip ignored IPs
-            if (in_array($ip, $ignoredIps)) return null;
-            
+        // OPNsense's static passthrough entries only populate HALF of a
+        // device's identity: "---mac---" entries (allowed-MAC passthrough)
+        // report a mac but an EMPTY ipAddress, while "---ip---" entries
+        // (allowed-IP passthrough) report an ip but an EMPTY macAddress. This
+        // closure builds the shared row shape and resolves whichever half is
+        // missing via the other lookup rather than rendering a blank cell.
+        $buildRow = function (?array $cp, ?array $arp, string $mac, ?string $ip) {
             return [
-                'ipAddress' => $ip,
-                'macAddress' => $mac,
+                'ipAddress' => $ip ?? 'N/A',
+                'macAddress' => $mac !== '' ? $mac : 'N/A',
                 'hostname' => $arp['hostname'] ?? 'Unknown',
                 'manufacturer' => $arp['manufacturer'] ?? 'Generic',
                 'cpSession' => $cp,
                 'isAuthorized' => $cp && (
-                    (isset($cp['clientState']) && in_array(strtoupper($cp['clientState']), ['AUTHORIZED', 'CONNECTED', 'ALREADY_AUTHORIZED'])) || 
-                    (!isset($cp['clientState']) && !empty($cp['ipAddress']))
+                    (isset($cp['clientState']) && in_array(strtoupper($cp['clientState']), ['AUTHORIZED', 'CONNECTED', 'ALREADY_AUTHORIZED'])) ||
+                    (!isset($cp['clientState']) && (!empty($cp['ipAddress']) || !empty($cp['macAddress'])))
                 ),
                 'sessionId' => $cp['sessionId'] ?? null,
                 'bytes_received' => $cp['bytes_received'] ?? 0,
@@ -189,7 +179,52 @@ class VoucherController extends Controller
                 'startTime' => $cp['startTime'] ?? null,
                 'authenticatedVia' => $cp['authenticated_via'] ?? null,
             ];
+        };
+
+        // 4. Combine all unique MAC addresses from ARP table and CP sessions (that have MACs)
+        $allMacs = $arpByMac->keys()->concat($cpByMac->keys()->filter())->unique()->filter();
+
+        $macDevices = $allMacs->map(function ($mac) use ($arpByMac, $cpByMac, $cpByIp, $ignoredIps, $buildRow) {
+            $arp = $arpByMac->get($mac);
+            $cp = $cpByMac->get($mac);
+
+            // If no match by MAC, try matching by the IP from the ARP table
+            if (!$cp && $arp && isset($arp['ip'])) {
+                $cp = $cpByIp->get($arp['ip']);
+            }
+
+            $ip = $arp['ip'] ?? (!empty($cp['ipAddress'] ?? null) ? $cp['ipAddress'] : null);
+            $ip = $ip ? str_replace('/32', '', $ip) : null;
+
+            // Skip ignored IPs
+            if ($ip && in_array($ip, $ignoredIps)) return null;
+
+            return $buildRow($cp, $arp, $mac, $ip);
         })->filter();
+
+        // 4b. "---ip---" passthrough sessions report an IP but no MAC at all,
+        // and the ARP table may not have a current entry for that IP either
+        // (device idle / cache expired) — without this pass they'd be
+        // silently dropped from the list entirely instead of showing with a
+        // resolvable IP and an honest "N/A" MAC.
+        $knownIps = $macDevices->pluck('ipAddress')->filter(fn($ip) => $ip !== 'N/A')->values();
+
+        $ipOnlyDevices = $opnSessions
+            ->map(function ($cp) use ($arpByIp, $ignoredIps, $knownIps, $normalizeMac, $buildRow) {
+                $ip = str_replace('/32', '', $cp['ipAddress'] ?? '');
+                $mac = $normalizeMac($cp['macAddress'] ?? '');
+
+                if ($ip === '' || $mac !== '' || $knownIps->contains($ip) || in_array($ip, $ignoredIps)) {
+                    return null;
+                }
+
+                $arp = $arpByIp->get($ip);
+
+                return $buildRow($cp, $arp, $arp ? $normalizeMac($arp['mac'] ?? '') : '', $ip);
+            })
+            ->filter();
+
+        $combinedDevices = $macDevices->concat($ipOnlyDevices)->values();
 
         // 5. Batch fetch relevant vouchers
         $ips = $combinedDevices->pluck('ipAddress')->toArray();
