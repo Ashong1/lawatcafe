@@ -85,7 +85,7 @@
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0 scale-90 translate-y-10"
          x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave="transition ease-in duration-[400ms]"
          x-transition:leave-start="opacity-100 scale-100 translate-y-0"
          x-transition:leave-end="opacity-0 scale-90 translate-y-10"
          class="mb-4 w-full h-[550px] bg-white rounded-[2rem] shadow-2xl border border-[#F0E6D2] overflow-hidden flex flex-col shadow-amber-900/10"
@@ -199,20 +199,20 @@
                 class="w-16 h-16 bg-[#3E2723] hover:bg-[#271815] text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group relative"
                 :class="!open ? 'cursor-move' : ''">
             <div x-show="!open"
-                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 -rotate-45 scale-75"
                  x-transition:enter-end="opacity-100 rotate-0 scale-100"
-                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 rotate-0 scale-100"
                  x-transition:leave-end="opacity-0 rotate-45 scale-75"
                  class="flex items-center justify-center">
                 <x-lucide-bot class="w-8 h-8 group-hover:rotate-12 transition-transform" />
             </div>
             <div x-show="open"
-                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 rotate-45 scale-75"
                  x-transition:enter-end="opacity-100 rotate-0 scale-100"
-                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 rotate-0 scale-100"
                  x-transition:leave-end="opacity-0 -rotate-45 scale-75"
                  class="flex items-center justify-center">

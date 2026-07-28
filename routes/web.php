@@ -29,7 +29,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::post('/upload', [CaptivePortalController::class, 'uploadReceipt'])->name('upload')->middleware('throttle:portal-upload');
     Route::post('/chat', [CaptivePortalController::class, 'chat'])->name('chat')->middleware('throttle:portal-chat');
     Route::get('/menu', [CaptivePortalController::class, 'menu'])->name('menu'); // Added menu route
-    Route::post('/disconnect', [CaptivePortalController::class, 'disconnect'])->name('disconnect');
+    Route::post('/disconnect', [CaptivePortalController::class, 'disconnect'])->name('disconnect')->middleware('throttle:portal-disconnect');
     Route::get('/unlock', [CaptivePortalController::class, 'unlock'])->name('unlock');
     Route::get('/success', [CaptivePortalController::class, 'success'])->name('success');
     });

@@ -237,13 +237,76 @@ class ToolCallOrchestratorTest extends TestCase
         ]);
 
         $orchestrator = app(ToolCallOrchestrator::class);
-        $orchestrator->rejectPending($audit, $admin);
+        $rejected = $orchestrator->rejectPending($audit, $admin);
 
+        $this->assertTrue($rejected);
         $ingredient->refresh();
         $this->assertEquals(50, $ingredient->current_stock);
 
         $audit->refresh();
         $this->assertSame('rejected', $audit->status);
         $this->assertSame($admin->id, $audit->approved_by_user_id);
+    }
+
+    public function test_staff_cannot_confirm_or_reject_another_staff_members_owned_proposal(): void
+    {
+        $owner = User::factory()->create(['role' => 'staff']);
+        $otherStaff = User::factory()->create(['role' => 'staff']);
+        $ingredient = Ingredient::create(['name' => 'Milk', 'current_stock' => 50, 'unit' => 'ml', 'low_stock_threshold' => 500, 'status' => 'Low Stock']);
+
+        $audit = AiActionAudit::create([
+            'tool_name' => 'restockIngredient',
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10],
+            'result' => [],
+            'actor_type' => 'ai',
+            'actor_user_id' => $owner->id,
+            'status' => 'proposed',
+        ]);
+
+        $orchestrator = app(ToolCallOrchestrator::class);
+
+        $confirmResult = $orchestrator->confirmPending($audit, $otherStaff);
+        $this->assertFalse($confirmResult->success);
+        $audit->refresh();
+        $this->assertSame('proposed', $audit->status, 'A non-owning staff member must not be able to confirm someone else\'s proposal.');
+
+        $rejected = $orchestrator->rejectPending($audit, $otherStaff);
+        $this->assertFalse($rejected, 'A non-owning staff member must not be able to reject someone else\'s proposal.');
+        $audit->refresh();
+        $this->assertSame('proposed', $audit->status);
+
+        $ingredient->refresh();
+        $this->assertEquals(50, $ingredient->current_stock, 'The action must never have executed.');
+    }
+
+    public function test_owner_can_confirm_their_own_proposal_and_admin_can_confirm_anyones(): void
+    {
+        $owner = User::factory()->create(['role' => 'staff']);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $ingredient = Ingredient::create(['name' => 'Milk', 'current_stock' => 50, 'unit' => 'ml', 'low_stock_threshold' => 500, 'status' => 'Low Stock']);
+
+        $ownedAudit = AiActionAudit::create([
+            'tool_name' => 'restockIngredient',
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10],
+            'result' => [],
+            'actor_type' => 'ai',
+            'actor_user_id' => $owner->id,
+            'status' => 'proposed',
+        ]);
+
+        $orchestrator = app(ToolCallOrchestrator::class);
+        $result = $orchestrator->confirmPending($ownedAudit, $owner);
+        $this->assertTrue($result->success, 'The owning staff member must be able to confirm their own proposal.');
+
+        $anotherOwnedAudit = AiActionAudit::create([
+            'tool_name' => 'restockIngredient',
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 5],
+            'result' => [],
+            'actor_type' => 'ai',
+            'actor_user_id' => $owner->id,
+            'status' => 'proposed',
+        ]);
+        $adminResult = $orchestrator->confirmPending($anotherOwnedAudit, $admin);
+        $this->assertTrue($adminResult->success, 'An admin must be able to confirm any staff member\'s proposal.');
     }
 }

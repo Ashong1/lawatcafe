@@ -75,6 +75,35 @@ class AiActionConfirmFlowTest extends TestCase
         $this->assertEquals(50, $ingredient->current_stock);
     }
 
+    public function test_staff_cannot_confirm_another_staff_members_owned_proposal(): void
+    {
+        $owner = User::factory()->create(['role' => 'staff']);
+        $otherStaff = User::factory()->create(['role' => 'staff']);
+        $ingredient = Ingredient::create(['name' => 'Milk', 'current_stock' => 50, 'unit' => 'ml', 'low_stock_threshold' => 500, 'status' => 'Low Stock']);
+
+        $audit = AiActionAudit::create([
+            'tool_name' => 'restockIngredient',
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10],
+            'result' => [],
+            'actor_type' => 'ai',
+            'actor_user_id' => $owner->id,
+            'status' => 'proposed',
+        ]);
+
+        $confirmResponse = $this->actingAs($otherStaff)->post(route('admin.ai.actions.confirm', $audit));
+        $confirmResponse->assertRedirect();
+        $audit->refresh();
+        $this->assertSame('proposed', $audit->status, 'A non-owning staff member must not be able to confirm someone else\'s proposal by guessing the audit id.');
+
+        $rejectResponse = $this->actingAs($otherStaff)->post(route('admin.ai.actions.reject', $audit));
+        $rejectResponse->assertRedirect();
+        $audit->refresh();
+        $this->assertSame('proposed', $audit->status, 'A non-owning staff member must not be able to reject someone else\'s proposal either.');
+
+        $ingredient->refresh();
+        $this->assertEquals(50, $ingredient->current_stock);
+    }
+
     public function test_guest_cannot_reach_confirm_endpoint(): void
     {
         $ingredient = Ingredient::create(['name' => 'Milk', 'current_stock' => 50, 'unit' => 'ml', 'low_stock_threshold' => 500, 'status' => 'Low Stock']);

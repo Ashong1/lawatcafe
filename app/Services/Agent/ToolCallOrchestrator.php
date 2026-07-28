@@ -118,11 +118,26 @@ class ToolCallOrchestrator
      * Execute a previously-proposed action. Used by the confirm endpoint.
      * Role ceiling is re-checked here too: an admin_only tool can never be
      * confirmed by a non-admin, even if it somehow reached this point.
+     *
+     * Ownership is also enforced here, not just at the controller/view layer:
+     * admins can confirm any org-wide pending action, but a staff member may
+     * only confirm their OWN proposals — otherwise any authenticated staff
+     * account could confirm or reject another user's pending action just by
+     * guessing/incrementing the audit id (route-model binding alone doesn't
+     * scope this). Audits with no actor_user_id (a scheduled/system-initiated
+     * proposal not tied to any specific user) are left open to any staff+
+     * account — same "not mine specifically, so not restricted" semantics
+     * pendingCount()/pendingPreview() already use to decide what shows up in
+     * a staff member's own pending list.
      */
     public function confirmPending(AiActionAudit $audit, User $approvedBy): ToolResult
     {
         if ($audit->status !== 'proposed') {
             return ToolResult::fail('This action is no longer pending.');
+        }
+
+        if (!$approvedBy->isAdminOrAbove() && $audit->actor_user_id !== null && $audit->actor_user_id !== $approvedBy->id) {
+            return ToolResult::fail('You can only confirm your own proposed actions.');
         }
 
         $tool = $this->registry->forAudience(ToolRegistry::AUDIENCE_ADMIN)[$audit->tool_name] ?? null;
@@ -141,12 +156,24 @@ class ToolCallOrchestrator
         return $result;
     }
 
-    public function rejectPending(AiActionAudit $audit, User $rejectedBy): void
+    /**
+     * @return bool whether the rejection actually happened — false if the
+     * action was no longer pending, or the rejecting user doesn't own it and
+     * isn't an admin. The controller uses this to report failure instead of
+     * always claiming success regardless of what happened.
+     */
+    public function rejectPending(AiActionAudit $audit, User $rejectedBy): bool
     {
         if ($audit->status !== 'proposed') {
-            return;
+            return false;
+        }
+
+        if (!$rejectedBy->isAdminOrAbove() && $audit->actor_user_id !== null && $audit->actor_user_id !== $rejectedBy->id) {
+            return false;
         }
 
         $this->auditLogger->markRejected($audit, $rejectedBy);
+
+        return true;
     }
 }

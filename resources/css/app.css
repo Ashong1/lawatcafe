@@ -53,7 +53,7 @@
 
 ::view-transition-old(root),
 ::view-transition-new(root) {
-    animation-duration: 0.18s;
+    animation-duration: 0.32s;
     animation-timing-function: ease-out;
 }
 
@@ -113,7 +113,7 @@
 }
 
 .dash-card-in {
-    animation: dash-card-in 0.4s ease-out both;
+    animation: dash-card-in 0.65s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -134,7 +134,7 @@
 }
 
 .anim-pop-in {
-    animation: anim-pop-in 0.25s ease-out both;
+    animation: anim-pop-in 0.4s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {

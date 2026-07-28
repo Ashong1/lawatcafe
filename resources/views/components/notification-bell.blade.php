@@ -17,10 +17,10 @@
     <!-- Dropdown -->
     <div x-show="open"
          @click.away="open = false"
-         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter="transition ease-out duration-[400ms]"
          x-transition:enter-start="opacity-0 scale-95 translate-y-2"
          x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave="transition ease-in duration-300"
          x-transition:leave-start="opacity-100 scale-100 translate-y-0"
          x-transition:leave-end="opacity-0 scale-95 translate-y-2"
          class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-[#F0E6D2] overflow-hidden z-50">

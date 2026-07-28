@@ -216,7 +216,7 @@ class PosController extends Controller
                     'product_id' => $item['type'] === 'product' ? $item['id'] : null,
                     'category' => $item['category'] ?? null,
                     'type' => $item['type'],
-                    'item_name' => $item['name'] . ($item['variant'] ? ' (' . $item['variant'] . ')' : ''), 
+                    'item_name' => $item['name'] . (($item['variant'] ?? null) ? ' (' . $item['variant'] . ')' : ''), 
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                     'kds_status' => 'pending',

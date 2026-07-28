@@ -120,10 +120,10 @@
             <a href="{{ route('staff.dashboard') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('staff.dashboard') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Staff Hub">
                 <x-lucide-layout-dashboard class="w-6 h-6 shrink-0 {{ request()->routeIs('staff.dashboard') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen"
-                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter="transition ease-out duration-[400ms]"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave="transition ease-in duration-200"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap">Staff Hub</span>
@@ -132,10 +132,10 @@
             <a href="/pos" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('pos') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="POS Register">
                 <x-lucide-calculator class="w-6 h-6 shrink-0 {{ request()->is('pos') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen"
-                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter="transition ease-out duration-[400ms]"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave="transition ease-in duration-200"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap">POS Register</span>
@@ -144,10 +144,10 @@
             <a href="/kds" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('kds') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Kitchen Display">
                 <x-lucide-chef-hat class="w-6 h-6 shrink-0 {{ request()->is('kds') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen"
-                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter="transition ease-out duration-[400ms]"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave="transition ease-in duration-200"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap">Kitchen Display</span>
@@ -156,10 +156,10 @@
             <a href="{{ route('pos.history') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('pos.history') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Order History">
                 <x-lucide-history class="w-6 h-6 shrink-0 {{ request()->routeIs('pos.history') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen"
-                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter="transition ease-out duration-[400ms]"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave="transition ease-in duration-200"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap">Order History</span>
@@ -168,10 +168,10 @@
             <a href="{{ route('network.vouchers.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.vouchers.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Vouchers">
                 <x-lucide-ticket class="w-6 h-6 shrink-0 {{ request()->routeIs('network.vouchers.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen"
-                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter="transition ease-out duration-[400ms]"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave="transition ease-in duration-200"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap">Vouchers</span>
@@ -180,10 +180,10 @@
             <a href="{{ route('ai.analysis.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('ai.analysis.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Findings History">
                 <x-lucide-radar class="w-6 h-6 shrink-0 {{ request()->routeIs('ai.analysis.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen"
-                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter="transition ease-out duration-[400ms]"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave="transition ease-in duration-200"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap">Findings History</span>

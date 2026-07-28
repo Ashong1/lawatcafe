@@ -25,10 +25,10 @@
 
 {{-- AI Pairing Suggestion --}}
 <div x-show="suggestion"
-     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter="transition ease-out duration-[400ms]"
      x-transition:enter-start="opacity-0 -translate-y-1"
      x-transition:enter-end="opacity-100 translate-y-0"
-     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave="transition ease-in duration-300"
      x-transition:leave-start="opacity-100 translate-y-0"
      x-transition:leave-end="opacity-0 -translate-y-1"
      class="shrink-0 mb-3 p-3 rounded-xl border border-amber-200 bg-amber-50 flex items-center gap-3" style="display: none;">
@@ -88,10 +88,10 @@
 {{-- BOTTOM CHECKOUT (Fixed: Will not shrink) --}}
 <div class="shrink-0 pt-3 border-t border-[#F0E6D2] flex flex-col gap-3">
     <div x-show="freeWifiMinAmount > 0"
-         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter="transition ease-out duration-[400ms]"
          x-transition:enter-start="opacity-0 -translate-y-1"
          x-transition:enter-end="opacity-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave="transition ease-in duration-300"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-1"
          class="p-3 rounded-xl border flex flex-col gap-2 transition-all" :class="grandTotal >= freeWifiMinAmount ? 'bg-[#F3F9FF] border-[#E3F2FD]' : 'bg-[#FAFAFA] border-[#F0E6D2]'" style="display: none;">

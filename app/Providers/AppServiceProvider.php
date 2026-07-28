@@ -48,6 +48,10 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(10)->by($request->ip());
         });
 
+        RateLimiter::for('portal-disconnect', function (Request $request) {
+            return Limit::perMinute(10)->by($request->ip());
+        });
+
         // Authenticated staff/admin AI chat + the confirm/reject/pending-action
         // endpoints (which also execute tools) had no rate limit at all — keyed
         // by user id (falling back to IP) since these are logged-in requests.

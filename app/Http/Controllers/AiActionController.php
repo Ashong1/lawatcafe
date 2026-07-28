@@ -61,12 +61,15 @@ class AiActionController extends Controller
 
     public function reject(Request $request, AiActionAudit $audit, ToolCallOrchestrator $orchestrator)
     {
-        $orchestrator->rejectPending($audit, $request->user());
+        $rejected = $orchestrator->rejectPending($audit, $request->user());
+        $message = $rejected
+            ? 'Proposed action rejected.'
+            : 'Unable to reject this action — it may no longer be pending, or it belongs to someone else.';
 
         if ($request->wantsJson()) {
-            return response()->json(['success' => true, 'message' => 'Proposed action rejected.']);
+            return response()->json(['success' => $rejected, 'message' => $message], $rejected ? 200 : 422);
         }
 
-        return redirect()->back()->with('success', 'Proposed action rejected.');
+        return redirect()->back()->with($rejected ? 'success' : 'error', $message);
     }
 }
