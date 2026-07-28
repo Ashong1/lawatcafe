@@ -212,7 +212,7 @@ class SettingController extends Controller
             Setting::set('payment_qr_code', $path);
         }
 
-        Cache::forget('dashboard_stats');
+        Cache::forget('dashboard_stats_today');
 
         return redirect()->back()->with('success', 'Configuration updated successfully.');
     }

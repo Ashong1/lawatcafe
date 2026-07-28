@@ -117,7 +117,13 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('categories', \App\Http\Controllers\CategoryController::class)->except(['create', 'show', 'edit']);
             Route::resource('products', ProductController::class)->except(['create', 'show', 'edit']);
             Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
-            Route::resource('ingredients', IngredientController::class)->except(['create', 'show', 'edit']);
+            // No destroy: inventory_logs.ingredient_id and product_ingredients.ingredient_id
+            // both cascade-delete, so hard-deleting an ingredient would silently wipe its
+            // entire audit trail and product associations. Ingredients are deactivated via
+            // their `status` field through update() instead (same pattern as
+            // ProductController::toggleStatus) — IngredientController has no destroy()
+            // method, so this route would 500 if ever reached.
+            Route::resource('ingredients', IngredientController::class)->except(['create', 'show', 'edit', 'destroy']);
             Route::post('ingredients/{ingredient}/add-stock', [IngredientController::class, 'addStock'])->name('ingredients.add-stock');
             
             // Supplier Deliveries (Receiving)

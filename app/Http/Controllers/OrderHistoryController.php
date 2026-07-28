@@ -38,12 +38,6 @@ class OrderHistoryController extends Controller
         return view('pos.history', compact('sales'));
     }
 
-    public function show(Sale $sale)
-    {
-        $sale->load(['items', 'user']);
-        return view('pos.receipt', compact('sale'));
-    }
-
     public function void(Sale $sale)
     {
         $result = $this->sales->void($sale, auth()->id());

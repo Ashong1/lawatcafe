@@ -32,7 +32,7 @@ class VoucherService
             }
         }
 
-        Cache::forget('dashboard_stats');
+        Cache::forget('dashboard_stats_today');
 
         return ['count' => count($codes), 'codes' => $codes];
     }
@@ -40,7 +40,7 @@ class VoucherService
     public function deleteVouchers(array $ids): int
     {
         $count = Voucher::whereIn('id', $ids)->delete();
-        Cache::forget('dashboard_stats');
+        Cache::forget('dashboard_stats_today');
         return $count;
     }
 
@@ -56,7 +56,7 @@ class VoucherService
 
         $usedCount = $expired->count();
         Voucher::whereIn('id', $expired->pluck('id'))->delete();
-        Cache::forget('dashboard_stats');
+        Cache::forget('dashboard_stats_today');
         return $usedCount;
     }
 }

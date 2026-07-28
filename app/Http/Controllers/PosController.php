@@ -203,7 +203,7 @@ class PosController extends Controller
             ]);
 
             // Clear dashboard cache
-            \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+            \Illuminate\Support\Facades\Cache::forget('dashboard_stats_today');
 
             $generatedCodes = [];
             $hasWifi = false;

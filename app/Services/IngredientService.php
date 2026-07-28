@@ -40,7 +40,7 @@ class IngredientService
             'status' => $status,
         ]);
 
-        Cache::forget('dashboard_stats');
+        Cache::forget('dashboard_stats_today');
 
         InventoryLog::create([
             'ingredient_id' => $ingredient->id,

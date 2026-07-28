@@ -1016,7 +1016,6 @@ document.addEventListener('alpine:init', () => {
             this.errorInsights = null;
 
             try {
-                console.log('Fetching AI insights...');
                 const response = await fetch('{{ route("admin.ai.insights") }}', { headers: { 'Accept': 'application/json' } });
 
                 if (!response.ok) {
@@ -1024,7 +1023,6 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 const data = await response.json();
-                console.log('AI insights received:', data);
 
                 if (data && (data.forecast_total !== undefined || data.is_calibrating)) {
                     this.insights = data;

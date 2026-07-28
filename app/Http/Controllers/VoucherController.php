@@ -122,7 +122,7 @@ class VoucherController extends Controller
         $voucher->delete();
 
         // Clear dashboard cache
-        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+        \Illuminate\Support\Facades\Cache::forget('dashboard_stats_today');
 
         return redirect()->back()->with('success', 'Voucher removed from the system.');
     }
