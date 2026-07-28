@@ -85,10 +85,14 @@
                             </span>
                         @endif
 
-                        <form action="{{ route('admin.settings.ai-providers.test', $key) }}" method="POST">
+                        <form action="{{ route('admin.settings.ai-providers.test', $key) }}" method="POST" x-data="{ testing: false }" @submit="testing = true">
                             @csrf
-                            <button type="submit" class="px-4 py-2 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#3E2723] hover:bg-white transition">
-                                Test Now
+                            <button type="submit" :disabled="testing" class="px-4 py-2 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#3E2723] hover:bg-white transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2">
+                                <svg x-show="testing" x-cloak class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                </svg>
+                                <span x-text="testing ? 'Testing...' : 'Test Now'">Test Now</span>
                             </button>
                         </form>
                     </div>
