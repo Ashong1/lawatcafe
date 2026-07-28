@@ -133,7 +133,12 @@
                 <x-lucide-ticket class="w-6 h-6 shrink-0 {{ request()->routeIs('network.vouchers.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">Vouchers</span>
             </a>
-            
+
+            <a href="{{ route('ai.analysis.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('ai.analysis.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Findings History">
+                <x-lucide-radar class="w-6 h-6 shrink-0 {{ request()->routeIs('ai.analysis.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
+                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap">Findings History</span>
+            </a>
+
             </nav>
     </aside>
 

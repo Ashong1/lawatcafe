@@ -79,6 +79,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
     });
 
+    // Proactive AI analysis history (shared: audience-scoped in the controller,
+    // same convention as network.vouchers.index above).
+    Route::get('/ai/analysis-history', [\App\Http\Controllers\AiAnalysisController::class, 'index'])->name('ai.analysis.index');
+
     // AI Agent proposed-action confirm/reject (shared: staff can confirm their own
     // confirm-tier proposals; ToolCallOrchestrator itself blocks staff from
     // confirming admin_only actions regardless of route access). NOTE: the
@@ -120,7 +124,11 @@ Route::middleware(['auth'])->group(function () {
             
             // Suppliers Database
             Route::resource('suppliers', \App\Http\Controllers\SupplierController::class)->except(['create', 'show', 'edit']);
-            
+
+            // Purchase Order Drafts (AI-drafted, human-managed)
+            Route::resource('purchase-orders', \App\Http\Controllers\PurchaseOrderController::class)->only(['index', 'destroy']);
+            Route::post('purchase-orders/{draft}/send', [\App\Http\Controllers\PurchaseOrderController::class, 'send'])->name('purchase-orders.send');
+
             // Wastage & Spoilage
             Route::resource('wastage', \App\Http\Controllers\WastageController::class)->only(['index', 'store', 'destroy']);
         });
@@ -129,6 +137,7 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('network')->name('network.')->group(function () {
             Route::get('/sessions', [VoucherController::class, 'sessions'])->name('sessions');
             Route::post('/sessions/kick', [VoucherController::class, 'kick'])->name('sessions.kick');
+            Route::post('/sessions/set-tier', [VoucherController::class, 'setTier'])->name('sessions.set-tier');
             Route::get('/verifications', [\App\Http\Controllers\PaymentController::class, 'logs'])->name('verifications');
             
             Route::post('/vouchers/generate', [VoucherController::class, 'generateBatch'])->name('vouchers.generate');

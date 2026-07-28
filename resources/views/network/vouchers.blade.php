@@ -105,6 +105,7 @@
                         @endif
                         <th class="pb-4 font-black">Voucher Code</th>
                         <th class="pb-4 font-black hidden md:table-cell">Duration</th>
+                        <th class="pb-4 font-black hidden md:table-cell">Tier</th>
                         <th class="pb-4 font-black text-center">Status</th>
                         <th class="pb-4 font-black hidden md:table-cell">Created At</th>
                         <th class="pb-4 font-black text-right">Actions</th>
@@ -124,6 +125,13 @@
                             </td>
                             <td class="py-4 text-[#8D6E63] font-bold hidden md:table-cell">
                                 {{ $voucher->duration_minutes }} Mins
+                            </td>
+                            <td class="py-4 hidden md:table-cell">
+                                @if($voucher->tier === 'premium')
+                                    <span class="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-100 text-[10px] font-bold uppercase tracking-wider rounded-full">Premium</span>
+                                @else
+                                    <span class="px-3 py-1 bg-gray-50 text-gray-600 border border-gray-100 text-[10px] font-bold uppercase tracking-wider rounded-full">Free</span>
+                                @endif
                             </td>
                             <td class="py-4 text-center">
                                 @if($voucher->is_used)
@@ -170,7 +178,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ auth()->user()->isAdminOrAbove() ? 6 : 5 }}" class="py-16 text-center">
+                            <td colspan="{{ auth()->user()->isAdminOrAbove() ? 7 : 6 }}" class="py-16 text-center">
                                 <div class="flex flex-col items-center opacity-30">
                                     <x-lucide-ticket class="w-10 h-10 mb-3" />
                                     <p class="text-[#A1887F] text-sm font-medium">No vouchers found.</p>
@@ -213,6 +221,14 @@
                         @foreach($durations as $price => $mins)
                             <option value="{{ $mins }}">₱{{ $price }} - {{ $mins >= 1440 ? 'Whole Day' : ($mins >= 60 ? ($mins/60) . ' Hour(s)' : $mins . ' Mins') }}</option>
                         @endforeach
+                    </select>
+                </div>
+
+                <div class="mb-8">
+                    <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Bandwidth Tier</label>
+                    <select name="tier" required class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
+                        <option value="free">Free</option>
+                        <option value="premium">Premium</option>
                     </select>
                 </div>
 

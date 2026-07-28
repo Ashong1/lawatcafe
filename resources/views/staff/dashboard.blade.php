@@ -179,6 +179,9 @@
                         <x-lucide-radar class="w-4 h-4" />
                     </div>
                     <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Barista AI Findings</h3>
+                    <a href="{{ route('ai.analysis.index') }}" class="ml-auto text-[9px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-800 transition-colors flex items-center gap-1 shrink-0">
+                        View All <x-lucide-arrow-right class="w-3 h-3" />
+                    </a>
                 </div>
 
                 <div class="flex-1 overflow-y-auto pr-1 space-y-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">

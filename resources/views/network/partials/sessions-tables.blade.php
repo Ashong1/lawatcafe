@@ -55,6 +55,11 @@
                             <span class="px-3 py-1 bg-amber-50 text-amber-800 border-amber-100 rounded-lg font-bold text-xs tracking-widest font-mono border">
                                 {{ $session->code }}
                             </span>
+                            @if($session->tier ?? null)
+                                <span class="inline-block mt-1 px-2 py-0.5 {{ $session->tier === 'premium' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600' }} text-[9px] font-bold uppercase tracking-wider rounded-full">
+                                    {{ $session->tier }}
+                                </span>
+                            @endif
                         @endif
                     </td>
                     <td class="py-4 hidden md:table-cell">
@@ -94,22 +99,48 @@
                         <span class="text-[10px] text-[#A1887F] font-medium md:hidden">{{ $session->connected_at }}</span>
                     </td>
                     <td class="py-4 text-right">
-                        @if($session->sessionId)
-                        <form action="{{ route('network.sessions.kick') }}" method="POST" id="kick-form-{{ $session->sessionId }}">
-                            @csrf
-                            <input type="hidden" name="sessionId" value="{{ $session->sessionId }}">
-                            <button type="button" 
-                                    onclick="window.confirmAction({
-                                        title: 'Disconnect Device?',
-                                        text: 'Are you sure you want to disconnect this device from the network?',
-                                        icon: 'warning',
-                                        confirmText: 'Yes, Disconnect',
-                                        callback: () => document.getElementById('kick-form-{{ $session->sessionId }}').submit()
-                                    })"
-                                    class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-95 group/btn">                <x-lucide-log-out class="w-5 h-5" />
-                            </button>
-                        </form>
-                        @endif
+                        <div class="flex items-center justify-end gap-1">
+                            @if($session->tier ?? null)
+                                @php($targetTier = $session->tier === 'premium' ? 'free' : 'premium')
+                                <form action="{{ route('network.sessions.set-tier') }}" method="POST" id="tier-form-{{ $session->code }}">
+                                    @csrf
+                                    <input type="hidden" name="voucher_code" value="{{ $session->code }}">
+                                    <input type="hidden" name="tier" value="{{ $targetTier }}">
+                                    <button type="button"
+                                            onclick="window.confirmAction({
+                                                title: '{{ $targetTier === 'premium' ? 'Upgrade to Premium?' : 'Downgrade to Free?' }}',
+                                                text: 'This device will be moved to the {{ $targetTier }} bandwidth tier.',
+                                                icon: 'warning',
+                                                confirmText: 'Yes, {{ $targetTier === 'premium' ? 'Upgrade' : 'Downgrade' }}',
+                                                callback: () => document.getElementById('tier-form-{{ $session->code }}').submit()
+                                            })"
+                                            title="{{ $targetTier === 'premium' ? 'Upgrade to Premium' : 'Downgrade to Free' }}"
+                                            class="p-2 text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition-all active:scale-95 group/btn">
+                                        @if($targetTier === 'premium')
+                                            <x-lucide-arrow-up-circle class="w-5 h-5" />
+                                        @else
+                                            <x-lucide-arrow-down-circle class="w-5 h-5" />
+                                        @endif
+                                    </button>
+                                </form>
+                            @endif
+                            @if($session->sessionId)
+                            <form action="{{ route('network.sessions.kick') }}" method="POST" id="kick-form-{{ $session->sessionId }}">
+                                @csrf
+                                <input type="hidden" name="sessionId" value="{{ $session->sessionId }}">
+                                <button type="button"
+                                        onclick="window.confirmAction({
+                                            title: 'Disconnect Device?',
+                                            text: 'Are you sure you want to disconnect this device from the network?',
+                                            icon: 'warning',
+                                            confirmText: 'Yes, Disconnect',
+                                            callback: () => document.getElementById('kick-form-{{ $session->sessionId }}').submit()
+                                        })"
+                                        class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-95 group/btn">                <x-lucide-log-out class="w-5 h-5" />
+                                </button>
+                            </form>
+                            @endif
+                        </div>
                     </td>
                 </tr>
                 @empty

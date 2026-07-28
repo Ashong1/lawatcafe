@@ -203,9 +203,14 @@
                 @endif
             </div>
         </div>
-        <a href="{{ route('admin.ai.actions.index') }}" class="text-[10px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-800 transition-colors flex items-center gap-1.5 shrink-0">
-            Agent Activity <x-lucide-arrow-right class="w-3 h-3" />
-        </a>
+        <div class="flex items-center gap-4 shrink-0">
+            <a href="{{ route('ai.analysis.index') }}" class="text-[10px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-800 transition-colors flex items-center gap-1.5">
+                Findings History <x-lucide-arrow-right class="w-3 h-3" />
+            </a>
+            <a href="{{ route('admin.ai.actions.index') }}" class="text-[10px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-800 transition-colors flex items-center gap-1.5">
+                Agent Activity <x-lucide-arrow-right class="w-3 h-3" />
+            </a>
+        </div>
     </div>
     <div class="space-y-2">
         @foreach($aiFindings as $finding)

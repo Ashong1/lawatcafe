@@ -49,15 +49,46 @@ class VoucherController extends Controller
         $request->validate([
             'quantity' => 'required|integer|min:1|max:100',
             'duration_minutes' => 'required|integer|min:1',
+            'tier' => 'nullable|in:free,premium',
         ]);
 
         $result = $this->vouchers->generateBatch(
             (int) $request->quantity,
             (int) $request->duration_minutes,
             auth()->id(),
+            'human',
+            $request->input('tier', 'free'),
         );
 
         return redirect()->back()->with('success', "{$result['count']} new vouchers generated successfully!");
+    }
+
+    /**
+     * Manually move a voucher/session to a different bandwidth tier — the
+     * human-facing counterpart to the AI's setSessionBandwidthTier tool.
+     */
+    public function setTier(Request $request, \App\Services\OpnSenseService $opnsense, \App\Services\TrafficShapingService $shaping)
+    {
+        $validated = $request->validate([
+            'voucher_code' => 'required|string',
+            'tier' => 'required|in:free,premium',
+        ]);
+
+        $voucher = Voucher::where('code', $validated['voucher_code'])->first();
+
+        if (!$voucher) {
+            return redirect()->back()->with('error', 'No matching voucher found.');
+        }
+
+        $voucher->tier = $validated['tier'];
+        $voucher->save();
+
+        if (!empty($voucher->ip_address)) {
+            $shaping->releaseIp($voucher->ip_address, $opnsense);
+            $shaping->assignTier($voucher, $voucher->ip_address, $opnsense);
+        }
+
+        return redirect()->back()->with('success', "Voucher {$voucher->code} moved to the {$validated['tier']} tier.");
     }
 
     /**
@@ -301,6 +332,10 @@ class VoucherController extends Controller
                 'has_traffic' => ($speedIn + $speedOut) > 1000, // Show active indicator if > 1Kbps
                 'connected_at' => $device['startTime'] ? \Carbon\Carbon::createFromTimestamp($device['startTime'])->diffForHumans() : 'Just Connected',
                 'is_authorized' => $device['isAuthorized'] || $isVip,
+                // Only genuine voucher-backed sessions have a meaningful tier —
+                // VIP/orphaned/static entries stay null so the view can hide
+                // the tier badge/change-tier action for them.
+                'tier' => $voucher->tier ?? null,
             ];
 
             if ($isVip) {

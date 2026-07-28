@@ -121,6 +121,10 @@
                 <x-lucide-list-checks class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.ai.actions.*') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Agent Activity</span>
             </a>
+            <a href="{{ route('ai.analysis.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('ai.analysis.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Findings History">
+                <x-lucide-radar class="w-5 h-5 shrink-0 {{ request()->routeIs('ai.analysis.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
+                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Findings History</span>
+            </a>
             <a href="/pos" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('pos') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="POS Register">
                 <x-lucide-calculator class="w-5 h-5 shrink-0 {{ request()->is('pos') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">POS Register</span>
@@ -154,6 +158,7 @@
                     <a href="/inventory/categories" class="block py-2 text-xs {{ request()->is('inventory/categories') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Categories</a>
                     <a href="/inventory/ingredients" class="block py-2 text-xs {{ request()->is('inventory/ingredients') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Ingredients</a>
                     <a href="/inventory/suppliers" class="block py-2 text-xs {{ request()->is('inventory/suppliers') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Suppliers</a>
+                    <a href="/inventory/purchase-orders" class="block py-2 text-xs {{ request()->is('inventory/purchase-orders') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Purchase Orders</a>
                     <a href="/inventory/deliveries" class="block py-2 text-xs {{ request()->is('inventory/deliveries') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Deliveries</a>
                     <a href="/inventory/wastage" class="block py-2 text-xs {{ request()->is('inventory/wastage') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Wastage</a>
                     <a href="/inventory/logs" class="block py-2 text-xs {{ request()->is('inventory/logs') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Audit Logs</a>
