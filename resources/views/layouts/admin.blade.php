@@ -400,12 +400,55 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('adminLayout', () => ({
                 sidebarOpen: true,
-                menus: {
-                    inventory: {{ request()->is('inventory*') ? 'true' : 'false' }},
-                    network: {{ request()->is('network*') ? 'true' : 'false' }},
-                    finance: {{ request()->is('sales*') ? 'true' : 'false' }},
-                    settings: {{ request()->is('accounts*') || request()->routeIs('admin.settings.store') || request()->routeIs('admin.settings.ai-providers*') ? 'true' : 'false' }},
-                    system: {{ request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'true' : 'false' }}
+                // Sidebar submenus used to auto-expand/collapse based on the current
+                // route. Since every navigation here is a full page reload (not an
+                // SPA), that meant the sidebar's height could jump abruptly between
+                // pages in different sections — visible as the submenu appearing to
+                // "expand and close" on nearly every click. Submenu state is now
+                // sticky: it only changes when the user explicitly clicks a section,
+                // persisted in localStorage so it stays consistent across page loads.
+                // The route-based defaults below only matter the very first time this
+                // browser has ever loaded an admin page (no saved state yet) — every
+                // load after that uses the saved state as-is, with NO blending back
+                // in of route defaults. Blending would reintroduce the original bug:
+                // every page's resolved (partly route-driven) state got persisted,
+                // so the next page's merge kept re-overriding its own true default
+                // with whatever unrelated section was false on the page before it.
+                menus: (() => {
+                    const routeDefaults = {
+                        inventory: {{ request()->is('inventory*') ? 'true' : 'false' }},
+                        network: {{ request()->is('network*') ? 'true' : 'false' }},
+                        finance: {{ request()->is('sales*') ? 'true' : 'false' }},
+                        settings: {{ request()->is('accounts*') || request()->routeIs('admin.settings.store') || request()->routeIs('admin.settings.ai-providers*') ? 'true' : 'false' }},
+                        system: {{ request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'true' : 'false' }}
+                    };
+                    try {
+                        const raw = localStorage.getItem('lawatkape_admin_menus');
+                        if (raw === null) return routeDefaults;
+                        const saved = JSON.parse(raw);
+                        if (!saved || typeof saved !== 'object') return routeDefaults;
+                        // Start from the saved object so every key the user already
+                        // has a preference for wins outright — only fall back to the
+                        // route default for a key a future menu addition introduces
+                        // that this saved object predates.
+                        const merged = { ...saved };
+                        for (const key of Object.keys(routeDefaults)) {
+                            if (!(key in merged)) merged[key] = routeDefaults[key];
+                        }
+                        return merged;
+                    } catch (e) {
+                        return routeDefaults;
+                    }
+                })(),
+                init() {
+                    // $watch only fires on subsequent changes, not the current value —
+                    // persist the resolved initial state too, so a section that just
+                    // auto-opened via the route-based fallback stays open on the next
+                    // navigation instead of reverting until the user clicks something.
+                    localStorage.setItem('lawatkape_admin_menus', JSON.stringify(this.menus));
+                    this.$watch('menus', (value) => {
+                        localStorage.setItem('lawatkape_admin_menus', JSON.stringify(value));
+                    });
                 }
             }))
         })
