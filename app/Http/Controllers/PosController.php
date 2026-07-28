@@ -246,8 +246,9 @@ class PosController extends Controller
                     foreach ($product->ingredients as $ingredientPivot) {
                         $quantityToDeduct = (float) $ingredientPivot->pivot->quantity * (int) $item['quantity'];
                         
-                        // RE-FETCH the ingredient to get the absolute latest stock and ensure we don't overwrite other deductions
-                        $ingredient = \App\Models\Ingredient::find($ingredientPivot->id);
+                        // RE-FETCH the ingredient with a row lock so two concurrent checkouts
+                        // deducting the same ingredient can't clobber each other's write.
+                        $ingredient = \App\Models\Ingredient::where('id', $ingredientPivot->id)->lockForUpdate()->first();
                         
                         if ($ingredient) {
                             $ingredient->current_stock -= $quantityToDeduct;

@@ -42,10 +42,18 @@ return [
         'secret' => env('OPNSENSE_API_SECRET'),
         'zone' => env('OPNSENSE_ZONE', 0),
         'guest_user' => env('OPNSENSE_GUEST_USER', 'laravel_guest'),
-        'guest_pass' => env('OPNSENSE_GUEST_PASS', 'Laravel123'),
+        // No hardcoded fallback password: authorizeDevice() refuses to run and
+        // logs an error if this isn't explicitly set, rather than silently
+        // authorizing guests with a known-weak default credential.
+        'guest_pass' => env('OPNSENSE_GUEST_PASS'),
         'block_alias' => env('OPNSENSE_BLOCK_ALIAS', 'guest_blocklist'),
         'tier_alias_free' => env('OPNSENSE_TIER_ALIAS_FREE', 'lawatcafe_free_tier'),
         'tier_alias_premium' => env('OPNSENSE_TIER_ALIAS_PREMIUM', 'lawatcafe_premium_tier'),
+        // Same-LAN OPNsense boxes commonly run a self-signed cert; this is an
+        // explicit, documented opt-in rather than a silent blanket bypass.
+        // Set true (and point PHP at a trusted CA bundle) once OPNsense has a
+        // cert your environment actually trusts.
+        'verify_tls' => env('OPNSENSE_VERIFY_TLS', false),
     ],
 
 ];

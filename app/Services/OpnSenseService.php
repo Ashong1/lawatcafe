@@ -22,6 +22,18 @@ class OpnSenseService
     }
 
     /**
+     * Build the authenticated HTTP client used for every OPNsense call.
+     * Centralizing this means the TLS verification tradeoff (see
+     * services.opnsense.verify_tls) is applied consistently everywhere,
+     * instead of each method deciding it individually.
+     */
+    protected function client()
+    {
+        return Http::withBasicAuth($this->apiKey, $this->apiSecret)
+            ->withOptions(['verify' => config('services.opnsense.verify_tls', false)]);
+    }
+
+    /**
      * Authorize a device on the OPNsense Captive Portal.
      *
      * @param string $ip The client IP address.
@@ -32,6 +44,11 @@ class OpnSenseService
     {
         if (empty($this->apiKey) || empty($this->apiSecret)) {
             Log::warning("OPNsense: API credentials not configured.");
+            return false;
+        }
+
+        if (empty(config('services.opnsense.guest_user')) || empty(config('services.opnsense.guest_pass'))) {
+            Log::error("OPNsense: guest_user/guest_pass not configured — refusing to authorize {$ip} rather than fall back to a default credential.");
             return false;
         }
 
@@ -46,9 +63,7 @@ class OpnSenseService
             Log::info("OPNsense Request URL: " . $url);
             Log::info("OPNsense API Key Length: " . strlen($this->apiKey));
             
-            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
-                ->withoutVerifying() 
-                ->post($url, [
+            $response = $this->client()->post($url, [
                     'user' => config('services.opnsense.guest_user'), 
                     'password' => config('services.opnsense.guest_pass'),
                     'ip' => $ip,
@@ -90,9 +105,7 @@ class OpnSenseService
         try {
             $url = "{$this->baseUrl}/api/diagnostics/interface/getArp";
             
-            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
-                ->withoutVerifying()
-                ->get($url);
+            $response = $this->client()->get($url);
 
             if ($response->successful()) {
                 return $response->json();
@@ -120,9 +133,7 @@ class OpnSenseService
             $zone = session('zone', $this->zone);
             $url = "{$this->baseUrl}/api/captiveportal/session/list/{$zone}/";
             
-            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
-                ->withoutVerifying()
-                ->get($url);
+            $response = $this->client()->get($url);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -197,9 +208,7 @@ class OpnSenseService
         try {
             $url = "{$this->baseUrl}/api/diagnostics/gateway/status";
             
-            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
-                ->withoutVerifying()
-                ->get($url);
+            $response = $this->client()->get($url);
 
             if ($response->successful()) {
                 return $response->json();
@@ -224,9 +233,7 @@ class OpnSenseService
         try {
             $url = "{$this->baseUrl}/api/diagnostics/interface/getInterfaceStatistics";
             
-            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
-                ->withoutVerifying()
-                ->get($url);
+            $response = $this->client()->get($url);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -312,9 +319,7 @@ class OpnSenseService
         try {
             $url = "{$this->baseUrl}/api/firewall/alias_util/{$action}/{$alias}";
 
-            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
-                ->withoutVerifying()
-                ->post($url, ['address' => $value]);
+            $response = $this->client()->post($url, ['address' => $value]);
 
             if ($response->successful()) {
                 Log::info("OPNsense: {$action} {$value} on alias '{$alias}'.");
@@ -383,9 +388,7 @@ class OpnSenseService
                 ? "{$this->baseUrl}/api/trafficshaper/settings/setPipe/{$uuid}"
                 : "{$this->baseUrl}/api/trafficshaper/settings/addPipe";
 
-            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
-                ->withoutVerifying()
-                ->post($url, $payload);
+            $response = $this->client()->post($url, $payload);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -424,9 +427,7 @@ class OpnSenseService
         try {
             $url = "{$this->baseUrl}/api/trafficshaper/service/reconfigure";
 
-            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
-                ->withoutVerifying()
-                ->post($url);
+            $response = $this->client()->post($url);
 
             if ($response->successful()) {
                 Log::info("OPNsense: traffic shaper reconfigured.");
@@ -462,9 +463,7 @@ class OpnSenseService
             $url = "{$this->baseUrl}/api/captiveportal/session/disconnect/{$zone}/";
             
             // We send both camelCase and lowercase to be safe across OPNsense versions
-            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
-                ->withoutVerifying()
-                ->post($url, [
+            $response = $this->client()->post($url, [
                     'sessionId' => $sessionId,
                     'sessionid' => $sessionId 
                 ]);
