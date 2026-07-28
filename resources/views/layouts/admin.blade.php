@@ -206,7 +206,7 @@
             @if(auth()->user()->isSuperAdmin())
             <div class="space-y-1">
                 <button @click="menus.system = !menus.system"
-                        class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->routeIs('admin.settings.integrations') || request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'text-amber-400' : 'text-[#A1887F]' }}"
+                        class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->routeIs('admin.settings.ai-providers*') || request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'text-amber-400' : 'text-[#A1887F]' }}"
                         title="System Administration — super_admin only">
                     <div class="flex items-center">
                         <x-lucide-shield-check class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
@@ -215,7 +215,6 @@
                     <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" x-bind:class="menus.system ? 'rotate-180' : ''" />
                 </button>
                 <div x-show="menus.system && sidebarOpen" x-transition class="pl-11 space-y-1">
-                    <a href="{{ route('admin.settings.integrations') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.integrations') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">API Integrations</a>
                     <a href="{{ route('admin.settings.ai-providers') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.ai-providers*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">AI Providers</a>
                     <a href="{{ route('admin.settings.network') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.network') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Network Config</a>
                     <a href="{{ route('admin.settings.agent') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.agent') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Agent Permissions</a>
@@ -294,7 +293,7 @@
                     network: {{ request()->is('network*') ? 'true' : 'false' }},
                     finance: {{ request()->is('sales*') ? 'true' : 'false' }},
                     settings: {{ request()->is('accounts*') || request()->routeIs('admin.settings.store') ? 'true' : 'false' }},
-                    system: {{ request()->routeIs('admin.settings.integrations') || request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'true' : 'false' }}
+                    system: {{ request()->routeIs('admin.settings.ai-providers*') || request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'true' : 'false' }}
                 }
             }))
         })

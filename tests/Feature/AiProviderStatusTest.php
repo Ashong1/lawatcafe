@@ -75,6 +75,21 @@ class AiProviderStatusTest extends TestCase
         $this->actingAs($superAdmin)->get(route('admin.settings.ai-providers'))->assertOk();
     }
 
+    public function test_super_admin_can_save_api_keys(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+        $this->actingAs($superAdmin)->post(route('admin.settings.ai-providers.update'), [
+            'gemini_api_key' => 'gemini-test-key',
+            'groq_api_key' => 'groq-test-key',
+            'openrouter_api_key' => 'openrouter-test-key',
+        ])->assertRedirect();
+
+        $this->assertSame('gemini-test-key', \App\Models\Setting::get('gemini_api_key'));
+        $this->assertSame('groq-test-key', \App\Models\Setting::get('groq_api_key'));
+        $this->assertSame('openrouter-test-key', \App\Models\Setting::get('openrouter_api_key'));
+    }
+
     public function test_plain_admin_is_blocked_from_ai_providers_page(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

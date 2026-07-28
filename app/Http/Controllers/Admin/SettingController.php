@@ -30,26 +30,39 @@ class SettingController extends Controller
     }
 
     /**
-     * Display API Integrations.
-     */
-    public function integrations()
-    {
-        $settings = [
-            'active_ai_model' => Setting::get('active_ai_model', 'gemini-1.5-pro'),
-            'ai_api_key' => Setting::get('ai_api_key', ''),
-        ];
-
-        return view('admin.settings.integrations', compact('settings'));
-    }
-
-    /**
-     * Display AI provider/model configuration and availability status.
+     * Display AI provider API key configuration and availability status.
+     * Merges what used to be the separate "API Integrations" page (which
+     * only ever held a decorative, unused model dropdown and one API key
+     * field mislabeled as generic but actually OpenRouter-only) into a
+     * single accurate page alongside real per-provider/per-model status.
      */
     public function aiProviders(AIService $ai)
     {
         $providers = $ai->getProviderStatuses();
+        $settings = [
+            'gemini_api_key' => Setting::get('gemini_api_key', ''),
+            'groq_api_key' => Setting::get('groq_api_key', ''),
+            'openrouter_api_key' => Setting::get('openrouter_api_key', ''),
+        ];
 
-        return view('admin.settings.ai-providers', compact('providers'));
+        return view('admin.settings.ai-providers', compact('providers', 'settings'));
+    }
+
+    /**
+     * Save AI provider API keys (fallback used only when the matching env
+     * var isn't set — see AIService's constructor).
+     */
+    public function updateAiProviders(Request $request)
+    {
+        $validated = $request->validate([
+            'gemini_api_key' => 'nullable|string',
+            'groq_api_key' => 'nullable|string',
+            'openrouter_api_key' => 'nullable|string',
+        ]);
+
+        $this->applySettings($validated);
+
+        return redirect()->back()->with('success', 'API keys updated successfully.');
     }
 
     /**
@@ -166,18 +179,6 @@ class SettingController extends Controller
     /**
      * Update API Integrations (AI model + key) — super_admin only, enforced at the route level.
      */
-    public function updateIntegrations(Request $request)
-    {
-        $validated = $request->validate([
-            'active_ai_model' => 'nullable|string',
-            'ai_api_key' => 'nullable|string',
-        ]);
-
-        $this->applySettings($validated);
-
-        return redirect()->back()->with('success', 'Configuration updated successfully.');
-    }
-
     /**
      * Update Network Configuration — super_admin only, enforced at the route level.
      */

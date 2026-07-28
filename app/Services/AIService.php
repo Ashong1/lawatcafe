@@ -71,7 +71,10 @@ class AIService
     {
         $this->geminiKey = env('GEMINI_API_KEY') ?: \App\Models\Setting::get('gemini_api_key');
         $this->groqKey = env('GROQ_API_KEY') ?: \App\Models\Setting::get('groq_api_key');
-        $this->openRouterKey = env('OPENROUTER_API_KEY') ?: \App\Models\Setting::get('ai_api_key');
+        // 'openrouter_api_key' is the current Setting name (AI Providers page);
+        // 'ai_api_key' is the legacy name from the retired Integrations page,
+        // kept as a fallback so a previously-saved key isn't silently dropped.
+        $this->openRouterKey = env('OPENROUTER_API_KEY') ?: \App\Models\Setting::get('openrouter_api_key') ?: \App\Models\Setting::get('ai_api_key');
     }
 
     public function getModel()

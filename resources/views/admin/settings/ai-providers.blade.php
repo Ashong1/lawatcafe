@@ -16,6 +16,41 @@
         </div>
 
         <div class="max-w-3xl mx-auto space-y-6">
+
+            {{-- API Keys — env vars always take priority; these are only used as a fallback. --}}
+            <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700">
+                        <x-lucide-key class="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">API Keys</h3>
+                        <p class="text-[10px] text-[#A1887F] font-medium italic">Used only if the matching env var (GEMINI_API_KEY / GROQ_API_KEY / OPENROUTER_API_KEY) isn't already set on the server.</p>
+                    </div>
+                </div>
+
+                <form action="{{ route('admin.settings.ai-providers.update') }}" method="POST" class="space-y-6">
+                    @csrf
+                    @foreach (['gemini_api_key' => 'Gemini API Key', 'groq_api_key' => 'Groq API Key', 'openrouter_api_key' => 'OpenRouter API Key'] as $field => $label)
+                        <div>
+                            <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">{{ $label }}</label>
+                            <div x-data="{ show: false }" class="relative">
+                                <input :type="show ? 'text' : 'password'" name="{{ $field }}" value="{{ $settings[$field] }}" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all" placeholder="Enter API Key...">
+                                <button type="button" @click="show = !show" class="absolute right-4 top-1/2 -translate-y-1/2 text-[#A1887F] hover:text-[#3E2723]">
+                                    <x-lucide-eye x-show="!show" class="w-4 h-4" />
+                                    <x-lucide-eye-off x-show="show" class="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+
+                    <button type="submit" class="w-full py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-3">
+                        <x-lucide-save class="w-5 h-5" />
+                        <span>Save API Keys</span>
+                    </button>
+                </form>
+            </div>
+
             @foreach ($providers as $key => $provider)
             <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
