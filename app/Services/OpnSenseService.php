@@ -27,11 +27,23 @@ class OpnSenseService
      * Centralizing this means the TLS verification tradeoff (see
      * services.opnsense.verify_tls) is applied consistently everywhere,
      * instead of each method deciding it individually.
+     *
+     * connectTimeout/timeout are both explicit: several call sites here run
+     * synchronously in a page's render path (DashboardController::index()'s
+     * network-pulse block, on every cache miss). Without a bound, a slow or
+     * unreachable firewall would stall by however long PHP/Guzzle's own
+     * defaults allow — Laravel's HTTP client has no timeout unless one is
+     * set. 3s connect / 5s total keeps a firewall hiccup from turning into a
+     * multi-second page hang; every call site here already wraps failures
+     * in try/catch and falls back to an empty result, so timing out is
+     * exactly as safe as any other failure mode already handled.
      */
     protected function client()
     {
         return Http::withBasicAuth($this->apiKey, $this->apiSecret)
-            ->withOptions(['verify' => config('services.opnsense.verify_tls', false)]);
+            ->withOptions(['verify' => config('services.opnsense.verify_tls', false)])
+            ->connectTimeout(3)
+            ->timeout(5);
     }
 
     /**
@@ -226,6 +238,11 @@ class OpnSenseService
 
     /**
      * Get the gateway status from OPNsense.
+     *
+     * Cached for a few seconds like getArpTable() — DashboardController's
+     * admin.live-stats endpoint polls interface/gateway data every 3 seconds
+     * while a dashboard is open, so without a cache every poll from every
+     * open admin session was its own uncached OPNsense round-trip.
      */
     public function getGatewayStatus()
     {
@@ -233,24 +250,35 @@ class OpnSenseService
             return [];
         }
 
-        try {
-            $url = "{$this->baseUrl}/api/diagnostics/gateway/status";
-            
-            $response = $this->client()->get($url);
+        return Cache::remember('opnsense_gateway_status', 5, function () {
+            try {
+                $url = "{$this->baseUrl}/api/diagnostics/gateway/status";
 
-            if ($response->successful()) {
-                return $response->json();
+                $response = $this->client()->get($url);
+
+                if ($response->successful()) {
+                    return $response->json();
+                }
+
+                return [];
+            } catch (\Exception $e) {
+                Log::error("OPNsense: Exception fetching gateway status: " . $e->getMessage());
+                return [];
             }
-
-            return [];
-        } catch (\Exception $e) {
-            Log::error("OPNsense: Exception fetching gateway status: " . $e->getMessage());
-            return [];
-        }
+        });
     }
 
     /**
      * Get interface statistics from OPNsense.
+     *
+     * Cached for a few seconds — this is called every 3s by
+     * DashboardController::liveStats() (the admin.live-stats poll, live for
+     * as long as any admin dashboard is open), and previously had no cache
+     * at all, so every poll from every concurrently open dashboard was its
+     * own uncached OPNsense HTTP round-trip. The raw byte counters returned
+     * here are cumulative anyway (the client computes a bandwidth rate from
+     * the delta between polls), so a few seconds of staleness costs nothing
+     * observable.
      */
     public function getInterfaceStats()
     {
@@ -258,50 +286,52 @@ class OpnSenseService
             return [];
         }
 
-        try {
-            $url = "{$this->baseUrl}/api/diagnostics/interface/getInterfaceStatistics";
-            
-            $response = $this->client()->get($url);
+        return Cache::remember('opnsense_interface_stats', 5, function () {
+            try {
+                $url = "{$this->baseUrl}/api/diagnostics/interface/getInterfaceStatistics";
 
-            if ($response->successful()) {
-                $data = $response->json();
-                $stats = $data['statistics'] ?? [];
-                
-                $normalized = [];
-                foreach ($stats as $key => $values) {
-                    // Extract the human name (WAN, LAN) or the interface name (vtnet0)
-                    $name = 'unknown';
-                    
-                    // Improved regex to handle nested brackets [[WAN]] -> wan
-                    if (preg_match('/\[+([a-zA-Z0-9]+)\]+/', $key, $matches)) {
-                        $name = strtolower($matches[1]);
-                    } elseif (preg_match('/\(([^\)]+)\)/', $key, $matches)) {
-                        $name = strtolower($matches[1]);
+                $response = $this->client()->get($url);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $stats = $data['statistics'] ?? [];
+
+                    $normalized = [];
+                    foreach ($stats as $key => $values) {
+                        // Extract the human name (WAN, LAN) or the interface name (vtnet0)
+                        $name = 'unknown';
+
+                        // Improved regex to handle nested brackets [[WAN]] -> wan
+                        if (preg_match('/\[+([a-zA-Z0-9]+)\]+/', $key, $matches)) {
+                            $name = strtolower($matches[1]);
+                        } elseif (preg_match('/\(([^\)]+)\)/', $key, $matches)) {
+                            $name = strtolower($matches[1]);
+                        }
+
+                        $inBytes = (int) ($values['received-bytes'] ?? 0);
+                        $outBytes = (int) ($values['sent-bytes'] ?? 0);
+
+                        // We want the aggregate entry for each interface.
+                        // Usually, this is the one with the highest traffic count.
+                        if (!isset($normalized[$name]) || ($inBytes + $outBytes) > ($normalized[$name]['inbytes'] + $normalized[$name]['outbytes'])) {
+                            $normalized[$name] = [
+                                'inbytes' => $inBytes,
+                                'outbytes' => $outBytes,
+                                'inpackets' => (int) ($values['received-packets'] ?? 0),
+                                'outpackets' => (int) ($values['sent-packets'] ?? 0),
+                                'errors' => (int) (($values['received-errors'] ?? 0) + ($values['send-errors'] ?? 0)),
+                            ];
+                        }
                     }
-
-                    $inBytes = (int) ($values['received-bytes'] ?? 0);
-                    $outBytes = (int) ($values['sent-bytes'] ?? 0);
-
-                    // We want the aggregate entry for each interface.
-                    // Usually, this is the one with the highest traffic count.
-                    if (!isset($normalized[$name]) || ($inBytes + $outBytes) > ($normalized[$name]['inbytes'] + $normalized[$name]['outbytes'])) {
-                        $normalized[$name] = [
-                            'inbytes' => $inBytes,
-                            'outbytes' => $outBytes,
-                            'inpackets' => (int) ($values['received-packets'] ?? 0),
-                            'outpackets' => (int) ($values['sent-packets'] ?? 0),
-                            'errors' => (int) (($values['received-errors'] ?? 0) + ($values['send-errors'] ?? 0)),
-                        ];
-                    }
+                    return $normalized;
                 }
-                return $normalized;
-            }
 
-            return [];
-        } catch (\Exception $e) {
-            Log::error("OPNsense: Exception fetching interface stats: " . $e->getMessage());
-            return [];
-        }
+                return [];
+            } catch (\Exception $e) {
+                Log::error("OPNsense: Exception fetching interface stats: " . $e->getMessage());
+                return [];
+            }
+        });
     }
 
     /**

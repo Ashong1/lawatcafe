@@ -103,4 +103,35 @@ class OpnSenseServiceTest extends TestCase
 
         $this->assertFalse(Cache::has('opnsense_sessions_list_0'));
     }
+
+    public function test_get_interface_stats_is_cached_across_calls(): void
+    {
+        // Regression coverage: this used to have no cache at all, so every
+        // 3s admin.live-stats poll (from every open admin dashboard) was its
+        // own uncached OPNsense round-trip.
+        Http::fake([
+            'opnsense.test/api/diagnostics/interface/getInterfaceStatistics' => Http::response([
+                'statistics' => ['[[WAN]]' => ['received-bytes' => 100, 'sent-bytes' => 50]],
+            ], 200),
+        ]);
+
+        $service = app(OpnSenseService::class);
+        $service->getInterfaceStats();
+        $service->getInterfaceStats();
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_get_gateway_status_is_cached_across_calls(): void
+    {
+        Http::fake([
+            'opnsense.test/api/diagnostics/gateway/status' => Http::response(['gateways' => []], 200),
+        ]);
+
+        $service = app(OpnSenseService::class);
+        $service->getGatewayStatus();
+        $service->getGatewayStatus();
+
+        Http::assertSentCount(1);
+    }
 }
