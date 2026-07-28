@@ -34,7 +34,7 @@
 
                         @if($settings['payment_qr_code'])
                             <div class="mb-6 flex justify-center p-4 bg-[#FDF8F5] rounded-2xl border border-[#F0E6D2] relative group">
-                                <img src="{{ asset('storage/' . $settings['payment_qr_code']) }}" class="w-48 h-48 object-contain rounded-lg">
+                                <img src="{{ asset('storage/' . $settings['payment_qr_code']) }}" alt="Current e-wallet payment QR code" class="w-48 h-48 object-contain rounded-lg">
                                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
                                     <span class="text-white text-[10px] font-black uppercase tracking-widest">Current QR Code</span>
                                 </div>
@@ -42,7 +42,7 @@
                         @endif
 
                         <div class="relative">
-                            <input type="file" name="payment_qr_code" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                            <input type="file" name="payment_qr_code" aria-label="Upload new e-wallet payment QR code (PNG or JPG, up to 2MB)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                             <div class="border-2 border-dashed border-[#F0E6D2] rounded-2xl p-8 text-center group-hover:border-[#3E2723] transition-colors">
                                 <x-lucide-upload class="w-8 h-8 text-[#A1887F] mx-auto mb-2" />
                                 <p class="text-xs font-bold text-[#3E2723]">Upload New QR Code</p>

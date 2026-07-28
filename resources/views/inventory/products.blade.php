@@ -90,10 +90,16 @@
                             </td>
                             <td class="py-4 font-black text-[#3E2723] text-sm">₱{{ number_format($product->price, 2) }}</td>
                             <td class="py-4">
-                                <button type="button" 
+                                <button type="button"
                                         @click="toggleStatus({{ $product->id }})"
-                                        :class="statuses['{{ $product->id }}'] === 'Active' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'"
-                                        class="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg border transition-all active:scale-95">
+                                        :disabled="togglingStatus['{{ $product->id }}']"
+                                        :aria-busy="togglingStatus['{{ $product->id }}'] ? 'true' : 'false'"
+                                        :class="[statuses['{{ $product->id }}'] === 'Active' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100', togglingStatus['{{ $product->id }}'] ? 'opacity-50 cursor-wait' : '']"
+                                        class="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-lg border transition-all active:scale-95 inline-flex items-center gap-1.5">
+                                    <svg x-show="togglingStatus['{{ $product->id }}']" class="w-2.5 h-2.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                    </svg>
                                     <span x-text="statuses['{{ $product->id }}'] || '{{ $product->status }}'"></span>
                                 </button>
                             </td>
@@ -253,6 +259,7 @@
             formData: { id: null, name: '', category: '', price: '', status: 'Active' },
             currentRecipe: [],
             statuses: {},
+            togglingStatus: {},
 
             openAddModal() {
                 this.isEditing = false;
@@ -280,6 +287,8 @@
             },
 
             async toggleStatus(productId) {
+                if (this.togglingStatus[productId]) return; // already in flight — guards the double-click race
+                this.togglingStatus[productId] = true;
                 try {
                     const response = await fetch(`/inventory/products/${productId}/toggle-status`, {
                         method: 'PATCH',
@@ -295,6 +304,8 @@
                     }
                 } catch (error) {
                     console.error('Failed to toggle status:', error);
+                } finally {
+                    this.togglingStatus[productId] = false;
                 }
             },
 
