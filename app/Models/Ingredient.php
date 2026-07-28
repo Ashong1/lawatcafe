@@ -24,6 +24,13 @@ class Ingredient extends Model
         return $this->hasMany(InventoryLog::class);
     }
 
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'product_ingredients')
+                    ->withPivot('quantity')
+                    ->withTimestamps();
+    }
+
     /**
      * Human-friendly display of current_stock — auto-converts g/ml into
      * kg/mg/L when the raw number would otherwise be awkwardly large or

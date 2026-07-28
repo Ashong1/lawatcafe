@@ -4,7 +4,6 @@ namespace App\Services\Agent;
 
 use App\Models\BannedDevice;
 use App\Models\Ingredient;
-use App\Models\ProductIngredient;
 use App\Models\SaleItem;
 use App\Models\Setting;
 use App\Models\Voucher;
@@ -127,7 +126,7 @@ class CrossDomainCorrelationService
 
         $signals = [];
         foreach ($lowStock as $ingredient) {
-            $productIds = ProductIngredient::where('ingredient_id', $ingredient->id)->pluck('product_id');
+            $productIds = $ingredient->products()->pluck('products.id');
             if ($productIds->isEmpty()) {
                 continue;
             }
