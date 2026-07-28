@@ -6,19 +6,6 @@
 @section('content')
 
 <style>
-    /* Opt this page out of the app-wide cross-document view transition (app.css:
-       `@view-transition { navigation: auto; }`). The POS page forcibly locks
-       body/html to a fixed 100vh with overflow:hidden (below) so the cart can sit
-       flush against the menu column — no other page does this. The browser's
-       view-transition cross-fade auto-interpolates old/new page sizes, and that
-       locked-viewport layout vs. a normal scrolling page is a big enough size
-       mismatch to visibly flicker/jump when navigating to or from this page.
-       Disabling it here only removes the fade for navigations touching POS;
-       every other page-to-page transition is unaffected. */
-    @view-transition {
-        navigation: none;
-    }
-
     /* This locked-viewport / fixed-height-flex-column treatment only applies at `lg` and up
        (matches Tailwind's lg breakpoint, 1024px), where the cart renders as a persistent
        side-by-side sidebar and needs precise height-matching with the menu column.

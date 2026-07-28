@@ -39,6 +39,18 @@
     navigation: auto;
 }
 
+/* The UA default also animates ::view-transition-group(root)'s width/height,
+   morphing/stretching between the old and new page's captured box size. Most
+   pages here are normal-height scrollable documents, but the POS register page
+   locks body/html to a fixed 100vh (see pos/index.blade.php) so its captured
+   snapshot size differs a lot from other pages' — letting that default resize
+   animation run produced a visible flicker/stretch when navigating to or from
+   POS. Disabling it keeps only our custom opacity fade below, which looks
+   identical everywhere no matter how much the page heights differ. */
+::view-transition-group(root) {
+    animation: none !important;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
     animation-duration: 0.18s;
