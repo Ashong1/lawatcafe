@@ -168,16 +168,18 @@ Route::middleware(['auth'])->group(function () {
         // System Accounts
         Route::resource('accounts', AccountController::class)->except(['create', 'show', 'edit']);
 
-        // System Settings (Consolidated) — Store Preferences is business-facing and
-        // stays reachable by admin-or-above; Integrations/Network/Agent are technical
-        // settings reserved for super_admin only (see nested group below).
+        // System Settings (Consolidated) — Store Preferences and the AI Providers
+        // API-key form are business-facing and stay reachable by admin-or-above
+        // (the shop owner should be able to plug in their own AI provider
+        // account); the AI status/testing/model-swap actions and Network/Agent
+        // are technical and reserved for super_admin only (see nested group below).
         Route::prefix('settings')->name('admin.settings.')->group(function () {
             Route::get('/store', [\App\Http\Controllers\Admin\SettingController::class, 'store'])->name('store');
             Route::post('/store', [\App\Http\Controllers\Admin\SettingController::class, 'updateStore'])->name('store.update');
+            Route::get('/ai-providers', [\App\Http\Controllers\Admin\SettingController::class, 'aiProviders'])->name('ai-providers');
+            Route::post('/ai-providers', [\App\Http\Controllers\Admin\SettingController::class, 'updateAiProviders'])->name('ai-providers.update');
 
             Route::middleware([RoleMiddleware::class . ':super_admin'])->group(function () {
-                Route::get('/ai-providers', [\App\Http\Controllers\Admin\SettingController::class, 'aiProviders'])->name('ai-providers');
-                Route::post('/ai-providers', [\App\Http\Controllers\Admin\SettingController::class, 'updateAiProviders'])->name('ai-providers.update');
                 Route::post('/ai-providers/{provider}/test', [\App\Http\Controllers\Admin\SettingController::class, 'testAiProvider'])
                     ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
                     ->name('ai-providers.test');

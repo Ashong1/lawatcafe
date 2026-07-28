@@ -28,7 +28,7 @@ class RoleMiddlewareTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
-        $response = $this->actingAs($admin)->get(route('admin.settings.ai-providers'));
+        $response = $this->actingAs($admin)->get(route('admin.settings.network'));
 
         $response->assertRedirect(route('dashboard'));
     }
@@ -37,7 +37,7 @@ class RoleMiddlewareTest extends TestCase
     {
         $superAdmin = User::factory()->create(['role' => 'super_admin']);
 
-        $this->actingAs($superAdmin)->get(route('admin.settings.ai-providers'))->assertOk();
+        $this->actingAs($superAdmin)->get(route('admin.settings.network'))->assertOk();
     }
 
     public function test_staff_still_blocked_from_admin_routes(): void

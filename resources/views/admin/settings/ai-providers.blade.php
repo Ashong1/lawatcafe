@@ -11,7 +11,14 @@
                     <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                     <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">AI Providers</span>
                 </h2>
-                <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Barista AI tries these providers in order (Gemini &rarr; Groq &rarr; OpenRouter). Status reflects real recent usage, or click "Test Now" to check right now.</p>
+                <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">
+                    Barista AI tries these providers in order (Gemini &rarr; Groq &rarr; OpenRouter).
+                    @if (auth()->user()->isSuperAdmin())
+                        Status reflects real recent usage, or click "Test Now" to check right now.
+                    @else
+                        Add your own API key below for whichever provider you have an account with.
+                    @endif
+                </p>
             </div>
         </div>
 
@@ -85,6 +92,7 @@
                             </span>
                         @endif
 
+                        @if (auth()->user()->isSuperAdmin())
                         <form action="{{ route('admin.settings.ai-providers.test', $key) }}" method="POST" x-data="{ testing: false }" @submit="testing = true">
                             @csrf
                             <button type="submit" :disabled="testing" class="px-4 py-2 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#3E2723] hover:bg-white transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2">
@@ -95,6 +103,7 @@
                                 <span x-text="testing ? 'Testing...' : 'Test Now'">Test Now</span>
                             </button>
                         </form>
+                        @endif
                     </div>
                 </div>
 
@@ -121,7 +130,7 @@
                                     @if ($model['at'])
                                         <span class="block text-[9px] text-[#A1887F]">{{ $model['at']->diffForHumans() }}</span>
                                     @endif
-                                    @if ($model['status'] === 'failed')
+                                    @if ($model['status'] === 'failed' && auth()->user()->isSuperAdmin())
                                         <button type="button" @click="editing = !editing" class="block text-[9px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-800 mt-1 ml-auto">
                                             Change Model
                                         </button>
@@ -129,7 +138,7 @@
                                 </div>
                             </div>
 
-                            @if ($model['status'] === 'failed')
+                            @if ($model['status'] === 'failed' && auth()->user()->isSuperAdmin())
                                 <form x-show="editing" x-cloak @submit="saving = true" action="{{ route('admin.settings.ai-providers.models.replace', $key) }}" method="POST" class="mt-3 flex items-center gap-2">
                                     @csrf
                                     <input type="hidden" name="old_model" value="{{ $model['name'] }}">
@@ -168,12 +177,14 @@
                     @endforeach
                 </div>
 
+                @if (auth()->user()->isSuperAdmin())
                 <form action="{{ route('admin.settings.ai-providers.models.reset', $key) }}" method="POST" class="mt-4 pt-4 border-t border-[#F0E6D2]">
                     @csrf
                     <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-[#A1887F] hover:text-[#3E2723] transition">
                         Reset to default models
                     </button>
                 </form>
+                @endif
             </div>
             @endforeach
         </div>

@@ -132,11 +132,43 @@ class AiProviderStatusTest extends TestCase
         $this->assertSame('openrouter-test-key', \App\Models\Setting::get('openrouter_api_key'));
     }
 
-    public function test_plain_admin_is_blocked_from_ai_providers_page(): void
+    public function test_plain_admin_can_view_the_ai_providers_page(): void
+    {
+        // The shop owner (role=admin) should be able to plug in their own
+        // provider account, even though the status/testing/model-swap
+        // actions further down the page stay super_admin-only.
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get(route('admin.settings.ai-providers'))->assertOk();
+    }
+
+    public function test_plain_admin_can_save_api_keys(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->post(route('admin.settings.ai-providers.update'), [
+            'gemini_api_key' => 'owner-gemini-key',
+        ])->assertRedirect();
+
+        $this->assertSame('owner-gemini-key', \App\Models\Setting::get('gemini_api_key'));
+    }
+
+    public function test_plain_admin_does_not_see_super_admin_only_actions(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->get(route('admin.settings.ai-providers'));
+
+        $response->assertOk();
+        $response->assertDontSee('Test Now');
+        $response->assertDontSee('Reset to default models');
+    }
+
+    public function test_plain_admin_is_blocked_from_testing_a_provider(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->post(route('admin.settings.ai-providers.test', 'gemini'));
 
         $response->assertRedirect(route('dashboard'));
     }
