@@ -65,6 +65,28 @@
     animation-name: vt-fade-in;
 }
 
+/* app-sidebar/app-header (tagged via [view-transition-name:...] in the admin
+   and staff layouts) are persistent app chrome, not page content — the same
+   nav list and header re-render on every navigation, just with a different
+   active item highlighted. Left to the UA default, each still gets its own
+   old/new cross-fade, and because the two snapshots are nearly pixel-identical,
+   fading between them reads as a blurry double-exposure/ghosting of the nav
+   text rather than a clean cut. Since there's nothing meaningful to animate
+   between two near-identical renders, skip the fade entirely: the new snapshot
+   sits fully opaque on top of the old one by default stacking order, so this
+   just swaps instantly with no visible artifact. */
+::view-transition-group(app-sidebar),
+::view-transition-group(app-header) {
+    animation: none !important;
+}
+
+::view-transition-old(app-sidebar),
+::view-transition-new(app-sidebar),
+::view-transition-old(app-header),
+::view-transition-new(app-header) {
+    animation: none !important;
+}
+
 @keyframes vt-fade-out {
     to { opacity: 0; }
 }
