@@ -292,31 +292,154 @@ class OpnSenseService
 
     protected function alterBlockAlias(string $action, string $macAddress): bool
     {
+        $alias = config('services.opnsense.block_alias', 'guest_blocklist');
+        return $this->alterAlias($alias, $action, $macAddress);
+    }
+
+    /**
+     * Add or remove a value (MAC or IP, depending on the alias's own type)
+     * from a named OPNsense firewall alias. This only manages alias
+     * membership — a firewall rule referencing the alias (block, or a
+     * traffic-shaper pipe assignment) must already exist in OPNsense.
+     */
+    protected function alterAlias(string $alias, string $action, string $value): bool
+    {
         if (empty($this->apiKey) || empty($this->apiSecret)) {
-            Log::warning("OPNsense: API credentials not configured, cannot {$action} MAC on block alias.");
+            Log::warning("OPNsense: API credentials not configured, cannot {$action} {$value} on alias '{$alias}'.");
             return false;
         }
 
         try {
-            $alias = config('services.opnsense.block_alias', 'guest_blocklist');
             $url = "{$this->baseUrl}/api/firewall/alias_util/{$action}/{$alias}";
 
             $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
                 ->withoutVerifying()
-                ->post($url, ['address' => $macAddress]);
+                ->post($url, ['address' => $value]);
 
             if ($response->successful()) {
-                Log::info("OPNsense: {$action} {$macAddress} on block alias '{$alias}'.");
+                Log::info("OPNsense: {$action} {$value} on alias '{$alias}'.");
                 return true;
             }
 
-            Log::error("OPNsense: Failed to {$action} {$macAddress} on block alias '{$alias}'.", [
+            Log::error("OPNsense: Failed to {$action} {$value} on alias '{$alias}'.", [
                 'status' => $response->status(),
                 'response' => $response->json(),
             ]);
             return false;
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception during block-alias {$action} for {$macAddress}: " . $e->getMessage());
+            Log::error("OPNsense: Exception during alias {$action} for {$value} on '{$alias}': " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Add/remove an IP address to the bandwidth-tier alias ('free' or
+     * 'premium') so a matching OPNsense firewall+shaper rule applies the
+     * corresponding pipe to its traffic. See upsertShaperPipe() for the pipe
+     * side of this — the firewall rule binding alias -> pipe is a one-time
+     * manual OPNsense setup step, not managed by this app.
+     */
+    public function addIpToTierAlias(string $tier, string $ip): bool
+    {
+        return $this->alterAlias($this->tierAliasName($tier), 'add', $ip);
+    }
+
+    public function removeIpFromTierAlias(string $tier, string $ip): bool
+    {
+        return $this->alterAlias($this->tierAliasName($tier), 'delete', $ip);
+    }
+
+    protected function tierAliasName(string $tier): string
+    {
+        return config("services.opnsense.tier_alias_{$tier}", "lawatcafe_{$tier}_tier");
+    }
+
+    /**
+     * Create or update the Dummynet pipe for a bandwidth tier ('free' or
+     * 'premium'). The pipe's OPNsense UUID is cached in Setting so repeat
+     * calls update the same pipe instead of creating duplicates. Does NOT
+     * apply the change by itself — call reconfigureShaper() after.
+     */
+    public function upsertShaperPipe(string $tier, float $downMbps, float $upMbps): bool
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            Log::warning("OPNsense: API credentials not configured, cannot upsert shaper pipe for tier {$tier}.");
+            return false;
+        }
+
+        $settingKey = "opnsense_pipe_uuid_{$tier}";
+        $uuid = \App\Models\Setting::get($settingKey);
+
+        $payload = [
+            'pipe' => [
+                'bandwidth' => (string) max($downMbps, $upMbps),
+                'bandwidthMetric' => 'Mbit/s',
+                'description' => "lawatcafe_{$tier}",
+            ],
+        ];
+
+        try {
+            $url = $uuid
+                ? "{$this->baseUrl}/api/trafficshaper/settings/setPipe/{$uuid}"
+                : "{$this->baseUrl}/api/trafficshaper/settings/addPipe";
+
+            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
+                ->withoutVerifying()
+                ->post($url, $payload);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $newUuid = $data['uuid'] ?? $uuid;
+                if ($newUuid && $newUuid !== $uuid) {
+                    \App\Models\Setting::set($settingKey, $newUuid);
+                }
+
+                Log::info("OPNsense: upserted shaper pipe for tier {$tier}.", ['uuid' => $newUuid]);
+                return true;
+            }
+
+            Log::error("OPNsense: Failed to upsert shaper pipe for tier {$tier}.", [
+                'status' => $response->status(),
+                'response' => $response->json(),
+            ]);
+            return false;
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception upserting shaper pipe for tier {$tier}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Apply pending traffic-shaper configuration changes (pipe add/update).
+     * Unlike alias_util, the trafficshaper module requires this explicit
+     * reconfigure call for pipe changes to take effect.
+     */
+    public function reconfigureShaper(): bool
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            Log::warning("OPNsense: API credentials not configured, cannot reconfigure shaper.");
+            return false;
+        }
+
+        try {
+            $url = "{$this->baseUrl}/api/trafficshaper/service/reconfigure";
+
+            $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
+                ->withoutVerifying()
+                ->post($url);
+
+            if ($response->successful()) {
+                Log::info("OPNsense: traffic shaper reconfigured.");
+                return true;
+            }
+
+            Log::error("OPNsense: Failed to reconfigure traffic shaper.", [
+                'status' => $response->status(),
+                'response' => $response->json(),
+            ]);
+            return false;
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception reconfiguring traffic shaper: " . $e->getMessage());
             return false;
         }
     }

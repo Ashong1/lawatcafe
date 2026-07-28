@@ -30,6 +30,7 @@ class GenerateVoucherBatchTool implements AgentTool
             'properties' => [
                 'quantity' => ['type' => 'integer', 'description' => 'How many vouchers to generate (1-100)'],
                 'duration_minutes' => ['type' => 'integer', 'description' => 'Voucher validity duration in minutes'],
+                'tier' => ['type' => 'string', 'enum' => ['free', 'premium'], 'description' => 'Bandwidth tier for the batch. Defaults to free.'],
             ],
             'required' => ['quantity', 'duration_minutes'],
         ];
@@ -49,7 +50,9 @@ class GenerateVoucherBatchTool implements AgentTool
             return ToolResult::fail('quantity and duration_minutes must both be positive.');
         }
 
-        $result = $this->vouchers->generateBatch($quantity, $duration, $actor?->id, 'ai');
+        $tier = in_array($arguments['tier'] ?? null, ['free', 'premium'], true) ? $arguments['tier'] : 'free';
+
+        $result = $this->vouchers->generateBatch($quantity, $duration, $actor?->id, 'ai', $tier);
 
         return ToolResult::ok(
             "Generated {$result['count']} voucher(s): " . implode(', ', $result['codes']),

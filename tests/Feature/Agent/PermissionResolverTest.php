@@ -64,6 +64,8 @@ class PermissionResolverTest extends TestCase
 
         $this->assertFalse($resolver->isConfigurable($tools['blockDevice']));
         $this->assertFalse($resolver->isConfigurable($tools['generateVoucherBatch']));
+        $this->assertFalse($resolver->isConfigurable($tools['unblockDevice']));
+        $this->assertFalse($resolver->isConfigurable($tools['setSessionBandwidthTier']));
         $this->assertTrue($resolver->isConfigurable($tools['restockIngredient']));
         $this->assertTrue($resolver->isConfigurable($tools['checkStockLevels']));
     }

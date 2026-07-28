@@ -112,7 +112,7 @@ class CaptivePortalController extends Controller
     }
 
     // Handle session termination
-    public function disconnect(Request $request, \App\Services\OpnSenseService $opnsense)
+    public function disconnect(Request $request, \App\Services\OpnSenseService $opnsense, \App\Services\TrafficShapingService $shaping)
     {
         $sessionId = $request->input('session_id');
 
@@ -131,6 +131,7 @@ class CaptivePortalController extends Controller
 
             if ($ownsSession) {
                 $opnsense->disconnectDevice($sessionId);
+                $shaping->releaseIp($ip, $opnsense);
             } else {
                 Log::warning("Portal disconnect: rejected attempt by {$ip} to disconnect session {$sessionId} it does not own.");
             }
@@ -140,13 +141,13 @@ class CaptivePortalController extends Controller
     }
 
     // Handle e-wallet reference number verification
-    public function verifyPayment(Request $request, \App\Services\OpnSenseService $opnsense)
+    public function verifyPayment(Request $request, \App\Services\OpnSenseService $opnsense, \App\Services\TrafficShapingService $shaping)
     {
         $request->validate([
             'reference_number' => 'required|string',
         ]);
 
-        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $opnsense) {
+        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $opnsense, $shaping) {
             $payment = \App\Models\EwalletPayment::where('reference_number', $request->reference_number)
                                                  ->where('is_used', false)
                                                  ->lockForUpdate() // Lock to prevent race conditions
@@ -186,9 +187,10 @@ class CaptivePortalController extends Controller
             // Generate the voucher
             $code = 'LAWA-' . strtoupper(\Illuminate\Support\Str::random(4));
             
-            \App\Models\Voucher::create([
+            $voucher = \App\Models\Voucher::create([
                 'code' => $code,
                 'duration_minutes' => $duration,
+                'tier' => 'premium',
                 'is_used' => true,
                 'used_at' => now(),
                 'ip_address' => $ip,
@@ -201,18 +203,20 @@ class CaptivePortalController extends Controller
             // Authorize device via backend API
             $opnsense->authorizeDevice($ip, $code);
 
+            $shaping->assignTier($voucher, $ip, $opnsense);
+
             return redirect()->route('portal.success')->with('passcode', $code);
         });
     }
 
     // Handle standard passcode entry
-    public function authenticate(Request $request, \App\Services\OpnSenseService $opnsense)
+    public function authenticate(Request $request, \App\Services\OpnSenseService $opnsense, \App\Services\TrafficShapingService $shaping)
     {
         $request->validate([
             'passcode' => 'required|string',
         ]);
 
-        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $opnsense) {
+        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $opnsense, $shaping) {
             // 1. Verify the Lawa't Voucher in your Database
             $voucher = \App\Models\Voucher::where('code', $request->passcode)
                               ->where('is_used', false)
@@ -245,6 +249,8 @@ class CaptivePortalController extends Controller
                 'ip_address' => $ip,
                 'mac_address' => $mac,
             ]);
+
+            $shaping->assignTier($voucher, $ip, $opnsense);
 
             return redirect()->route('portal.success');
         });

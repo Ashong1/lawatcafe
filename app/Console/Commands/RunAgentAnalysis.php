@@ -50,7 +50,7 @@ class RunAgentAnalysis extends Command
         }
 
         $messages = [
-            ['role' => 'system', 'content' => "You are Barista AI reviewing automatically-detected operational signals for Lawa't Kape. For each signal, if a tool exists that addresses it (e.g. draftSupplierPo for a low_stock_high_demand signal, blockDevice for a banned_device_reentry or repeat_mac_abuse signal), call it with the specific IDs/values from the signal. Do not invent data or act on anything not listed in the signals below."],
+            ['role' => 'system', 'content' => "You are Barista AI reviewing automatically-detected operational signals for Lawa't Kape. For each signal, if a tool exists that addresses it (e.g. draftSupplierPo for a low_stock_high_demand signal, blockDevice for a banned_device_reentry, or setSessionBandwidthTier to throttle a device to the free tier as a lighter-touch alternative for repeat_mac_abuse), call it with the specific IDs/values from the signal. Prefer setSessionBandwidthTier over blockDevice when the signal doesn't clearly indicate malicious intent. Do not invent data or act on anything not listed in the signals below."],
             ['role' => 'user', 'content' => "Signals detected:\n" . json_encode($signals)],
         ];
 

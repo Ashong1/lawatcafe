@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Setting;
 use App\Models\Voucher;
 use App\Services\OpnSenseService;
+use App\Services\TrafficShapingService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -34,7 +35,7 @@ class EnforceSessionLimits extends Command
      */
     protected const ORPHAN_GRACE_MINUTES = 60;
 
-    public function handle(OpnSenseService $opnsense)
+    public function handle(OpnSenseService $opnsense, TrafficShapingService $shaping)
     {
         $this->info("Fetching active sessions from OPNsense...");
         $sessions = $opnsense->listSessions();
@@ -74,7 +75,7 @@ class EnforceSessionLimits extends Command
                 ->first();
 
             if (!$voucher) {
-                $this->handleOrphanedSession($opnsense, $session, $ip, $sessionId, $protectedIps);
+                $this->handleOrphanedSession($opnsense, $shaping, $session, $ip, $sessionId, $protectedIps);
                 continue;
             }
 
@@ -91,6 +92,7 @@ class EnforceSessionLimits extends Command
                 $disconnected = $opnsense->disconnectDevice($sessionId);
 
                 if ($disconnected) {
+                    $shaping->releaseIp($ip, $opnsense);
                     Log::warning("EnforceSessions: Disconnected {$ip} due to MAC binding violation (voucher {$voucher->code} bound to {$boundMac}, saw {$mac}).");
                 } else {
                     $this->error("   [FAILED] Could not kick device for MAC mismatch.");
@@ -107,6 +109,7 @@ class EnforceSessionLimits extends Command
                 $disconnected = $opnsense->disconnectDevice($sessionId);
 
                 if ($disconnected) {
+                    $shaping->releaseIp($ip, $opnsense);
                     $this->info("   [SUCCESS] Device kicked.");
                     Log::info("EnforceSessions: Disconnected {$ip} (Voucher: {$voucher->code}) due to expiration.");
                 } else {
@@ -132,7 +135,7 @@ class EnforceSessionLimits extends Command
      * disconnect it once it's been idle past the grace period so it can't
      * linger indefinitely.
      */
-    protected function handleOrphanedSession(OpnSenseService $opnsense, array $session, string $ip, string $sessionId, array $protectedIps): void
+    protected function handleOrphanedSession(OpnSenseService $opnsense, TrafficShapingService $shaping, array $session, string $ip, string $sessionId, array $protectedIps): void
     {
         if (in_array($ip, $protectedIps)) {
             $this->line(" - Session {$ip}: Allowlisted (ignored/VIP/infrastructure). Skipping.");
@@ -157,6 +160,7 @@ class EnforceSessionLimits extends Command
         $disconnected = $opnsense->disconnectDevice($sessionId);
 
         if ($disconnected) {
+            $shaping->releaseIp($ip, $opnsense);
             $this->info("   [SUCCESS] Orphaned device kicked.");
             Log::info("EnforceSessions: Disconnected orphaned session {$ip} (idle {$idleMinutes}m, no voucher record).");
         } else {

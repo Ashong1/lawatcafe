@@ -32,6 +32,7 @@ class EnforceSessionLimitsTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession()]);
             $mock->shouldReceive('disconnectDevice')->once()->with('sess-1')->andReturn(true);
+            $mock->shouldReceive('removeIpFromTierAlias')->andReturn(true);
         });
 
         $this->artisan('network:enforce-sessions')->assertExitCode(0);
@@ -60,6 +61,7 @@ class EnforceSessionLimitsTest extends TestCase
                 $this->fakeSession(['last_accessed' => now()->subMinutes(90)->timestamp]),
             ]);
             $mock->shouldReceive('disconnectDevice')->once()->with('sess-1')->andReturn(true);
+            $mock->shouldReceive('removeIpFromTierAlias')->andReturn(true);
         });
 
         $this->artisan('network:enforce-sessions')->assertExitCode(0);

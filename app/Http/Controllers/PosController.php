@@ -232,6 +232,7 @@ class PosController extends Controller
                         Voucher::create([
                             'code' => $code,
                             'duration_minutes' => $item['duration'] ?? 60,
+                            'tier' => 'premium',
                             'is_used' => false,
                             'sale_id' => $sale->id,
                         ]);
@@ -287,6 +288,7 @@ class PosController extends Controller
                 Voucher::create([
                     'code' => $freeCode,
                     'duration_minutes' => $freeWifiDuration,
+                    'tier' => 'free',
                     'is_used' => false,
                     'sale_id' => $sale->id,
                 ]);

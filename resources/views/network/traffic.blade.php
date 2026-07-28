@@ -112,19 +112,19 @@
                             <div class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center shrink-0">
                                 <span class="text-sm font-black text-[#3E2723]">1</span>
                             </div>
-                            <p class="text-xs text-amber-50/80 leading-relaxed font-medium">Rules defined here are sent to OPNsense as Dummynet pipes during the voucher authorization phase.</p>
+                            <p class="text-xs text-amber-50/80 leading-relaxed font-medium">Saving these rules creates/updates two Dummynet pipes on OPNsense (one per tier) via its API immediately — no manual OPNsense edits needed for bandwidth changes.</p>
                         </div>
                         <div class="flex gap-4">
                             <div class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center shrink-0">
                                 <span class="text-sm font-black text-[#3E2723]">2</span>
                             </div>
-                            <p class="text-xs text-amber-50/80 leading-relaxed font-medium">Download and Upload limits are applied per-client session, not shared globally, ensuring consistent performance for everyone.</p>
+                            <p class="text-xs text-amber-50/80 leading-relaxed font-medium">Each guest's voucher (free or premium) determines which tier its session's IP is added to at connection time, so limits apply per-client rather than as one shared pool.</p>
                         </div>
                         <div class="flex gap-4">
                             <div class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center shrink-0">
                                 <span class="text-sm font-black text-[#3E2723]">3</span>
                             </div>
-                            <p class="text-xs text-amber-50/80 leading-relaxed font-medium">Quality of Service (QoS) prioritizes VoIP and Transaction traffic to ensure seamless payments even under high load.</p>
+                            <p class="text-xs text-amber-50/80 leading-relaxed font-medium">One-time setup on OPNsense (not managed by this app): create two firewall rules binding the <code class="text-amber-200">{{ config('services.opnsense.tier_alias_free') }}</code> and <code class="text-amber-200">{{ config('services.opnsense.tier_alias_premium') }}</code> aliases to their matching pipe. This app only manages pipe bandwidth and alias membership.</p>
                         </div>
                     </div>
                 </div>

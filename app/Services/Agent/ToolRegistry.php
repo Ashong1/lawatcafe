@@ -8,10 +8,13 @@ use App\Services\Agent\Tools\CheckStockLevelsTool;
 use App\Services\Agent\Tools\DraftSupplierPoTool;
 use App\Services\Agent\Tools\GenerateVoucherBatchTool;
 use App\Services\Agent\Tools\GetActiveSessionsTool;
+use App\Services\Agent\Tools\GetTrafficStatsTool;
 use App\Services\Agent\Tools\LookupVoucherTool;
 use App\Services\Agent\Tools\RestockIngredientTool;
 use App\Services\Agent\Tools\SendSupplierPoTool;
+use App\Services\Agent\Tools\SetSessionBandwidthTierTool;
 use App\Services\Agent\Tools\ShiftHandoffSummaryTool;
+use App\Services\Agent\Tools\UnblockDeviceTool;
 use App\Services\Agent\Tools\VoidSaleTool;
 
 /**
@@ -45,6 +48,7 @@ class ToolRegistry
             ...$this->guestToolClasses(),
             CheckStockLevelsTool::class,
             GetActiveSessionsTool::class,
+            GetTrafficStatsTool::class,
             RestockIngredientTool::class,
             VoidSaleTool::class,
             DraftSupplierPoTool::class,
@@ -60,6 +64,8 @@ class ToolRegistry
             ...$this->staffToolClasses(),
             GenerateVoucherBatchTool::class,
             BlockDeviceTool::class,
+            UnblockDeviceTool::class,
+            SetSessionBandwidthTierTool::class,
         ];
     }
 

@@ -13,7 +13,7 @@ class VoucherService
      *
      * @return array{count: int, codes: string[]}
      */
-    public function generateBatch(int $quantity, int $durationMinutes, ?int $actorUserId = null, string $actorType = 'human'): array
+    public function generateBatch(int $quantity, int $durationMinutes, ?int $actorUserId = null, string $actorType = 'human', string $tier = 'free'): array
     {
         $codes = [];
 
@@ -25,6 +25,7 @@ class VoucherService
                 Voucher::create([
                     'code' => $code,
                     'duration_minutes' => $durationMinutes,
+                    'tier' => $tier,
                     'is_used' => false,
                 ]);
                 $codes[] = $code;

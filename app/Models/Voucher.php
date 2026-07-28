@@ -11,6 +11,7 @@ class Voucher extends Model
     protected $fillable = [
         'code',
         'duration_minutes',
+        'tier',
         'is_used',
         'used_at',
         'ip_address',

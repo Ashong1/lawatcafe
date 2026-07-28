@@ -8,6 +8,8 @@ use App\Services\Agent\Tools\DraftSupplierPoTool;
 use App\Services\Agent\Tools\GenerateVoucherBatchTool;
 use App\Services\Agent\Tools\RestockIngredientTool;
 use App\Services\Agent\Tools\SendSupplierPoTool;
+use App\Services\Agent\Tools\SetSessionBandwidthTierTool;
+use App\Services\Agent\Tools\UnblockDeviceTool;
 use App\Services\Agent\Tools\VoidSaleTool;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -23,6 +25,8 @@ class ToolRegistryIsolationTest extends TestCase
         VoidSaleTool::class,
         DraftSupplierPoTool::class,
         SendSupplierPoTool::class,
+        UnblockDeviceTool::class,
+        SetSessionBandwidthTierTool::class,
     ];
 
     public function test_guest_registry_never_contains_a_write_tool(): void
@@ -55,6 +59,8 @@ class ToolRegistryIsolationTest extends TestCase
 
         $this->assertArrayNotHasKey('generateVoucherBatch', $staffTools);
         $this->assertArrayNotHasKey('blockDevice', $staffTools);
+        $this->assertArrayNotHasKey('unblockDevice', $staffTools);
+        $this->assertArrayNotHasKey('setSessionBandwidthTier', $staffTools);
     }
 
     public function test_admin_registry_contains_every_registered_tool(): void

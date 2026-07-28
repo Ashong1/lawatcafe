@@ -44,6 +44,8 @@ return [
         'guest_user' => env('OPNSENSE_GUEST_USER', 'laravel_guest'),
         'guest_pass' => env('OPNSENSE_GUEST_PASS', 'Laravel123'),
         'block_alias' => env('OPNSENSE_BLOCK_ALIAS', 'guest_blocklist'),
+        'tier_alias_free' => env('OPNSENSE_TIER_ALIAS_FREE', 'lawatcafe_free_tier'),
+        'tier_alias_premium' => env('OPNSENSE_TIER_ALIAS_PREMIUM', 'lawatcafe_premium_tier'),
     ],
 
 ];
