@@ -70,10 +70,20 @@
                             @endif
                         </td>
                         <td class="py-4 text-right">
-                            <a href="{{ route('admin.finance.shift-detail', $shift->id) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-[#FAFAFA] border border-[#F0E6D2] text-[#3E2723] rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#3E2723] hover:text-white hover:border-[#3E2723] transition-all group shadow-sm">
-                                <span>Audit Detail</span>
-                                <x-lucide-chevron-right class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                            </a>
+                            @if($shift->status === 'closed')
+                                <a href="{{ route('admin.finance.shift-detail', $shift->id) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-[#FAFAFA] border border-[#F0E6D2] text-[#3E2723] rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#3E2723] hover:text-white hover:border-[#3E2723] transition-all group shadow-sm">
+                                    <span>Audit Detail</span>
+                                    <x-lucide-chevron-right class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                                </a>
+                            @else
+                                {{-- An open shift has no closed_at/ending_cash yet — the audit
+                                     detail page assumes both are set. Point at the live
+                                     reconciliation view instead (same one the cashier sees). --}}
+                                <a href="{{ route('shift.closing-report', $shift->id) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-[#FAFAFA] border border-[#F0E6D2] text-[#3E2723] rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-[#3E2723] hover:text-white hover:border-[#3E2723] transition-all group shadow-sm">
+                                    <span>View Live</span>
+                                    <x-lucide-chevron-right class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                                </a>
+                            @endif
                         </td>
                     </tr>
                     @empty
