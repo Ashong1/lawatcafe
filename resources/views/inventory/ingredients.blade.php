@@ -50,34 +50,9 @@
                     @php
                         $isLow = $ingredient->current_stock <= $ingredient->low_stock_threshold;
                         $isOut = $ingredient->current_stock <= 0;
-                        
-                        // Precise Dynamic Formatting Logic
-                        $displayStock = (float) $ingredient->current_stock;
-                        $displayUnit = $ingredient->unit;
-                        
-                        if ($ingredient->unit === 'g') {
-                            if ($displayStock >= 1000) {
-                                $displayStock /= 1000;
-                                $displayUnit = 'kg';
-                            } elseif ($displayStock < 1 && $displayStock > 0) {
-                                $displayStock *= 1000;
-                                $displayUnit = 'mg';
-                            }
-                        } elseif ($ingredient->unit === 'ml') {
-                            if ($displayStock >= 1000) {
-                                $displayStock /= 1000;
-                                $displayUnit = 'L';
-                            }
-                        }
-                        
-                        $formattedStock = $displayStock >= 100 
-                            ? number_format($displayStock, 1) 
-                            : ($displayStock >= 10 
-                                ? number_format($displayStock, 2) 
-                                : number_format($displayStock, 3));
-                        
-                        // Remove trailing zeros and decimal if whole number
-                        $formattedStock = rtrim(rtrim($formattedStock, '0'), '.');
+                        $stockDisplay = $ingredient->formattedStock();
+                        $formattedStock = $stockDisplay['value'];
+                        $displayUnit = $stockDisplay['unit'];
                     @endphp
                     <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors {{ $isLow ? 'bg-red-50/30' : '' }}">
                         <td class="py-4">
