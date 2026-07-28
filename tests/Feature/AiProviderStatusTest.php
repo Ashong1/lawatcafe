@@ -46,6 +46,31 @@ class AiProviderStatusTest extends TestCase
         $this->assertNotContains('my-custom-model', $catalog);
     }
 
+    public function test_more_free_models_lists_additional_openrouter_free_models_not_active(): void
+    {
+        $more = app(AIService::class)->getProviderStatuses()['openrouter']['more_free_models'];
+
+        $this->assertContains('poolside/laguna-s-2.1:free', $more);
+        $this->assertContains('google/gemma-4-31b-it:free', $more);
+        // Gemini/Groq have no documented "additional free" backlog.
+        $statuses = app(AIService::class)->getProviderStatuses();
+        $this->assertEmpty($statuses['gemini']['more_free_models']);
+        $this->assertEmpty($statuses['groq']['more_free_models']);
+    }
+
+    public function test_more_free_models_excludes_a_model_once_it_becomes_active(): void
+    {
+        Http::fake(['openrouter.ai/*' => Http::response([
+            'choices' => [['message' => ['content' => 'OK']]],
+        ], 200)]);
+
+        app(AIService::class)->replaceModel('openrouter', 'openrouter/free', 'poolside/laguna-s-2.1:free');
+
+        $more = app(AIService::class)->getProviderStatuses()['openrouter']['more_free_models'];
+
+        $this->assertNotContains('poolside/laguna-s-2.1:free', $more);
+    }
+
     public function test_test_provider_records_success_for_every_healthy_model(): void
     {
         Http::fake([

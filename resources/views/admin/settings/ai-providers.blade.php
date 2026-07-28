@@ -135,9 +135,20 @@
                                     <input type="hidden" name="old_model" value="{{ $model['name'] }}">
                                     <select name="new_model" :disabled="isCustom" :required="!isCustom" @change="isCustom = ($event.target.value === '__custom__')" class="flex-1 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-lg px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                                         <option value="">Choose a model...</option>
-                                        @foreach ($provider['catalog'] as $catalogModel)
-                                            <option value="{{ $catalogModel }}">{{ $catalogModel }}</option>
-                                        @endforeach
+                                        @if (!empty($provider['catalog']))
+                                            <optgroup label="Suggested">
+                                                @foreach ($provider['catalog'] as $catalogModel)
+                                                    <option value="{{ $catalogModel }}">{{ $catalogModel }}</option>
+                                                @endforeach
+                                            </optgroup>
+                                        @endif
+                                        @if (!empty($provider['more_free_models']))
+                                            <optgroup label="Other Free Models (untested here)">
+                                                @foreach ($provider['more_free_models'] as $freeModel)
+                                                    <option value="{{ $freeModel }}">{{ $freeModel }}</option>
+                                                @endforeach
+                                            </optgroup>
+                                        @endif
                                         <option value="__custom__">Other (type manually)...</option>
                                     </select>
                                     <input type="text" name="new_model" x-show="isCustom" x-cloak :disabled="!isCustom" :required="isCustom" placeholder="Type a model ID..." class="flex-1 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-lg px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all">

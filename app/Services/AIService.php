@@ -67,6 +67,29 @@ class AIService
         'nvidia/nemotron-nano-9b-v2:free',
     ];
 
+    // Other genuinely free (pricing=0) models seen on OpenRouter that aren't
+    // in the curated list above — not because they're broken, just because
+    // they were 429/timing-out during the one-time 2026-07-27 verification
+    // pass (see comment above). Offered as opt-in catalog suggestions (never
+    // auto-cascaded) so an admin can deliberately try one and see current
+    // real-world behavior via the replace-and-verify flow. Deliberately does
+    // NOT include the Groq-excluded models (safety classifier, reasoning
+    // leak, built-in-tools conflict, language mismatch) or the OpenRouter
+    // non-chat models (content-safety classifier, music generation) — those
+    // have concrete functional blockers, not just flakiness, so suggesting
+    // them would just set an admin up to pick something that can't work.
+    protected $additionalFreeModelsCatalog = [
+        'gemini' => [],
+        'groq' => [],
+        'openrouter' => [
+            'poolside/laguna-s-2.1:free',
+            'google/gemma-4-31b-it:free',
+            'nvidia/nemotron-3-ultra-550b-a55b:free',
+            'poolside/laguna-m.1:free',
+            'nvidia/nemotron-nano-12b-v2-vl:free',
+        ],
+    ];
+
     public function __construct()
     {
         $this->geminiKey = env('GEMINI_API_KEY') ?: \App\Models\Setting::get('gemini_api_key');
@@ -157,6 +180,12 @@ class AIService
             'openrouter' => $this->openRouterModels,
             default => [],
         };
+    }
+
+    /** Genuinely free models known but not in the curated default list (see property comment). */
+    public function additionalFreeModels(string $provider): array
+    {
+        return $this->additionalFreeModelsCatalog[$provider] ?? [];
     }
 
     /**
@@ -256,6 +285,11 @@ class AIService
             // admin isn't stuck typing a model ID from memory.
             $catalog = array_values(array_diff($this->defaultModels($provider), $info['models']));
 
+            // Other genuinely free models not in the curated list (see
+            // $additionalFreeModelsCatalog) — shown as a separate, clearly
+            // labeled group since they're unverified for tool-calling here.
+            $moreFreeModels = array_values(array_diff($this->additionalFreeModels($provider), $info['models']));
+
             $result[$provider] = [
                 'label' => $info['label'],
                 'configured' => (bool) $info['key'],
@@ -266,6 +300,7 @@ class AIService
                     'failure_count' => (int) Cache::get("ai_circuit_failures_{$provider}", 0),
                 ],
                 'models' => $models,
+                'more_free_models' => $moreFreeModels,
                 'catalog' => $catalog,
             ];
         }
