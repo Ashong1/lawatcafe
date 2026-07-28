@@ -111,35 +111,91 @@
         <nav class="flex-1 px-3 py-6 space-y-1 overflow-y-auto overflow-x-hidden">
             <a href="/dashboard" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('dashboard') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Dashboard">
                 <x-lucide-layout-dashboard class="w-5 h-5 shrink-0 {{ request()->is('dashboard') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Dashboard</span>
+                <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">Dashboard</span>
             </a>
             <a href="{{ route('admin.analytics') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('admin/analytics') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Insights">
                 <x-lucide-brain-circuit class="w-5 h-5 shrink-0 {{ request()->is('admin/analytics') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">AI Insights</span>
+                <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">AI Insights</span>
             </a>
             <a href="{{ route('admin.ai.actions.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('admin.ai.actions.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Agent Activity">
                 <x-lucide-list-checks class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.ai.actions.*') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Agent Activity</span>
+                <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">Agent Activity</span>
             </a>
             <a href="{{ route('ai.analysis.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('ai.analysis.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Findings History">
                 <x-lucide-radar class="w-5 h-5 shrink-0 {{ request()->routeIs('ai.analysis.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Findings History</span>
+                <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">Findings History</span>
             </a>
             <a href="/pos" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('pos') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="POS Register">
                 <x-lucide-calculator class="w-5 h-5 shrink-0 {{ request()->is('pos') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">POS Register</span>
+                <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">POS Register</span>
             </a>
             <a href="/kds" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('kds') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Kitchen Display">
                 <x-lucide-chef-hat class="w-5 h-5 shrink-0 {{ request()->is('kds') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Kitchen Display</span>
+                <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">Kitchen Display</span>
             </a>
             <a href="{{ route('pos.history') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('pos.history') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Order History">
                 <x-lucide-history class="w-5 h-5 shrink-0 {{ request()->routeIs('pos.history') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Order History</span>
+                <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">Order History</span>
             </a>
             <a href="{{ route('admin.finance.z-reads') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('admin.finance.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Z-Reads / Audits">
                 <x-lucide-lock class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.finance.*') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Z-Reads / Audits</span>
+                <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">Z-Reads / Audits</span>
             </a>
 
             <!-- Inventory Dropdown -->
@@ -149,11 +205,25 @@
                         title="Inventory">
                     <div class="flex items-center">
                         <x-lucide-package class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
-                        <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Inventory</span>
+                        <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">Inventory</span>
                     </div>
                     <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" x-bind:class="menus.inventory ? 'rotate-180' : ''" />
                 </button>
-                <div x-show="menus.inventory && sidebarOpen" x-transition class="pl-11 space-y-1">
+                <div x-show="menus.inventory && sidebarOpen"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="pl-11 space-y-1">
                     <a href="/inventory/products" class="block py-2 text-xs {{ request()->is('inventory/products') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Products</a>
                     <a href="/inventory/categories" class="block py-2 text-xs {{ request()->is('inventory/categories') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Categories</a>
                     <a href="/inventory/ingredients" class="block py-2 text-xs {{ request()->is('inventory/ingredients') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Ingredients</a>
@@ -172,11 +242,25 @@
                         title="Network">
                     <div class="flex items-center">
                         <x-lucide-wifi class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
-                        <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Network</span>
+                        <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">Network</span>
                     </div>
                     <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" x-bind:class="menus.network ? 'rotate-180' : ''" />
                 </button>
-                <div x-show="menus.network && sidebarOpen" x-transition class="pl-11 space-y-1">
+                <div x-show="menus.network && sidebarOpen"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="pl-11 space-y-1">
                     <a href="/network/sessions" class="block py-2 text-xs {{ request()->is('network/sessions') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Active Sessions</a>
                     <a href="/network/vouchers" class="block py-2 text-xs {{ request()->is('network/vouchers') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Vouchers</a>
                     <a href="/network/verifications" class="block py-2 text-xs {{ request()->is('network/verifications') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Verification Logs</a>
@@ -193,11 +277,25 @@
                         title="Business Settings">
                     <div class="flex items-center">
                         <x-lucide-settings-2 class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
-                        <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Business Settings</span>
+                        <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">Business Settings</span>
                     </div>
                     <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" x-bind:class="menus.settings ? 'rotate-180' : ''" />
                 </button>
-                <div x-show="menus.settings && sidebarOpen" x-transition class="pl-11 space-y-1">
+                <div x-show="menus.settings && sidebarOpen"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="pl-11 space-y-1">
                     <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">{{ auth()->user()->isSuperAdmin() ? 'Staff & Admin Accounts' : 'Staff Accounts' }}</a>
                     <a href="{{ route('admin.settings.store') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.store') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Store Preferences</a>
                     <a href="{{ route('admin.settings.ai-providers') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.ai-providers*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">AI Providers</a>
@@ -211,11 +309,25 @@
                         title="System Administration — super_admin only">
                     <div class="flex items-center">
                         <x-lucide-shield-check class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
-                        <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">System Administration</span>
+                        <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-out duration-200"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in duration-100"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">System Administration</span>
                     </div>
                     <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" x-bind:class="menus.system ? 'rotate-180' : ''" />
                 </button>
-                <div x-show="menus.system && sidebarOpen" x-transition class="pl-11 space-y-1">
+                <div x-show="menus.system && sidebarOpen"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100 translate-y-0"
+                     x-transition:leave-end="opacity-0 -translate-y-1"
+                     class="pl-11 space-y-1">
                     <a href="{{ route('admin.settings.network') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.network') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Network Config</a>
                     <a href="{{ route('admin.settings.agent') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.agent') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Agent Permissions</a>
                 </div>

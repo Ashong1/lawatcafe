@@ -6,6 +6,19 @@
 @section('content')
 
 <style>
+    /* Opt this page out of the app-wide cross-document view transition (app.css:
+       `@view-transition { navigation: auto; }`). The POS page forcibly locks
+       body/html to a fixed 100vh with overflow:hidden (below) so the cart can sit
+       flush against the menu column — no other page does this. The browser's
+       view-transition cross-fade auto-interpolates old/new page sizes, and that
+       locked-viewport layout vs. a normal scrolling page is a big enough size
+       mismatch to visibly flicker/jump when navigating to or from this page.
+       Disabling it here only removes the fade for navigations touching POS;
+       every other page-to-page transition is unaffected. */
+    @view-transition {
+        navigation: none;
+    }
+
     /* This locked-viewport / fixed-height-flex-column treatment only applies at `lg` and up
        (matches Tailwind's lg breakpoint, 1024px), where the cart renders as a persistent
        side-by-side sidebar and needs precise height-matching with the menu column.
@@ -237,7 +250,14 @@
     </div>
 
     {{-- Mobile/Tablet-Portrait Cart Trigger --}}
-    <div x-show="cart.length > 0" x-cloak x-transition class="lg:hidden fixed bottom-4 inset-x-4 z-40">
+    <div x-show="cart.length > 0" x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 translate-y-4"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-4"
+         class="lg:hidden fixed bottom-4 inset-x-4 z-40">
         <button type="button" @click="showMobileCart = true" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white rounded-full py-4 px-6 shadow-2xl flex items-center justify-between font-bold text-sm active:scale-[0.98] transition">
             <span class="flex items-center gap-2">
                 <x-lucide-shopping-cart class="w-5 h-5" />

@@ -24,7 +24,14 @@
 </div>
 
 {{-- AI Pairing Suggestion --}}
-<div x-show="suggestion" x-transition class="shrink-0 mb-3 p-3 rounded-xl border border-amber-200 bg-amber-50 flex items-center gap-3" style="display: none;">
+<div x-show="suggestion"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0 -translate-y-1"
+     x-transition:enter-end="opacity-100 translate-y-0"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100 translate-y-0"
+     x-transition:leave-end="opacity-0 -translate-y-1"
+     class="shrink-0 mb-3 p-3 rounded-xl border border-amber-200 bg-amber-50 flex items-center gap-3" style="display: none;">
     <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
         <x-lucide-sparkles class="w-4 h-4 text-amber-700" />
     </div>
@@ -80,7 +87,14 @@
 
 {{-- BOTTOM CHECKOUT (Fixed: Will not shrink) --}}
 <div class="shrink-0 pt-3 border-t border-[#F0E6D2] flex flex-col gap-3">
-    <div x-show="freeWifiMinAmount > 0" x-transition class="p-3 rounded-xl border flex flex-col gap-2 transition-all" :class="grandTotal >= freeWifiMinAmount ? 'bg-[#F3F9FF] border-[#E3F2FD]' : 'bg-[#FAFAFA] border-[#F0E6D2]'" style="display: none;">
+    <div x-show="freeWifiMinAmount > 0"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 -translate-y-1"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 -translate-y-1"
+         class="p-3 rounded-xl border flex flex-col gap-2 transition-all" :class="grandTotal >= freeWifiMinAmount ? 'bg-[#F3F9FF] border-[#E3F2FD]' : 'bg-[#FAFAFA] border-[#F0E6D2]'" style="display: none;">
         <div class="flex justify-between items-center">
             <p class="text-[9px] font-black uppercase tracking-[0.2em]" :class="grandTotal >= freeWifiMinAmount ? 'text-[#1565C0]' : 'text-[#8D6E63]'">
                 <span x-show="grandTotal >= freeWifiMinAmount"><x-lucide-wifi class="w-3 h-3 inline-block mr-1 -mt-0.5"/> Free Wi-Fi Unlocked!</span>

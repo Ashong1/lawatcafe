@@ -88,6 +88,27 @@
     }
 }
 
+/* Generic small-pop entrance — chat bubbles, dropdown/list items appearing
+   one at a time. Cheap (opacity + transform only, GPU-friendly) so it's
+   safe on frequently-updated views. Only plays once per element: inside an
+   `x-for` keyed by a stable key, Alpine reuses the DOM node for existing
+   items and only creates a fresh node (replaying this animation) for a
+   genuinely new entry — it won't re-trigger on unrelated re-renders. */
+@keyframes anim-pop-in {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.anim-pop-in {
+    animation: anim-pop-in 0.25s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .anim-pop-in {
+        animation: none;
+    }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

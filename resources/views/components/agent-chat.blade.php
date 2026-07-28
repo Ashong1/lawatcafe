@@ -24,7 +24,7 @@
 
         <div class="overflow-y-auto space-y-3 pr-1 w-full flex flex-col justify-start z-10 max-h-full no-scrollbar flex-1 min-h-0" id="{{ $anchorId }}-chat-history">
             <template x-for="(msg, index) in history" :key="index">
-                <div>
+                <div class="anim-pop-in">
                     <template x-if="msg.kind === 'text'">
                         <div class="p-3 rounded-2xl shadow-sm text-xs font-medium relative w-fit max-w-[85%] break-words whitespace-normal mx-1"
                              :class="msg.role === 'user' ? 'bg-[#3E2723] text-white self-end rounded-br-sm' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] self-start rounded-bl-sm'">
@@ -50,7 +50,7 @@
                     </template>
                 </div>
             </template>
-            <div x-show="thinking" class="bg-white p-3 rounded-2xl rounded-bl-sm shadow-sm border border-[#F0E6D2] self-start w-fit mx-1">
+            <div x-show="thinking" class="anim-pop-in bg-white p-3 rounded-2xl rounded-bl-sm shadow-sm border border-[#F0E6D2] self-start w-fit mx-1">
                 <span class="text-[9px] text-[#8D6E63] font-black tracking-widest uppercase animate-pulse">Typing...</span>
             </div>
             <div id="{{ $anchorId }}-chat-anchor" class="h-1 w-full"></div>
@@ -113,7 +113,7 @@
         <!-- Messages Area -->
         <div class="flex-1 overflow-y-auto p-6 space-y-4 bg-[#FDF8F5]" id="{{ $anchorId }}-chat-history">
             <template x-for="(msg, index) in history" :key="index">
-                <div>
+                <div class="anim-pop-in">
                     <!-- Plain text turn -->
                     <template x-if="msg.kind === 'text'">
                         <div class="flex flex-col" :class="msg.role === 'user' ? 'items-end' : 'items-start'">
@@ -166,7 +166,7 @@
                 </div>
             </template>
 
-            <div x-show="thinking" class="flex flex-col items-start">
+            <div x-show="thinking" class="anim-pop-in flex flex-col items-start">
                 <div class="bg-white border border-[#F0E6D2] p-4 rounded-2xl rounded-tl-none shadow-sm">
                     <div class="flex gap-1">
                         <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce"></div>
@@ -198,10 +198,24 @@
                 @pointerdown="if(!open) startDrag($event)"
                 class="w-16 h-16 bg-[#3E2723] hover:bg-[#271815] text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group relative"
                 :class="!open ? 'cursor-move' : ''">
-            <div x-show="!open" class="flex items-center justify-center">
+            <div x-show="!open"
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -rotate-45 scale-75"
+                 x-transition:enter-end="opacity-100 rotate-0 scale-100"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 rotate-0 scale-100"
+                 x-transition:leave-end="opacity-0 rotate-45 scale-75"
+                 class="flex items-center justify-center">
                 <x-lucide-bot class="w-8 h-8 group-hover:rotate-12 transition-transform" />
             </div>
-            <div x-show="open" class="flex items-center justify-center">
+            <div x-show="open"
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 rotate-45 scale-75"
+                 x-transition:enter-end="opacity-100 rotate-0 scale-100"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 rotate-0 scale-100"
+                 x-transition:leave-end="opacity-0 -rotate-45 scale-75"
+                 class="flex items-center justify-center">
                 <x-lucide-chevron-down class="w-8 h-8" />
             </div>
 
