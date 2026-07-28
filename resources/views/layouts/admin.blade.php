@@ -183,23 +183,39 @@
 
             <!-- Settings Dropdown (Consolidated) -->
             <div class="space-y-1">
-                <button @click="menus.settings = !menus.settings" 
-                        class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->is('admin/settings*') || request()->is('accounts*') ? 'text-amber-400' : 'text-[#A1887F]' }}"
-                        title="Settings">
+                <button @click="menus.settings = !menus.settings"
+                        class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->routeIs('admin.settings.store') || request()->is('accounts*') ? 'text-amber-400' : 'text-[#A1887F]' }}"
+                        title="Business Settings">
                     <div class="flex items-center">
                         <x-lucide-settings-2 class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
-                        <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">System Settings</span>
+                        <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">Business Settings</span>
                     </div>
                     <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" x-bind:class="menus.settings ? 'rotate-180' : ''" />
                 </button>
                 <div x-show="menus.settings && sidebarOpen" x-transition class="pl-11 space-y-1">
-                    <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Staff Accounts</a>
+                    <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">{{ auth()->user()->isSuperAdmin() ? 'Staff & Admin Accounts' : 'Staff Accounts' }}</a>
                     <a href="{{ route('admin.settings.store') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.store') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Store Preferences</a>
+                </div>
+            </div>
+
+            @if(auth()->user()->isSuperAdmin())
+            <div class="space-y-1">
+                <button @click="menus.system = !menus.system"
+                        class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->routeIs('admin.settings.integrations') || request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'text-amber-400' : 'text-[#A1887F]' }}"
+                        title="System Administration — super_admin only">
+                    <div class="flex items-center">
+                        <x-lucide-shield-check class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
+                        <span x-show="sidebarOpen" class="ml-3 whitespace-nowrap text-sm">System Administration</span>
+                    </div>
+                    <x-lucide-chevron-down x-show="sidebarOpen" class="w-4 h-4 transition-transform duration-200" x-bind:class="menus.system ? 'rotate-180' : ''" />
+                </button>
+                <div x-show="menus.system && sidebarOpen" x-transition class="pl-11 space-y-1">
                     <a href="{{ route('admin.settings.integrations') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.integrations') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">API Integrations</a>
                     <a href="{{ route('admin.settings.network') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.network') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Network Config</a>
                     <a href="{{ route('admin.settings.agent') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.agent') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Agent Permissions</a>
                 </div>
             </div>
+            @endif
         </nav>
     </aside>
 
@@ -270,9 +286,9 @@
                 menus: {
                     inventory: {{ request()->is('inventory*') ? 'true' : 'false' }},
                     network: {{ request()->is('network*') ? 'true' : 'false' }},
-                    system: {{ request()->is('accounts*') ? 'true' : 'false' }},
                     finance: {{ request()->is('sales*') ? 'true' : 'false' }},
-                    settings: {{ request()->routeIs('admin.settings*') ? 'true' : 'false' }}
+                    settings: {{ request()->is('accounts*') || request()->routeIs('admin.settings.store') ? 'true' : 'false' }},
+                    system: {{ request()->routeIs('admin.settings.integrations') || request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'true' : 'false' }}
                 }
             }))
         })

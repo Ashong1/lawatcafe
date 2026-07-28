@@ -15,7 +15,7 @@
             </div>
         </div>
 
-        <form action="{{ route('admin.settings.update') }}" method="POST">
+        <form action="{{ route('admin.settings.integrations.update') }}" method="POST">
             @csrf
             <div class="max-w-2xl mx-auto space-y-8">
                 

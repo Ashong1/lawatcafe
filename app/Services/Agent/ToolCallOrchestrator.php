@@ -28,10 +28,15 @@ class ToolCallOrchestrator
      * @param array $messages Canonical chat history: [['role'=>'user'|'assistant'|'system','content'=>string], ...]
      * @param string $audience 'guest'|'staff'|'admin' — determines which tools the model is even offered.
      * @param array $context Request-scoped data tools may need (e.g. guest's own IP/MAC). Never model-supplied.
+     * @param ?callable $onTextDelta Invoked with each text chunk as it streams in from the model.
+     *                                Defaults to a no-op for non-interactive callers (e.g. the scheduled
+     *                                agent:analyze run) that don't need live output.
      * @return array{reply: ?string, pending: array, executed: array}
      */
-    public function run(array $messages, string $audience, ?User $actor, array $context = []): array
+    public function run(array $messages, string $audience, ?User $actor, array $context = [], ?callable $onTextDelta = null): array
     {
+        $onTextDelta ??= function (string $delta) {};
+
         $registryTools = $this->registry->forAudience($audience);
         $canonicalTools = array_values(array_map(fn ($t) => [
             'name' => $t->name(),
@@ -43,7 +48,7 @@ class ToolCallOrchestrator
         $pending = [];
 
         for ($roundTrip = 0; $roundTrip < self::MAX_ROUND_TRIPS; $roundTrip++) {
-            $response = $this->ai->chatWithTools($messages, $canonicalTools);
+            $response = $this->ai->chatWithToolsStreaming($messages, $canonicalTools, $onTextDelta);
 
             if (!$response) {
                 return ['reply' => null, 'pending' => $pending, 'executed' => $executed];
@@ -126,7 +131,7 @@ class ToolCallOrchestrator
         }
 
         $tier = $this->permissions->tierFor($tool, $approvedBy);
-        if ($tier === PermissionResolver::TIER_ADMIN_ONLY && $approvedBy->role !== 'admin') {
+        if ($tier === PermissionResolver::TIER_ADMIN_ONLY && !$approvedBy->isAdminOrAbove()) {
             return ToolResult::fail('Only an admin can approve this action.');
         }
 

@@ -263,7 +263,7 @@ class PosController extends Controller
 
                             // Check for Low Stock
                             if ($ingredient->current_stock <= $ingredient->low_stock_threshold) {
-                                $admins = \App\Models\User::where('role', 'admin')->get();
+                                $admins = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->get();
                                 \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\SystemAlert(
                                     'Inventory Warning',
                                     "{$ingredient->name} reached low stock during a sale.",
@@ -311,6 +311,40 @@ class PosController extends Controller
                 'sale_id' => $sale->id, 
             ]);
         });
+    }
+
+    /**
+     * Real-time upsell/cross-sell suggestion for whatever was just added to
+     * the cart. Deliberately not a formal AgentTool — this is a read-only
+     * suggestion fired on every add-to-cart, not an executed/auditable
+     * action, and routing it through ToolCallOrchestrator would add latency
+     * for no benefit.
+     */
+    public function suggestPairing(Request $request, \App\Services\PairingSuggestionService $pairing, \App\Services\AIService $ai)
+    {
+        $request->validate([
+            'product_id' => 'required|integer',
+            'cart_product_ids' => 'nullable|array',
+            'cart_product_ids.*' => 'integer',
+        ]);
+
+        $suggestion = $pairing->suggestFor((int) $request->product_id, $request->input('cart_product_ids', []));
+
+        if (!$suggestion) {
+            return response()->json(['suggestion' => null]);
+        }
+
+        $itemName = Product::find($request->product_id)?->name ?? 'that item';
+        $message = $ai->phraseSuggestion($itemName, $suggestion['name']) ?? "Pairs well with {$suggestion['name']}!";
+
+        return response()->json([
+            'suggestion' => [
+                'product_id' => $suggestion['product_id'],
+                'name' => $suggestion['name'],
+                'price' => $suggestion['price'],
+                'message' => $message,
+            ],
+        ]);
     }
 
     public function receipt(Sale $sale)

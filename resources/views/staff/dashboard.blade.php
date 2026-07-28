@@ -65,7 +65,7 @@
     </div>
 
     <!-- Operational Details Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
         <!-- Active Shift Info -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col h-full relative overflow-hidden">
@@ -170,6 +170,37 @@
             </div>
         </div>
 
+        <!-- Barista AI Findings -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col h-full relative overflow-hidden">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-50/50 rounded-full z-0"></div>
+            <div class="relative z-10 flex flex-col h-full">
+                <div class="flex items-center gap-2 mb-4 pb-4 border-b border-[#F0E6D2]">
+                    <div class="p-2 bg-amber-50 rounded-lg text-amber-700">
+                        <x-lucide-radar class="w-4 h-4" />
+                    </div>
+                    <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Barista AI Findings</h3>
+                </div>
+
+                <div class="flex-1 overflow-y-auto pr-1 space-y-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">
+                    <template x-for="(finding, index) in aiFindings" :key="index">
+                        <div class="flex items-start gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" :class="finding.severity === 'danger' ? 'bg-red-500' : 'bg-amber-500'"></span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold text-[#3E2723] leading-snug" x-text="finding.summary"></p>
+                                <p class="text-[9px] font-black uppercase tracking-widest text-[#A1887F] mt-0.5" x-text="finding.created_at"></p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div x-show="aiFindings.length === 0" class="h-full flex flex-col items-center justify-center text-center py-6">
+                        <x-lucide-check-circle class="w-8 h-8 text-green-500 mb-3 opacity-50" />
+                        <p class="text-sm font-bold text-green-700">All Clear</p>
+                        <p class="text-xs text-[#8D6E63] mt-1">No operational findings right now.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     </div>
@@ -188,6 +219,7 @@ document.addEventListener('alpine:init', () => {
             'starting_cash' => number_format($activeShift->starting_cash, 2),
             'role' => auth()->user()->role,
         ] : null),
+        aiFindings: @js($aiFindings->map(fn ($f) => ['summary' => $f->summary, 'severity' => $f->severity, 'created_at' => $f->created_at->diffForHumans()])),
         currentTime: @js(now()->format('l, F jS - h:i A')),
 
         init() {
@@ -197,7 +229,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchLiveData() {
             try {
-                const response = await fetch('{{ route('staff.dashboard.live') }}');
+                const response = await fetch('{{ route('staff.dashboard.live') }}', { headers: { 'Accept': 'application/json' } });
                 if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.json();
                 
@@ -206,6 +238,7 @@ document.addEventListener('alpine:init', () => {
                 this.shiftNotes = data.shiftNotes;
                 this.eightySixList = data.eightySixList;
                 this.activeShift = data.shift;
+                this.aiFindings = data.aiFindings;
                 this.currentTime = data.currentTime;
             } catch (error) {
                 console.error('Failed to fetch live data:', error);

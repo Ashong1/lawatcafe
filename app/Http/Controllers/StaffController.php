@@ -25,12 +25,15 @@ class StaffController extends Controller
 
         $unusedVouchers = Voucher::where('is_used', false)->count();
 
+        $aiFindings = \App\Models\AiFinding::where('audience', 'staff')->latest()->take(5)->get();
+
         return view('staff.dashboard', compact(
             'activeShift',
             'eightySixList',
             'shiftNotes',
             'pendingOrdersCount',
-            'unusedVouchers'
+            'unusedVouchers',
+            'aiFindings'
         ));
     }
 
@@ -54,6 +57,16 @@ class StaffController extends Controller
         $pendingOrdersCount = Sale::whereIn('status', ['pending', 'preparing'])->count();
         $unusedVouchers = Voucher::where('is_used', false)->count();
 
+        $aiFindings = \App\Models\AiFinding::where('audience', 'staff')
+            ->latest()
+            ->take(5)
+            ->get(['summary', 'severity', 'created_at'])
+            ->map(fn ($f) => [
+                'summary' => $f->summary,
+                'severity' => $f->severity,
+                'created_at' => $f->created_at->diffForHumans(),
+            ]);
+
         return response()->json([
             'hasActiveShift' => (bool) $activeShift,
             'shift' => $activeShift ? [
@@ -66,6 +79,7 @@ class StaffController extends Controller
             'shiftNotes' => $shiftNotes,
             'pendingOrdersCount' => $pendingOrdersCount,
             'unusedVouchers' => $unusedVouchers,
+            'aiFindings' => $aiFindings,
             'currentTime' => now()->format('l, F jS - h:i A'),
         ]);
     }
@@ -83,12 +97,27 @@ class StaffController extends Controller
         }
         $messages[] = ['role' => 'user', 'content' => $request->message];
 
-        $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_STAFF, $request->user());
+        return response()->stream(function () use ($messages, $orchestrator, $request) {
+            $onTextDelta = function (string $delta) {
+                echo 'data: ' . json_encode(['type' => 'delta', 'text' => $delta]) . "\n\n";
+                if (ob_get_level() > 0) @ob_flush();
+                flush();
+            };
 
-        return response()->json([
-            'reply' => $result['reply'] ?? "☕ Staff AI stack offline.",
-            'pending' => $result['pending'],
-            'executed' => $result['executed'],
+            $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_STAFF, $request->user(), [], $onTextDelta);
+
+            echo 'data: ' . json_encode([
+                'type' => 'meta',
+                'reply' => $result['reply'] ?? "☕ Staff AI stack offline.",
+                'pending' => $result['pending'],
+                'executed' => $result['executed'],
+            ]) . "\n\n";
+            if (ob_get_level() > 0) @ob_flush();
+            flush();
+        }, 200, [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+            'X-Accel-Buffering' => 'no',
         ]);
     }
 }

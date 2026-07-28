@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Setting;
 use App\Services\Agent\PermissionResolver;
 use App\Services\Agent\ToolRegistry;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class SettingController extends Controller
@@ -105,19 +106,13 @@ class SettingController extends Controller
     }
 
     /**
-     * Update specified settings.
+     * Update Store Preferences — business-facing settings, reachable by admin-or-above.
      */
-    public function update(Request $request)
+    public function updateStore(Request $request)
     {
         $validated = $request->validate([
-            'active_ai_model' => 'nullable|string',
-            'ai_api_key' => 'nullable|string',
             'payment_qr_code' => 'nullable|image|max:2048',
             'voucher_durations' => 'nullable|json',
-            'network_ignored_ips' => 'nullable|string',
-            'network_vip_ips' => 'nullable|string',
-            'network_infrastructure_ips' => 'nullable|string',
-            'opnsense_zone' => 'nullable|string',
             'low_stock_threshold' => 'nullable|numeric',
             'free_wifi_min_amount' => 'nullable|numeric|min:0',
             'free_wifi_duration' => 'nullable|numeric|min:1',
@@ -126,11 +121,7 @@ class SettingController extends Controller
             'receipt_header' => 'nullable|string|max:255',
         ]);
 
-        foreach ($validated as $key => $value) {
-            if ($key !== 'payment_qr_code') {
-                Setting::set($key, $value);
-            }
-        }
+        $this->applySettings($validated, exclude: ['payment_qr_code']);
 
         if ($request->hasFile('payment_qr_code')) {
             $oldQr = Setting::get('payment_qr_code');
@@ -142,9 +133,49 @@ class SettingController extends Controller
             Setting::set('payment_qr_code', $path);
         }
 
-        // Clear dashboard cache
-        \Illuminate\Support\Facades\Cache::forget('dashboard_stats');
+        Cache::forget('dashboard_stats');
 
         return redirect()->back()->with('success', 'Configuration updated successfully.');
+    }
+
+    /**
+     * Update API Integrations (AI model + key) — super_admin only, enforced at the route level.
+     */
+    public function updateIntegrations(Request $request)
+    {
+        $validated = $request->validate([
+            'active_ai_model' => 'nullable|string',
+            'ai_api_key' => 'nullable|string',
+        ]);
+
+        $this->applySettings($validated);
+
+        return redirect()->back()->with('success', 'Configuration updated successfully.');
+    }
+
+    /**
+     * Update Network Configuration — super_admin only, enforced at the route level.
+     */
+    public function updateNetwork(Request $request)
+    {
+        $validated = $request->validate([
+            'network_ignored_ips' => 'nullable|string',
+            'network_vip_ips' => 'nullable|string',
+            'network_infrastructure_ips' => 'nullable|string',
+            'opnsense_zone' => 'nullable|string',
+        ]);
+
+        $this->applySettings($validated);
+
+        return redirect()->back()->with('success', 'Configuration updated successfully.');
+    }
+
+    private function applySettings(array $validated, array $exclude = []): void
+    {
+        foreach ($validated as $key => $value) {
+            if (!in_array($key, $exclude, true)) {
+                Setting::set($key, $value);
+            }
+        }
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Models\AiAnalysisRun;
+use App\Models\AiFinding;
 use App\Models\User;
 use App\Notifications\SystemAlert;
 use App\Services\Agent\CrossDomainCorrelationService;
@@ -31,6 +33,22 @@ class RunAgentAnalysis extends Command
         $interpretation = $ai->interpretSignals($signals);
         $narrative = $interpretation['narrative'] ?? 'Barista AI detected operational signals that need review.';
 
+        // Durable findings feed (dashboard panels) — neither AiActionAudit (no
+        // narrative, tool-calls only) nor the notifications table (read-state
+        // scoped, admin-only today) can serve this; a signal's audience
+        // decides whether staff see it or it stays admin-only.
+        $run = AiAnalysisRun::create(['narrative' => $narrative, 'signal_count' => count($signals)]);
+        foreach ($signals as $signal) {
+            AiFinding::create([
+                'run_id' => $run->id,
+                'type' => $signal['type'],
+                'severity' => $signal['severity'],
+                'summary' => $signal['summary'],
+                'data' => $signal['data'] ?? [],
+                'audience' => AiFinding::audienceForType($signal['type']),
+            ]);
+        }
+
         $messages = [
             ['role' => 'system', 'content' => "You are Barista AI reviewing automatically-detected operational signals for Lawa't Kape. For each signal, if a tool exists that addresses it (e.g. draftSupplierPo for a low_stock_high_demand signal, blockDevice for a banned_device_reentry or repeat_mac_abuse signal), call it with the specific IDs/values from the signal. Do not invent data or act on anything not listed in the signals below."],
             ['role' => 'user', 'content' => "Signals detected:\n" . json_encode($signals)],
@@ -41,7 +59,7 @@ class RunAgentAnalysis extends Command
         // admin_only action still lands as 'proposed', not auto-bypassed.
         $result = $orchestrator->run($messages, ToolRegistry::AUDIENCE_ADMIN, null);
 
-        $admins = User::where('role', 'admin')->get();
+        $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
         if ($admins->isNotEmpty()) {
             Notification::send($admins, new SystemAlert(
                 'Barista AI: Operational Review',

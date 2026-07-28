@@ -47,5 +47,20 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('portal-chat', function (Request $request) {
             return Limit::perMinute(10)->by($request->ip());
         });
+
+        // Authenticated staff/admin AI chat + the confirm/reject/pending-action
+        // endpoints (which also execute tools) had no rate limit at all — keyed
+        // by user id (falling back to IP) since these are logged-in requests.
+        RateLimiter::for('staff-ai-chat', function (Request $request) {
+            return Limit::perMinute(20)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('admin-ai-chat', function (Request $request) {
+            return Limit::perMinute(20)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('ai-actions', function (Request $request) {
+            return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
+        });
     }
 }

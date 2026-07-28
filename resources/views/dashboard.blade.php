@@ -188,6 +188,39 @@
     </div>
 </div>
 
+{{-- Row 2.5: Proactive AI Findings (from the agent:analyze scheduled job) --}}
+@if(($aiFindings ?? collect())->isNotEmpty())
+<div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
+    <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-amber-100 rounded-xl">
+                <x-lucide-radar class="w-5 h-5 text-amber-700" />
+            </div>
+            <div>
+                <h3 class="text-sm font-black uppercase tracking-widest text-[#3E2723]">Barista AI Findings</h3>
+                @if($latestAiNarrative ?? null)
+                    <p class="text-[10px] text-[#8D6E63] font-medium mt-0.5">{{ $latestAiNarrative }}</p>
+                @endif
+            </div>
+        </div>
+        <a href="{{ route('admin.ai.actions.index') }}" class="text-[10px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-800 transition-colors flex items-center gap-1.5 shrink-0">
+            Agent Activity <x-lucide-arrow-right class="w-3 h-3" />
+        </a>
+    </div>
+    <div class="space-y-2">
+        @foreach($aiFindings as $finding)
+        <div class="flex items-start gap-3 p-3 rounded-xl {{ $finding->severity === 'danger' ? 'bg-red-50' : 'bg-amber-50' }}">
+            <span class="w-2 h-2 rounded-full mt-1.5 shrink-0 {{ $finding->severity === 'danger' ? 'bg-red-500' : 'bg-amber-500' }}"></span>
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold {{ $finding->severity === 'danger' ? 'text-red-800' : 'text-amber-900' }}">{{ $finding->summary }}</p>
+                <p class="text-[9px] font-bold uppercase tracking-widest {{ $finding->severity === 'danger' ? 'text-red-500/70' : 'text-amber-700/60' }} mt-0.5">{{ $finding->created_at->diffForHumans() }}</p>
+            </div>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 {{-- Row 3: System Health & Network --}}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     {{-- System Health --}}
@@ -729,7 +762,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchLiveStats() {
             try {
-                const response = await fetch('{{ route("admin.live-stats") }}');
+                const response = await fetch('{{ route("admin.live-stats") }}', { headers: { 'Accept': 'application/json' } });
                 const data = await response.json();
                 
                 const now = Date.now();
@@ -767,7 +800,7 @@ document.addEventListener('alpine:init', () => {
             
             try {
                 console.log('Fetching AI insights...');
-                const response = await fetch('{{ route("admin.ai.insights") }}');
+                const response = await fetch('{{ route("admin.ai.insights") }}', { headers: { 'Accept': 'application/json' } });
                 
                 if (!response.ok) {
                     throw new Error(`Server returned ${response.status}: ${response.statusText}`);

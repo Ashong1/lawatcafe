@@ -312,16 +312,35 @@ document.addEventListener('alpine:init', () => {
             this.thinking = true;
             this.scrollToBottom();
 
+            // Client-side ceiling matching the worst-case server-side provider
+            // cascade, so a dead request reads as "slow, try again" rather than
+            // hanging indefinitely with no feedback.
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+            // The in-progress assistant bubble streamed text gets appended into.
+            // Stays null until the first real content delta arrives — a round
+            // that's only resolving tool calls never creates one, so the
+            // "Typing..." indicator keeps showing until genuine reply text starts.
+            let assistantEntry = null;
+
             try {
                 const headers = {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    'Accept': 'text/event-stream',
+                    // Laravel's expectsJson() only checks Accept for a "json" substring, which
+                    // "text/event-stream" doesn't contain — X-Requested-With covers the ajax()
+                    // branch of that check instead, so an expired session gets a clean 401
+                    // rather than a redirect that stores this streaming URL as the post-login
+                    // destination (see: pending-count "intended URL" bug).
+                    'X-Requested-With': 'XMLHttpRequest',
                 };
                 if (this.csrf) headers['X-CSRF-TOKEN'] = this.csrfToken;
 
                 const response = await fetch(this.endpoint, {
                     method: 'POST',
                     headers,
+                    signal: controller.signal,
                     body: JSON.stringify({
                         message: userMsg,
                         // Only replay plain conversational turns as history — executed/pending
@@ -338,24 +357,68 @@ document.addEventListener('alpine:init', () => {
                     return;
                 }
 
-                const data = await response.json();
-
-                if (data.reply) {
-                    this.history.push({ kind: 'text', role: 'assistant', content: data.reply });
+                if (!response.ok || !response.body) {
+                    throw new Error('Bad response');
                 }
 
-                (data.executed || []).forEach(e => {
-                    this.history.push({ kind: 'executed', tool: e.tool, message: (e.result && e.result.message) || 'Done.' });
-                });
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
 
-                (data.pending || []).forEach(p => {
-                    const entry = { kind: 'pending', tool: p.tool, arguments: p.arguments, tier: p.tier, audit_id: p.audit_id, resolved: false, resolution: null, resolutionMessage: null };
-                    this.history.push(entry);
-                    this.pendingActions.push(entry);
-                });
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+
+                    let boundary;
+                    while ((boundary = buffer.indexOf('\n\n')) !== -1) {
+                        const rawEvent = buffer.slice(0, boundary);
+                        buffer = buffer.slice(boundary + 2);
+
+                        const line = rawEvent.split('\n').find(l => l.startsWith('data:'));
+                        if (!line) continue;
+
+                        const json = line.slice(5).trim();
+                        if (!json) continue;
+
+                        let event;
+                        try { event = JSON.parse(json); } catch (e) { continue; }
+
+                        if (event.type === 'delta') {
+                            if (!assistantEntry) {
+                                assistantEntry = { kind: 'text', role: 'assistant', content: '' };
+                                this.history.push(assistantEntry);
+                                this.thinking = false;
+                            }
+                            assistantEntry.content += event.text;
+                            this.scrollToBottom();
+                        } else if (event.type === 'meta') {
+                            // Only push meta.reply as a fresh bubble if nothing streamed —
+                            // when it did, meta.reply is the same text already rendered live.
+                            if (!assistantEntry && event.reply) {
+                                this.history.push({ kind: 'text', role: 'assistant', content: event.reply });
+                            }
+
+                            (event.executed || []).forEach(e => {
+                                this.history.push({ kind: 'executed', tool: e.tool, message: (e.result && e.result.message) || 'Done.' });
+                            });
+
+                            (event.pending || []).forEach(p => {
+                                const entry = { kind: 'pending', tool: p.tool, arguments: p.arguments, tier: p.tier, audit_id: p.audit_id, resolved: false, resolution: null, resolutionMessage: null };
+                                this.history.push(entry);
+                                this.pendingActions.push(entry);
+                            });
+                        }
+                    }
+                }
             } catch (error) {
-                this.history.push({ kind: 'text', role: 'assistant', content: "I'm sorry, I'm having trouble connecting right now." });
+                const message = error.name === 'AbortError'
+                    ? "That's taking longer than expected — please try again."
+                    : "I'm sorry, I'm having trouble connecting right now.";
+                this.history.push({ kind: 'text', role: 'assistant', content: message });
             } finally {
+                clearTimeout(timeoutId);
                 this.thinking = false;
                 this.scrollToBottom();
             }
@@ -368,6 +431,10 @@ document.addEventListener('alpine:init', () => {
                 const headers = { 'Accept': 'application/json' };
                 if (this.csrf) headers['X-CSRF-TOKEN'] = this.csrfToken;
                 const response = await fetch(`/admin/ai/actions/${entry.audit_id}/confirm`, { method: 'POST', headers });
+                if (response.status === 429) {
+                    this.toast('error', this.rateLimitMessage);
+                    return;
+                }
                 const data = await response.json();
                 entry.resolved = true;
                 entry.resolution = data.success ? 'approved' : 'failed';
@@ -388,6 +455,10 @@ document.addEventListener('alpine:init', () => {
                 const headers = { 'Accept': 'application/json' };
                 if (this.csrf) headers['X-CSRF-TOKEN'] = this.csrfToken;
                 const response = await fetch(`/admin/ai/actions/${entry.audit_id}/reject`, { method: 'POST', headers });
+                if (response.status === 429) {
+                    this.toast('error', this.rateLimitMessage);
+                    return;
+                }
                 const data = await response.json();
                 entry.resolved = true;
                 entry.resolution = 'rejected';

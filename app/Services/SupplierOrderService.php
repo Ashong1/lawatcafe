@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Mail\PurchaseOrderRequest;
 use App\Models\Ingredient;
 use App\Models\IngredientDeliveryItem;
 use App\Models\PurchaseOrderDraft;
 use App\Models\Supplier;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class SupplierOrderService
 {
@@ -66,5 +69,42 @@ class SupplierOrderService
                 ? 'Drafted a purchase order for: ' . $names . '.'
                 : 'No matching ingredients found to draft a purchase order for.',
         ];
+    }
+
+    /**
+     * Mark a draft as sent, emailing the linked supplier if an address is on
+     * file. This is the only place a PurchaseOrderDraft transitions out of
+     * 'draft' — previously drafts had no way to actually be sent.
+     *
+     * @return array{sent: bool, emailed: bool, message: string}
+     */
+    public function sendPurchaseOrder(PurchaseOrderDraft $draft): array
+    {
+        if ($draft->status !== 'draft') {
+            return ['sent' => false, 'emailed' => false, 'message' => "This purchase order has already been {$draft->status}."];
+        }
+
+        $draft->load(['ingredient', 'supplier']);
+        $emailed = false;
+
+        if ($draft->supplier?->email) {
+            try {
+                Mail::to($draft->supplier->email)->send(new PurchaseOrderRequest($draft));
+                $emailed = true;
+            } catch (\Exception $e) {
+                Log::error("SupplierOrderService: failed to email PO draft {$draft->id}: " . $e->getMessage());
+            }
+        }
+
+        $draft->update(['status' => 'sent']);
+
+        $message = "Purchase order for {$draft->ingredient->name} marked as sent";
+        $message .= match (true) {
+            $emailed => " and emailed to {$draft->supplier->name}.",
+            (bool) $draft->supplier => ", but no email is on file for {$draft->supplier->name}.",
+            default => ', but no supplier is linked to this draft.',
+        };
+
+        return ['sent' => true, 'emailed' => $emailed, 'message' => $message];
     }
 }

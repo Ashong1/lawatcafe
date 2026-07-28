@@ -225,12 +225,21 @@ class DashboardController extends Controller
         // 5. AI Brief Summary
         $aiBrief = Cache::get('barista_ai_brief', 'Store data is being analyzed for strategic insights...');
 
+        // 6. Proactive AI findings feed (from the agent:analyze scheduled job) —
+        // admins see every audience, staff (see StaffController) only 'staff'-tagged ones.
+        $aiFindings = \App\Models\AiFinding::latest()->take(6)->get();
+        $latestAiRun = \App\Models\AiAnalysisRun::latest()->first();
+
         return view('dashboard', array_merge(
-            $stats, 
-            $networkPulse, 
-            $charts, 
-            $systemHealth, 
-            ['aiBrief' => $aiBrief]
+            $stats,
+            $networkPulse,
+            $charts,
+            $systemHealth,
+            [
+                'aiBrief' => $aiBrief,
+                'aiFindings' => $aiFindings,
+                'latestAiNarrative' => $latestAiRun?->narrative,
+            ]
         ));
     }
 
@@ -389,12 +398,27 @@ class DashboardController extends Controller
         }
         $messages[] = ['role' => 'user', 'content' => $request->message];
 
-        $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_ADMIN, $request->user());
+        return response()->stream(function () use ($messages, $orchestrator, $request) {
+            $onTextDelta = function (string $delta) {
+                echo 'data: ' . json_encode(['type' => 'delta', 'text' => $delta]) . "\n\n";
+                if (ob_get_level() > 0) @ob_flush();
+                flush();
+            };
 
-        return response()->json([
-            'reply' => $result['reply'] ?? "☕ I'm having trouble connecting to our business intelligence stack right now.",
-            'pending' => $result['pending'],
-            'executed' => $result['executed'],
+            $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_ADMIN, $request->user(), [], $onTextDelta);
+
+            echo 'data: ' . json_encode([
+                'type' => 'meta',
+                'reply' => $result['reply'] ?? "☕ I'm having trouble connecting to our business intelligence stack right now.",
+                'pending' => $result['pending'],
+                'executed' => $result['executed'],
+            ]) . "\n\n";
+            if (ob_get_level() > 0) @ob_flush();
+            flush();
+        }, 200, [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+            'X-Accel-Buffering' => 'no',
         ]);
     }
 

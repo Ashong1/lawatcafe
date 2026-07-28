@@ -1,4 +1,4 @@
-@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.staff')
+@extends(auth()->user()->isAdminOrAbove() ? 'layouts.admin' : 'layouts.staff')
 @section('title', 'End of Day Report')
 
 @section('content')

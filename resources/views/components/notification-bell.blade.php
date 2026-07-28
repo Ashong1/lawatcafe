@@ -82,7 +82,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchUnreadCount() {
             try {
-                const response = await fetch('{{ route("notifications.unread-count") }}');
+                const response = await fetch('{{ route("notifications.unread-count") }}', { headers: { 'Accept': 'application/json' } });
                 const data = await response.json();
                 this.unreadCount = data.count;
             } catch (error) {
@@ -92,7 +92,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchNotifications() {
             try {
-                const response = await fetch('{{ route("notifications.index") }}');
+                const response = await fetch('{{ route("notifications.index") }}', { headers: { 'Accept': 'application/json' } });
                 const data = await response.json();
                 this.notifications = data.data;
             } catch (error) {
@@ -109,7 +109,7 @@ document.addEventListener('alpine:init', () => {
             try {
                 await fetch(`/notifications/${notif.id}/read`, {
                     method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
                 });
                 notif.read_at = new Date().toISOString();
                 this.unreadCount = Math.max(0, this.unreadCount - 1);
@@ -123,7 +123,7 @@ document.addEventListener('alpine:init', () => {
             try {
                 await fetch('{{ route("notifications.read-all") }}', {
                     method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
                 });
                 this.notifications.forEach(n => n.read_at = n.read_at || new Date().toISOString());
                 this.unreadCount = 0;

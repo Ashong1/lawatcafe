@@ -10,6 +10,8 @@ use App\Services\Agent\Tools\GenerateVoucherBatchTool;
 use App\Services\Agent\Tools\GetActiveSessionsTool;
 use App\Services\Agent\Tools\LookupVoucherTool;
 use App\Services\Agent\Tools\RestockIngredientTool;
+use App\Services\Agent\Tools\SendSupplierPoTool;
+use App\Services\Agent\Tools\ShiftHandoffSummaryTool;
 use App\Services\Agent\Tools\VoidSaleTool;
 
 /**
@@ -46,6 +48,8 @@ class ToolRegistry
             RestockIngredientTool::class,
             VoidSaleTool::class,
             DraftSupplierPoTool::class,
+            SendSupplierPoTool::class,
+            ShiftHandoffSummaryTool::class,
         ];
     }
 

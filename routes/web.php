@@ -43,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pos', [PosController::class, 'index'])->name('pos');
     Route::post('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
     Route::get('/pos/receipt/{sale}', [PosController::class, 'receipt'])->name('pos.receipt');
+    Route::post('/pos/suggest-pairing', [PosController::class, 'suggestPairing'])->name('pos.suggest-pairing');
 
     // Kitchen Display System
     Route::get('/kds', [\App\Http\Controllers\KdsController::class, 'index'])->name('kds.index');
@@ -85,7 +86,7 @@ Route::middleware(['auth'])->group(function () {
     // do not "fix" these into an admin-only middleware group, that would break
     // staff's only mechanism for approving their own proposed actions and their
     // pending-action badge below.
-    Route::prefix('admin/ai/actions')->name('admin.ai.actions.')->group(function () {
+    Route::prefix('admin/ai/actions')->name('admin.ai.actions.')->middleware('throttle:ai-actions')->group(function () {
         Route::post('/{audit}/confirm', [\App\Http\Controllers\AiActionController::class, 'confirm'])->name('confirm');
         Route::post('/{audit}/reject', [\App\Http\Controllers\AiActionController::class, 'reject'])->name('reject');
         Route::get('/pending-count', [\App\Http\Controllers\AiActionController::class, 'pendingCount'])->name('pending-count');
@@ -100,7 +101,7 @@ Route::middleware(['auth'])->group(function () {
         // Admin Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/admin/live-stats', [DashboardController::class, 'liveStats'])->name('admin.live-stats'); // Added live-stats route
-        Route::post('/admin/ai/chat', [DashboardController::class, 'adminChat'])->name('admin.ai.chat');
+        Route::post('/admin/ai/chat', [DashboardController::class, 'adminChat'])->name('admin.ai.chat')->middleware('throttle:admin-ai-chat');
         Route::get('/admin/ai/insights', [DashboardController::class, 'getAIInsights'])->name('admin.ai.insights');
         Route::get('/admin/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('admin.analytics');
         Route::get('/admin/ai/actions', [\App\Http\Controllers\AiActionController::class, 'index'])->name('admin.ai.actions.index');
@@ -158,14 +159,21 @@ Route::middleware(['auth'])->group(function () {
         // System Accounts
         Route::resource('accounts', AccountController::class)->except(['create', 'show', 'edit']);
 
-        // System Settings (Consolidated)
+        // System Settings (Consolidated) — Store Preferences is business-facing and
+        // stays reachable by admin-or-above; Integrations/Network/Agent are technical
+        // settings reserved for super_admin only (see nested group below).
         Route::prefix('settings')->name('admin.settings.')->group(function () {
             Route::get('/store', [\App\Http\Controllers\Admin\SettingController::class, 'store'])->name('store');
-            Route::get('/integrations', [\App\Http\Controllers\Admin\SettingController::class, 'integrations'])->name('integrations');
-            Route::get('/network', [\App\Http\Controllers\Admin\SettingController::class, 'network'])->name('network');
-            Route::get('/agent', [\App\Http\Controllers\Admin\SettingController::class, 'agent'])->name('agent');
-            Route::post('/agent', [\App\Http\Controllers\Admin\SettingController::class, 'updateAgentPermissions'])->name('agent.update');
-            Route::post('/update', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('update');
+            Route::post('/store', [\App\Http\Controllers\Admin\SettingController::class, 'updateStore'])->name('store.update');
+
+            Route::middleware([RoleMiddleware::class . ':super_admin'])->group(function () {
+                Route::get('/integrations', [\App\Http\Controllers\Admin\SettingController::class, 'integrations'])->name('integrations');
+                Route::post('/integrations', [\App\Http\Controllers\Admin\SettingController::class, 'updateIntegrations'])->name('integrations.update');
+                Route::get('/network', [\App\Http\Controllers\Admin\SettingController::class, 'network'])->name('network');
+                Route::post('/network', [\App\Http\Controllers\Admin\SettingController::class, 'updateNetwork'])->name('network.update');
+                Route::get('/agent', [\App\Http\Controllers\Admin\SettingController::class, 'agent'])->name('agent');
+                Route::post('/agent', [\App\Http\Controllers\Admin\SettingController::class, 'updateAgentPermissions'])->name('agent.update');
+            });
         });
     });
 
@@ -177,7 +185,7 @@ Route::middleware(['auth'])->group(function () {
         // Staff Hub
         Route::get('/staff-dashboard', [StaffController::class, 'index'])->name('staff.dashboard');
         Route::get('/staff-dashboard/live', [StaffController::class, 'getLiveData'])->name('staff.dashboard.live');
-        Route::post('/staff/ai/chat', [StaffController::class, 'staffChat'])->name('staff.ai.chat');
+        Route::post('/staff/ai/chat', [StaffController::class, 'staffChat'])->name('staff.ai.chat')->middleware('throttle:staff-ai-chat');
 
     });
 });

@@ -57,7 +57,7 @@
                 </button>
             </div>
 
-            <form action="{{ route('admin.settings.update') }}" method="POST">
+            <form action="{{ route('admin.settings.store.update') }}" method="POST">
                 @csrf
                 
                 {{-- Hidden Inputs for the Form to save Complimentary Data --}}

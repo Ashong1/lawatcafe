@@ -66,7 +66,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchCount() {
             try {
-                const response = await fetch('{{ route("admin.ai.actions.pending-count") }}');
+                const response = await fetch('{{ route("admin.ai.actions.pending-count") }}', { headers: { 'Accept': 'application/json' } });
                 const data = await response.json();
                 this.count = data.count;
             } catch (error) {
@@ -76,7 +76,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchPreview() {
             try {
-                const response = await fetch('{{ route("admin.ai.actions.pending-preview") }}');
+                const response = await fetch('{{ route("admin.ai.actions.pending-preview") }}', { headers: { 'Accept': 'application/json' } });
                 this.items = await response.json();
             } catch (error) {
                 console.error('Failed to fetch pending agent action preview');

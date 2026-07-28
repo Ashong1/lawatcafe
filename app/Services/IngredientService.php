@@ -52,7 +52,7 @@ class IngredientService
 
         $lowStockAlertSent = false;
         if ($newStock <= $ingredient->low_stock_threshold) {
-            $admins = User::where('role', 'admin')->get();
+            $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
             Notification::send($admins, new SystemAlert(
                 'Low Stock Alert!',
                 "{$ingredient->name} is running low ({$newStock} {$ingredient->unit} left).",

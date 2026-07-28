@@ -47,4 +47,16 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /** Exactly the developer/system account — the single fixed super_admin. */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    /** Admin-tier or higher — the check ~20 call sites want when they mean "the same access admin has". */
+    public function isAdminOrAbove(): bool
+    {
+        return in_array($this->role, ['admin', 'super_admin'], true);
+    }
 }

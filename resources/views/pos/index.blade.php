@@ -1,5 +1,5 @@
 {{-- Dynamically load the layout based on the user's role --}}
-@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.staff')
+@extends(auth()->user()->isAdminOrAbove() ? 'layouts.admin' : 'layouts.staff')
 
 @section('title', 'POS Register')
 
@@ -76,7 +76,7 @@
                     </a>
 
                     {{-- Admin Actions --}}
-                    @if(auth()->user()->role === 'admin')
+                    @if(auth()->user()->isAdminOrAbove())
                     <div class="flex gap-2 shrink-0">
                         <a href="{{ route('network.sessions') }}" class="bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#8D6E63] hover:text-[#3E2723] px-4 py-3 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center border border-[#F0E6D2] gap-2" title="Active Sessions">
                             <x-lucide-wifi class="w-4 h-4" />
@@ -310,7 +310,7 @@
                 </button>
             </form>
 
-            @if(auth()->user()->role === 'admin')
+            @if(auth()->user()->isAdminOrAbove())
             <div class="mt-6 text-center">
                 <a href="{{ route('dashboard') }}" class="text-[10px] font-black text-[#A1887F] hover:text-[#3E2723] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group">
                     <x-lucide-arrow-left class="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
@@ -344,6 +344,7 @@
             generatedCode: '',
             checkoutHasWifi: false,
             isProcessing: false,
+            suggestion: null,
             freeWifiMinAmount: {{ $freeWifiMinAmount ?? 0 }},
             freeWifiDuration: {{ $freeWifiDuration ?? 0 }},
 
@@ -460,12 +461,50 @@
             processAdd(product, variant) {
                 // Match by ID AND Variant so Hot/Iced don't merge
                 const existing = this.cart.find(i => i.id === product.id && i.variant === variant);
-                
+
                 if (existing) {
                     existing.quantity++;
                 } else {
                     this.cart.push({ ...product, quantity: 1, variant: variant });
                 }
+
+                this.fetchPairingSuggestion(product);
+            },
+
+            async fetchPairingSuggestion(product) {
+                // Wi-Fi add-ons aren't real Product rows — nothing to pair.
+                if (product.type !== 'product') return;
+
+                try {
+                    const response = await fetch('{{ route('pos.suggest-pairing') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                        body: JSON.stringify({
+                            product_id: product.id,
+                            cart_product_ids: this.cart.filter(i => i.type === 'product').map(i => i.id),
+                        }),
+                    });
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    if (data.suggestion) this.suggestion = data.suggestion;
+                } catch (error) {
+                    // Silent — a missed suggestion should never interrupt order-taking.
+                }
+            },
+
+            addSuggestion() {
+                if (!this.suggestion) return;
+                const product = this.products.find(p => p.id === this.suggestion.product_id);
+                if (product) this.addToCart(product);
+                this.suggestion = null;
+            },
+
+            dismissSuggestion() {
+                this.suggestion = null;
             },
 
             removeFromCart(index) {
@@ -497,6 +536,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify({

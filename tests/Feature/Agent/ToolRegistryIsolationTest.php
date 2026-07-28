@@ -7,6 +7,7 @@ use App\Services\Agent\Tools\BlockDeviceTool;
 use App\Services\Agent\Tools\DraftSupplierPoTool;
 use App\Services\Agent\Tools\GenerateVoucherBatchTool;
 use App\Services\Agent\Tools\RestockIngredientTool;
+use App\Services\Agent\Tools\SendSupplierPoTool;
 use App\Services\Agent\Tools\VoidSaleTool;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,6 +22,7 @@ class ToolRegistryIsolationTest extends TestCase
         RestockIngredientTool::class,
         VoidSaleTool::class,
         DraftSupplierPoTool::class,
+        SendSupplierPoTool::class,
     ];
 
     public function test_guest_registry_never_contains_a_write_tool(): void

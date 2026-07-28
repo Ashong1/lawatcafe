@@ -15,11 +15,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Admin Account
+        // Super Admin Account — the single, fixed system/technical administrator.
         User::factory()->create([
-            'name' => 'Admin',
+            'name' => 'Super Admin',
             'email' => 'asherlimbo@gmail.com',
             'password' => bcrypt('password1234'),
+            'role' => 'super_admin',
+        ]);
+
+        // Admin Account — the coffee shop owner.
+        User::factory()->create([
+            'name' => 'Admin',
+            'email' => 'admin@gmail.com',
+            'password' => bcrypt('adminpass1234'),
             'role' => 'admin',
         ]);
 

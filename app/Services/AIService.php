@@ -11,6 +11,9 @@ use Carbon\Carbon;
 
 class AIService
 {
+    /** Total-request ceiling for streaming calls — see streamGeminiLoop()/streamOpenAiCompatibleLoop(). */
+    private const STREAM_TIMEOUT = 18;
+
     protected $geminiKey;
     protected $groqKey;
     protected $openRouterKey;
@@ -23,20 +26,45 @@ class AIService
         'gemini-1.5-flash',          // Legacy High-Speed
     ];
 
+    // Verified 2026-07-27 against the real Groq /models endpoint and each
+    // model's actual chat-completions + tool-calling behavior (not just
+    // listed-as-available) — every entry below confirmed working for both.
+    // Excluded on purpose despite being live: openai/gpt-oss-safeguard-20b
+    // (a content-moderation classifier, not a general chat model),
+    // qwen/qwen3.6-27b (leaks raw <think>...</think> reasoning into the
+    // reply text — needs stripping before it's safe to show a user),
+    // groq/compound & groq/compound-mini (Groq's own agentic meta-model with
+    // its own built-in tools, which could conflict with our function-calling
+    // schema), allam-2-7b (Arabic-focused, not relevant here).
     protected $groqModels = [
-        'llama-3.3-70b-versatile',    // High-Tier General
-        'deepseek-r1-distill-llama-70b', // Best Logic/Reasoning
-        'qwen-qwq-32b',               // Strong Multilingual
-        'mixtral-8x7b-32768',         // MoE Reliable
+        'llama-3.3-70b-versatile',
+        'llama-3.1-8b-instant',
+        'openai/gpt-oss-120b',
+        'openai/gpt-oss-20b',
     ];
 
+    // Verified 2026-07-27 against OpenRouter's real /models pricing data
+    // (pricing.prompt === pricing.completion === "0", not just a ":free"
+    // suffix) AND each model's actual chat-completions + tool-calling
+    // behavior. Excluded: nvidia/nemotron-3.5-content-safety:free (a safety
+    // classifier, not chat) and google/lyria-3-*:free (music generation, not
+    // chat) — both free but not usable here. A few other free entries
+    // (poolside/laguna-s-2.1:free, google/gemma-4-31b-it:free,
+    // nvidia/nemotron-3-ultra-550b-a55b:free, poolside/laguna-m.1:free,
+    // nvidia/nemotron-nano-12b-v2-vl:free) were 429/timing-out at test time —
+    // may be worth retrying later, left out for now rather than risk
+    // wasting a fail-over slot on a currently-flaky model.
     protected $openRouterModels = [
-        'openrouter/free',                       // Recommended Auto-Router
-        'openai/gpt-oss-120b:free',               // Best Overall 2026
-        'openai/gpt-oss-20b:free',                // Fast/Lightweight
-        'google/gemini-2.0-flash:free',           // Long Context/Vision
-        'meta-llama/llama-3.3-70b-instruct:free', // High Reasoning
-        'nvidia/nemotron-3-super:free'            // Large MoE
+        'openrouter/free',
+        'openai/gpt-oss-20b:free',
+        'inclusionai/ling-3.0-flash:free',
+        'poolside/laguna-xs-2.1:free',
+        'cohere/north-mini-code:free',
+        'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+        'google/gemma-4-26b-a4b-it:free',
+        'nvidia/nemotron-3-super-120b-a12b:free',
+        'nvidia/nemotron-3-nano-30b-a3b:free',
+        'nvidia/nemotron-nano-9b-v2:free',
     ];
 
     public function __construct()
@@ -63,18 +91,21 @@ class AIService
      */
     private function callAI($messages, $useVision = false, array $tools = [], bool $fast = false)
     {
-        if ($this->geminiKey) {
+        if ($this->geminiKey && !$this->providerIsOpen('gemini')) {
             $response = $this->callGeminiLoop($messages, $useVision, $tools, $fast);
+            $this->recordProviderResult('gemini', (bool) $response);
             if ($response) return $response;
         }
 
-        if ($this->groqKey && !$useVision) {
+        if ($this->groqKey && !$useVision && !$this->providerIsOpen('groq')) {
             $response = $this->callGroqLoop($messages, $tools, $fast);
+            $this->recordProviderResult('groq', (bool) $response);
             if ($response) return $response;
         }
 
-        if ($this->openRouterKey) {
+        if ($this->openRouterKey && !$this->providerIsOpen('openrouter')) {
             $response = $this->callOpenRouterLoop($messages, $tools, $fast);
+            $this->recordProviderResult('openrouter', (bool) $response);
             if ($response) return $response;
         }
 
@@ -82,15 +113,236 @@ class AIService
     }
 
     /**
-     * Public tool-calling entry point used by ToolCallOrchestrator. Returns the
-     * same normalized shape as callAI(): ['choices' => [['message' => ['content' => ?string, 'tool_calls' => [...]]]]]
-     * A null return means every provider failed. $fast defaults true since every
-     * current caller (guest/staff/admin chat, and the scheduled agent run) is either
-     * interactive or already gated behind a cheap deterministic filter.
+     * Circuit breaker: a provider that's failed repeatedly in the last few
+     * minutes gets skipped entirely (cascade falls straight to the next
+     * provider) rather than retried at full cost on every single call.
      */
-    public function chatWithTools(array $messages, array $tools = [], bool $fast = true): ?array
+    private function providerIsOpen(string $provider): bool
     {
-        return $this->callAI($messages, false, $tools, $fast);
+        return Cache::has("ai_circuit_open_{$provider}");
+    }
+
+    private function recordProviderResult(string $provider, bool $success): void
+    {
+        $failureKey = "ai_circuit_failures_{$provider}";
+
+        if ($success) {
+            Cache::forget($failureKey);
+            Cache::forget("ai_circuit_open_{$provider}");
+            return;
+        }
+
+        $threshold = (int) \App\Models\Setting::get('ai_circuit_failure_threshold', 3);
+        $failures = (int) Cache::get($failureKey, 0) + 1;
+        Cache::put($failureKey, $failures, now()->addMinutes(10));
+
+        if ($failures >= $threshold) {
+            $cooldown = (int) \App\Models\Setting::get('ai_circuit_cooldown_minutes', 5);
+            Cache::put("ai_circuit_open_{$provider}", true, now()->addMinutes($cooldown));
+            Log::warning("AIService: circuit breaker opened for '{$provider}' after {$failures} consecutive failures; cooling down {$cooldown}m.");
+            Cache::forget($failureKey);
+        }
+    }
+
+    /**
+     * Streaming tool-calling entry point used by ToolCallOrchestrator. Same
+     * cascade order and same normalized return shape as the old blocking
+     * chatWithTools(), but every provider attempt is made as a streaming
+     * request so $onTextDelta can be invoked with genuine content chunks as
+     * they arrive. A round that turns out to contain tool_calls is never
+     * forwarded through $onTextDelta — only plain content deltas are (the
+     * "stream only the final answer" scope: intermediate tool-resolution
+     * rounds show the caller nothing but a static "thinking" state).
+     */
+    public function chatWithToolsStreaming(array $messages, array $tools, callable $onTextDelta): ?array
+    {
+        if ($this->geminiKey && !$this->providerIsOpen('gemini')) {
+            $response = $this->streamGeminiLoop($messages, $tools, $onTextDelta);
+            $this->recordProviderResult('gemini', (bool) $response);
+            if ($response) return $response;
+        }
+
+        if ($this->groqKey && !$this->providerIsOpen('groq')) {
+            $response = $this->streamOpenAiCompatibleLoop(
+                $this->groqModels,
+                'https://api.groq.com/openai/v1/chat/completions',
+                ['Authorization' => 'Bearer ' . $this->groqKey],
+                $messages,
+                $tools,
+                $onTextDelta
+            );
+            $this->recordProviderResult('groq', (bool) $response);
+            if ($response) return $response;
+        }
+
+        if ($this->openRouterKey && !$this->providerIsOpen('openrouter')) {
+            $response = $this->streamOpenAiCompatibleLoop(
+                $this->openRouterModels,
+                'https://openrouter.ai/api/v1/chat/completions',
+                ['Authorization' => 'Bearer ' . $this->openRouterKey, 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')],
+                $messages,
+                $tools,
+                $onTextDelta
+            );
+            $this->recordProviderResult('openrouter', (bool) $response);
+            if ($response) return $response;
+        }
+
+        return null;
+    }
+
+    private function streamGeminiLoop(array $messages, array $tools, callable $onTextDelta): ?array
+    {
+        $models = $this->geminiModels;
+        shuffle($models);
+        $budget = $this->fastPathBudget();
+        $models = array_slice($models, 0, max(1, $budget['modelLimit']));
+        // Streaming needs a longer total-request ceiling than the blocking fast
+        // path: responsiveness here comes from time-to-first-byte, not total
+        // duration, since tokens render as they arrive. Kept just under the
+        // client's 20s abort so the server never times out first.
+        $timeout = self::STREAM_TIMEOUT;
+
+        foreach ($models as $model) {
+            try {
+                $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:streamGenerateContent?alt=sse&key=" . $this->geminiKey;
+                $contents = $this->buildGeminiContents($messages);
+                $payload = ['contents' => $contents];
+                if (!empty($tools)) {
+                    $payload['tools'] = $this->toGeminiTools($tools);
+                }
+
+                $response = Http::timeout($timeout)->withOptions(['stream' => true])->post($url, $payload);
+
+                if (!$response->successful()) {
+                    if ($response->status() === 401) break;
+                    continue;
+                }
+
+                $text = '';
+                $toolCalls = [];
+                $sawAny = false;
+
+                $this->readSseStream($response->toPsrResponse()->getBody(), function (array $event) use (&$text, &$toolCalls, &$sawAny, $onTextDelta) {
+                    foreach ($event['candidates'][0]['content']['parts'] ?? [] as $part) {
+                        if (isset($part['text'])) {
+                            $sawAny = true;
+                            $text .= $part['text'];
+                            $onTextDelta($part['text']);
+                        }
+                        if (isset($part['functionCall'])) {
+                            $sawAny = true;
+                            $toolCalls[] = [
+                                'id' => 'call_' . Str::random(8),
+                                'name' => $part['functionCall']['name'] ?? '',
+                                'arguments' => $part['functionCall']['args'] ?? [],
+                            ];
+                        }
+                    }
+                });
+
+                if ($sawAny) {
+                    return ['choices' => [['message' => ['content' => $text ?: null, 'tool_calls' => $toolCalls]]]];
+                }
+            } catch (\Exception $e) {
+                Log::error("Gemini Stream Loop Exception ({$model}): " . $e->getMessage());
+            }
+        }
+        return null;
+    }
+
+    /** Shared by Groq and OpenRouter — both speak the OpenAI-compatible streaming delta format. */
+    private function streamOpenAiCompatibleLoop(array $models, string $url, array $headers, array $messages, array $tools, callable $onTextDelta): ?array
+    {
+        $modelsList = $models;
+        shuffle($modelsList);
+        $budget = $this->fastPathBudget();
+        $modelsList = array_slice($modelsList, 0, max(1, $budget['modelLimit']));
+        $timeout = self::STREAM_TIMEOUT;
+
+        foreach ($modelsList as $model) {
+            try {
+                $payload = ['model' => $model, 'messages' => $messages, 'stream' => true];
+                if (!empty($tools)) {
+                    $payload['tools'] = $this->toOpenAiTools($tools);
+                }
+
+                $response = Http::timeout($timeout)->withOptions(['stream' => true])->withHeaders($headers)->post($url, $payload);
+
+                if (!$response->successful()) {
+                    if ($response->status() === 401) break;
+                    continue;
+                }
+
+                $text = '';
+                $toolCallsByIndex = [];
+                $sawAny = false;
+
+                $this->readSseStream($response->toPsrResponse()->getBody(), function (array $event) use (&$text, &$toolCallsByIndex, &$sawAny, $onTextDelta) {
+                    $delta = $event['choices'][0]['delta'] ?? [];
+
+                    if (($delta['content'] ?? '') !== '') {
+                        $sawAny = true;
+                        $text .= $delta['content'];
+                        $onTextDelta($delta['content']);
+                    }
+
+                    foreach ($delta['tool_calls'] ?? [] as $tc) {
+                        $sawAny = true;
+                        $index = $tc['index'] ?? 0;
+                        $toolCallsByIndex[$index] ??= ['id' => null, 'name' => null, 'arguments' => ''];
+                        if (isset($tc['id'])) $toolCallsByIndex[$index]['id'] = $tc['id'];
+                        if (isset($tc['function']['name'])) $toolCallsByIndex[$index]['name'] = $tc['function']['name'];
+                        if (isset($tc['function']['arguments'])) $toolCallsByIndex[$index]['arguments'] .= $tc['function']['arguments'];
+                    }
+                });
+
+                if ($sawAny) {
+                    $toolCalls = array_map(fn ($tc) => [
+                        'id' => $tc['id'] ?? ('call_' . Str::random(8)),
+                        'name' => $tc['name'] ?? '',
+                        'arguments' => json_decode($tc['arguments'] ?: '{}', true) ?? [],
+                    ], array_values($toolCallsByIndex));
+
+                    return ['choices' => [['message' => ['content' => $text ?: null, 'tool_calls' => $toolCalls]]]];
+                }
+            } catch (\Exception $e) {
+                Log::error("OpenAI-compatible Stream Loop Exception ({$model} @ {$url}): " . $e->getMessage());
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Minimal SSE reader: buffers bytes from a PSR stream until a full
+     * "data: ...\n" line is available, JSON-decodes it, and invokes
+     * $onEvent. Skips the "[DONE]" terminator OpenAI-compatible APIs send.
+     */
+    private function readSseStream(\Psr\Http\Message\StreamInterface $body, callable $onEvent): void
+    {
+        $buffer = '';
+        while (!$body->eof()) {
+            $buffer .= $body->read(1024);
+
+            while (($pos = strpos($buffer, "\n")) !== false) {
+                $line = trim(substr($buffer, 0, $pos));
+                $buffer = substr($buffer, $pos + 1);
+
+                if ($line === '' || !str_starts_with($line, 'data:')) {
+                    continue;
+                }
+
+                $json = trim(substr($line, 5));
+                if ($json === '' || $json === '[DONE]') {
+                    continue;
+                }
+
+                $decoded = json_decode($json, true);
+                if (is_array($decoded)) {
+                    $onEvent($decoded);
+                }
+            }
+        }
     }
 
     /** @return array{timeout: int, modelLimit: int} */
@@ -242,7 +494,7 @@ class AIService
             'functionDeclarations' => array_map(fn ($t) => [
                 'name' => $t['name'],
                 'description' => $t['description'],
-                'parameters' => $t['parameters'],
+                'parameters' => $this->jsonSchemaSafeParameters($t['parameters']),
             ], $tools),
         ]];
     }
@@ -255,9 +507,29 @@ class AIService
             'function' => [
                 'name' => $t['name'],
                 'description' => $t['description'],
-                'parameters' => $t['parameters'],
+                'parameters' => $this->jsonSchemaSafeParameters($t['parameters']),
             ],
         ], $tools);
+    }
+
+    /**
+     * PHP can't distinguish an empty array from an empty object — a
+     * zero-parameter tool's `'properties' => []` (from AgentTool::parametersSchema())
+     * json_encode()s as a JSON array, but Gemini and Groq both strictly
+     * require a JSON object there and reject the request with a 400 (verified
+     * live against both APIs). OpenRouter happens to tolerate it, which is
+     * why this bug was silently invisible — every zero-parameter tool
+     * (checkStockLevels, checkMySession, getActiveSessions,
+     * shiftHandoffSummary) was quietly failing on the first two providers in
+     * the cascade and only ever succeeding on the third.
+     */
+    private function jsonSchemaSafeParameters(array $parameters): array
+    {
+        if (isset($parameters['properties']) && $parameters['properties'] === []) {
+            $parameters['properties'] = new \stdClass();
+        }
+
+        return $parameters;
     }
 
     /** Gemini's raw generateContent response -> canonical ['choices'=>[['message'=>['content'=>?,'tool_calls'=>[]]]]]. */
@@ -462,6 +734,43 @@ OPERATIONAL GUIDELINES:
             return json_decode($raw, true);
         }
         return null;
+    }
+
+    /**
+     * Ultra-low-latency, best-effort phrasing for the POS upsell suggestion
+     * toast. Tries exactly one provider with a hard ~2s cap and no cascade —
+     * this fires on every single add-to-cart, so a slow/unavailable AI must
+     * never hold up the (already-computed, always-correct) data-driven
+     * suggestion. Returns null on any failure/timeout; caller must have a
+     * simple template fallback.
+     */
+    public function phraseSuggestion(string $itemName, string $suggestedName): ?string
+    {
+        if (!$this->geminiKey || $this->providerIsOpen('gemini')) {
+            return null;
+        }
+
+        try {
+            $model = $this->geminiModels[0];
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . $this->geminiKey;
+            $prompt = "A customer just ordered '{$itemName}'. In under 12 words, write a friendly one-line suggestion to also get '{$suggestedName}'. No markdown, no quotes.";
+
+            $response = Http::timeout(2)->post($url, [
+                'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],
+            ]);
+
+            if (!$response->successful()) {
+                $this->recordProviderResult('gemini', false);
+                return null;
+            }
+
+            $text = trim($response->json('candidates.0.content.parts.0.text') ?? '');
+            $this->recordProviderResult('gemini', $text !== '');
+            return $text !== '' ? $text : null;
+        } catch (\Exception $e) {
+            $this->recordProviderResult('gemini', false);
+            return null;
+        }
     }
 
     /** Short-TTL cache: these were previously re-queried on every single chat call. */

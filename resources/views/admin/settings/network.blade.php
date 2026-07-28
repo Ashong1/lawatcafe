@@ -10,7 +10,7 @@
             <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Manage your router connection and configure permanent internet access for kape equipment.</p>
         </div>
 
-        <form action="{{ route('admin.settings.update') }}" method="POST">
+        <form action="{{ route('admin.settings.network.update') }}" method="POST">
             @csrf
             {{-- Preserve technical settings in the background --}}
             <input type="hidden" name="opnsense_zone" value="{{ $settings['opnsense_zone'] }}">

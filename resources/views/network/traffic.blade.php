@@ -181,7 +181,7 @@
 
             async fetchStats() {
                 try {
-                    const response = await fetch('{{ route('network.traffic.stats') }}');
+                    const response = await fetch('{{ route('network.traffic.stats') }}', { headers: { 'Accept': 'application/json' } });
                     const data = await response.json();
                     
                     // OPNsense usually returns an object where keys are interface names (wan, lan, etc.)

@@ -81,7 +81,7 @@ class IngredientController extends Controller
 
             // Check for Low Stock
             if ($newStock <= $ingredient->low_stock_threshold) {
-                $admins = \App\Models\User::where('role', 'admin')->get();
+                $admins = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->get();
                 \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\SystemAlert(
                     'Low Stock Alert!',
                     "{$ingredient->name} is running low ({$newStock} {$ingredient->unit} left).",
@@ -127,7 +127,7 @@ class IngredientController extends Controller
 
         $logs = $query->paginate(20);
         $ingredients = Ingredient::orderBy('name')->get();
-        $users = \App\Models\User::where('role', 'admin')->orderBy('name')->get();
+        $users = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->orderBy('name')->get();
 
         return view('inventory.logs', compact('logs', 'ingredients', 'users'));
     }

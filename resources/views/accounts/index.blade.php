@@ -129,8 +129,9 @@
                 <div>
                     <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Account Role</label>
                     <select name="role" x-model="formData.role" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
-                        <option value="staff">Staff / Barista</option>
-                        <option value="admin">System Administrator</option>
+                        @foreach($assignableRoles as $value => $label)
+                            <option value="{{ $value }}">{{ $label }}</option>
+                        @endforeach
                     </select>
                 </div>
 

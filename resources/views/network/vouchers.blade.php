@@ -1,4 +1,4 @@
-@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.staff')
+@extends(auth()->user()->isAdminOrAbove() ? 'layouts.admin' : 'layouts.staff')
 @section('title', 'WiFi Voucher Management')
 
 @section('content')
@@ -58,7 +58,7 @@
                     <span x-text="'Print (' + selectedVouchers.length + ')'"></span>
                 </button>
 
-                @if(auth()->user()->role === 'admin')
+                @if(auth()->user()->isAdminOrAbove())
                 <!-- Bulk Delete -->
                 <button @click="deleteSelected()" 
                         x-show="selectedVouchers.length > 0"
@@ -98,7 +98,7 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
-                        @if(auth()->user()->role === 'admin')
+                        @if(auth()->user()->isAdminOrAbove())
                         <th class="pb-4 w-10">
                             <input type="checkbox" @change="toggleAll()" :checked="allSelected" class="rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
                         </th>
@@ -113,7 +113,7 @@
                 <tbody class="text-sm">
                     @forelse($vouchers as $voucher)
                         <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors" :class="selectedVouchers.includes({{ $voucher->id }}) ? 'bg-amber-50/50' : ''">
-                            @if(auth()->user()->role === 'admin')
+                            @if(auth()->user()->isAdminOrAbove())
                             <td class="py-4">
                                 <input type="checkbox" value="{{ $voucher->id }}" x-model="selectedVouchers" class="rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
                             </td>
@@ -147,7 +147,7 @@
                                         <x-lucide-printer class="w-4 h-4" />
                                     </a>
 
-                                    @if(auth()->user()->role === 'admin')
+                                    @if(auth()->user()->isAdminOrAbove())
                                     <form action="{{ route('network.vouchers.destroy', $voucher->id) }}" method="POST" id="delete-voucher-{{ $voucher->id }}">
                                         @csrf
                                         @method('DELETE')
@@ -170,7 +170,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ auth()->user()->role === 'admin' ? 6 : 5 }}" class="py-16 text-center">
+                            <td colspan="{{ auth()->user()->isAdminOrAbove() ? 6 : 5 }}" class="py-16 text-center">
                                 <div class="flex flex-col items-center opacity-30">
                                     <x-lucide-ticket class="w-10 h-10 mb-3" />
                                     <p class="text-[#A1887F] text-sm font-medium">No vouchers found.</p>
@@ -186,7 +186,7 @@
         </div>
     </div>
 
-    @if(auth()->user()->role === 'admin')
+    @if(auth()->user()->isAdminOrAbove())
     <!-- Hidden Bulk Delete Form -->
     <form id="bulk-delete-form" action="{{ route('network.vouchers.bulk-delete') }}" method="POST" class="hidden">
         @csrf

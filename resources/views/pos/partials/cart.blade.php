@@ -23,6 +23,18 @@
     </div>
 </div>
 
+{{-- AI Pairing Suggestion --}}
+<div x-show="suggestion" x-transition class="shrink-0 mb-3 p-3 rounded-xl border border-amber-200 bg-amber-50 flex items-center gap-3" style="display: none;">
+    <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+        <x-lucide-sparkles class="w-4 h-4 text-amber-700" />
+    </div>
+    <p class="flex-1 text-[11px] font-bold text-amber-900 leading-snug" x-text="suggestion && suggestion.message"></p>
+    <button type="button" @click="addSuggestion()" class="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition">Add</button>
+    <button type="button" @click="dismissSuggestion()" class="shrink-0 w-6 h-6 flex items-center justify-center text-amber-700/50 hover:text-amber-900 transition">
+        <x-lucide-x class="w-3.5 h-3.5" />
+    </button>
+</div>
+
 {{-- CART ITEMS (Scrollable: Takes up remaining space) --}}
 {{-- min-h-0 is the CSS secret that allows flex-1 to scroll properly --}}
 <div class="flex-1 min-h-0 overflow-y-auto pr-2 my-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">

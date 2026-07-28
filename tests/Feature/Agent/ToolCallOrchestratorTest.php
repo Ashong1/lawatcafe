@@ -15,20 +15,30 @@ class ToolCallOrchestratorTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function geminiFunctionCallResponse(string $name, array $args): array
+    /**
+     * AIService now issues every request as a streaming (alt=sse) call, so
+     * fakes must return real SSE-framed bodies ("data: {...}\n\n"), not a
+     * plain JSON object, or AIService's SSE reader parses zero events.
+     */
+    private function sse(array $chunk): string
     {
-        return [
+        return "data: " . json_encode($chunk) . "\n\n";
+    }
+
+    private function geminiFunctionCallResponse(string $name, array $args): string
+    {
+        return $this->sse([
             'candidates' => [[
                 'content' => ['parts' => [
                     ['functionCall' => ['name' => $name, 'args' => $args]],
                 ]],
             ]],
-        ];
+        ]);
     }
 
-    private function geminiTextResponse(string $text): array
+    private function geminiTextResponse(string $text): string
     {
-        return ['candidates' => [['content' => ['parts' => [['text' => $text]]]]]];
+        return $this->sse(['candidates' => [['content' => ['parts' => [['text' => $text]]]]]]);
     }
 
     public function test_auto_tier_tool_executes_and_logs_an_executed_audit(): void
@@ -54,6 +64,34 @@ class ToolCallOrchestratorTest extends TestCase
             'actor_type' => 'ai',
             'actor_user_id' => $admin->id,
         ]);
+    }
+
+    public function test_on_text_delta_is_invoked_with_streamed_content(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        // Two SSE chunks for the same (final, no-tool-call) round — proves
+        // deltas are forwarded as they arrive, not just the accumulated whole.
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response(
+                $this->sse(['candidates' => [['content' => ['parts' => [['text' => 'Hello, ']]]]]])
+                . $this->sse(['candidates' => [['content' => ['parts' => [['text' => 'world!']]]]]]),
+                200
+            ),
+        ]);
+
+        $deltas = [];
+        $orchestrator = app(ToolCallOrchestrator::class);
+        $result = $orchestrator->run(
+            [['role' => 'user', 'content' => 'hi']],
+            ToolRegistry::AUDIENCE_ADMIN,
+            $admin,
+            [],
+            function (string $delta) use (&$deltas) { $deltas[] = $delta; }
+        );
+
+        $this->assertSame(['Hello, ', 'world!'], $deltas);
+        $this->assertSame('Hello, world!', $result['reply']);
     }
 
     public function test_confirm_tier_tool_is_queued_not_executed(): void
@@ -161,6 +199,26 @@ class ToolCallOrchestratorTest extends TestCase
 
         $allowedResult = $orchestrator->confirmPending($audit, $admin);
         $this->assertTrue($allowedResult->success);
+        $audit->refresh();
+        $this->assertSame('executed', $audit->status);
+    }
+
+    public function test_super_admin_can_confirm_admin_only_action(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin']);
+
+        $audit = AiActionAudit::create([
+            'tool_name' => 'blockDevice',
+            'input_params' => ['mac_address' => 'AA:BB:CC:DD:EE:FF'],
+            'result' => [],
+            'actor_type' => 'ai',
+            'status' => 'proposed',
+        ]);
+
+        $orchestrator = app(ToolCallOrchestrator::class);
+        $result = $orchestrator->confirmPending($audit, $superAdmin);
+
+        $this->assertTrue($result->success, 'super_admin must be able to approve admin_only actions.');
         $audit->refresh();
         $this->assertSame('executed', $audit->status);
     }
