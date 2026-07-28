@@ -100,7 +100,7 @@
 
                 <div class="divide-y divide-[#F0E6D2]">
                     @foreach ($provider['models'] as $model)
-                        <div class="py-3" x-data="{ editing: false, saving: false }">
+                        <div class="py-3" x-data="{ editing: false, saving: false, isCustom: false }">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="flex items-center gap-2 min-w-0">
                                     <span class="w-2 h-2 rounded-full shrink-0 {{ match($model['status']) {
@@ -133,7 +133,14 @@
                                 <form x-show="editing" x-cloak @submit="saving = true" action="{{ route('admin.settings.ai-providers.models.replace', $key) }}" method="POST" class="mt-3 flex items-center gap-2">
                                     @csrf
                                     <input type="hidden" name="old_model" value="{{ $model['name'] }}">
-                                    <input type="text" name="new_model" required placeholder="e.g. gemini-2.5-flash" class="flex-1 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-lg px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                                    <select name="new_model" :disabled="isCustom" :required="!isCustom" @change="isCustom = ($event.target.value === '__custom__')" class="flex-1 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-lg px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                                        <option value="">Choose a model...</option>
+                                        @foreach ($provider['catalog'] as $catalogModel)
+                                            <option value="{{ $catalogModel }}">{{ $catalogModel }}</option>
+                                        @endforeach
+                                        <option value="__custom__">Other (type manually)...</option>
+                                    </select>
+                                    <input type="text" name="new_model" x-show="isCustom" x-cloak :disabled="!isCustom" :required="isCustom" placeholder="Type a model ID..." class="flex-1 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-lg px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                                     <button type="submit" :disabled="saving" class="px-3 py-2 bg-[#3E2723] hover:bg-[#271815] text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0">
                                         <svg x-show="saving" x-cloak class="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -141,7 +148,7 @@
                                         </svg>
                                         <span x-text="saving ? 'Saving...' : 'Save'">Save</span>
                                     </button>
-                                    <button type="button" @click="editing = false" class="px-3 py-2 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-lg text-[10px] font-black uppercase tracking-widest text-[#8D6E63] hover:bg-white transition shrink-0">
+                                    <button type="button" @click="editing = false; isCustom = false" class="px-3 py-2 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-lg text-[10px] font-black uppercase tracking-widest text-[#8D6E63] hover:bg-white transition shrink-0">
                                         Cancel
                                     </button>
                                 </form>

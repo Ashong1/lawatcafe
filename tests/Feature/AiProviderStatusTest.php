@@ -26,7 +26,24 @@ class AiProviderStatusTest extends TestCase
                 $this->assertSame('never_tested', $model['status']);
             }
             $this->assertFalse($statuses[$provider]['circuit']['open']);
+            // No override saved yet, so every default model is already
+            // "active" — nothing left to suggest as a swap-in candidate.
+            $this->assertEmpty($statuses[$provider]['catalog']);
         }
+    }
+
+    public function test_catalog_offers_defaults_not_currently_active_and_excludes_active_ones(): void
+    {
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response([], 500)]);
+
+        app(AIService::class)->replaceModel('gemini', 'gemini-2.0-flash', 'my-custom-model');
+
+        $catalog = app(AIService::class)->getProviderStatuses()['gemini']['catalog'];
+
+        $this->assertContains('gemini-2.0-flash', $catalog);
+        $this->assertNotContains('gemini-1.5-pro', $catalog);
+        $this->assertNotContains('gemini-1.5-flash', $catalog);
+        $this->assertNotContains('my-custom-model', $catalog);
     }
 
     public function test_test_provider_records_success_for_every_healthy_model(): void

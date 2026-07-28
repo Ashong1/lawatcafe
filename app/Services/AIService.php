@@ -143,16 +143,20 @@ class AIService
      */
     public function activeModels(string $provider): array
     {
-        $default = match ($provider) {
+        $override = json_decode((string) \App\Models\Setting::get("ai_models_{$provider}"), true);
+
+        return (is_array($override) && !empty($override)) ? array_values($override) : $this->defaultModels($provider);
+    }
+
+    /** The hardcoded, curated model list for a provider — unaffected by any Setting override. */
+    public function defaultModels(string $provider): array
+    {
+        return match ($provider) {
             'gemini' => $this->geminiModels,
             'groq' => $this->groqModels,
             'openrouter' => $this->openRouterModels,
             default => [],
         };
-
-        $override = json_decode((string) \App\Models\Setting::get("ai_models_{$provider}"), true);
-
-        return (is_array($override) && !empty($override)) ? array_values($override) : $default;
     }
 
     /**
@@ -247,6 +251,11 @@ class AIService
                 ];
             }, $info['models']);
 
+            // Curated defaults not already in the active list — offered as
+            // dropdown suggestions when swapping out a failed model, so the
+            // admin isn't stuck typing a model ID from memory.
+            $catalog = array_values(array_diff($this->defaultModels($provider), $info['models']));
+
             $result[$provider] = [
                 'label' => $info['label'],
                 'configured' => (bool) $info['key'],
@@ -257,6 +266,7 @@ class AIService
                     'failure_count' => (int) Cache::get("ai_circuit_failures_{$provider}", 0),
                 ],
                 'models' => $models,
+                'catalog' => $catalog,
             ];
         }
 
