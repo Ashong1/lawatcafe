@@ -122,15 +122,28 @@ class SidebarMenuStateTest extends TestCase
         $response->assertSee('menus: {"inventory":true,"network":false}', false);
     }
 
-    public function test_submenu_dropdowns_have_x_cloak_to_prevent_a_flash_before_alpine_hydrates(): void
+    /**
+     * Submenu panels animate open/closed via a CSS grid-template-rows
+     * transition (0fr <-> 1fr), not x-show/x-cloak — this avoids the classic
+     * Alpine quirk where x-show keeps an element's layout space reserved for
+     * the entire leave transition and only collapses it in one abrupt jump
+     * at the very end, making "closing" feel like it drags on longer than
+     * "opening" even at an identical duration (explicit user request,
+     * 2026-07-30: sync the perceived speed of closing to opening).
+     *
+     * The static `grid-template-rows: 0fr` inline style is what prevents any
+     * flash before Alpine hydrates (replacing x-cloak's old role here) —
+     * every submenu genuinely starts collapsed regardless of JS timing.
+     */
+    public function test_submenu_dropdowns_start_collapsed_via_grid_rows_to_prevent_a_flash_before_alpine_hydrates(): void
     {
         $admin = User::factory()->create(['role' => 'super_admin']);
 
         $response = $this->actingAs($admin)->get(route('dashboard'));
 
         $response->assertOk();
-        foreach (['menus.inventory', 'menus.network', 'menus.settings', 'menus.system'] as $expr) {
-            $response->assertSee("x-show=\"{$expr} && sidebarOpen\" x-cloak", false);
+        foreach (['inventory', 'network', 'settings', 'system'] as $section) {
+            $response->assertSee("x-bind:style=\"(menus.{$section} && sidebarOpen) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'\"", false);
         }
     }
 }

@@ -257,22 +257,21 @@
                                      x-transition:leave-end="opacity-0"
                                      class="w-4 h-4 transition-transform duration-700" x-bind:class="menus.inventory ? 'rotate-180' : ''" />
                 </button>
-                <div x-show="menus.inventory && sidebarOpen" x-cloak
-                     x-transition:enter="transition ease-in-out duration-700"
-                     x-transition:enter-start="opacity-0 -translate-y-1"
-                     x-transition:enter-end="opacity-100 translate-y-0"
-                     x-transition:leave="transition ease-in-out duration-700"
-                     x-transition:leave-start="opacity-100 translate-y-0"
-                     x-transition:leave-end="opacity-0 -translate-y-1"
-                     class="pl-11 space-y-1">
-                    <a href="/inventory/products" class="block py-2 text-xs {{ request()->is('inventory/products') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Products</a>
-                    <a href="/inventory/categories" class="block py-2 text-xs {{ request()->is('inventory/categories') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Categories</a>
-                    <a href="/inventory/ingredients" class="block py-2 text-xs {{ request()->is('inventory/ingredients') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Ingredients</a>
-                    <a href="/inventory/suppliers" class="block py-2 text-xs {{ request()->is('inventory/suppliers') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Suppliers</a>
-                    <a href="/inventory/purchase-orders" class="block py-2 text-xs {{ request()->is('inventory/purchase-orders') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Purchase Orders</a>
-                    <a href="/inventory/deliveries" class="block py-2 text-xs {{ request()->is('inventory/deliveries') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Deliveries</a>
-                    <a href="/inventory/wastage" class="block py-2 text-xs {{ request()->is('inventory/wastage') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Wastage</a>
-                    <a href="/inventory/logs" class="block py-2 text-xs {{ request()->is('inventory/logs') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Audit Logs</a>
+                <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
+                     style="grid-template-rows: 0fr"
+                     x-bind:style="(menus.inventory && sidebarOpen) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                    <div class="overflow-hidden">
+                        <div class="pl-11 space-y-1 pt-1">
+                            <a href="/inventory/products" class="block py-2 text-xs {{ request()->is('inventory/products') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Products</a>
+                            <a href="/inventory/categories" class="block py-2 text-xs {{ request()->is('inventory/categories') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Categories</a>
+                            <a href="/inventory/ingredients" class="block py-2 text-xs {{ request()->is('inventory/ingredients') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Ingredients</a>
+                            <a href="/inventory/suppliers" class="block py-2 text-xs {{ request()->is('inventory/suppliers') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Suppliers</a>
+                            <a href="/inventory/purchase-orders" class="block py-2 text-xs {{ request()->is('inventory/purchase-orders') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Purchase Orders</a>
+                            <a href="/inventory/deliveries" class="block py-2 text-xs {{ request()->is('inventory/deliveries') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Deliveries</a>
+                            <a href="/inventory/wastage" class="block py-2 text-xs {{ request()->is('inventory/wastage') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Wastage</a>
+                            <a href="/inventory/logs" class="block py-2 text-xs {{ request()->is('inventory/logs') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Audit Logs</a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -301,20 +300,19 @@
                                      x-transition:leave-end="opacity-0"
                                      class="w-4 h-4 transition-transform duration-700" x-bind:class="menus.network ? 'rotate-180' : ''" />
                 </button>
-                <div x-show="menus.network && sidebarOpen" x-cloak
-                     x-transition:enter="transition ease-in-out duration-700"
-                     x-transition:enter-start="opacity-0 -translate-y-1"
-                     x-transition:enter-end="opacity-100 translate-y-0"
-                     x-transition:leave="transition ease-in-out duration-700"
-                     x-transition:leave-start="opacity-100 translate-y-0"
-                     x-transition:leave-end="opacity-0 -translate-y-1"
-                     class="pl-11 space-y-1">
-                    <a href="/network/sessions" class="block py-2 text-xs {{ request()->is('network/sessions') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Active Sessions</a>
-                    <a href="/network/vouchers" class="block py-2 text-xs {{ request()->is('network/vouchers') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Vouchers</a>
-                    <a href="/network/verifications" class="block py-2 text-xs {{ request()->is('network/verifications') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Verification Logs</a>
-                    <a href="/network/traffic" class="block py-2 text-xs {{ request()->is('network/traffic') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Traffic Shaping</a>
-                    <a href="/network/blocklist" class="block py-2 text-xs {{ request()->is('network/blocklist') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Device Blocklist</a>
-                    <a href="/network/plans" class="block py-2 text-xs {{ request()->is('network/plans') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Wi-Fi Plans</a>
+                <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
+                     style="grid-template-rows: 0fr"
+                     x-bind:style="(menus.network && sidebarOpen) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                    <div class="overflow-hidden">
+                        <div class="pl-11 space-y-1 pt-1">
+                            <a href="/network/sessions" class="block py-2 text-xs {{ request()->is('network/sessions') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Active Sessions</a>
+                            <a href="/network/vouchers" class="block py-2 text-xs {{ request()->is('network/vouchers') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Vouchers</a>
+                            <a href="/network/verifications" class="block py-2 text-xs {{ request()->is('network/verifications') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Verification Logs</a>
+                            <a href="/network/traffic" class="block py-2 text-xs {{ request()->is('network/traffic') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Traffic Shaping</a>
+                            <a href="/network/blocklist" class="block py-2 text-xs {{ request()->is('network/blocklist') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Device Blocklist</a>
+                            <a href="/network/plans" class="block py-2 text-xs {{ request()->is('network/plans') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Wi-Fi Plans</a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -343,17 +341,16 @@
                                      x-transition:leave-end="opacity-0"
                                      class="w-4 h-4 transition-transform duration-700" x-bind:class="menus.settings ? 'rotate-180' : ''" />
                 </button>
-                <div x-show="menus.settings && sidebarOpen" x-cloak
-                     x-transition:enter="transition ease-in-out duration-700"
-                     x-transition:enter-start="opacity-0 -translate-y-1"
-                     x-transition:enter-end="opacity-100 translate-y-0"
-                     x-transition:leave="transition ease-in-out duration-700"
-                     x-transition:leave-start="opacity-100 translate-y-0"
-                     x-transition:leave-end="opacity-0 -translate-y-1"
-                     class="pl-11 space-y-1">
-                    <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">{{ auth()->user()->isSuperAdmin() ? 'Staff & Admin Accounts' : 'Staff Accounts' }}</a>
-                    <a href="{{ route('admin.settings.store') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.store') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Store Preferences</a>
-                    <a href="{{ route('admin.settings.ai-providers') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.ai-providers*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">AI Providers</a>
+                <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
+                     style="grid-template-rows: 0fr"
+                     x-bind:style="(menus.settings && sidebarOpen) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                    <div class="overflow-hidden">
+                        <div class="pl-11 space-y-1 pt-1">
+                            <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">{{ auth()->user()->isSuperAdmin() ? 'Staff & Admin Accounts' : 'Staff Accounts' }}</a>
+                            <a href="{{ route('admin.settings.store') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.store') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Store Preferences</a>
+                            <a href="{{ route('admin.settings.ai-providers') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.ai-providers*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">AI Providers</a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -382,23 +379,22 @@
                                      x-transition:leave-end="opacity-0"
                                      class="w-4 h-4 transition-transform duration-700" x-bind:class="menus.system ? 'rotate-180' : ''" />
                 </button>
-                <div x-show="menus.system && sidebarOpen" x-cloak
-                     x-transition:enter="transition ease-in-out duration-700"
-                     x-transition:enter-start="opacity-0 -translate-y-1"
-                     x-transition:enter-end="opacity-100 translate-y-0"
-                     x-transition:leave="transition ease-in-out duration-700"
-                     x-transition:leave-start="opacity-100 translate-y-0"
-                     x-transition:leave-end="opacity-0 -translate-y-1"
-                     class="pl-11 space-y-1">
-                    <a href="{{ route('admin.settings.network') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.network') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Network Config</a>
-                    <a href="{{ route('admin.settings.agent') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.agent') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Agent Permissions</a>
+                <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
+                     style="grid-template-rows: 0fr"
+                     x-bind:style="(menus.system && sidebarOpen) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                    <div class="overflow-hidden">
+                        <div class="pl-11 space-y-1 pt-1">
+                            <a href="{{ route('admin.settings.network') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.network') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Network Config</a>
+                            <a href="{{ route('admin.settings.agent') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.agent') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Agent Permissions</a>
+                        </div>
+                    </div>
                 </div>
             </div>
             @endif
         </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.20</span>
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.21</span>
             <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
