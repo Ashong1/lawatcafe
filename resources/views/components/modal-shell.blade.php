@@ -52,9 +52,9 @@ $isBottomSheet = $position === 'bottom-sheet';
     x-on:keydown.tab.prevent="$event.shiftKey || nextFocusable().focus()"
     x-on:keydown.shift.tab.prevent="prevFocusable().focus()"
     @if($isBottomSheet)
-    class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-end justify-center"
     @else
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4"
     @endif
     x-transition:enter="transition ease-out duration-200"
     x-transition:enter-start="opacity-0"
@@ -66,9 +66,16 @@ $isBottomSheet = $position === 'bottom-sheet';
     aria-modal="true"
     @if($labelledBy) aria-labelledby="{{ $labelledBy }}" @endif
 >
+    {{-- Static (untransitioned) blur layer, separate from the panel/backdrop's
+         own opacity fade above. backdrop-filter is expensive to recompute every
+         animation frame — keeping it off any element with its own x-transition
+         means the browser only has to composite it once at each end state,
+         while the actual fade-in/out (on this div's parent, and the panel's
+         own scale/opacity below) stays cheap opacity-only compositing. --}}
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
     <div @click.away="{{ $show }} = false"
          @if($isBottomSheet)
-         class="bg-white {{ $radiusTopClass }} shadow-2xl w-full {{ $maxWidthClass }} max-h-[90vh] flex flex-col overflow-hidden transform transition-all {{ $panelClass }}"
+         class="relative bg-white {{ $radiusTopClass }} shadow-2xl w-full {{ $maxWidthClass }} max-h-[90vh] flex flex-col overflow-hidden transform transition-all {{ $panelClass }}"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="translate-y-full"
          x-transition:enter-end="translate-y-0"
@@ -76,7 +83,7 @@ $isBottomSheet = $position === 'bottom-sheet';
          x-transition:leave-start="translate-y-0"
          x-transition:leave-end="translate-y-full"
          @else
-         class="bg-white {{ $radiusClass }} shadow-2xl w-full {{ $maxWidthClass }} overflow-hidden transform transition-all {{ $panelClass }}"
+         class="relative bg-white {{ $radiusClass }} shadow-2xl w-full {{ $maxWidthClass }} overflow-hidden transform transition-all {{ $panelClass }}"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 scale-95"
          x-transition:enter-end="opacity-100 scale-100"
