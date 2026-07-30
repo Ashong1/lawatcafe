@@ -398,7 +398,7 @@
         </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.12</span>
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.13</span>
             <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
@@ -472,6 +472,12 @@
                 init() {
                     this.$watch('sidebarOpen', v => document.cookie = `lk_sidebar_open=${v ? 1 : 0};path=/;max-age=31536000;SameSite=Lax`);
                     this.$watch('menus', v => document.cookie = `lk_admin_menus=${encodeURIComponent(JSON.stringify(v))};path=/;max-age=31536000;SameSite=Lax`);
+                    // Seed the cookie from the current (possibly route-derived) state on
+                    // every load too, not just on the $watch above — $watch only fires on
+                    // a *change*, so a section that auto-opened purely from matching the
+                    // current route (no manual click yet) would never get persisted, and
+                    // navigating away from it would look like it "closed on its own".
+                    document.cookie = `lk_admin_menus=${encodeURIComponent(JSON.stringify(this.menus))};path=/;max-age=31536000;SameSite=Lax`;
 
                     const savedScroll = parseInt(localStorage.getItem('lawatkape_admin_nav_scroll'), 10);
                     if (!isNaN(savedScroll)) {
