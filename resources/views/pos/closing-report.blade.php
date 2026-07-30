@@ -63,18 +63,21 @@
                 </div>
             </div>
 
-            <form action="{{ route('shift.end', $shift->id) }}" method="POST" class="space-y-6">
+            <form action="{{ route('shift.end', $shift->id) }}" method="POST" class="space-y-6" x-data="{ submitting: false }" @submit="submitting = true">
                 @csrf
                 <div>
                     <label class="block text-[10px] font-black text-amber-500/80 uppercase tracking-widest mb-2 ml-1">Actual Cash Counted</label>
-                    <input type="number" name="ending_cash" step="0.01" required 
+                    <input type="number" name="ending_cash" step="0.01" required
                            class="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-5 py-4 text-2xl font-black text-white focus:outline-none focus:border-amber-500 transition-all text-center placeholder-white/20"
                            placeholder="0.00">
                     <p class="text-[9px] text-white/40 mt-3 italic text-center uppercase tracking-tighter">Please count the physical bills and coins in the drawer.</p>
                 </div>
 
-                <button type="submit" class="w-full py-4 bg-amber-500 hover:bg-amber-600 text-[#3E2723] rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-95 shadow-xl shadow-amber-500/20">
-                    Finalize & Close Shift
+                <button type="submit" :disabled="submitting" class="w-full py-4 bg-amber-500 hover:bg-amber-600 text-[#3E2723] rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-95 shadow-xl shadow-amber-500/20 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2">
+                    <template x-if="submitting">
+                        <x-lucide-loader-2 class="w-4 h-4 animate-spin" />
+                    </template>
+                    <span x-text="submitting ? 'Closing Shift...' : 'Finalize & Close Shift'"></span>
                 </button>
             </form>
         </div>

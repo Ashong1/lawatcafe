@@ -309,15 +309,20 @@
             <h2 class="text-2xl font-bold text-[#3E2723] mb-2 text-center">Shift Closed</h2>
             <p class="text-sm text-[#8D6E63] mb-8 text-center">You must open a cash drawer shift to process transactions.</p>
 
-            <form action="{{ route('shift.start') }}" method="POST">
+            <form action="{{ route('shift.start') }}" method="POST" x-data="{ submitting: false }" @submit="submitting = true">
                 @csrf
                 <div class="mb-6">
                     <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-2 text-center">Starting Float / Cash</label>
                     <input type="number" name="starting_cash" required min="0" step="0.01" class="w-full p-4 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-amber-600 bg-[#FAFAFA] transition-all text-center text-2xl font-bold text-[#3E2723]" placeholder="0.00">
                 </div>
-                <button type="submit" class="w-full py-4 bg-amber-600 text-white rounded-full hover:bg-amber-700 font-bold uppercase tracking-widest transition shadow-lg text-xs flex items-center justify-center gap-2">
-                    <x-lucide-unlock class="w-4 h-4" />
-                    <span>Open Shift</span>
+                <button type="submit" :disabled="submitting" class="w-full py-4 bg-amber-600 text-white rounded-full hover:bg-amber-700 font-bold uppercase tracking-widest transition shadow-lg text-xs flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                    <template x-if="!submitting">
+                        <x-lucide-unlock class="w-4 h-4" />
+                    </template>
+                    <template x-if="submitting">
+                        <x-lucide-loader-2 class="w-4 h-4 animate-spin" />
+                    </template>
+                    <span x-text="submitting ? 'Opening Shift...' : 'Open Shift'"></span>
                 </button>
             </form>
 
@@ -613,10 +618,18 @@
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Recording...',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            showConfirmButton: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+
                         const form = document.createElement('form');
                         form.method = 'POST';
                         form.action = '{{ route('shift.transaction', $activeShift->id ?? 0) }}';
-                        
+
                         const csrf = document.createElement('input');
                         csrf.type = 'hidden';
                         csrf.name = '_token';
