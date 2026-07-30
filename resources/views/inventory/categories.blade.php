@@ -125,19 +125,21 @@
                         <input type="text" name="name" x-model="formData.name" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm" placeholder="e.g. Cold Brews">
                     </div>
 
+                    <button type="button" @click="suggestWithAi()" :disabled="!formData.name || suggesting"
+                            class="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/50 text-amber-800 hover:bg-amber-50 hover:border-amber-400 transition text-[10px] font-black uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed">
+                        <x-lucide-loader-2 x-show="suggesting" class="w-4 h-4 animate-spin" />
+                        <x-lucide-sparkles x-show="!suggesting" class="w-4 h-4" />
+                        <span x-text="suggesting ? 'Generating…' : 'Generate description & icon with AI'"></span>
+                    </button>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Icon</label>
                             <div class="relative">
                                 <select name="icon" x-model="formData.icon" class="w-full p-3 pl-10 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all appearance-none text-xs font-bold">
-                                    <option value="coffee">Coffee Cup</option>
-                                    <option value="cup-soda">Soda / Cold</option>
-                                    <option value="cookie">Pastry / Cookie</option>
-                                    <option value="beef">Food / Meals</option>
-                                    <option value="utensils">General Dining</option>
-                                    <option value="wifi">Network / WiFi</option>
-                                    <option value="star">Featured</option>
-                                    <option value="layers">General</option>
+                                    @foreach(\App\Models\Category::AVAILABLE_ICONS as $iconOption)
+                                        <option value="{{ $iconOption }}">{{ ucwords(str_replace('-', ' ', $iconOption)) }}</option>
+                                    @endforeach
                                 </select>
                                 <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#8D6E63]">
                                     <x-lucide-search class="w-4 h-4" />
@@ -175,6 +177,7 @@
             isModalOpen: false,
             isEditing: false,
             submitting: false,
+            suggesting: false,
             modalTitle: 'Add New Category',
             formAction: '{{ route('inventory.categories.store') }}',
             formData: { id: null, name: '', description: '', icon: 'coffee', color: '#3E2723' },
@@ -195,7 +198,47 @@
                 this.submitting = false;
                 this.isModalOpen = true;
             },
-            closeModal() { this.isModalOpen = false; }
+            closeModal() { this.isModalOpen = false; },
+
+            async suggestWithAi() {
+                if (!this.formData.name || this.suggesting) return;
+                this.suggesting = true;
+                try {
+                    const response = await fetch('{{ route('inventory.categories.suggest-ai') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                        body: JSON.stringify({ name: this.formData.name }),
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        this.toast('error', data.message || 'Could not generate a suggestion.');
+                        return;
+                    }
+                    this.formData.description = data.description;
+                    this.formData.icon = data.icon;
+                } catch (error) {
+                    this.toast('error', 'Could not reach the server to generate a suggestion.');
+                } finally {
+                    this.suggesting = false;
+                }
+            },
+
+            toast(icon, title) {
+                if (typeof Swal === 'undefined') return;
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon,
+                    title,
+                    showConfirmButton: false,
+                    timer: 4000,
+                    timerProgressBar: true,
+                });
+            }
         }))
     });
 </script>

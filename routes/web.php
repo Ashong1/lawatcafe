@@ -125,6 +125,7 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('inventory')->name('inventory.')->group(function () {
             Route::get('/logs', [IngredientController::class, 'logs'])->name('logs');
             Route::resource('categories', \App\Http\Controllers\CategoryController::class)->except(['create', 'show', 'edit']);
+            Route::post('categories/suggest-ai', [\App\Http\Controllers\CategoryController::class, 'suggestAi'])->name('categories.suggest-ai');
             Route::resource('products', ProductController::class)->except(['create', 'show', 'edit']);
             Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
             // No destroy: inventory_logs.ingredient_id and product_ingredients.ingredient_id

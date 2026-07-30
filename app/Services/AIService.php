@@ -1075,6 +1075,45 @@ OPERATIONAL GUIDELINES:
     }
 
     /**
+     * One-shot suggestion of a short description and an icon for a product
+     * category, given just its name. The icon is constrained to
+     * Category::AVAILABLE_ICONS (listed in the prompt) rather than the full
+     * ~1950-icon Lucide set — keeps the model's choice both relevant and
+     * guaranteed renderable/selectable in the existing category form, and
+     * removes the need to validate against 1950 icon names.
+     *
+     * @return array{description: string, icon: string}|null
+     */
+    public function suggestCategoryContent(string $categoryName): ?array
+    {
+        $icons = implode(', ', \App\Models\Category::AVAILABLE_ICONS);
+
+        $messages = [[
+            'role' => 'user',
+            'content' => "You write short category descriptions and pick icons for a Filipino coffee shop's POS menu (Lawa't Kape). "
+                . "Category name: \"{$categoryName}\". "
+                . "Return ONLY JSON: {\"description\": \"string, one plain sentence under 120 characters, no emoji or marketing fluff\", \"icon\": \"string, must be EXACTLY one of: {$icons}\"}",
+        ]];
+
+        $data = $this->callAI($messages);
+        if (!$data) {
+            return null;
+        }
+
+        $raw = str_replace(['```json', '```'], '', trim($data['choices'][0]['message']['content'] ?? ''));
+        $result = json_decode($raw, true);
+
+        if (!is_array($result) || empty($result['description']) || empty($result['icon'])) {
+            return null;
+        }
+
+        return [
+            'description' => \Illuminate\Support\Str::limit(trim($result['description']), 150, ''),
+            'icon' => in_array($result['icon'], \App\Models\Category::AVAILABLE_ICONS, true) ? $result['icon'] : 'layers',
+        ];
+    }
+
+    /**
      * Ultra-low-latency, best-effort phrasing for the POS upsell suggestion
      * toast. Tries exactly one provider with a hard ~2s cap and no cascade —
      * this fires on every single add-to-cart, so a slow/unavailable AI must

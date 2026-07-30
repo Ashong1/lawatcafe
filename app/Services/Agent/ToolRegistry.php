@@ -14,6 +14,7 @@ use App\Services\Agent\Tools\RestockIngredientTool;
 use App\Services\Agent\Tools\SendSupplierPoTool;
 use App\Services\Agent\Tools\SetSessionBandwidthTierTool;
 use App\Services\Agent\Tools\ShiftHandoffSummaryTool;
+use App\Services\Agent\Tools\SuggestCategoryContentTool;
 use App\Services\Agent\Tools\UnblockDeviceTool;
 use App\Services\Agent\Tools\VoidSaleTool;
 
@@ -66,6 +67,7 @@ class ToolRegistry
             BlockDeviceTool::class,
             UnblockDeviceTool::class,
             SetSessionBandwidthTierTool::class,
+            SuggestCategoryContentTool::class,
         ];
     }
 
