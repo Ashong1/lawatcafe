@@ -30,7 +30,7 @@
       ">
 
     <div class="fixed inset-0 z-0">
-        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-[20s] hover:scale-105" style="background-image: url('/images/lawat-bg.jpg');"></div>
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat ambient-pan" style="background-image: url('/images/lawat-bg.jpg');"></div>
         <div class="absolute inset-0 bg-black/50 backdrop-blur-[4px]"></div>
     </div>
 

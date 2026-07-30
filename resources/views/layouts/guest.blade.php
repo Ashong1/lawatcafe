@@ -55,7 +55,7 @@
       ">
 
     <!-- Blurred Background -->
-    <div class="absolute inset-0 z-0 opacity-40 bg-cover bg-center" style="background-image: url('/images/lawat-bg.jpg'); filter: blur(8px);"></div>
+    <div class="absolute inset-0 z-0 opacity-40 bg-cover bg-center ambient-pan" style="background-image: url('/images/lawat-bg.jpg'); filter: blur(8px);"></div>
 
     <!-- Main Centered Card -->
     <div class="relative z-10 w-full max-w-6xl min-h-[600px] mx-4 flex rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-[#5D4037]">

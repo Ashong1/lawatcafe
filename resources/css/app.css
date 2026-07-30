@@ -147,6 +147,26 @@ html {
     }
 }
 
+/* Slow ambient pan for the login/guest-portal background photo — these are
+   unauthenticated, low-interaction screens (kiosk/mobile, no meaningful
+   hover target), so the old hover:scale-105 it replaces never actually
+   fired in practice and the background sat completely static. This keeps
+   the screen feeling alive at rest instead of only on interaction. */
+@keyframes ambient-pan {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+.ambient-pan {
+    animation: ambient-pan 26s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ambient-pan {
+        animation: none;
+    }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
