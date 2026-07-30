@@ -114,6 +114,16 @@ document.addEventListener('alpine:init', () => {
         },
 
         async updateStatus(url, status, event) {
+            // Disable + fade the clicked button for the duration of the fetch so a slow
+            // network doesn't invite a double-tap — success replaces this whole button via
+            // applyGridHtml() anyway, and failure falls through to a real page navigation,
+            // so no explicit re-enable/reset is needed in either case.
+            const btn = event?.submitter;
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-wait');
+            }
+
             try {
                 const res = await fetch(url, {
                     method: 'POST',
@@ -135,6 +145,12 @@ document.addEventListener('alpine:init', () => {
         },
 
         async recall(url, event) {
+            const btn = event?.submitter;
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-wait');
+            }
+
             try {
                 const res = await fetch(url, {
                     method: 'POST',
