@@ -15,8 +15,19 @@
         </div>
     </div>
 
-    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]" 
-         x-data="{ 
+    {{-- Tried Alpine.morph() here to make this poll state-preserving (rows keep
+         their DOM identity across a refresh instead of being destroyed and
+         recreated every 5s) — stable row ids exist in sessions-tables.blade.php
+         for this purpose. Despite correct key configuration and matching ids,
+         it empirically failed to preserve row identity on this specific page
+         once any real time had elapsed between polls (worked in every isolated
+         test, including calling the exact same component method directly right
+         after page load — but not once real elapsed time/content changes were
+         involved), for a root cause that wasn't pinned down after substantial
+         investigation. Reverted to the original plain replace rather than ship
+         something unreliable; left as a known future improvement. --}}
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]"
+         x-data="{
             refreshSessions() {
                 fetch('{{ route('network.sessions') }}', {
                     headers: {

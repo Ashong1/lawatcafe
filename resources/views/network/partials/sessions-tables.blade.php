@@ -18,7 +18,11 @@
             </thead>
             <tbody class="text-sm">
                 @forelse($activeSessions as $session)
-                <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
+                {{-- Stable id kept from an attempted Alpine.morph()-based rewrite of
+                     this table's poll refresh (see the comment in sessions.blade.php) —
+                     that attempt was reverted, so nothing currently reads this id, but
+                     it's a harmless, useful hook for future debugging/e2e tests. --}}
+                <tr id="session-row-{{ $session->sessionId ?? ($session->ip_address . '-' . $session->mac_address) }}" class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                     <td class="py-4">
                         <div class="flex flex-col">
                             <span class="font-extrabold text-[#3E2723] text-sm flex items-center gap-2">
@@ -178,7 +182,7 @@
             </thead>
             <tbody class="text-xs">
                 @forelse($infrastructureSessions as $session)
-                <tr class="border-b border-slate-100/50 hover:bg-slate-100 transition-colors">
+                <tr id="session-row-{{ $session->sessionId ?? ($session->ip_address . '-' . $session->mac_address) }}" class="border-b border-slate-100/50 hover:bg-slate-100 transition-colors">
                     <td class="py-4 px-6">
                         <div class="flex flex-col">
                             <span class="font-bold text-slate-800 text-sm flex items-center gap-2">
@@ -250,7 +254,7 @@
             </thead>
             <tbody class="text-xs">
                 @forelse($pendingSessions as $session)
-                <tr class="border-b border-[#FAFAFA] bg-gray-50/30 group hover:bg-[#FDF8F5]/80 transition-colors">
+                <tr id="session-row-{{ $session->sessionId ?? ($session->ip_address . '-' . $session->mac_address) }}" class="border-b border-[#FAFAFA] bg-gray-50/30 group hover:bg-[#FDF8F5]/80 transition-colors">
                     <td class="py-3">
                         <div class="flex flex-col">
                             <span class="font-bold text-[#4A3B32]">{{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unknown Device' }}</span>
