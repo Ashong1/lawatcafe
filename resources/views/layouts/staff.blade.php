@@ -6,7 +6,13 @@
         'inventory' => request()->is('inventory*'),
         'network'   => request()->is('network*'),
     ];
-    $menus = is_array($cookieMenus) && !empty($cookieMenus) ? array_merge($routeDefaults, $cookieMenus) : $routeDefaults;
+    // See the matching fix (and full reasoning) in layouts/admin.blade.php —
+    // the current page's own section is always authoritative when it
+    // matches one, so a stale cookie can't leave a dropdown stuck open on
+    // an unrelated page; the cookie only applies on pages with no section
+    // of their own (e.g. the dashboard).
+    $onASection = in_array(true, $routeDefaults, true);
+    $menus = $onASection || !is_array($cookieMenus) || empty($cookieMenus) ? $routeDefaults : $cookieMenus;
 @endphp
 <html lang="en">
 <head>
@@ -202,7 +208,7 @@
             </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.7</span>
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.8</span>
             <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>

@@ -9,7 +9,17 @@
         'settings'  => request()->is('accounts*') || request()->routeIs('admin.settings.store') || request()->routeIs('admin.settings.ai-providers*'),
         'system'    => request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent'),
     ];
-    $menus = is_array($cookieMenus) && !empty($cookieMenus) ? array_merge($routeDefaults, $cookieMenus) : $routeDefaults;
+    // If the current page belongs to a section, that's authoritative for
+    // ALL sections — we know exactly which one should be open (this one)
+    // and which shouldn't (everything else), no ambiguity to resolve via
+    // the cookie. array_merge($routeDefaults, $cookieMenus) previously let
+    // a stale cookie value win even when it contradicted the current page
+    // (e.g. Inventory left open from an earlier visit stayed visibly open
+    // while browsing Network) — only fall back to the user's last
+    // manual/sticky preference on pages that don't belong to any section
+    // (e.g. the dashboard), where there's no route signal to go on.
+    $onASection = in_array(true, $routeDefaults, true);
+    $menus = $onASection || !is_array($cookieMenus) || empty($cookieMenus) ? $routeDefaults : $cookieMenus;
 @endphp
 <html lang="en">
 <head>
@@ -389,7 +399,7 @@
         </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.7</span>
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.8</span>
             <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
