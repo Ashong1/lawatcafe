@@ -104,17 +104,19 @@
         </p>
     </div>
 
-    {{-- Persistent full-bleed loading overlay for the payment-verify/receipt-upload
-         round trip (both now fetch-based, see submitPaymentForm()/submitReceiptUpload()
-         below) — previously a native form submit meant the browser blanked the tab
-         mid-wait and any in-page loading state disappeared with it, right when the
-         real wait (OPNsense auth / AI OCR) began. --}}
-    <div x-show="verifyingPayment || uploadingReceipt" x-cloak
+    {{-- Persistent full-bleed loading overlay for the payment-verify/receipt-upload/
+         voucher-redeem round trip — previously a native form submit meant the browser
+         blanked the tab mid-wait and any in-page loading state disappeared with it,
+         right when the real wait (OPNsense auth / AI OCR) began. submitForm() (voucher
+         passcode) still does a native e.target.submit() rather than a fetch conversion
+         — the overlay just shows immediately beforehand so the pre-navigation instant
+         isn't a bare button spinner like the other two paths used to be. --}}
+    <div x-show="verifyingPayment || uploadingReceipt || isSubmitting" x-cloak
          x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
          x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
          class="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center gap-4 text-white text-center px-6">
         <x-lucide-loader-2 class="w-10 h-10 animate-spin text-amber-500" />
-        <p class="text-sm font-black uppercase tracking-widest" x-text="uploadingReceipt ? 'Reading your receipt…' : 'Verifying payment…'"></p>
+        <p class="text-sm font-black uppercase tracking-widest" x-text="uploadingReceipt ? 'Reading your receipt…' : (isSubmitting ? 'Redeeming your voucher…' : 'Verifying payment…')"></p>
         <p class="text-[10px] text-white/60 font-medium max-w-xs">Please don't close this window.</p>
     </div>
 

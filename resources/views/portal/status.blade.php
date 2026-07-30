@@ -118,11 +118,13 @@
                             Continue Browsing
                             <x-lucide-external-link class="w-5 h-5" />
                         </a>
-                        <form action="{{ route('portal.disconnect') }}" method="POST">
+                        <form action="{{ route('portal.disconnect') }}" method="POST" x-data="{ disconnecting: false }" @submit="disconnecting = true">
                             @csrf
                             <input type="hidden" name="session_id" value="{{ $session['sessionId'] }}">
-                            <button type="submit" class="w-full bg-white/60 hover:bg-white text-[#C62828] border-2 border-[#F0E6D2] py-4 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-[10px] shadow-sm">
-                                <x-lucide-log-out class="w-4 h-4" /> Disconnect Session
+                            <button type="submit" :disabled="disconnecting" class="w-full bg-white/60 hover:bg-white text-[#C62828] border-2 border-[#F0E6D2] py-4 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-[10px] shadow-sm disabled:opacity-70 disabled:cursor-not-allowed">
+                                <x-lucide-log-out x-show="!disconnecting" class="w-4 h-4" />
+                                <x-lucide-loader-2 x-show="disconnecting" x-cloak class="w-4 h-4 animate-spin" />
+                                <span x-text="disconnecting ? 'Disconnecting…' : 'Disconnect Session'"></span>
                             </button>
                         </form>
                     </div>
@@ -200,6 +202,17 @@
                                   }
                               }"
                               @submit.prevent="submit($event)"> @csrf
+                            {{-- Full-bleed overlay, matching the one on portal/index.blade.php's
+                                 GCash form, for the same reason: keeps a visible loading state for
+                                 the whole OPNsense round trip instead of a bare button spinner. --}}
+                            <div x-show="isSubmitting" x-cloak
+                                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                                 class="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center gap-4 text-white text-center px-6">
+                                <x-lucide-loader-2 class="w-10 h-10 animate-spin text-amber-500" />
+                                <p class="text-sm font-black uppercase tracking-widest">Verifying payment…</p>
+                                <p class="text-[10px] text-white/60 font-medium max-w-xs">Please don't close this window.</p>
+                            </div>
                             <div>
                                 <label class="flex justify-between items-end mb-2.5 ml-2">
                                     <span class="text-[11px] font-black text-[#A1887F] uppercase tracking-[0.2em]">Transaction Ref #</span>
