@@ -75,6 +75,23 @@ class OpnSenseServiceTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    public function test_get_dhcp_leases_is_cached_across_calls(): void
+    {
+        Http::fake([
+            'opnsense.test/api/kea/leases4/search' => Http::response([
+                'rows' => [['address' => '192.168.2.113', 'hwaddr' => 'aa:bb:cc:dd:ee:ff', 'hostname' => 'xiaomi-15-pro']],
+            ], 200),
+        ]);
+
+        $service = app(OpnSenseService::class);
+        $first = $service->getDhcpLeases();
+        $second = $service->getDhcpLeases();
+
+        $this->assertEquals($first, $second);
+        $this->assertSame('xiaomi-15-pro', $first[0]['hostname']);
+        Http::assertSentCount(1);
+    }
+
     public function test_list_sessions_is_cached_across_calls(): void
     {
         Http::fake([

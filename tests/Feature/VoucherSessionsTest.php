@@ -53,6 +53,7 @@ class VoucherSessionsTest extends TestCase
             $mock->shouldReceive('getArpTable')->andReturn([
                 ['mac' => '3C:7C:3F:5E:85:4E', 'ip' => '192.168.2.99', 'hostname' => 'staff-laptop', 'manufacturer' => 'Dell'],
             ]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
         });
 
         $response = $this->actingAs($admin)->get(route('network.sessions'));
@@ -73,38 +74,61 @@ class VoucherSessionsTest extends TestCase
      * disappeared entirely when unknown — making every device look
      * identical by IP/MAC alone. It's now the headline of the device cell
      * in all three tables, with an honest "Unknown Device" fallback when
-     * OPNsense has no DHCP hostname for that client (a common case — many
-     * devices simply don't send one).
+     * neither source has a name for that client.
+     *
+     * Also covers the source priority added alongside this: OPNsense's ARP
+     * diagnostic endpoint's 'hostname' field is rarely populated in
+     * practice (it's just a Layer-2/3 lookup table with no naming data of
+     * its own), whereas Kea's DHCP leases carry each client's actual
+     * self-reported hostname far more often — so Kea is preferred, with ARP
+     * only as a fallback for devices Kea has no current lease for.
      */
-    public function test_device_hostname_is_prominently_shown_with_a_fallback_when_unknown(): void
+    public function test_device_hostname_prefers_the_kea_lease_name_falls_back_to_arp_then_unknown(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('listSessions')->andReturn([
+                // Has a Kea lease hostname AND a (stale/different) ARP hostname — Kea wins.
                 [
-                    'sessionId' => 'sess-named',
+                    'sessionId' => 'sess-kea-named',
                     'ipAddress' => '192.168.2.120/32',
                     'macAddress' => 'AA:BB:CC:DD:EE:01',
                     'bytes_received' => 0, 'bytes_sent' => 0,
                 ],
+                // No Kea lease hostname, but ARP has one — falls back to ARP's.
                 [
-                    'sessionId' => 'sess-unnamed',
+                    'sessionId' => 'sess-arp-only',
                     'ipAddress' => '192.168.2.121/32',
                     'macAddress' => 'AA:BB:CC:DD:EE:02',
+                    'bytes_received' => 0, 'bytes_sent' => 0,
+                ],
+                // Neither source has a name — "Unknown Device" fallback.
+                [
+                    'sessionId' => 'sess-unnamed',
+                    'ipAddress' => '192.168.2.122/32',
+                    'macAddress' => 'AA:BB:CC:DD:EE:03',
                     'bytes_received' => 0, 'bytes_sent' => 0,
                 ],
             ]);
 
             $mock->shouldReceive('getArpTable')->andReturn([
-                ['mac' => 'AA:BB:CC:DD:EE:01', 'ip' => '192.168.2.120', 'hostname' => "Johns-iPhone", 'manufacturer' => 'Apple'],
-                ['mac' => 'AA:BB:CC:DD:EE:02', 'ip' => '192.168.2.121', 'hostname' => '', 'manufacturer' => 'Generic'],
+                ['mac' => 'AA:BB:CC:DD:EE:01', 'ip' => '192.168.2.120', 'hostname' => 'stale-arp-name', 'manufacturer' => 'Apple'],
+                ['mac' => 'AA:BB:CC:DD:EE:02', 'ip' => '192.168.2.121', 'hostname' => 'Johns-iPhone', 'manufacturer' => 'Apple'],
+                ['mac' => 'AA:BB:CC:DD:EE:03', 'ip' => '192.168.2.122', 'hostname' => '', 'manufacturer' => 'Generic'],
+            ]);
+
+            $mock->shouldReceive('getDhcpLeases')->andReturn([
+                ['hwaddr' => 'aa:bb:cc:dd:ee:01', 'hostname' => 'xiaomi-15-pro'],
+                ['hwaddr' => 'aa:bb:cc:dd:ee:02', 'hostname' => ''],
             ]);
         });
 
         $response = $this->actingAs($admin)->get(route('network.sessions'));
 
         $response->assertOk();
+        $response->assertSee('xiaomi-15-pro');
+        $response->assertDontSee('stale-arp-name');
         $response->assertSee('Johns-iPhone');
         $response->assertSee('Unknown Device');
     }

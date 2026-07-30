@@ -171,6 +171,7 @@ class VoucherController extends Controller
         // 1. Get real-time sessions from OPNsense
         $opnSessions = collect($opnsense->listSessions());
         $arpTable = collect($opnsense->getArpTable());
+        $dhcpLeases = collect($opnsense->getDhcpLeases());
 
         // 2. Identify ignored and VIP IPs
         $ignoredIpsStr = \App\Models\Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.1');
@@ -192,17 +193,27 @@ class VoucherController extends Controller
         $cpByMac = $opnSessions->keyBy(fn($item) => $normalizeMac($item['macAddress'] ?? ''));
         $cpByIp = $opnSessions->keyBy(fn($item) => str_replace('/32', '', $item['ipAddress'] ?? ''));
 
+        // Kea's DHCP leases carry each client's self-reported hostname —
+        // populated far more often in practice than the ARP table's own
+        // 'hostname' field (ARP has no naming data of its own). Preferred
+        // source below; ARP's hostname is only a fallback for devices Kea
+        // has no current lease for (e.g. a manually static-configured IP).
+        $hostnameByMac = $dhcpLeases
+            ->keyBy(fn($lease) => $normalizeMac($lease['hwaddr'] ?? ''))
+            ->map(fn($lease) => $lease['hostname'] ?? '')
+            ->filter();
+
         // OPNsense's static passthrough entries only populate HALF of a
         // device's identity: "---mac---" entries (allowed-MAC passthrough)
         // report a mac but an EMPTY ipAddress, while "---ip---" entries
         // (allowed-IP passthrough) report an ip but an EMPTY macAddress. This
         // closure builds the shared row shape and resolves whichever half is
         // missing via the other lookup rather than rendering a blank cell.
-        $buildRow = function (?array $cp, ?array $arp, string $mac, ?string $ip) {
+        $buildRow = function (?array $cp, ?array $arp, string $mac, ?string $ip) use ($hostnameByMac) {
             return [
                 'ipAddress' => $ip ?? 'N/A',
                 'macAddress' => $mac !== '' ? $mac : 'N/A',
-                'hostname' => $arp['hostname'] ?? 'Unknown',
+                'hostname' => $hostnameByMac->get($mac) ?: ($arp['hostname'] ?? 'Unknown'),
                 'manufacturer' => $arp['manufacturer'] ?? 'Generic',
                 'cpSession' => $cp,
                 'isAuthorized' => $cp && (

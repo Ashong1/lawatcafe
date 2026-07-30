@@ -148,6 +148,42 @@ class OpnSenseService
     }
 
     /**
+     * Get current Kea DHCPv4 leases from OPNsense — the authoritative
+     * source for a device's self-reported hostname (whatever the client
+     * sent in its DHCP request), which in practice is far more often
+     * populated than the ARP diagnostic endpoint's own 'hostname' field
+     * (ARP is just a Layer-2/3 lookup table; it has no naming data of its
+     * own beyond whatever OPNsense happens to enrich it with). Some devices
+     * genuinely send no hostname at all — that's a real client limitation,
+     * not something either source can paper over.
+     *
+     * Cached like getArpTable() — hit on every sessions-page load.
+     *
+     * @return array
+     */
+    public function getDhcpLeases()
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return [];
+        }
+
+        return Cache::remember('opnsense_dhcp_leases', 15, function () {
+            try {
+                $response = $this->client()->get("{$this->baseUrl}/api/kea/leases4/search");
+
+                if ($response->successful()) {
+                    return $response->json('rows') ?? [];
+                }
+
+                return Cache::get('opnsense_dhcp_leases') ?? [];
+            } catch (\Exception $e) {
+                Log::error("OPNsense: Exception fetching DHCP leases: " . $e->getMessage());
+                return Cache::get('opnsense_dhcp_leases') ?? [];
+            }
+        });
+    }
+
+    /**
      * Get the list of active sessions from OPNsense.
      *
      * Cached for a few seconds per zone — hit on every portal page load and
