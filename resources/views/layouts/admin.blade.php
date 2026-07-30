@@ -255,13 +255,13 @@
                                      x-transition:leave="transition ease-in-out duration-300"
                                      x-transition:leave-start="opacity-100"
                                      x-transition:leave-end="opacity-0"
-                                     class="w-4 h-4 transition-transform duration-300" x-bind:class="menus.inventory ? 'rotate-180' : ''" />
+                                     class="w-4 h-4 transition-transform duration-500" x-bind:class="menus.inventory ? 'rotate-180' : ''" />
                 </button>
                 <div x-show="menus.inventory && sidebarOpen" x-cloak
-                     x-transition:enter="transition ease-in-out duration-300"
+                     x-transition:enter="transition ease-in-out duration-500"
                      x-transition:enter-start="opacity-0 -translate-y-1"
                      x-transition:enter-end="opacity-100 translate-y-0"
-                     x-transition:leave="transition ease-in-out duration-300"
+                     x-transition:leave="transition ease-in-out duration-500"
                      x-transition:leave-start="opacity-100 translate-y-0"
                      x-transition:leave-end="opacity-0 -translate-y-1"
                      class="pl-11 space-y-1">
@@ -299,13 +299,13 @@
                                      x-transition:leave="transition ease-in-out duration-300"
                                      x-transition:leave-start="opacity-100"
                                      x-transition:leave-end="opacity-0"
-                                     class="w-4 h-4 transition-transform duration-300" x-bind:class="menus.network ? 'rotate-180' : ''" />
+                                     class="w-4 h-4 transition-transform duration-500" x-bind:class="menus.network ? 'rotate-180' : ''" />
                 </button>
                 <div x-show="menus.network && sidebarOpen" x-cloak
-                     x-transition:enter="transition ease-in-out duration-300"
+                     x-transition:enter="transition ease-in-out duration-500"
                      x-transition:enter-start="opacity-0 -translate-y-1"
                      x-transition:enter-end="opacity-100 translate-y-0"
-                     x-transition:leave="transition ease-in-out duration-300"
+                     x-transition:leave="transition ease-in-out duration-500"
                      x-transition:leave-start="opacity-100 translate-y-0"
                      x-transition:leave-end="opacity-0 -translate-y-1"
                      class="pl-11 space-y-1">
@@ -341,13 +341,13 @@
                                      x-transition:leave="transition ease-in-out duration-300"
                                      x-transition:leave-start="opacity-100"
                                      x-transition:leave-end="opacity-0"
-                                     class="w-4 h-4 transition-transform duration-300" x-bind:class="menus.settings ? 'rotate-180' : ''" />
+                                     class="w-4 h-4 transition-transform duration-500" x-bind:class="menus.settings ? 'rotate-180' : ''" />
                 </button>
                 <div x-show="menus.settings && sidebarOpen" x-cloak
-                     x-transition:enter="transition ease-in-out duration-300"
+                     x-transition:enter="transition ease-in-out duration-500"
                      x-transition:enter-start="opacity-0 -translate-y-1"
                      x-transition:enter-end="opacity-100 translate-y-0"
-                     x-transition:leave="transition ease-in-out duration-300"
+                     x-transition:leave="transition ease-in-out duration-500"
                      x-transition:leave-start="opacity-100 translate-y-0"
                      x-transition:leave-end="opacity-0 -translate-y-1"
                      class="pl-11 space-y-1">
@@ -380,13 +380,13 @@
                                      x-transition:leave="transition ease-in-out duration-300"
                                      x-transition:leave-start="opacity-100"
                                      x-transition:leave-end="opacity-0"
-                                     class="w-4 h-4 transition-transform duration-300" x-bind:class="menus.system ? 'rotate-180' : ''" />
+                                     class="w-4 h-4 transition-transform duration-500" x-bind:class="menus.system ? 'rotate-180' : ''" />
                 </button>
                 <div x-show="menus.system && sidebarOpen" x-cloak
-                     x-transition:enter="transition ease-in-out duration-300"
+                     x-transition:enter="transition ease-in-out duration-500"
                      x-transition:enter-start="opacity-0 -translate-y-1"
                      x-transition:enter-end="opacity-100 translate-y-0"
-                     x-transition:leave="transition ease-in-out duration-300"
+                     x-transition:leave="transition ease-in-out duration-500"
                      x-transition:leave-start="opacity-100 translate-y-0"
                      x-transition:leave-end="opacity-0 -translate-y-1"
                      class="pl-11 space-y-1">
@@ -398,7 +398,7 @@
         </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.16</span>
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.17</span>
             <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
