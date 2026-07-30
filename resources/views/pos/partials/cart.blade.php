@@ -49,7 +49,13 @@
         <template x-for="(cartItem, index) in cart" :key="cartItem.id + '-' + index">
 
             {{-- Added min-h-[5rem] (80px) to absolutely forbid the browser from squishing the item vertically --}}
-            <div class="flex gap-3 items-center bg-white group shrink-0 min-h-[5rem] py-2 border-b border-[#FDF8F5] last:border-0">
+            <div class="flex gap-3 items-center bg-white group shrink-0 min-h-[5rem] py-2 border-b border-[#FDF8F5] last:border-0"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 -translate-x-2"
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-x-0"
+                 x-transition:leave-end="opacity-0 translate-x-2">
                 <div class="w-10 h-10 bg-[#FDF8F5] border border-[#F0E6D2] rounded-lg flex items-center justify-center shrink-0">
                     <template x-if="cartItem.type === 'wifi'">
                         <x-lucide-wifi class="w-5 h-5 text-amber-800/30" />
@@ -70,7 +76,9 @@
 
                         <div class="flex items-center bg-[#FAFAFA] border border-[#F0E6D2] rounded-full px-1 py-0.5 shrink-0">
                             <button type="button" @click="removeFromCart(index)" class="w-5 h-5 flex items-center justify-center text-[#8D6E63] hover:text-[#3E2723] font-bold transition text-xs">-</button>
-                            <span class="w-5 text-center text-[11px] font-bold text-[#3E2723]" x-text="cartItem.quantity"></span>
+                            <span class="w-5 text-center text-[11px] font-bold transition-all duration-200"
+                                  :class="flashKey === (cartItem.id + '-' + cartItem.variant) ? 'text-amber-600 scale-125' : 'text-[#3E2723] scale-100'"
+                                  x-text="cartItem.quantity"></span>
                             <button type="button" @click="addToCart(cartItem)" class="w-5 h-5 flex items-center justify-center text-[#8D6E63] hover:text-[#3E2723] font-bold transition text-xs">+</button>
                         </div>
                     </div>

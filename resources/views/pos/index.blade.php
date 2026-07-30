@@ -361,6 +361,12 @@
             suggestion: null,
             freeWifiMinAmount: {{ $freeWifiMinAmount ?? 0 }},
             freeWifiDuration: {{ $freeWifiDuration ?? 0 }},
+            flashKey: null,
+
+            flashItem(key) {
+                this.flashKey = key;
+                setTimeout(() => { if (this.flashKey === key) this.flashKey = null; }, 300);
+            },
 
             editNote(index) {
                 const item = this.cart[index];
@@ -481,6 +487,7 @@
                 } else {
                     this.cart.push({ ...product, quantity: 1, variant: variant });
                 }
+                this.flashItem(product.id + '-' + variant);
 
                 this.fetchPairingSuggestion(product);
             },
@@ -524,6 +531,7 @@
             removeFromCart(index) {
                 if (this.cart[index].quantity > 1) {
                     this.cart[index].quantity--;
+                    this.flashItem(this.cart[index].id + '-' + this.cart[index].variant);
                 } else {
                     this.cart.splice(index, 1);
                 }
