@@ -5,7 +5,7 @@
     </x-slot>
 
     <!-- Form -->
-    <form method="POST" action="{{ route('login') }}" class="space-y-6 max-w-md mx-auto w-full">
+    <form method="POST" action="{{ route('login') }}" class="space-y-6 max-w-md mx-auto w-full" x-data="{ submitting: false }" @submit="submitting = true">
         @csrf
 
         <!-- Email Address -->
@@ -21,14 +21,16 @@
         <div x-data="{ show: false }">
             <label for="password" class="block text-[10px] font-black text-white/80 uppercase tracking-widest mb-2 ml-1">Password</label>
             <div class="relative">
-                <input id="password" :type="show ? 'text' : 'password'" name="password" required 
-                    class="w-full bg-white/10 text-white border-white/20 focus:border-white focus:ring-0 rounded-xl px-4 py-3.5 placeholder-white/30 transition shadow-inner text-sm pr-12" 
+                <input id="password" :type="show ? 'text' : 'password'" name="password" required
+                    class="w-full bg-white/10 text-white border-white/20 focus:border-white focus:ring-0 rounded-xl px-4 py-3.5 placeholder-white/30 transition shadow-inner text-sm pr-12"
                     placeholder="••••••••" />
-                
+
                 <!-- Toggle Eye Icon -->
                 <button type="button" @click="show = !show" class="absolute inset-y-0 right-0 pr-4 flex items-center text-white/50 hover:text-white transition">
-                    <x-lucide-eye x-show="!show" class="w-5 h-5" />
-                    <x-lucide-eye-off x-show="show" style="display: none;" class="w-5 h-5" />
+                    <span class="relative w-5 h-5 block">
+                        <x-lucide-eye x-show="!show" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-75" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-75" class="w-5 h-5 absolute inset-0" />
+                        <x-lucide-eye-off x-show="show" style="display: none;" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-75" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-75" class="w-5 h-5 absolute inset-0" />
+                    </span>
                 </button>
             </div>
             <x-input-error :messages="$errors->get('password')" class="mt-2 text-red-400 text-xs font-bold" />
@@ -51,8 +53,12 @@
 
         <!-- Submit Button -->
         <div class="pt-6 text-center">
-            <button type="submit" class="w-full sm:w-5/6 mx-auto flex justify-center py-4 px-6 rounded-full shadow-2xl text-sm font-black text-[#3E2723] bg-[#FDF8F5] hover:bg-white hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-[0.2em]">
-                Sign In
+            <button type="submit" :disabled="submitting" class="w-full sm:w-5/6 mx-auto flex items-center justify-center gap-2 py-4 px-6 rounded-full shadow-2xl text-sm font-black text-[#3E2723] bg-[#FDF8F5] hover:bg-white hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-[0.2em] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100">
+                <svg x-show="submitting" x-cloak class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <span x-text="submitting ? 'Signing In...' : 'Sign In'">Sign In</span>
             </button>
         </div>
     </form>
