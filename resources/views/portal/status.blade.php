@@ -175,7 +175,31 @@
                             @endif
                         </div>
 
-                        <form action="{{ route('portal.verify-payment') }}" method="POST" id="lawat-payment-form" class="w-full lg:w-[58%] flex flex-col relative z-10 gap-5" x-data="{ isSubmitting: false }" @submit="isSubmitting = true"> @csrf
+                        {{-- Fetch-based (not a plain native submit) so the "Verifying..." button
+                             state survives the whole OPNsense auth round trip instead of
+                             vanishing the instant the browser starts navigating away. --}}
+                        <form action="{{ route('portal.verify-payment') }}" method="POST" id="lawat-payment-form" class="w-full lg:w-[58%] flex flex-col relative z-10 gap-5"
+                              x-data="{
+                                  isSubmitting: false,
+                                  async submit(e) {
+                                      this.isSubmitting = true;
+                                      try {
+                                          const formData = new FormData(e.target);
+                                          const res = await fetch(e.target.action, { method: 'POST', headers: { 'Accept': 'application/json' }, body: formData });
+                                          const data = await res.json().catch(() => null);
+                                          if (res.ok && data?.success) {
+                                              window.location.href = data.redirect;
+                                              return;
+                                          }
+                                          this.isSubmitting = false;
+                                          Swal.fire({ icon: 'error', title: 'Verification Failed', text: data?.message || 'Something went wrong. Please try again.', confirmButtonColor: '#3E2723' });
+                                      } catch (err) {
+                                          this.isSubmitting = false;
+                                          Swal.fire({ icon: 'error', title: 'Connection Error', text: 'Please check your connection and try again.', confirmButtonColor: '#3E2723' });
+                                      }
+                                  }
+                              }"
+                              @submit.prevent="submit($event)"> @csrf
                             <div>
                                 <label class="flex justify-between items-end mb-2.5 ml-2">
                                     <span class="text-[11px] font-black text-[#A1887F] uppercase tracking-[0.2em]">Transaction Ref #</span>

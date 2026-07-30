@@ -149,14 +149,25 @@ class CaptivePortalController extends Controller
             'reference_number' => 'required|string',
         ]);
 
-        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $opnsense, $shaping) {
+        // Guests on a captive portal can have unusual/no-JS browsers, so both
+        // response modes are supported from the same handler: JSON for the
+        // JS-driven fetch (see portalSystem() in portal/index.blade.php,
+        // added so the loading state survives the whole round-trip instead
+        // of disappearing the moment a native form POST starts navigating),
+        // and the original redirect+flash for a plain <form> fallback.
+        $wantsJson = $request->wantsJson();
+        $fail = fn (string $message) => $wantsJson
+            ? response()->json(['success' => false, 'message' => $message], 422)
+            : back()->with('error', $message);
+
+        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $opnsense, $shaping, $wantsJson, $fail) {
             $payment = \App\Models\EwalletPayment::where('reference_number', $request->reference_number)
                                                  ->where('is_used', false)
                                                  ->lockForUpdate() // Lock to prevent race conditions
                                                  ->first();
 
             if (!$payment) {
-                return back()->with('error', 'GCash payment not found or already verified. If you just paid, please wait a minute for the system to process the GCash notification email.');
+                return $fail('GCash payment not found or already verified. If you just paid, please wait a minute for the system to process the GCash notification email.');
             }
 
             // Determine duration based on amount from dynamic settings
@@ -174,7 +185,7 @@ class CaptivePortalController extends Controller
             }
 
             if ($duration === 0) {
-                return back()->with('error', 'Insufficient amount for a Wi-Fi voucher. Minimum is ₱20.00.');
+                return $fail('Insufficient amount for a Wi-Fi voucher. Minimum is ₱20.00.');
             }
 
             // Authorize device on OPNsense — IP/MAC resolved from the gateway,
@@ -183,12 +194,12 @@ class CaptivePortalController extends Controller
 
             if ($this->isMacBanned($mac)) {
                 Log::warning("Portal verify-payment: rejected banned device {$mac} ({$ip}).");
-                return back()->with('error', 'This device has been blocked from network access. Please see staff for assistance.');
+                return $fail('This device has been blocked from network access. Please see staff for assistance.');
             }
 
             // Generate the voucher
             $code = 'LAWA-' . strtoupper(\Illuminate\Support\Str::random(4));
-            
+
             $voucher = \App\Models\Voucher::create([
                 'code' => $code,
                 'duration_minutes' => $duration,
@@ -207,7 +218,13 @@ class CaptivePortalController extends Controller
 
             $shaping->assignTier($voucher, $ip, $opnsense);
 
-            return redirect()->route('portal.success')->with('passcode', $code);
+            session()->flash('passcode', $code);
+
+            if ($wantsJson) {
+                return response()->json(['success' => true, 'redirect' => route('portal.success')]);
+            }
+
+            return redirect()->route('portal.success');
         });
     }
 
@@ -272,22 +289,36 @@ class CaptivePortalController extends Controller
             'receipt' => 'required|image|max:5120', // Max 5MB
         ]);
 
+        $wantsJson = $request->wantsJson();
+
         // Store the image temporarily
         $path = $request->file('receipt')->store('temp_receipts', 'local');
 
         // Pass this image to the Gemini/OpenRouter API for OCR.
         $aiResult = $ai->extractPaymentDetails($path);
-        
+
         // Cleanup temp file
         \Illuminate\Support\Facades\Storage::disk('local')->delete($path);
 
         if ($aiResult && !empty($aiResult['reference_number'])) {
-            // Found a ref number, store it in session so the view can populate it
+            $message = 'Receipt parsed! Please confirm the reference number and verify.';
+
+            if ($wantsJson) {
+                return response()->json(['success' => true, 'reference_number' => $aiResult['reference_number'], 'message' => $message]);
+            }
+
+            // Store in session so the view can populate it on the non-JS <form> fallback path.
             session()->flash('ai_ref', $aiResult['reference_number']);
-            return back()->with('message', 'Receipt parsed! Please confirm the reference number and verify.');
+            return back()->with('message', $message);
         }
-        
-        return back()->with('error', 'Could not clearly read the reference number from the receipt. Please enter it manually.');
+
+        $errorMessage = 'Could not clearly read the reference number from the receipt. Please enter it manually.';
+
+        if ($wantsJson) {
+            return response()->json(['success' => false, 'message' => $errorMessage], 422);
+        }
+
+        return back()->with('error', $errorMessage);
     }
 
     public function chat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator, \App\Services\OpnSenseService $opnsense)

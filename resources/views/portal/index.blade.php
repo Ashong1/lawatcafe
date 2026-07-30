@@ -96,12 +96,26 @@
     </div>
 
     <!-- CNA Escape Hatch Banner -->
-    <div class="fixed top-0 inset-x-0 z-[60] bg-amber-50 border-b border-amber-100 px-4 py-2 text-center lg:hidden" 
+    <div class="fixed top-0 inset-x-0 z-[60] bg-amber-50 border-b border-amber-100 px-4 py-2 text-center lg:hidden"
          x-show="isCNA()" x-cloak>
         <p class="text-[10px] font-black text-amber-800 uppercase tracking-widest flex items-center justify-center gap-2">
             <x-lucide-external-link class="w-3 h-3" />
             Issues? <a href="http://connectivitycheck.gstatic.com/generate_204" class="underline decoration-dotted">Open in Browser</a>
         </p>
+    </div>
+
+    {{-- Persistent full-bleed loading overlay for the payment-verify/receipt-upload
+         round trip (both now fetch-based, see submitPaymentForm()/submitReceiptUpload()
+         below) — previously a native form submit meant the browser blanked the tab
+         mid-wait and any in-page loading state disappeared with it, right when the
+         real wait (OPNsense auth / AI OCR) began. --}}
+    <div x-show="verifyingPayment || uploadingReceipt" x-cloak
+         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center gap-4 text-white text-center px-6">
+        <x-lucide-loader-2 class="w-10 h-10 animate-spin text-amber-500" />
+        <p class="text-sm font-black uppercase tracking-widest" x-text="uploadingReceipt ? 'Reading your receipt…' : 'Verifying payment…'"></p>
+        <p class="text-[10px] text-white/60 font-medium max-w-xs">Please don't close this window.</p>
     </div>
 
     <!-- Main Compact Card -->
@@ -246,21 +260,21 @@
                         </div>
                     </div>
 
-                    <form action="{{ route('portal.verify-payment') }}" method="POST" class="space-y-3 shrink-0" @submit.prevent="submitForm($event)">
+                    <form action="{{ route('portal.verify-payment') }}" method="POST" class="space-y-3 shrink-0" @submit.prevent="submitPaymentForm($event)">
                         @csrf
                         <div>
                             <label class="flex justify-between items-end mb-1 ml-1">
                                 <span class="text-[9px] font-black text-[#A1887F] uppercase tracking-widest">Reference No.</span>
                             </label>
                             <div class="flex items-center bg-white border-2 border-[#F0E6D2] rounded-2xl shadow-sm focus-within:border-[#3E2723] transition-all">
-                                <input type="text" name="reference_number" required placeholder="G-Cash Ref #" value="{{ session('ai_ref') }}"
+                                <input type="text" name="reference_number" x-model="referenceNumber" required placeholder="G-Cash Ref #" value="{{ session('ai_ref') }}"
                                         :disabled="!{{ $qrCode ? 'true' : 'false' }}"
                                         class="flex-1 min-w-0 border-0 bg-transparent py-3 pl-4 text-center text-base font-mono font-black text-[#3E2723] tracking-widest focus:outline-none focus:ring-0 disabled:bg-[#F5EFE8] disabled:text-[#8D6E63] disabled:cursor-not-allowed rounded-2xl">
 
                                 <div class="h-4 w-[1px] bg-[#F0E6D2] shrink-0"></div>
                                 <div class="relative overflow-hidden shrink-0 inline-flex items-center justify-center w-11 h-11 group cursor-pointer">
                                     <input type="file" name="receipt" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                           @change="uploadingReceipt = true; $nextTick(() => $event.target.form.action = '{{ route('portal.upload') }}'); $nextTick(() => $event.target.form.submit())">
+                                           @change="submitReceiptUpload($event)">
                                     <x-lucide-sparkles x-show="!uploadingReceipt" class="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
                                     <x-lucide-loader-2 x-show="uploadingReceipt" x-cloak class="w-4 h-4 text-amber-600 animate-spin" />
                                 </div>
@@ -275,12 +289,12 @@
                             Uploading &amp; reading receipt&hellip;
                         </p>
 
-                        <button type="submit" :disabled="isSubmitting || !{{ $qrCode ? 'true' : 'false' }}"
+                        <button type="submit" :disabled="verifyingPayment || !{{ $qrCode ? 'true' : 'false' }}"
                                 class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 text-[10px] flex items-center justify-center gap-2 disabled:opacity-50 disabled:bg-gray-400">
-                            <template x-if="!isSubmitting">
+                            <template x-if="!verifyingPayment">
                                 <span>@if($qrCode) Verify & Connect @else Counter Payment Only @endif</span>
                             </template>
-                            <template x-if="isSubmitting">
+                            <template x-if="verifyingPayment">
                                 <span>Verifying...</span>
                             </template>
                         </button>
@@ -361,7 +375,9 @@ document.addEventListener('alpine:init', () => {
         activeTab: new URLSearchParams(window.location.search).get('tab') || 'code',
         selectedPlan: null,
         isSubmitting: false,
+        verifyingPayment: false,
         uploadingReceipt: false,
+        referenceNumber: {{ \Illuminate\Support\Js::from(session('ai_ref', '')) }},
         showTOS: false,
         connectionStatus: 'disconnected',
 
@@ -384,6 +400,109 @@ document.addEventListener('alpine:init', () => {
             this.isSubmitting = true;
             this.connectionStatus = 'authenticating';
             e.target.submit();
+        },
+
+        // Fetch-based (not a native form submit) so the "Verifying payment..."
+        // overlay actually stays on screen for the whole OPNsense auth round
+        // trip instead of vanishing the instant the browser starts navigating
+        // away — see the full-bleed overlay near the top of this file.
+        async submitPaymentForm(e) {
+            this.verifyingPayment = true;
+            this.connectionStatus = 'authenticating';
+
+            try {
+                const formData = new FormData(e.target);
+                const res = await fetch(e.target.action, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: formData,
+                });
+                const data = await res.json().catch(() => null);
+
+                if (res.ok && data?.success) {
+                    window.location.href = data.redirect;
+                    return; // stay "verifying" — the page is navigating away
+                }
+
+                this.verifyingPayment = false;
+                this.connectionStatus = 'disconnected';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Verification Failed',
+                    text: data?.message || 'Something went wrong. Please try again.',
+                    confirmButtonColor: '#3E2723',
+                });
+            } catch (err) {
+                this.verifyingPayment = false;
+                this.connectionStatus = 'disconnected';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Connection Error',
+                    text: 'Please check your connection and try again.',
+                    confirmButtonColor: '#3E2723',
+                });
+            }
+        },
+
+        // Same reasoning as submitPaymentForm() — this used to hijack the
+        // verify-payment form's own action/submit() to piggyback a native
+        // POST to the upload endpoint, which meant the "reading your
+        // receipt" state vanished the moment the browser started navigating,
+        // right as the multi-second AI OCR call was the real wait.
+        async submitReceiptUpload(e) {
+            const fileInput = e.target;
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            this.uploadingReceipt = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('receipt', file);
+                formData.append('_token', fileInput.form.querySelector('[name="_token"]').value);
+
+                const res = await fetch('{{ route('portal.upload') }}', {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: formData,
+                });
+                const data = await res.json().catch(() => null);
+
+                this.uploadingReceipt = false;
+
+                if (res.ok && data?.success) {
+                    this.referenceNumber = data.reference_number;
+                    Swal.fire({
+                        toast: true,
+                        position: 'top',
+                        icon: 'success',
+                        title: data.message,
+                        showConfirmButton: false,
+                        timer: 4000,
+                        timerProgressBar: true,
+                        background: '#E8F5E9',
+                        color: '#2E7D32',
+                        iconColor: '#2E7D32',
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Could Not Read Receipt',
+                        text: data?.message || 'Please enter the reference number manually.',
+                        confirmButtonColor: '#3E2723',
+                    });
+                }
+            } catch (err) {
+                this.uploadingReceipt = false;
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Upload Failed',
+                    text: 'Please check your connection and try again.',
+                    confirmButtonColor: '#3E2723',
+                });
+            } finally {
+                fileInput.value = '';
+            }
         }
 }));
 
