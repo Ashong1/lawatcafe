@@ -7,6 +7,13 @@
     'mode' => 'floating',
     'csrf' => true,
     'rateLimitMessage' => "I'm a bit busy right now — please try again in a moment.",
+    // Server-side, per-account conversation history (list past conversations,
+    // resume one, start a new one) — only meaningful for authenticated
+    // widgets (admin/staff). anchorId doubles as the backend "context" value
+    // ('admin'/'staff') when this is on. Guest portal chat never sets this:
+    // those kiosks are often shared between different customers with no
+    // durable account to key history off.
+    'historyEnabled' => false,
 ])
 
 @if($mode === 'embedded')
@@ -18,6 +25,7 @@
             csrfToken: @js(csrf_token()),
             rateLimitMessage: @js($rateLimitMessage),
             anchorId: @js($anchorId),
+            historyEnabled: @js($historyEnabled),
         })"
         class="flex-1 min-h-0 flex flex-col"
         @open-agent-chat.window="handleExternalOpen($event.detail.prompt)"
@@ -90,7 +98,7 @@
          x-transition:leave="transition ease-in duration-[400ms]"
          x-transition:leave-start="opacity-100 scale-100 translate-y-0"
          x-transition:leave-end="opacity-0 scale-90 translate-y-10"
-         class="mb-4 w-full h-[550px] bg-white rounded-[2rem] shadow-2xl border border-[#F0E6D2] overflow-hidden flex flex-col shadow-amber-900/10"
+         class="relative mb-4 w-full h-[550px] bg-white rounded-[2rem] shadow-2xl border border-[#F0E6D2] overflow-hidden flex flex-col shadow-amber-900/10"
          style="display: none;">
 
         <!-- Header (Draggable Handle) -->
@@ -107,9 +115,42 @@
                     @endif
                 </div>
             </div>
-            <button @click="open = false; posY += 566" class="text-amber-200 hover:text-white transition">
+            <div class="flex items-center gap-1" x-show="historyEnabled">
+                <button @click.stop="toggleHistory()" title="Past conversations" class="text-amber-200 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
+                    <x-lucide-history class="w-5 h-5" />
+                </button>
+                <button @click.stop="newConversation()" title="New conversation" class="text-amber-200 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
+                    <x-lucide-square-pen class="w-5 h-5" />
+                </button>
+            </div>
+            <button @click="open = false; posY += 566" class="text-amber-200 hover:text-white transition shrink-0">
                 <x-lucide-x class="w-6 h-6" />
             </button>
+        </div>
+
+        <!-- History Panel -->
+        <div x-show="historyEnabled && showHistory"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             @click.outside="showHistory = false"
+             class="absolute top-[92px] left-4 right-4 z-20 bg-white rounded-2xl shadow-2xl border border-[#F0E6D2] max-h-72 overflow-y-auto"
+             style="display: none;">
+            <div x-show="loadingHistory" class="p-4 text-center text-[10px] font-black uppercase tracking-widest text-[#A1887F]">Loading…</div>
+            <div x-show="!loadingHistory && conversationList.length === 0" class="p-4 text-center text-[10px] font-black uppercase tracking-widest text-[#A1887F]">No past conversations yet.</div>
+            <template x-for="conv in conversationList" :key="conv.id">
+                <div @click="openConversation(conv.id)"
+                     class="flex items-center justify-between gap-2 px-4 py-3 border-b border-[#F0E6D2] last:border-0 cursor-pointer hover:bg-[#FDF8F5] transition group"
+                     :class="conv.id === conversationId ? 'bg-amber-50' : ''">
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-[#3E2723] truncate" x-text="conv.title || 'Conversation'"></p>
+                        <p class="text-[9px] font-black uppercase tracking-widest text-[#A1887F] mt-0.5" x-text="formatRelativeTime(conv.last_message_at)"></p>
+                    </div>
+                    <button @click.stop="deleteConversation(conv.id)" title="Delete" class="shrink-0 opacity-0 group-hover:opacity-100 text-[#D7CCC8] hover:text-red-600 transition p-1">
+                        <x-lucide-trash-2 class="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            </template>
         </div>
 
         <!-- Messages Area -->
@@ -235,16 +276,25 @@ document.addEventListener('alpine:init', () => {
         csrf: config.csrf,
         csrfToken: config.csrfToken,
         rateLimitMessage: config.rateLimitMessage,
+        historyEnabled: config.historyEnabled,
+        context: config.anchorId,
         storageKey: 'agentChatHistory:' + config.anchorId,
+        conversationIdStorageKey: 'agentChatConversationId:' + config.anchorId,
 
         open: false,
         message: '',
         thinking: false,
         history: [
-            { kind: 'text', role: 'assistant', content: config.greeting }
+            { kind: 'text', role: 'assistant', content: config.greeting, isGreeting: true }
         ],
         pendingActions: [],
         resolvingId: null,
+
+        // Server-side conversation history (historyEnabled only).
+        conversationId: null,
+        showHistory: false,
+        loadingHistory: false,
+        conversationList: [],
 
         // Draggable state
         posX: window.innerWidth - 412,
@@ -266,6 +316,10 @@ document.addEventListener('alpine:init', () => {
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     if (Array.isArray(parsed) && parsed.length) this.history = parsed;
+                }
+                if (this.historyEnabled) {
+                    const savedId = sessionStorage.getItem(this.conversationIdStorageKey);
+                    if (savedId) this.conversationId = parseInt(savedId, 10) || null;
                 }
             } catch (e) { /* corrupt/unavailable storage — keep the default greeting */ }
 
@@ -344,6 +398,14 @@ document.addEventListener('alpine:init', () => {
             if (!this.message.trim() || this.thinking) return;
 
             const userMsg = this.message;
+            // Captured before pushing the new turn below, so this never has to
+            // guess which entries are "real" — no positional slicing needed,
+            // which matters once history can also be a server-loaded past
+            // conversation with no synthetic greeting bubble at index 0.
+            const historyForRequest = this.history
+                .filter(m => m.kind === 'text' && !m.isGreeting)
+                .map(m => ({ role: m.role, content: m.content }));
+
             this.history.push({ kind: 'text', role: 'user', content: userMsg });
             this.message = '';
             this.thinking = true;
@@ -383,10 +445,8 @@ document.addEventListener('alpine:init', () => {
                         message: userMsg,
                         // Only replay plain conversational turns as history — executed/pending
                         // entries aren't natural-language turns and would confuse the model.
-                        history: this.history
-                            .filter(m => m.kind === 'text')
-                            .slice(1, -1)
-                            .map(m => ({ role: m.role, content: m.content })),
+                        history: historyForRequest,
+                        conversation_id: this.historyEnabled ? this.conversationId : undefined,
                     })
                 });
 
@@ -432,6 +492,10 @@ document.addEventListener('alpine:init', () => {
                             assistantEntry.content += event.text;
                             this.scrollToBottom();
                         } else if (event.type === 'meta') {
+                            if (this.historyEnabled && event.conversation_id) {
+                                this.conversationId = event.conversation_id;
+                            }
+
                             // Only push meta.reply as a fresh bubble if nothing streamed —
                             // when it did, meta.reply is the same text already rendered live.
                             if (!assistantEntry && event.reply) {
@@ -577,7 +641,83 @@ document.addEventListener('alpine:init', () => {
         save() {
             try {
                 sessionStorage.setItem(this.storageKey, JSON.stringify(this.history));
+                if (this.historyEnabled) {
+                    if (this.conversationId) {
+                        sessionStorage.setItem(this.conversationIdStorageKey, String(this.conversationId));
+                    } else {
+                        sessionStorage.removeItem(this.conversationIdStorageKey);
+                    }
+                }
             } catch (e) { /* storage full/unavailable — history just won't survive navigation */ }
+        },
+
+        toggleHistory() {
+            this.showHistory = !this.showHistory;
+            if (this.showHistory) this.loadHistoryList();
+        },
+
+        async loadHistoryList() {
+            this.loadingHistory = true;
+            try {
+                const response = await fetch(`{{ route('ai.conversations.index') }}?context=${this.context}`, {
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (!response.ok) return;
+                this.conversationList = await response.json();
+            } catch (error) {
+                // Silent — the panel just shows its empty state.
+            } finally {
+                this.loadingHistory = false;
+            }
+        },
+
+        async openConversation(id) {
+            try {
+                const response = await fetch(`/ai/conversations/${id}`, { headers: { 'Accept': 'application/json' } });
+                if (!response.ok) return;
+                const data = await response.json();
+                if (Array.isArray(data.messages) && data.messages.length) {
+                    this.history = data.messages;
+                    this.conversationId = id;
+                    this.showHistory = false;
+                    this.save();
+                    this.scrollToBottom();
+                }
+            } catch (error) {
+                this.toast('error', 'Could not load that conversation.');
+            }
+        },
+
+        newConversation() {
+            this.history = [{ kind: 'text', role: 'assistant', content: {{ Illuminate\Support\Js::from($greeting) }}, isGreeting: true }];
+            this.conversationId = null;
+            this.showHistory = false;
+            this.save();
+        },
+
+        async deleteConversation(id) {
+            try {
+                const headers = { 'Accept': 'application/json' };
+                if (this.csrf) headers['X-CSRF-TOKEN'] = this.csrfToken;
+                await fetch(`/ai/conversations/${id}`, { method: 'DELETE', headers });
+                this.conversationList = this.conversationList.filter(c => c.id !== id);
+                if (this.conversationId === id) this.newConversation();
+            } catch (error) {
+                this.toast('error', 'Could not delete that conversation.');
+            }
+        },
+
+        formatRelativeTime(iso) {
+            if (!iso) return '';
+            const diffMs = Date.now() - new Date(iso).getTime();
+            const minutes = Math.round(diffMs / 60000);
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.round(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.round(hours / 24);
+            if (days < 7) return `${days}d ago`;
+            return new Date(iso).toLocaleDateString();
         }
     }));
 });

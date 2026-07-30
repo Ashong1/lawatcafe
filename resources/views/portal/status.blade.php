@@ -17,7 +17,7 @@
 </head>
 <body class="bg-[#FAF7F2] text-[#4A3B32] min-h-screen font-sans antialiased flex items-center justify-center p-2 lg:p-8"
       style="font-family: 'Montserrat', sans-serif;"
-      x-data="portalSystem()"
+      x-data="portalSystem({{ $expirationTime->getTimestampMs() }})"
       x-init="
         @if(session('message'))
             Swal.fire({
@@ -96,8 +96,8 @@
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 max-w-4xl mx-auto w-full px-2">
                         <div class="bg-amber-50 border-2 border-amber-200/50 rounded-3xl p-6 shadow-sm col-span-2 flex flex-col items-center justify-center transition-all hover:bg-amber-100/50 group">
                             <span class="text-[10px] font-black text-amber-800 uppercase tracking-widest mb-2 group-hover:scale-110 transition-transform">Time Remaining</span>
-                            <span class="text-4xl lg:text-5xl font-black text-[#3E2723] tabular-nums tracking-tighter">{{ now()->diffInMinutes($expirationTime, false) }}</span>
-                            <span class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mt-1">Minutes left</span>
+                            <span class="text-4xl lg:text-5xl font-black text-[#3E2723] tabular-nums tracking-tighter" x-text="remainingLabel"></span>
+                            <span class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mt-1" x-text="remainingUnit"></span>
                         </div>
                         
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">
@@ -252,11 +252,13 @@
 
 <script>
 document.addEventListener('alpine:init', () => {
-    Alpine.data('portalSystem', () => ({
+    Alpine.data('portalSystem', (expiresAtMs) => ({
         activeTab: 'status',
         selectedPlan: null,
         isSubmitting: false,
         connectionStatus: 'connected',
+        remainingLabel: '—',
+        remainingUnit: 'Left',
 
         init() {
             // The embedded agent-chat component instance owns its own chat state/scrolling now —
@@ -266,6 +268,44 @@ document.addEventListener('alpine:init', () => {
                     window.dispatchEvent(new CustomEvent('portal-tab-changed'));
                 }
             });
+
+            // Live countdown so guests can watch their time tick down without
+            // waiting on the page's 60s <meta refresh>. That refresh is still
+            // what re-syncs against the server and catches actual expiry
+            // (redirecting to the passcode screen) — this just makes the
+            // number between refreshes feel alive instead of frozen.
+            this.tickCountdown(expiresAtMs);
+            setInterval(() => this.tickCountdown(expiresAtMs), 1000);
+        },
+
+        tickCountdown(expiresAtMs) {
+            const totalSeconds = Math.max(0, Math.round((expiresAtMs - Date.now()) / 1000));
+
+            if (totalSeconds <= 0) {
+                this.remainingLabel = "Time's Up";
+                this.remainingUnit = 'Reconnecting…';
+                // Let the server have the final say (voucher/session state) rather
+                // than trusting the client clock — reload triggers the expired-
+                // session redirect in CaptivePortalController::index().
+                setTimeout(() => window.location.reload(), 1500);
+                return;
+            }
+
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            if (days > 0) {
+                this.remainingLabel = `${days}d ${hours}h`;
+                this.remainingUnit = 'Days Left';
+            } else if (hours > 0) {
+                this.remainingLabel = `${hours}h ${minutes}m`;
+                this.remainingUnit = 'Hours Left';
+            } else {
+                this.remainingLabel = `${minutes}:${String(seconds).padStart(2, '0')}`;
+                this.remainingUnit = 'Minutes Left';
+            }
         }
     }));
 });

@@ -106,6 +106,7 @@
         greeting="Hello Admin! I am Barista AI. I've analyzed today's data and I'm ready to help you optimize Lawa't Kape. How can I assist you today?"
         anchor-id="admin"
         mode="floating"
+        :history-enabled="true"
     />
 
     <aside
@@ -414,7 +415,8 @@
 
                 <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
 
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}"
+                      onsubmit="try { sessionStorage.removeItem('agentChatHistory:admin'); sessionStorage.removeItem('agentChatConversationId:admin'); } catch (e) {}">
                     @csrf
                     <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-bold tracking-widest uppercase transition">
                         Logout

@@ -316,12 +316,15 @@ class DashboardController extends Controller
         return response()->json($forecast->getForecast($ai));
     }
 
-    public function adminChat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator)
+    public function adminChat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator, \App\Services\Agent\ConversationHistoryService $conversations)
     {
         $request->validate([
             'message' => 'required|string|max:1000',
-            'history' => 'nullable|array'
+            'history' => 'nullable|array',
+            'conversation_id' => 'nullable|integer',
         ]);
+
+        $conversation = $conversations->resolve($request->integer('conversation_id') ?: null, $request->user()->id, 'admin');
 
         $messages = [['role' => 'system', 'content' => $ai->buildAdminSystemPrompt()]];
         foreach ($request->history ?? [] as $msg) {
@@ -329,7 +332,7 @@ class DashboardController extends Controller
         }
         $messages[] = ['role' => 'user', 'content' => $request->message];
 
-        return response()->stream(function () use ($messages, $orchestrator, $request) {
+        return response()->stream(function () use ($messages, $orchestrator, $request, $conversations, $conversation) {
             $onTextDelta = function (string $delta) {
                 echo 'data: ' . json_encode(['type' => 'delta', 'text' => $delta]) . "\n\n";
                 if (ob_get_level() > 0) @ob_flush();
@@ -338,11 +341,15 @@ class DashboardController extends Controller
 
             $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_ADMIN, $request->user(), [], $onTextDelta);
 
+            $reply = $result['reply'] ?? "☕ I'm having trouble connecting to our business intelligence stack right now.";
+            $conversations->append($conversation, $request->message, $reply, $result['executed'] ?? [], $result['pending'] ?? []);
+
             echo 'data: ' . json_encode([
                 'type' => 'meta',
-                'reply' => $result['reply'] ?? "☕ I'm having trouble connecting to our business intelligence stack right now.",
+                'reply' => $reply,
                 'pending' => $result['pending'],
                 'executed' => $result['executed'],
+                'conversation_id' => $conversation->id,
             ]) . "\n\n";
             if (ob_get_level() > 0) @ob_flush();
             flush();

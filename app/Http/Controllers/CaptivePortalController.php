@@ -58,6 +58,17 @@ class CaptivePortalController extends Controller
 
         [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
 
+        $qrCode = \App\Models\Setting::get('payment_qr_code');
+
+        // Fetch and sort durations
+        $durationsRaw = \App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}');
+        $durations = json_decode($durationsRaw, true);
+        if ($durations) {
+            ksort($durations); // Sort by price ascending
+        } else {
+            $durations = [];
+        }
+
         // 2. Check if already connected
         $sessions = $opnsense->listSessions();
         $activeSession = collect($sessions)->filter(function($s) use ($ip, $mac) {
@@ -92,20 +103,11 @@ class CaptivePortalController extends Controller
                     'session' => $activeSession,
                     'startTime' => \Carbon\Carbon::createFromTimestamp($activeSession['startTime']),
                     'expirationTime' => $expirationTime,
-                    'userName' => $activeSession['userName'] ?? 'Guest'
+                    'userName' => $activeSession['userName'] ?? 'Guest',
+                    'qrCode' => $qrCode,
+                    'durations' => $durations,
                 ]);
             }
-        }
-
-        $qrCode = \App\Models\Setting::get('payment_qr_code');
-        
-        // Fetch and sort durations
-        $durationsRaw = \App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}');
-        $durations = json_decode($durationsRaw, true);
-        if ($durations) {
-            ksort($durations); // Sort by price ascending
-        } else {
-            $durations = [];
         }
 
         return view('portal.index', compact('qrCode', 'durations'));

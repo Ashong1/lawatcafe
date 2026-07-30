@@ -103,6 +103,7 @@
         greeting="Hello! I am Barista Support. Ask me about preparation, stock, or POS tips."
         anchor-id="staff"
         mode="floating"
+        :history-enabled="true"
     />
 
     <aside
@@ -227,7 +228,8 @@
 
                 <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
 
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}"
+                      onsubmit="try { sessionStorage.removeItem('agentChatHistory:staff'); sessionStorage.removeItem('agentChatConversationId:staff'); } catch (e) {}">
                     @csrf
                     <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-bold tracking-widest uppercase transition">
                         Logout

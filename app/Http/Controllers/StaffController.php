@@ -101,12 +101,15 @@ class StaffController extends Controller
         return AiFinding::where('audience', 'staff')->latest()->take(5)->get(['summary', 'severity', 'created_at']);
     }
 
-    public function staffChat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator)
+    public function staffChat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator, \App\Services\Agent\ConversationHistoryService $conversations)
     {
         $request->validate([
             'message' => 'required|string|max:1000',
-            'history' => 'nullable|array'
+            'history' => 'nullable|array',
+            'conversation_id' => 'nullable|integer',
         ]);
+
+        $conversation = $conversations->resolve($request->integer('conversation_id') ?: null, $request->user()->id, 'staff');
 
         $messages = [['role' => 'system', 'content' => $ai->buildStaffSystemPrompt()]];
         foreach ($request->history ?? [] as $msg) {
@@ -114,7 +117,7 @@ class StaffController extends Controller
         }
         $messages[] = ['role' => 'user', 'content' => $request->message];
 
-        return response()->stream(function () use ($messages, $orchestrator, $request) {
+        return response()->stream(function () use ($messages, $orchestrator, $request, $conversations, $conversation) {
             $onTextDelta = function (string $delta) {
                 echo 'data: ' . json_encode(['type' => 'delta', 'text' => $delta]) . "\n\n";
                 if (ob_get_level() > 0) @ob_flush();
@@ -123,11 +126,15 @@ class StaffController extends Controller
 
             $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_STAFF, $request->user(), [], $onTextDelta);
 
+            $reply = $result['reply'] ?? "☕ Staff AI stack offline.";
+            $conversations->append($conversation, $request->message, $reply, $result['executed'] ?? [], $result['pending'] ?? []);
+
             echo 'data: ' . json_encode([
                 'type' => 'meta',
-                'reply' => $result['reply'] ?? "☕ Staff AI stack offline.",
+                'reply' => $reply,
                 'pending' => $result['pending'],
                 'executed' => $result['executed'],
+                'conversation_id' => $conversation->id,
             ]) . "\n\n";
             if (ob_get_level() > 0) @ob_flush();
             flush();

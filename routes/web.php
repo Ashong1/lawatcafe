@@ -98,6 +98,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/statuses', [\App\Http\Controllers\AiActionController::class, 'statuses'])->name('statuses');
     });
 
+    // Barista AI conversation history (admin/staff widgets only — see
+    // agent-chat.blade.php's historyEnabled prop). Scoped to the requesting
+    // user inside the controller, so plain 'auth' is enough here.
+    Route::prefix('ai/conversations')->name('ai.conversations.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\AiConversationController::class, 'index'])->name('index');
+        Route::get('/{conversation}', [\App\Http\Controllers\AiConversationController::class, 'show'])->name('show');
+        Route::delete('/{conversation}', [\App\Http\Controllers\AiConversationController::class, 'destroy'])->name('destroy');
+    });
+
     // ==========================================
     // ADMIN ONLY ROUTES
     // ==========================================
