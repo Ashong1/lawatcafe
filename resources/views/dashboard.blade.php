@@ -511,18 +511,17 @@
 </div>
 
     <!-- AI Insights Modal -->
-    <div x-show="showInsightsModal" x-cloak class="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
-        <div @click.away="showInsightsModal = false" class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full border-t-8 border-[#3E2723] max-h-[90vh] flex flex-col relative z-50">
+    <x-modal-shell show="showInsightsModal" max-width="2xl" panel-class="p-8 border-t-8 border-[#3E2723] max-h-[90vh] flex flex-col relative" labelled-by="ai-insights-heading">
             <button @click="showInsightsModal = false" class="absolute top-6 right-6 text-[#A1887F] hover:text-[#3E2723] transition">
                 <x-lucide-x class="w-6 h-6" />
             </button>
-            
+
             <div class="flex items-center gap-3 mb-6 shrink-0">
                 <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-700 shadow-sm">
                     <x-lucide-brain-circuit class="w-6 h-6" />
                 </div>
                 <div>
-                    <h2 class="text-2xl font-black text-[#3E2723]">Barista AI Insights</h2>
+                    <h2 id="ai-insights-heading" class="text-2xl font-black text-[#3E2723]">Barista AI Insights</h2>
                     <p class="text-xs font-bold text-[#8D6E63] uppercase tracking-widest">7-Day Predictive Forecast</p>
                 </div>
             </div>
@@ -693,8 +692,7 @@
                 </div>
 
             </div>
-        </div>
-    </div>
+    </x-modal-shell>
     </div>
 </div>
 
@@ -803,8 +801,8 @@ document.addEventListener('alpine:init', () => {
                     const outDelta = data.rawOut - this.liveData.lastRawOut;
 
                     if (inDelta >= 0 && outDelta >= 0) {
-                        this.liveData.bandwidthDown = (inDelta * 8) / (1024 * 1024) / deltaT;
-                        this.liveData.bandwidthUp = (outDelta * 8) / (1024 * 1024) / deltaT;
+                        this.animateNumber(this.liveData, 'bandwidthDown', (inDelta * 8) / (1024 * 1024) / deltaT);
+                        this.animateNumber(this.liveData, 'bandwidthUp', (outDelta * 8) / (1024 * 1024) / deltaT);
                     }
                 }
 
@@ -812,9 +810,9 @@ document.addEventListener('alpine:init', () => {
                 this.liveData.lastRawOut = data.rawOut;
                 this.liveData.lastTime = now;
 
-                this.liveData.cpuLoad = data.cpuLoad;
-                this.liveData.memoryUsage = data.memoryUsage;
-                this.liveData.cpuTemp = data.cpuTemp;
+                this.animateNumber(this.liveData, 'cpuLoad', data.cpuLoad);
+                this.animateNumber(this.liveData, 'memoryUsage', data.memoryUsage);
+                this.animateNumber(this.liveData, 'cpuTemp', data.cpuTemp);
                 this.liveData.activeGuests = data.activeGuests;
 
             } catch (error) {
@@ -934,19 +932,21 @@ document.addEventListener('alpine:init', () => {
             setTimeout(() => { this.flash[key] = false; }, 700);
         },
 
-        // Tweens live[key] from its current value to `to` over `duration`ms
+        // Tweens obj[key] from its current value to `to` over `duration`ms
         // (ease-out cubic) instead of jumping straight to the new number —
         // the text-content equivalent of the ring gauges' CSS transitions.
-        animateNumber(key, to, duration = 600) {
-            const from = this.live[key] ?? 0;
+        // Takes the target object explicitly so both `live` (20s business
+        // data poll) and `liveData` (3s system stats poll) can share it.
+        animateNumber(obj, key, to, duration = 600) {
+            const from = obj[key] ?? 0;
             if (from === to) return;
             const start = performance.now();
             const step = (now) => {
                 const progress = Math.min((now - start) / duration, 1);
                 const eased = 1 - Math.pow(1 - progress, 3);
-                this.live[key] = from + (to - from) * eased;
+                obj[key] = from + (to - from) * eased;
                 if (progress < 1) requestAnimationFrame(step);
-                else this.live[key] = to;
+                else obj[key] = to;
             };
             requestAnimationFrame(step);
         },
@@ -960,7 +960,7 @@ document.addEventListener('alpine:init', () => {
                 ['todaysSales', 'todaysOrders', 'availableVouchers', 'lowStockCount'].forEach((key) => {
                     if (Math.round(this.live[key]) !== Math.round(data[key])) {
                         this.flashKey(key);
-                        this.animateNumber(key, data[key]);
+                        this.animateNumber(this.live, key, data[key]);
                     }
                 });
 
