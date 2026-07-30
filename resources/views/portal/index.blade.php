@@ -26,7 +26,7 @@
         overflow: hidden;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         border: 1px solid #E6D5C3;
-        transition: all 0.3s ease;
+        transition: max-width 0.3s ease, height 0.3s ease, max-height 0.3s ease;
     }
 
     /* Force 16px font on inputs to prevent iOS auto-zoom */

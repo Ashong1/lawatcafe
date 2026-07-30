@@ -398,7 +398,7 @@
                         <span class="text-[#3E2723]" x-text="'₱' + Math.round(live.paymentBreakdown['Cash'] || 0).toLocaleString()"></span>
                     </div>
                     <div class="w-full bg-[#FAFAFA] rounded-full h-1.5 overflow-hidden">
-                        <div class="bg-[#3E2723] h-full transition-all duration-700" :style="'width: ' + cashPct() + '%'"></div>
+                        <div class="bg-[#3E2723] h-full w-full origin-left transition-transform duration-700" :style="'transform: scaleX(' + (cashPct() / 100) + ')'"></div>
                     </div>
                 </div>
 
@@ -408,7 +408,7 @@
                         <span class="text-[#3E2723]" x-text="'₱' + Math.round(live.paymentBreakdown['E-Wallet'] || 0).toLocaleString()"></span>
                     </div>
                     <div class="w-full bg-[#FAFAFA] rounded-full h-1.5 overflow-hidden">
-                        <div class="bg-blue-600 h-full transition-all duration-700" :style="'width: ' + ewalletPct() + '%'"></div>
+                        <div class="bg-blue-600 h-full w-full origin-left transition-transform duration-700" :style="'transform: scaleX(' + (ewalletPct() / 100) + ')'"></div>
                     </div>
                 </div>
             </div>
@@ -458,7 +458,7 @@
                                     <span class="text-[#8D6E63] font-bold text-center" x-text="voucher.duration_minutes + 'm'"></span>
                                     <template x-if="voucher.percent !== null && voucher.percent > 0">
                                         <div class="w-12 bg-gray-100 rounded-full h-1 mt-1 overflow-hidden" :title="voucher.remaining_minutes + ' mins remaining'">
-                                            <div class="h-full transition-all duration-1000" :class="voucher.color" :style="'width: ' + voucher.percent + '%'"></div>
+                                            <div class="h-full w-full origin-left transition-transform duration-1000" :class="voucher.color" :style="'transform: scaleX(' + (voucher.percent / 100) + ')'"></div>
                                         </div>
                                     </template>
                                 </div>
@@ -554,7 +554,7 @@
                             <p class="text-xs font-bold text-blue-700" x-text="`${insights?.meta?.transaction_count} / ${insights?.meta?.target_transactions} Transactions`"></p>
                         </div>
                         <div class="w-full bg-blue-200/50 rounded-full h-2 overflow-hidden mb-2">
-                            <div class="bg-blue-600 h-full transition-all duration-700" :style="`width: ${insights?.meta?.progress_percent}%`"></div>
+                            <div class="bg-blue-600 h-full w-full origin-left transition-transform duration-700" :style="`transform: scaleX(${(insights?.meta?.progress_percent ?? 0) / 100})`"></div>
                         </div>
                         <p class="text-xs text-blue-800/80 font-medium">Barista AI is establishing a baseline. Accuracy will improve as more sales are recorded.</p>
                         <div class="mt-3">
