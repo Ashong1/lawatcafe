@@ -69,7 +69,7 @@ $isBottomSheet = $position === 'bottom-sheet';
     <div @click.away="{{ $show }} = false"
          @if($isBottomSheet)
          class="bg-white {{ $radiusTopClass }} shadow-2xl w-full {{ $maxWidthClass }} max-h-[90vh] flex flex-col overflow-hidden transform transition-all {{ $panelClass }}"
-         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="translate-y-full"
          x-transition:enter-end="translate-y-0"
          x-transition:leave="transition ease-in duration-200"

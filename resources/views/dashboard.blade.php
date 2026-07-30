@@ -241,7 +241,7 @@
                 <div class="relative w-10 h-10 md:w-12 md:h-12">
                     <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                         <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="text-amber-600" :class="ringsReady ? 'transition-all duration-1000 ease-out' : ''" :stroke-dasharray="liveData.cpuLoad + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="text-amber-600" :class="ringsReady ? 'transition-[stroke-dasharray] duration-700 ease-out' : ''" :stroke-dasharray="liveData.cpuLoad + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     </svg>
                     <div class="absolute inset-0 flex items-center justify-center">
                         <span class="text-[9px] font-black text-amber-700" x-text="Math.round(liveData.cpuLoad) + '%'">{{ number_format($cpuLoad, 0) }}%</span>
@@ -254,7 +254,7 @@
                 <div class="relative w-10 h-10 md:w-12 md:h-12">
                     <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                         <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="text-blue-500" :class="ringsReady ? 'transition-all duration-1000 ease-out' : ''" :stroke-dasharray="liveData.memoryUsage + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="text-blue-500" :class="ringsReady ? 'transition-[stroke-dasharray] duration-700 ease-out' : ''" :stroke-dasharray="liveData.memoryUsage + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     </svg>
                     <div class="absolute inset-0 flex items-center justify-center">
                         <span class="text-[9px] font-black text-blue-700" x-text="Math.round(liveData.memoryUsage) + '%'">{{ number_format($memoryUsage, 0) }}%</span>
@@ -267,7 +267,7 @@
                 <div class="relative w-10 h-10 md:w-12 md:h-12">
                     <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                         <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="{{ $diskUsage > 90 ? 'text-red-500' : 'text-slate-500' }} transition-all duration-1000 ease-out" stroke-dasharray="{{ $diskUsage }}, 100" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="{{ $diskUsage > 90 ? 'text-red-500' : 'text-slate-500' }} transition-[stroke-dasharray] duration-700 ease-out" stroke-dasharray="{{ $diskUsage }}, 100" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     </svg>
                     <div class="absolute inset-0 flex items-center justify-center">
                         <span class="text-[9px] font-black {{ $diskUsage > 90 ? 'text-red-700' : 'text-slate-700' }}">{{ number_format($diskUsage, 0) }}%</span>
@@ -280,7 +280,7 @@
                 <div class="relative w-10 h-10 md:w-12 md:h-12">
                     <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                         <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="text-red-500" :class="ringsReady ? 'transition-all duration-1000 ease-out' : ''" :stroke-dasharray="Math.min(liveData.cpuTemp, 100) + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="text-red-500" :class="ringsReady ? 'transition-[stroke-dasharray] duration-700 ease-out' : ''" :stroke-dasharray="Math.min(liveData.cpuTemp, 100) + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     </svg>
                     <div class="absolute inset-0 flex items-center justify-center">
                         <span class="text-[9px] font-black text-red-600" x-text="liveData.cpuTemp + '°'">{{ $cpuTemp ?? 0 }}°</span>
