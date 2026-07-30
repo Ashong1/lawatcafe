@@ -399,13 +399,18 @@ class VoucherController extends Controller
         \Illuminate\Support\Facades\Cache::put($snapshotKey, $newSnapshot, 120);
 
         // 8. Identify Infrastructure IPs
-        $infraIpsStr = \App\Models\Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4');
-        $infraIps = explode(',', $infraIpsStr);
+        $infraIps = \App\Models\Setting::infrastructureIps();
 
-        // 9. Split into three collections for the UI
-        $infrastructureSessions = $sessions->filter(fn($s) => in_array($s->ip_address, $infraIps));
-        $activeSessions = $sessions->filter(fn($s) => !in_array($s->ip_address, $infraIps) && !$s->is_unauthorized);
-        $pendingSessions = $sessions->filter(fn($s) => !in_array($s->ip_address, $infraIps) && $s->is_unauthorized);
+        // 9. Split into three collections for the UI. is_system covers both
+        // VIP (static IP reservation) and captive-portal allow-list
+        // passthrough devices ("SYSTEM/STATIC") — neither is a real
+        // customer session, so both belong in Infrastructure regardless of
+        // whether their IP happens to also be in the network_infrastructure_ips
+        // list (the allow-list is a separate, OPNsense-side list — a device
+        // can be on it without ever being added to the app's own IP list).
+        $infrastructureSessions = $sessions->filter(fn($s) => in_array($s->ip_address, $infraIps) || $s->is_system);
+        $activeSessions = $sessions->filter(fn($s) => !in_array($s->ip_address, $infraIps) && !$s->is_system && !$s->is_unauthorized);
+        $pendingSessions = $sessions->filter(fn($s) => !in_array($s->ip_address, $infraIps) && !$s->is_system && $s->is_unauthorized);
 
         if (request()->ajax() || request()->wantsJson()) {
             return view('network.partials.sessions-tables', compact('activeSessions', 'infrastructureSessions', 'pendingSessions'));

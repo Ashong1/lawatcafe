@@ -53,7 +53,7 @@ class EnforceSessionLimits extends Command
         $protectedIps = array_merge(
             explode(',', Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.1')),
             StaticIpAssignment::pluck('ip_address')->all(),
-            explode(',', Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4')),
+            Setting::infrastructureIps(),
         );
 
         foreach ($sessions as $session) {

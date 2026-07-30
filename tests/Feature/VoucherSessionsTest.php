@@ -132,4 +132,58 @@ class VoucherSessionsTest extends TestCase
         $response->assertSee('Johns-iPhone');
         $response->assertSee('Unknown Device');
     }
+
+    /**
+     * Regression: OPNsense's captive-portal allow-list (bypass the portal,
+     * no voucher ever — see CaptivePortalController's ---mac---/---ip---
+     * passthrough entries) is a separate, OPNsense-side list from this
+     * app's own network_infrastructure_ips setting. A device on the
+     * allow-list but not in that setting was previously bucketed into
+     * "Active Customer Sessions" with a fake "SYSTEM/STATIC" code instead
+     * of Infrastructure — reported as "6 active guest but only 3 devices
+     * connected" (2026-07-30), the sessions-page half of that same report.
+     */
+    public function test_allow_list_passthrough_devices_are_bucketed_as_infrastructure_not_active(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('listSessions')->andReturn([
+                // A real, voucher-authenticated guest.
+                [
+                    'sessionId' => 'sess-real-guest',
+                    'authenticated_via' => 'API',
+                    'ipAddress' => '192.168.2.112',
+                    'macAddress' => 'AA:BB:CC:DD:EE:FF',
+                    'bytes_received' => 0, 'bytes_sent' => 0,
+                ],
+                // Allow-list passthrough — not in network_infrastructure_ips.
+                [
+                    'sessionId' => 'sess-allowlisted-ip',
+                    'authenticated_via' => '---ip---',
+                    'ipAddress' => '192.168.2.122/32',
+                    'macAddress' => '',
+                    'bytes_received' => 0, 'bytes_sent' => 0,
+                ],
+                [
+                    'sessionId' => 'sess-allowlisted-mac',
+                    'authenticated_via' => '---mac---',
+                    'ipAddress' => '',
+                    'macAddress' => '78:2B:46:CF:BB:42',
+                    'bytes_received' => 0, 'bytes_sent' => 0,
+                ],
+            ]);
+
+            $mock->shouldReceive('getArpTable')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
+        });
+
+        $response = $this->actingAs($admin)->get(route('network.sessions'));
+
+        $response->assertOk();
+        $response->assertViewHas('activeSessions', fn ($sessions) => $sessions->count() === 1
+            && $sessions->first()->ip_address === '192.168.2.112');
+        $response->assertViewHas('infrastructureSessions', fn ($sessions) => $sessions->contains('ip_address', '192.168.2.122')
+            && $sessions->contains('mac_address', '782B46CFBB42'));
+    }
 }

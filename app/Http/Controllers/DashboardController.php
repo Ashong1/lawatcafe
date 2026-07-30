@@ -25,9 +25,8 @@ class DashboardController extends Controller
             try {
                 $arpTable = collect($opnsense->getArpTable());
                 $allConnected = $arpTable->filter(fn($entry) => !empty($entry['mac']) && $entry['mac'] !== '(incomplete)');
-                
-                $infraIpsStr = \App\Models\Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4');
-                $infraIps = explode(',', $infraIpsStr);
+
+                $infraIps = \App\Models\Setting::infrastructureIps();
 
                 $systemNodes = $allConnected->filter(fn($s) => in_array($s['ip'] ?? '', $infraIps))
                     ->unique('mac')->count();
@@ -395,9 +394,8 @@ class DashboardController extends Controller
         // 3. Active Guests (Real-time from ARP)
         $activeGuests = Cache::remember('active_guests_count', 15, function() use ($opnsense) {
             $arpTable = collect($opnsense->getArpTable());
-            $infraIpsStr = \App\Models\Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4');
-            $infraIps = explode(',', $infraIpsStr);
-            
+            $infraIps = \App\Models\Setting::infrastructureIps();
+
             return $arpTable->filter(function($entry) use ($infraIps) {
                 $ip = $entry['ip'] ?? '';
                 return !empty($ip) && !in_array($ip, $infraIps) && !empty($entry['mac']) && $entry['mac'] !== '(incomplete)';

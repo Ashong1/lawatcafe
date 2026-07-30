@@ -5,14 +5,45 @@ namespace Tests\Feature;
 use App\Models\AiAnalysisRun;
 use App\Models\AiFinding;
 use App\Models\Sale;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Services\OpnSenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class DashboardLiveDataTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * Regression: OPNsense's own LAN IP wasn't guaranteed to be in the
+     * admin-edited network_infrastructure_ips setting, so it was counted as
+     * an "active guest" — reported as "6 active guest but only 3 devices
+     * connected" (2026-07-30). Setting::infrastructureIps() now always
+     * excludes the configured OPNsense IP regardless of the setting's
+     * content.
+     */
+    public function test_active_guests_excludes_the_opnsense_ip_even_when_not_in_the_setting(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        config(['services.opnsense.ip' => '192.168.2.251']);
+        Setting::set('network_infrastructure_ips', '192.168.2.4');
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('getInterfaceStats')->andReturn([]);
+            $mock->shouldReceive('getArpTable')->andReturn([
+                ['ip' => '192.168.2.251', 'mac' => 'aa:aa:aa:aa:aa:aa'], // OPNsense itself — must not count
+                ['ip' => '192.168.2.4', 'mac' => 'bb:bb:bb:bb:bb:bb'],   // in the setting — must not count
+                ['ip' => '192.168.2.111', 'mac' => 'cc:cc:cc:cc:cc:cc'], // real guest — must count
+            ]);
+        });
+
+        $response = $this->actingAs($admin)->getJson(route('admin.live-stats'));
+
+        $response->assertOk();
+        $response->assertJson(['activeGuests' => 1]);
+    }
 
     public function test_dashboard_renders_with_real_seeded_data(): void
     {
