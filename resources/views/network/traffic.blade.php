@@ -138,7 +138,7 @@
                                 <span x-text="utilization + '%'">0%</span>
                             </div>
                             <div class="w-full h-2 bg-[#FDF8F5] rounded-full overflow-hidden border border-[#F0E6D2]">
-                                <div class="h-full bg-amber-600 transition-all duration-1000" :style="'width: ' + utilization + '%'"></div>
+                                <div class="h-full w-full bg-amber-600 origin-left transition-transform duration-1000" :style="'transform: scaleX(' + (utilization / 100) + ')'"></div>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4 mt-4">
