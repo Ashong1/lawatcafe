@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Shift;
+use App\Services\ShiftAuditService;
 use Illuminate\Http\Request;
 
 class ShiftController extends Controller
@@ -71,7 +72,7 @@ class ShiftController extends Controller
         return redirect()->back()->with('success', strtoupper(str_replace('_', ' ', $request->type)) . ' recorded successfully.');
     }
 
-    public function end(Request $request, Shift $shift)
+    public function end(Request $request, Shift $shift, ShiftAuditService $audit)
     {
         $request->validate([
             'ending_cash' => 'required|numeric|min:0'
@@ -82,7 +83,7 @@ class ShiftController extends Controller
         $cashSales = (float) $shift->sales()->where('status', 'completed')->where('payment_method', 'Cash')->sum('total_amount');
         $payIns = (float) $shift->transactions()->where('type', 'pay_in')->sum('amount');
         $payOuts = (float) $shift->transactions()->where('type', 'pay_out')->sum('amount');
-        
+
         $expectedCash = (float) $shift->starting_cash + $cashSales + $payIns - $payOuts;
 
         $shift->update([
@@ -91,6 +92,8 @@ class ShiftController extends Controller
             'status' => 'closed',
             'closed_at' => now(),
         ]);
+
+        $audit->auditShiftClose($shift);
 
         return redirect()->route('pos')->with('success', 'Shift closed successfully. Variance: ₱' . number_format($request->ending_cash - $expectedCash, 2));
     }

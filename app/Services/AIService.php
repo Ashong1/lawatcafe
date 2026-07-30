@@ -1065,6 +1065,34 @@ OPERATIONAL GUIDELINES:
         return null;
     }
 
+    /**
+     * Short, neutral narrative summary of a shift's cash-count shortfall, for
+     * the audit email sent to the staff member and admins. Returns null on
+     * any AI failure — caller must fall back to the raw numbers alone.
+     */
+    public function summarizeShiftAudit(array $data): ?string
+    {
+        $prompt = "You are auditing a coffee shop cashier's shift for Lawa't Kape (a POS system). "
+            . "Write a short, neutral, factual summary (2-4 sentences, plain text, no markdown, no greeting) of this shift's cash reconciliation for an internal audit record. "
+            . "State the shortage amount plainly and note it should be reviewed with the staff member.\n\n"
+            . "Staff: {$data['staff_name']}\n"
+            . "Starting cash: ₱" . number_format($data['starting_cash'], 2) . "\n"
+            . "Cash sales: ₱" . number_format($data['cash_sales'], 2) . "\n"
+            . "Pay-ins: ₱" . number_format($data['pay_ins'], 2) . "\n"
+            . "Pay-outs: ₱" . number_format($data['pay_outs'], 2) . "\n"
+            . "Expected cash: ₱" . number_format($data['expected_cash'], 2) . "\n"
+            . "Actual cash counted: ₱" . number_format($data['ending_cash'], 2) . "\n"
+            . "Variance: ₱" . number_format($data['variance'], 2) . " (negative means short)";
+
+        $response = $this->callAI([['role' => 'user', 'content' => $prompt]]);
+        if (!$response) {
+            return null;
+        }
+
+        $text = trim($response['choices'][0]['message']['content'] ?? '');
+        return $text !== '' ? $text : null;
+    }
+
     public function extractPaymentDetails($input)
     {
         $isText = !file_exists(storage_path('app/' . $input)) || (strlen($input) > 255);

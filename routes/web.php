@@ -121,6 +121,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin/analytics', [\App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('admin.analytics');
         Route::get('/admin/ai/actions', [\App\Http\Controllers\AiActionController::class, 'index'])->name('admin.ai.actions.index');
 
+        // Void Requests (staff-submitted, admin-reviewed)
+        Route::post('/pos/history/void-requests/{void_request}/approve', [\App\Http\Controllers\OrderHistoryController::class, 'approveVoidRequest'])->name('pos.history.void-requests.approve');
+        Route::post('/pos/history/void-requests/{void_request}/reject', [\App\Http\Controllers\OrderHistoryController::class, 'rejectVoidRequest'])->name('pos.history.void-requests.reject');
+
         // Inventory Management
         Route::prefix('inventory')->name('inventory.')->group(function () {
             Route::get('/logs', [IngredientController::class, 'logs'])->name('logs');

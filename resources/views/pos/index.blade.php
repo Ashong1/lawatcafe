@@ -321,14 +321,12 @@
                 </button>
             </form>
 
-            @if(auth()->user()->isAdminOrAbove())
             <div class="mt-6 text-center">
-                <a href="{{ route('dashboard') }}" class="text-[10px] font-black text-[#A1887F] hover:text-[#3E2723] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group">
+                <a href="{{ route(auth()->user()->isAdminOrAbove() ? 'dashboard' : 'staff.dashboard') }}" class="text-[10px] font-black text-[#A1887F] hover:text-[#3E2723] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group">
                     <x-lucide-arrow-left class="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
                     <span>Back to Hub</span>
                 </a>
             </div>
-            @endif
         </div>
     </div>
     @endif

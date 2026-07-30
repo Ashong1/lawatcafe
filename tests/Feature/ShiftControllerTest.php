@@ -6,7 +6,9 @@ use App\Models\Sale;
 use App\Models\Shift;
 use App\Models\ShiftTransaction;
 use App\Models\User;
+use App\Services\AIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class ShiftControllerTest extends TestCase
@@ -82,6 +84,12 @@ class ShiftControllerTest extends TestCase
 
     public function test_end_records_a_cash_variance_when_ending_cash_does_not_match_expected(): void
     {
+        // A shortage here also fires ShiftAuditService (see ShiftAuditServiceTest for
+        // full coverage of that) — mock AIService and fake Mail so this test doesn't
+        // make a real external AI call or send a real email.
+        $this->mock(AIService::class, fn ($mock) => $mock->shouldReceive('summarizeShiftAudit')->andReturn(null));
+        Mail::fake();
+
         $staff = User::factory()->create(['role' => 'staff']);
         $shift = Shift::create(['user_id' => $staff->id, 'starting_cash' => 500, 'status' => 'open', 'opened_at' => now()]);
 

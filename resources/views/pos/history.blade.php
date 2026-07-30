@@ -2,9 +2,9 @@
 @section('title', 'Order History')
 
 @section('content')
-<div class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+<div x-data="voidRequestManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
-    
+
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
@@ -14,6 +14,38 @@
             <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">View past transactions, reprint receipts, and manage voids.</p>
         </div>
     </div>
+
+    @if(auth()->user()->isAdminOrAbove() && $pendingVoidRequests->isNotEmpty())
+    <div class="bg-amber-50 border border-amber-200 p-6 md:p-8 rounded-2xl mb-8">
+        <h3 class="text-sm font-bold text-amber-800 uppercase tracking-widest mb-1">Pending Void Requests</h3>
+        <p class="text-xs text-amber-700/80 mb-6 font-medium">Staff-submitted void requests awaiting your review.</p>
+
+        <div class="space-y-3">
+            @foreach($pendingVoidRequests as $voidRequest)
+            <div class="bg-white p-4 rounded-xl border border-amber-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div>
+                    <span class="font-extrabold text-[#3E2723] font-mono">#{{ substr($voidRequest->sale->transaction_number, -8) }}</span>
+                    <span class="text-xs text-[#8D6E63] font-bold ml-2">₱{{ number_format($voidRequest->sale->total_amount, 2) }}</span>
+                    <span class="text-[10px] text-[#A1887F] font-bold uppercase tracking-widest block mt-1">
+                        Requested by {{ $voidRequest->requestedBy->name }} • {{ $voidRequest->created_at->diffForHumans() }}
+                    </span>
+                    <p class="text-xs text-[#4A3B32] font-medium mt-2 italic">"{{ $voidRequest->reason }}"</p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <form action="{{ route('pos.history.void-requests.approve', $voidRequest->id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 hover:bg-green-100 border border-green-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">Approve</button>
+                    </form>
+                    <form action="{{ route('pos.history.void-requests.reject', $voidRequest->id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">Reject</button>
+                    </form>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 
     {{-- FILTERS --}}
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
@@ -97,23 +129,32 @@
                                 <a href="{{ route('pos.receipt', $sale->id) }}" target="_blank" class="p-2 text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-lg transition" title="Reprint Receipt">
                                     <x-lucide-printer class="w-4 h-4" />
                                 </a>
-                                
+
                                 @if($sale->status !== 'cancelled')
                                     <x-ask-ai-button :prompt="'Review sale with ID ' . $sale->id . ' (transaction #' . substr($sale->transaction_number, -8) . ') for anything unusual, and void it if warranted.'" label="Review" />
-                                    <form action="{{ route('pos.history.void', $sale->id) }}" method="POST" id="void-form-{{ $sale->id }}" class="inline">
-                                        @csrf
-                                        <button type="button" 
-                                                @click="window.confirmAction({
-                                                    title: 'Void Order?',
-                                                    text: 'Are you sure you want to void this transaction? This is recorded for auditing.',
-                                                    icon: 'warning',
-                                                    confirmText: 'Yes, Void It',
-                                                    callback: () => document.getElementById('void-form-{{ $sale->id }}').submit()
-                                                })"
-                                                class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Void Transaction">
+
+                                    @if(auth()->user()->isAdminOrAbove())
+                                        <form action="{{ route('pos.history.void', $sale->id) }}" method="POST" id="void-form-{{ $sale->id }}" class="inline">
+                                            @csrf
+                                            <button type="button"
+                                                    @click="window.confirmAction({
+                                                        title: 'Void Order?',
+                                                        text: 'Are you sure you want to void this transaction? This is recorded for auditing.',
+                                                        icon: 'warning',
+                                                        confirmText: 'Yes, Void It',
+                                                        callback: () => document.getElementById('void-form-{{ $sale->id }}').submit()
+                                                    })"
+                                                    class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Void Transaction">
+                                                <x-lucide-slash class="w-4 h-4" />
+                                            </button>
+                                        </form>
+                                    @else
+                                        <button type="button"
+                                                @click="openVoidRequestModal({{ $sale->id }}, '{{ substr($sale->transaction_number, -8) }}')"
+                                                class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Request Void">
                                             <x-lucide-slash class="w-4 h-4" />
                                         </button>
-                                    </form>
+                                    @endif
                                 @endif
                             </div>
                         </td>
@@ -136,5 +177,45 @@
         </div>
     </div>
     </div>
+
+    {{-- Request Void Modal (staff only) --}}
+    <x-modal-shell show="isModalOpen" max-width="md" panel-class="border-t-8 border-red-500" labelled-by="request-void-heading">
+        <div class="px-8 py-6 border-b border-[#FDF8F5]">
+            <h2 id="request-void-heading" class="text-xl font-black text-[#3E2723] uppercase tracking-widest">Request Void</h2>
+            <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter">Order <span x-text="voidingSaleLabel"></span> — an admin will review this before it's voided.</p>
+        </div>
+
+        <form :action="'/pos/history/void/' + voidingSaleId" method="POST" @submit="submitting = true">
+            @csrf
+            <div class="p-8">
+                <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest ml-1">Reason for Void</label>
+                <textarea name="reason" x-model="reason" required rows="3" placeholder="e.g. Customer changed their mind, wrong item rung up..." class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all"></textarea>
+            </div>
+            <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
+                <button type="button" @click="isModalOpen = false" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-[#FDF8F5] font-black transition text-[10px] uppercase tracking-widest whitespace-nowrap">Cancel</button>
+                <x-submit-button label="Submit Request" variant="danger" state="submitting" />
+            </div>
+        </form>
+    </x-modal-shell>
 </div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('voidRequestManager', () => ({
+            isModalOpen: false,
+            submitting: false,
+            voidingSaleId: null,
+            voidingSaleLabel: '',
+            reason: '',
+
+            openVoidRequestModal(saleId, label) {
+                this.voidingSaleId = saleId;
+                this.voidingSaleLabel = '#' + label;
+                this.reason = '';
+                this.submitting = false;
+                this.isModalOpen = true;
+            },
+        }))
+    });
+</script>
 @endsection

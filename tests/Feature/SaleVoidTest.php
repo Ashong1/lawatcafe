@@ -64,15 +64,15 @@ class SaleVoidTest extends TestCase
         $this->assertEquals(40, $milk->current_stock, 'Stock must remain exactly as it was — void does not restock.');
     }
 
-    public function test_order_history_void_endpoint_voids_the_sale_and_flashes_success(): void
+    public function test_order_history_void_endpoint_voids_the_sale_instantly_for_an_admin(): void
     {
-        $staff = User::factory()->create(['role' => 'staff']);
+        $admin = User::factory()->create(['role' => 'admin']);
         $sale = Sale::create([
             'transaction_number' => 'TRN-VOID004', 'total_amount' => 150, 'status' => 'completed',
-            'payment_method' => 'Cash', 'order_type' => 'dine_in', 'user_id' => $staff->id,
+            'payment_method' => 'Cash', 'order_type' => 'dine_in', 'user_id' => $admin->id,
         ]);
 
-        $response = $this->actingAs($staff)->post(route('pos.history.void', $sale));
+        $response = $this->actingAs($admin)->post(route('pos.history.void', $sale));
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
@@ -80,18 +80,37 @@ class SaleVoidTest extends TestCase
         $this->assertSame('cancelled', $sale->status);
     }
 
-    public function test_order_history_void_endpoint_flashes_error_for_an_already_voided_sale(): void
+    public function test_order_history_void_endpoint_flashes_error_for_an_already_voided_sale_as_admin(): void
     {
-        $staff = User::factory()->create(['role' => 'staff']);
+        $admin = User::factory()->create(['role' => 'admin']);
         $sale = Sale::create([
             'transaction_number' => 'TRN-VOID005', 'total_amount' => 150, 'status' => 'cancelled',
-            'payment_method' => 'Cash', 'order_type' => 'dine_in', 'user_id' => $staff->id,
+            'payment_method' => 'Cash', 'order_type' => 'dine_in', 'user_id' => $admin->id,
         ]);
 
-        $response = $this->actingAs($staff)->post(route('pos.history.void', $sale));
+        $response = $this->actingAs($admin)->post(route('pos.history.void', $sale));
 
         $response->assertRedirect();
         $response->assertSessionHas('error');
+    }
+
+    public function test_order_history_void_endpoint_creates_a_pending_request_for_staff_instead_of_voiding(): void
+    {
+        // Staff can no longer void instantly — see SaleVoidRequestTest for the
+        // full pending-request/admin-approval flow.
+        $staff = User::factory()->create(['role' => 'staff']);
+        $sale = Sale::create([
+            'transaction_number' => 'TRN-VOID007', 'total_amount' => 150, 'status' => 'completed',
+            'payment_method' => 'Cash', 'order_type' => 'dine_in', 'user_id' => $staff->id,
+        ]);
+
+        $response = $this->actingAs($staff)->post(route('pos.history.void', $sale), ['reason' => 'Customer changed their mind.']);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+        $sale->refresh();
+        $this->assertSame('completed', $sale->status, 'Sale must not change status until an admin approves the request.');
+        $this->assertDatabaseHas('sale_void_requests', ['sale_id' => $sale->id, 'status' => 'pending']);
     }
 
     public function test_guest_cannot_reach_the_void_endpoint(): void
