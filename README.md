@@ -112,6 +112,10 @@ php artisan test
 
 Business logic lives in `app/Services/` (controllers stay thin). AI agent tools live in `app/Services/Agent/Tools/`, one class per tool, each declaring its own permission tier. `app/Http/Controllers/` is grouped roughly by feature (POS, Inventory, Network, Admin). `resources/views/layouts/` has separate layouts for `admin`, `staff`, and `guest`/`portal` contexts, since each role sees a materially different app.
 
+## Infrastructure
+
+This app doesn't run standalone — it sits behind a real network stack (OPNsense for routing/firewall/captive-portal/DHCP, Nginx Proxy Manager as the reverse proxy, Pi-hole for guest DNS, all on Proxmox). See **[docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md)** for the full topology, what each box does, and what the app's `OpnSenseService` actually manages via API.
+
 ## License
 
 Licensed under the [MIT license](https://opensource.org/licenses/MIT), per `composer.json`.
