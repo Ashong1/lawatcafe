@@ -169,7 +169,7 @@ class PosCheckoutTest extends TestCase
         $response->assertOk();
         $json = $response->json();
         $this->assertTrue($json['hasWifi']);
-        $this->assertNotEmpty($json['generatedCode']);
+        $this->assertNotEmpty($json['generatedCodes']);
         $this->assertDatabaseHas('vouchers', ['duration_minutes' => 180, 'tier' => 'premium', 'is_used' => false]);
     }
 
@@ -195,5 +195,35 @@ class PosCheckoutTest extends TestCase
         $json = $response->json();
         $this->assertTrue($json['hasWifi']);
         $this->assertDatabaseHas('vouchers', ['tier' => 'free', 'duration_minutes' => 60]);
+    }
+
+    public function test_generated_codes_are_returned_as_distinct_entries_not_one_joined_string(): void
+    {
+        // A sale that both buys Wi-Fi AND crosses the free-wifi threshold generates
+        // two separate voucher rows — the response must expose them as two distinct
+        // array entries, not a single comma-joined string a guest could mistake for
+        // one passcode (see CaptivePortalController::authenticate()'s exact-match lookup).
+        $staff = User::factory()->create(['role' => 'staff']);
+        $shift = $this->openShift($staff);
+        Setting::set('voucher_durations', json_encode(['50' => 180]));
+        Setting::set('free_wifi_min_amount', 200);
+        Setting::set('free_wifi_duration', 60);
+        $product = Product::create(['name' => 'Premium Blend', 'category' => 'Coffee Based', 'price' => 200, 'status' => 'Active']);
+
+        $response = $this->actingAs($staff)->postJson(route('pos.checkout'), [
+            'total_amount' => 250,
+            'amount_received' => 250,
+            'cart' => [
+                ['id' => $product->id, 'name' => 'Premium Blend', 'category' => 'Coffee Based', 'type' => 'product', 'quantity' => 1, 'price' => 200, 'variant' => null],
+                ['id' => 'w1', 'name' => '3 Hour(s) Wi-Fi', 'category' => 'Wi-Fi', 'type' => 'wifi', 'quantity' => 1, 'price' => 50, 'duration' => 180],
+            ],
+            'order_type' => 'takeaway',
+            'shift_id' => $shift->id,
+        ]);
+
+        $response->assertOk();
+        $json = $response->json();
+        $this->assertCount(2, $json['generatedCodes']);
+        $this->assertNotSame($json['generatedCodes'][0], $json['generatedCodes'][1]);
     }
 }

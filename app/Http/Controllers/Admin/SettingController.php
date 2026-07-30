@@ -8,6 +8,7 @@ use App\Models\Setting;
 use App\Services\Agent\PermissionResolver;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
+use App\Services\OpnSenseService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
@@ -123,16 +124,18 @@ class SettingController extends Controller
     /**
      * Display Network Configuration.
      */
-    public function network()
+    public function network(OpnSenseService $opnsense)
     {
         $settings = [
             'opnsense_zone' => Setting::get('opnsense_zone', '0'),
             'network_ignored_ips' => Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.100,192.168.2.5,192.168.2.4'),
-            'network_vip_ips' => Setting::get('network_vip_ips', '192.168.2.100,192.168.2.5,192.168.2.4,192.168.2.99'),
             'network_infrastructure_ips' => Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4'),
         ];
 
-        return view('admin.settings.network', compact('settings'));
+        $staticIps = \App\Models\StaticIpAssignment::latest()->get();
+        $allowedAddresses = $opnsense->getAllowedAddresses();
+
+        return view('admin.settings.network', compact('settings', 'staticIps', 'allowedAddresses'));
     }
 
     /**
@@ -227,7 +230,6 @@ class SettingController extends Controller
     {
         $validated = $request->validate([
             'network_ignored_ips' => 'nullable|string',
-            'network_vip_ips' => 'nullable|string',
             'network_infrastructure_ips' => 'nullable|string',
             'opnsense_zone' => 'nullable|string',
         ]);

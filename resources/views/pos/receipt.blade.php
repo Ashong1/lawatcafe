@@ -153,6 +153,19 @@
             </tr>
         </table>
 
+        @if($sale->vouchers->isNotEmpty())
+        <div class="divider"></div>
+
+        <!-- Wi-Fi Voucher(s) -->
+        <div class="text-center">
+            <p class="font-bold text-sm" style="margin-bottom: 8px;">WI-FI PASSCODE{{ $sale->vouchers->count() > 1 ? 'S' : '' }}</p>
+            @foreach($sale->vouchers as $voucher)
+            <p style="font-size: 20px; font-weight: bold; letter-spacing: 2px; margin: 6px 0; font-family: 'Courier New', Courier, monospace;">{{ $voucher->code }}</p>
+            <p class="text-xs" style="margin: 0 0 10px;">{{ $voucher->duration_minutes }} min access{{ $sale->vouchers->count() > 1 ? ' — enter one code per device' : '' }}</p>
+            @endforeach
+        </div>
+        @endif
+
         <div class="divider"></div>
 
         <!-- Footer -->

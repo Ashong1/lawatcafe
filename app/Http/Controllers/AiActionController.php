@@ -48,6 +48,32 @@ class AiActionController extends Controller
             ]));
     }
 
+    /**
+     * Lets a chat widget re-sync the resolution of pending actions it rendered
+     * inline, in case they were approved/rejected elsewhere (e.g. the Agent
+     * Activity page) rather than through the chat's own confirm/reject buttons.
+     * Same ownership scoping as pendingCount/pendingPreview: admins can check
+     * any id, staff only their own — otherwise a guessed id would leak another
+     * user's proposal outcome.
+     */
+    public function statuses(Request $request)
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string) $request->query('ids'))));
+
+        $query = AiActionAudit::with('approvedBy')->whereIn('id', $ids);
+        if (!$request->user()->isAdminOrAbove()) {
+            $query->where('actor_user_id', $request->user()->id);
+        }
+
+        return response()->json($query->get(['id', 'status', 'result', 'approved_by_user_id'])
+            ->map(fn ($a) => [
+                'id' => $a->id,
+                'status' => $a->status,
+                'message' => $a->result['message'] ?? null,
+                'approved_by' => $a->approvedBy?->name,
+            ]));
+    }
+
     public function confirm(Request $request, AiActionAudit $audit, ToolCallOrchestrator $orchestrator)
     {
         $result = $orchestrator->confirmPending($audit, $request->user());

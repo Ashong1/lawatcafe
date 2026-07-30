@@ -95,6 +95,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{audit}/reject', [\App\Http\Controllers\AiActionController::class, 'reject'])->name('reject');
         Route::get('/pending-count', [\App\Http\Controllers\AiActionController::class, 'pendingCount'])->name('pending-count');
         Route::get('/pending-preview', [\App\Http\Controllers\AiActionController::class, 'pendingPreview'])->name('pending-preview');
+        Route::get('/statuses', [\App\Http\Controllers\AiActionController::class, 'statuses'])->name('statuses');
     });
 
     // ==========================================
@@ -162,6 +163,19 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/blocklist', [\App\Http\Controllers\BlocklistController::class, 'index'])->name('blocklist');
             Route::post('/blocklist', [\App\Http\Controllers\BlocklistController::class, 'store'])->name('blocklist.store');
             Route::delete('/blocklist/{device}', [\App\Http\Controllers\BlocklistController::class, 'destroy'])->name('blocklist.destroy');
+
+            // Static IP assignments (MAC-bound Kea DHCP reservations, replaces
+            // the old app-only "Permanent Kape Devices" IP whitelist).
+            Route::post('/static-ips', [\App\Http\Controllers\StaticIpController::class, 'store'])->name('static-ips.store');
+            Route::delete('/static-ips/{assignment}', [\App\Http\Controllers\StaticIpController::class, 'destroy'])->name('static-ips.destroy');
+
+            // Captive portal allow-list — OPNsense's own "Allowed IP/MAC
+            // addresses" passthrough, distinct from static-ips above: these
+            // devices skip the portal entirely, no voucher ever required.
+            Route::post('/allowed-addresses/ips', [\App\Http\Controllers\AllowedAddressController::class, 'storeIp'])->name('allowed-addresses.ips.store');
+            Route::delete('/allowed-addresses/ips', [\App\Http\Controllers\AllowedAddressController::class, 'destroyIp'])->name('allowed-addresses.ips.destroy');
+            Route::post('/allowed-addresses/macs', [\App\Http\Controllers\AllowedAddressController::class, 'storeMac'])->name('allowed-addresses.macs.store');
+            Route::delete('/allowed-addresses/macs', [\App\Http\Controllers\AllowedAddressController::class, 'destroyMac'])->name('allowed-addresses.macs.destroy');
         });
 
         // Finance / Sales Reports

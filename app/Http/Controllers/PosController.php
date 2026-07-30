@@ -310,8 +310,8 @@ class PosController extends Controller
             return response()->json([
                 'success' => true,
                 'hasWifi' => $hasWifi,
-                'generatedCode' => implode(', ', $generatedCodes),
-                'sale_id' => $sale->id, 
+                'generatedCodes' => $generatedCodes,
+                'sale_id' => $sale->id,
             ]);
         });
     }
@@ -352,7 +352,7 @@ class PosController extends Controller
 
     public function receipt(Sale $sale)
     {
-        $sale->load(['items', 'user']);
+        $sale->load(['items', 'user', 'vouchers']);
         return view('pos.receipt', compact('sale'));
     }
 }

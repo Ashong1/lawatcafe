@@ -176,8 +176,13 @@ class VoucherController extends Controller
         $ignoredIpsStr = \App\Models\Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.1');
         $ignoredIps = explode(',', $ignoredIpsStr);
         
-        $vipIpsStr = \App\Models\Setting::get('network_vip_ips', '192.168.2.100,192.168.2.5,192.168.2.4,192.168.2.99');
-        $vipIps = explode(',', $vipIpsStr);
+        // "VIP" devices are now MAC-bound Kea DHCP reservations (see
+        // StaticIpAssignment) rather than a freeform IP whitelist — the OPNsense
+        // side guarantees the IP, this just tells the view which sessions to
+        // badge as permanent/system devices instead of guest sessions.
+        $staticAssignments = \App\Models\StaticIpAssignment::all();
+        $vipIps = $staticAssignments->pluck('ip_address')->all();
+        $vipMacs = $staticAssignments->pluck('mac_address')->map(fn ($m) => strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $m)))->all();
 
         $normalizeMac = fn($mac) => strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac ?? ''));
 
@@ -278,7 +283,7 @@ class VoucherController extends Controller
         $newSnapshot = [];
 
         // 7. Map and cross-reference for the view
-        $sessions = $combinedDevices->map(function($device) use ($voucherList, $vipIps, $oldSnapshot, &$newSnapshot, $now, $normalizeMac) {
+        $sessions = $combinedDevices->map(function($device) use ($voucherList, $vipIps, $vipMacs, $oldSnapshot, &$newSnapshot, $now, $normalizeMac) {
             $ip = $device['ipAddress'];
             $mac = $device['macAddress'];
             
@@ -303,8 +308,8 @@ class VoucherController extends Controller
                 return round($bps) . ' bps';
             };
 
-            // Check if this is a VIP IP
-            $isVip = in_array($ip, $vipIps);
+            // Check if this is a VIP (statically-assigned) device, by IP or MAC
+            $isVip = in_array($ip, $vipIps) || ($mac && in_array($mac, $vipMacs));
 
             // Find the latest voucher
             $voucher = $voucherList->filter(function($v) use ($ip, $mac, $normalizeMac) {

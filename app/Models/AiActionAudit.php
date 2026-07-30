@@ -45,4 +45,34 @@ class AiActionAudit extends Model
     {
         return $query->where('status', 'proposed');
     }
+
+    /**
+     * Human-readable description of what the AI did or proposed. Executed
+     * (and system-rejected) rows carry a result message from the tool itself;
+     * proposed/human-rejected rows never got a result written (see
+     * AuditLogger::markRejected — it only flips status), so those fall back
+     * to formatting the original input_params.
+     */
+    public function detailText(): string
+    {
+        $message = $this->result['message'] ?? null;
+        if ($message) {
+            return $message;
+        }
+
+        $params = $this->input_params ?? [];
+        if (empty($params)) {
+            return '—';
+        }
+
+        $formatted = collect($params)->map(function ($value, $key) {
+            $label = ucwords(str_replace('_', ' ', $key));
+            $value = is_array($value) ? json_encode($value) : $value;
+            return "{$label}: {$value}";
+        })->implode(', ');
+
+        return $this->status === 'proposed'
+            ? "Proposed: {$formatted}"
+            : "Proposed (rejected): {$formatted}";
+    }
 }

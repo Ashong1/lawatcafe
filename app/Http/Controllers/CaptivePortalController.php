@@ -218,14 +218,21 @@ class CaptivePortalController extends Controller
 
         return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $opnsense, $shaping) {
             // 1. Verify the Lawa't Voucher in your Database
-            $voucher = \App\Models\Voucher::where('code', $request->passcode)
-                              ->where('is_used', false)
+            $code = trim($request->passcode);
+            $voucher = \App\Models\Voucher::where('code', $code)
                               ->lockForUpdate()
                               ->first();
 
-            // If the voucher is wrong, we send them back with the red error
+            // Distinguish "doesn't exist / mistyped" from "already redeemed" —
+            // a single generic message for both makes it impossible for a guest
+            // (or the staff helping them) to tell whether they mistyped the code
+            // or are trying to reuse one that already worked.
             if (!$voucher) {
-                return back()->with('error', 'Invalid or expired voucher code.');
+                return back()->with('error', 'That code doesn\'t match any voucher — double-check it against your receipt.');
+            }
+
+            if ($voucher->is_used) {
+                return back()->with('error', 'This code has already been used.');
             }
 
             [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);

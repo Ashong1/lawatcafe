@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Setting;
+use App\Models\StaticIpAssignment;
 use App\Models\Voucher;
 use App\Services\OpnSenseService;
 use App\Services\TrafficShapingService;
@@ -51,7 +52,7 @@ class EnforceSessionLimits extends Command
         // these intentionally have no voucher and are not meant to expire.
         $protectedIps = array_merge(
             explode(',', Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.1')),
-            explode(',', Setting::get('network_vip_ips', '192.168.2.100,192.168.2.5,192.168.2.4,192.168.2.99')),
+            StaticIpAssignment::pluck('ip_address')->all(),
             explode(',', Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4')),
         );
 

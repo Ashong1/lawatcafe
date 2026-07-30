@@ -1,4 +1,16 @@
 <!DOCTYPE html>
+@php
+    $sidebarOpen = request()->cookie('lk_sidebar_open', '1') === '1';
+    $cookieMenus = json_decode(request()->cookie('lk_admin_menus', '{}'), true);
+    $routeDefaults = [
+        'inventory' => request()->is('inventory*'),
+        'network'   => request()->is('network*'),
+        'finance'   => request()->is('sales*'),
+        'settings'  => request()->is('accounts*') || request()->routeIs('admin.settings.store') || request()->routeIs('admin.settings.ai-providers*'),
+        'system'    => request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent'),
+    ];
+    $menus = is_array($cookieMenus) && !empty($cookieMenus) ? array_merge($routeDefaults, $cookieMenus) : $routeDefaults;
+@endphp
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -19,7 +31,7 @@
                 toast: true,
                 position: 'top-end',
                 icon: 'success',
-                title: '{{ session('success') }}',
+                title: {!! \Illuminate\Support\Js::from(session('success')) !!},
                 showConfirmButton: false,
                 timer: 4000,
                 timerProgressBar: true,
@@ -36,7 +48,7 @@
                 toast: true,
                 position: 'top-end',
                 icon: 'error',
-                title: '{{ session('error') }}',
+                title: {!! \Illuminate\Support\Js::from(session('error')) !!},
                 showConfirmButton: false,
                 timer: 4000,
                 timerProgressBar: true,
@@ -53,7 +65,7 @@
                 toast: true,
                 position: 'top-end',
                 icon: 'info',
-                title: '{{ session('status') === 'profile-updated' ? 'Profile Updated' : (session('status') === 'password-updated' ? 'Password Updated' : (session('status') === 'verification-link-sent' ? 'Verification Link Sent' : session('status'))) }}',
+                title: {!! \Illuminate\Support\Js::from(session('status') === 'profile-updated' ? 'Profile Updated' : (session('status') === 'password-updated' ? 'Password Updated' : (session('status') === 'verification-link-sent' ? 'Verification Link Sent' : session('status')))) !!},
                 showConfirmButton: false,
                 timer: 4000,
                 timerProgressBar: true,
@@ -71,7 +83,7 @@
                 position: 'top-end',
                 icon: 'error',
                 title: 'Validation Error',
-                text: '{{ $errors->first() }}',
+                text: {!! \Illuminate\Support\Js::from($errors->first()) !!},
                 showConfirmButton: false,
                 timer: 6000,
                 timerProgressBar: true,
@@ -97,8 +109,8 @@
     />
 
     <aside
-        :class="sidebarOpen ? 'w-64' : 'w-20'"
-        class="bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out shrink-0 relative [view-transition-name:app-sidebar]">
+        class="{{ $sidebarOpen ? 'w-64' : 'w-20' }} flex-none bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl z-20 transition-[width] duration-300 ease-in-out shrink-0 relative [view-transition-name:app-sidebar]"
+        :class="{ '!w-20': !sidebarOpen }">
         
         <div class="h-20 flex items-center px-6 border-b border-[#5D4037] shrink-0 overflow-hidden relative">
             <x-lucide-coffee class="w-8 h-8 text-amber-500 mr-2 shrink-0 absolute left-6" />
@@ -374,6 +386,11 @@
             </div>
             @endif
         </nav>
+
+        <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.0</span>
+            <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
+        </div>
     </aside>
 
     <div class="flex-1 flex flex-col overflow-hidden">
@@ -439,64 +456,12 @@
 
         document.addEventListener('alpine:init', () => {
             Alpine.data('adminLayout', () => ({
-                sidebarOpen: true,
-                // Sidebar submenus used to auto-expand/collapse based on the current
-                // route. Since every navigation here is a full page reload (not an
-                // SPA), that meant the sidebar's height could jump abruptly between
-                // pages in different sections — visible as the submenu appearing to
-                // "expand and close" on nearly every click. Submenu state is now
-                // sticky: it only changes when the user explicitly clicks a section,
-                // persisted in localStorage so it stays consistent across page loads.
-                // The route-based defaults below only matter the very first time this
-                // browser has ever loaded an admin page (no saved state yet) — every
-                // load after that uses the saved state as-is, with NO blending back
-                // in of route defaults. Blending would reintroduce the original bug:
-                // every page's resolved (partly route-driven) state got persisted,
-                // so the next page's merge kept re-overriding its own true default
-                // with whatever unrelated section was false on the page before it.
-                menus: (() => {
-                    const routeDefaults = {
-                        inventory: {{ request()->is('inventory*') ? 'true' : 'false' }},
-                        network: {{ request()->is('network*') ? 'true' : 'false' }},
-                        finance: {{ request()->is('sales*') ? 'true' : 'false' }},
-                        settings: {{ request()->is('accounts*') || request()->routeIs('admin.settings.store') || request()->routeIs('admin.settings.ai-providers*') ? 'true' : 'false' }},
-                        system: {{ request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'true' : 'false' }}
-                    };
-                    try {
-                        const raw = localStorage.getItem('lawatkape_admin_menus');
-                        if (raw === null) return routeDefaults;
-                        const saved = JSON.parse(raw);
-                        if (!saved || typeof saved !== 'object') return routeDefaults;
-                        // Start from the saved object so every key the user already
-                        // has a preference for wins outright — only fall back to the
-                        // route default for a key a future menu addition introduces
-                        // that this saved object predates.
-                        const merged = { ...saved };
-                        for (const key of Object.keys(routeDefaults)) {
-                            if (!(key in merged)) merged[key] = routeDefaults[key];
-                        }
-                        return merged;
-                    } catch (e) {
-                        return routeDefaults;
-                    }
-                })(),
+                sidebarOpen: @json($sidebarOpen),
+                menus: @json($menus),
                 init() {
-                    // $watch only fires on subsequent changes, not the current value —
-                    // persist the resolved initial state too, so a section that just
-                    // auto-opened via the route-based fallback stays open on the next
-                    // navigation instead of reverting until the user clicks something.
-                    localStorage.setItem('lawatkape_admin_menus', JSON.stringify(this.menus));
-                    this.$watch('menus', (value) => {
-                        localStorage.setItem('lawatkape_admin_menus', JSON.stringify(value));
-                    });
+                    this.$watch('sidebarOpen', v => document.cookie = `lk_sidebar_open=${v ? 1 : 0};path=/;max-age=31536000;SameSite=Lax`);
+                    this.$watch('menus', v => document.cookie = `lk_admin_menus=${encodeURIComponent(JSON.stringify(v))};path=/;max-age=31536000;SameSite=Lax`);
 
-                    // The sidebar nav is a fresh DOM node on every full page load, so
-                    // its scrollTop always starts at 0 — if a submenu is expanded and
-                    // the user was scrolled down to see a link near the bottom,
-                    // clicking that link resets the new page's sidebar to the top.
-                    // That reset reads as the sidebar "auto-scrolling up" on every
-                    // navigation. Restore whatever position was last saved, before the
-                    // user has a chance to see the reset.
                     const savedScroll = parseInt(localStorage.getItem('lawatkape_admin_nav_scroll'), 10);
                     if (!isNaN(savedScroll)) {
                         this.$refs.sidebarNav.scrollTop = savedScroll;

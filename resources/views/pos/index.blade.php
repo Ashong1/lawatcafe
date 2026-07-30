@@ -270,9 +270,13 @@
             <p class="text-sm font-bold text-green-600 mb-8" x-show="amountTendered > 0">Change: ₱<span x-text="Math.max(0, amountTendered - grandTotal).toFixed(2)"></span></p>
 
             <template x-if="checkoutHasWifi">
-                <div class="border border-[#E3F2FD] rounded-2xl p-6 mb-8 bg-[#F3F9FF]">
-                    <p class="text-xs text-[#1565C0] uppercase tracking-widest mb-2 font-bold">Generated Wi-Fi Access</p>
-                    <p class="text-3xl font-mono font-black tracking-widest text-[#0D47A1]" x-text="generatedCode"></p>
+                <div class="border border-[#E3F2FD] rounded-2xl p-6 mb-8 bg-[#F3F9FF] space-y-3">
+                    <p class="text-xs text-[#1565C0] uppercase tracking-widest font-bold">
+                        <span x-text="generatedCodes.length > 1 ? 'Generated Wi-Fi Codes — one per device' : 'Generated Wi-Fi Access'"></span>
+                    </p>
+                    <template x-for="code in generatedCodes" :key="code">
+                        <p class="text-3xl font-mono font-black tracking-widest text-[#0D47A1]" x-text="code"></p>
+                    </template>
                 </div>
             </template>
 
@@ -348,7 +352,7 @@
             showMobileCart: false,
             pendingItem: null,
             saleId: null,
-            generatedCode: '',
+            generatedCodes: [],
             checkoutHasWifi: false,
             isProcessing: false,
             suggestion: null,
@@ -562,7 +566,7 @@
                     
                     if (result.success) {
                         this.saleId = result.sale_id;
-                        this.generatedCode = result.generatedCode || '';
+                        this.generatedCodes = result.generatedCodes || [];
                         this.checkoutHasWifi = result.hasWifi || false;
                         this.showMobileCart = false;
                         this.showModal = true;

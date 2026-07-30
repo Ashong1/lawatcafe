@@ -31,8 +31,9 @@
                 <tbody class="text-sm">
                     @forelse($actions as $action)
                     <tr class="border-b border-[#FAFAFA] group hover:bg-amber-50/30 transition-colors">
-                        <td class="py-4">
+                        <td class="py-4 max-w-xs">
                             <span class="font-black text-[#3E2723] text-xs font-mono">{{ $action->tool_name }}</span>
+                            <span class="block text-[11px] text-[#8D6E63] font-medium mt-1 leading-relaxed">{{ $action->detailText() }}</span>
                         </td>
                         <td class="py-4 text-xs font-bold text-[#8D6E63]">
                             {{ $action->actor?->name ?? 'Barista AI (scheduled)' }}

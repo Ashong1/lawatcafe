@@ -98,10 +98,15 @@ class EnforceSessionLimitsTest extends TestCase
 
     public function test_never_disconnects_allowlisted_ip_even_when_orphaned(): void
     {
+        \App\Models\StaticIpAssignment::create([
+            'mac_address' => 'AA:BB:CC:DD:EE:FF',
+            'ip_address' => '192.168.2.99',
+        ]);
+
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('listSessions')->once()->andReturn([
                 $this->fakeSession([
-                    'ipAddress' => '192.168.2.99', // default network_vip_ips entry
+                    'ipAddress' => '192.168.2.99', // statically-assigned device
                     'last_accessed' => now()->subMonths(6)->timestamp,
                 ]),
             ]);

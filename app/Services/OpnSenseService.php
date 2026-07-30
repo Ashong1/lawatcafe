@@ -28,22 +28,26 @@ class OpnSenseService
      * services.opnsense.verify_tls) is applied consistently everywhere,
      * instead of each method deciding it individually.
      *
-     * connectTimeout/timeout are both explicit: several call sites here run
-     * synchronously in a page's render path (DashboardController::index()'s
-     * network-pulse block, on every cache miss). Without a bound, a slow or
-     * unreachable firewall would stall by however long PHP/Guzzle's own
-     * defaults allow — Laravel's HTTP client has no timeout unless one is
-     * set. 3s connect / 5s total keeps a firewall hiccup from turning into a
-     * multi-second page hang; every call site here already wraps failures
-     * in try/catch and falls back to an empty result, so timing out is
-     * exactly as safe as any other failure mode already handled.
+     * The default 1s/2s budget is deliberately tight: several call sites here
+     * (getArpTable, listSessions, getGatewayStatus, getInterfaceStats) run
+     * synchronously in a page's render/poll path and exceeding Chrome's
+     * ~500ms paint-holding budget was previously causing a blank-page flash
+     * on navigation (see .gemini/memory/LEARNINGS.md, 2026-07-28). Those
+     * methods are all cached with a stale-value fallback on failure, so
+     * timing out costs nothing worse than a few extra seconds of staleness.
+     *
+     * authorizeDevice() is the one call that can't take that tradeoff: it's a
+     * one-shot write triggered directly by a customer redeeming a voucher,
+     * with no cached fallback — a timeout there is a flatly rejected
+     * voucher, not stale data. It passes its own longer budget explicitly
+     * rather than sharing this default.
      */
-    protected function client()
+    protected function client(?int $connectTimeout = null, ?int $timeoutSeconds = null)
     {
         return Http::withBasicAuth($this->apiKey, $this->apiSecret)
             ->withOptions(['verify' => config('services.opnsense.verify_tls', false)])
-            ->connectTimeout(3)
-            ->timeout(5);
+            ->connectTimeout($connectTimeout ?? 1)
+            ->timeout($timeoutSeconds ?? 2);
     }
 
     /**
@@ -75,9 +79,13 @@ class OpnSenseService
             
             Log::info("OPNsense Request URL: " . $url);
             Log::info("OPNsense API Key Length: " . strlen($this->apiKey));
-            
-            $response = $this->client()->post($url, [
-                    'user' => config('services.opnsense.guest_user'), 
+
+            // Longer budget than the shared render-path default (see client()
+            // docblock) — this redeems a customer's voucher with no fallback
+            // on failure, so it's worth waiting out a slow-but-working router
+            // rather than fast-failing a legitimate request.
+            $response = $this->client(4, 8)->post($url, [
+                    'user' => config('services.opnsense.guest_user'),
                     'password' => config('services.opnsense.guest_pass'),
                     'ip' => $ip,
                 ]);
@@ -121,7 +129,7 @@ class OpnSenseService
             return [];
         }
 
-        return Cache::remember('opnsense_arp_table', 5, function () {
+        return Cache::remember('opnsense_arp_table', 15, function () {
             try {
                 $url = "{$this->baseUrl}/api/diagnostics/interface/getArp";
 
@@ -131,10 +139,10 @@ class OpnSenseService
                     return $response->json();
                 }
 
-                return [];
+                return Cache::get('opnsense_arp_table') ?? [];
             } catch (\Exception $e) {
                 Log::error("OPNsense: Exception fetching ARP table: " . $e->getMessage());
-                return [];
+                return Cache::get('opnsense_arp_table') ?? [];
             }
         });
     }
@@ -157,7 +165,7 @@ class OpnSenseService
 
         $zone = session('zone', $this->zone);
 
-        return Cache::remember("opnsense_sessions_list_{$zone}", 5, function () use ($zone) {
+        return Cache::remember("opnsense_sessions_list_{$zone}", 15, function () use ($zone) {
             try {
                 $url = "{$this->baseUrl}/api/captiveportal/session/list/{$zone}/";
 
@@ -181,10 +189,10 @@ class OpnSenseService
                     }, $rows);
                 }
 
-                return [];
+                return Cache::get("opnsense_sessions_list_{$zone}") ?? [];
             } catch (\Exception $e) {
                 Log::error("OPNsense: Exception fetching sessions: " . $e->getMessage());
-                return [];
+                return Cache::get("opnsense_sessions_list_{$zone}") ?? [];
             }
         });
     }
@@ -250,7 +258,7 @@ class OpnSenseService
             return [];
         }
 
-        return Cache::remember('opnsense_gateway_status', 5, function () {
+        return Cache::remember('opnsense_gateway_status', 15, function () {
             try {
                 $url = "{$this->baseUrl}/api/diagnostics/gateway/status";
 
@@ -260,10 +268,10 @@ class OpnSenseService
                     return $response->json();
                 }
 
-                return [];
+                return Cache::get('opnsense_gateway_status') ?? [];
             } catch (\Exception $e) {
                 Log::error("OPNsense: Exception fetching gateway status: " . $e->getMessage());
-                return [];
+                return Cache::get('opnsense_gateway_status') ?? [];
             }
         });
     }
@@ -286,7 +294,7 @@ class OpnSenseService
             return [];
         }
 
-        return Cache::remember('opnsense_interface_stats', 5, function () {
+        return Cache::remember('opnsense_interface_stats', 10, function () {
             try {
                 $url = "{$this->baseUrl}/api/diagnostics/interface/getInterfaceStatistics";
 
@@ -499,6 +507,392 @@ class OpnSenseService
             return false;
         } catch (\Exception $e) {
             Log::error("OPNsense: Exception reconfiguring traffic shaper: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Find the Kea DHCPv4 subnet (by UUID) that a given IP falls inside.
+     * A reservation always belongs to a specific subnet object in Kea, so
+     * this has to run before add/updateKeaReservation can build a payload.
+     */
+    protected function findKeaSubnetUuidForIp(string $ip): ?string
+    {
+        try {
+            $response = $this->client()->get("{$this->baseUrl}/api/kea/dhcpv4/searchSubnet");
+
+            if (!$response->successful()) {
+                return null;
+            }
+
+            foreach ($response->json('rows') ?? [] as $row) {
+                if ($this->cidrContainsIp($row['subnet'] ?? '', $ip)) {
+                    return $row['uuid'] ?? null;
+                }
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception searching Kea subnets: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    protected function cidrContainsIp(string $cidr, string $ip): bool
+    {
+        if (!str_contains($cidr, '/')) {
+            return false;
+        }
+
+        [$subnet, $bits] = explode('/', $cidr, 2);
+        $bits = (int) $bits;
+        if ($bits < 0 || $bits > 32) {
+            return false;
+        }
+
+        $ipLong = ip2long($ip);
+        $subnetLong = ip2long($subnet);
+        if ($ipLong === false || $subnetLong === false) {
+            return false;
+        }
+
+        $mask = $bits === 0 ? 0 : (~0 << (32 - $bits));
+
+        return ($ipLong & $mask) === ($subnetLong & $mask);
+    }
+
+    /**
+     * Create a permanent DHCP reservation in Kea binding $ip to $mac, so the
+     * device keeps that IP forever regardless of lease renewals — unlike the
+     * old app-only "VIP IP" whitelist, this is enforced by the DHCP server
+     * itself.
+     *
+     * @return array{success: bool, uuid: ?string, subnet_uuid: ?string, message: ?string}
+     */
+    public function addKeaReservation(string $mac, string $ip, ?string $hostname): array
+    {
+        return $this->writeKeaReservation(null, $mac, $ip, $hostname);
+    }
+
+    /**
+     * Update an existing reservation in place (e.g. the device's IP or
+     * hostname changed). The subnet is re-resolved from $ip rather than
+     * reused from the original assignment, so this also works correctly if
+     * the new IP falls under a different Kea subnet.
+     */
+    public function updateKeaReservation(string $reservationUuid, string $mac, string $ip, ?string $hostname): array
+    {
+        return $this->writeKeaReservation($reservationUuid, $mac, $ip, $hostname);
+    }
+
+    protected function writeKeaReservation(?string $reservationUuid, string $mac, string $ip, ?string $hostname): array
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return ['success' => false, 'uuid' => null, 'subnet_uuid' => null, 'message' => 'OPNsense API credentials are not configured.'];
+        }
+
+        $subnetUuid = $this->findKeaSubnetUuidForIp($ip);
+        if (!$subnetUuid) {
+            return [
+                'success' => false,
+                'uuid' => null,
+                'subnet_uuid' => null,
+                'message' => "No Kea DHCPv4 subnet on OPNsense covers {$ip} — set one up under Services > Kea DHCP first.",
+            ];
+        }
+
+        $payload = ['reservation' => [
+            'subnet' => $subnetUuid,
+            'ip_address' => $ip,
+            'hw_address' => $mac,
+            'hostname' => $hostname ?? '',
+            'description' => $hostname ?? '',
+        ]];
+
+        try {
+            $endpoint = $reservationUuid
+                ? "{$this->baseUrl}/api/kea/dhcpv4/set_reservation/{$reservationUuid}"
+                : "{$this->baseUrl}/api/kea/dhcpv4/add_reservation";
+
+            $response = $this->client()->post($endpoint, $payload);
+            $data = $response->json();
+
+            if ($response->successful() && ($data['result'] ?? null) === 'saved') {
+                $this->reconfigureKeaDhcp();
+                return [
+                    'success' => true,
+                    'uuid' => $data['uuid'] ?? $reservationUuid,
+                    'subnet_uuid' => $subnetUuid,
+                    'message' => null,
+                ];
+            }
+
+            Log::error("OPNsense: Failed to write Kea reservation for {$mac} -> {$ip}.", [
+                'status' => $response->status(),
+                'response' => $data,
+            ]);
+
+            return [
+                'success' => false,
+                'uuid' => null,
+                'subnet_uuid' => $subnetUuid,
+                'message' => 'OPNsense rejected the reservation: ' . json_encode($data['validations'] ?? $data),
+            ];
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception writing Kea reservation for {$mac} -> {$ip}: " . $e->getMessage());
+            return ['success' => false, 'uuid' => null, 'subnet_uuid' => $subnetUuid, 'message' => 'Could not reach OPNsense.'];
+        }
+    }
+
+    /**
+     * Delete a Kea reservation by its OPNsense UUID.
+     */
+    public function deleteKeaReservation(string $reservationUuid): bool
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            Log::warning("OPNsense: API credentials not configured, cannot delete Kea reservation {$reservationUuid}.");
+            return false;
+        }
+
+        try {
+            $response = $this->client()->post("{$this->baseUrl}/api/kea/dhcpv4/del_reservation/{$reservationUuid}");
+            $data = $response->json();
+
+            if ($response->successful() && ($data['result'] ?? null) === 'deleted') {
+                $this->reconfigureKeaDhcp();
+                return true;
+            }
+
+            Log::error("OPNsense: Failed to delete Kea reservation {$reservationUuid}.", [
+                'status' => $response->status(),
+                'response' => $data,
+            ]);
+            return false;
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception deleting Kea reservation {$reservationUuid}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Apply pending Kea DHCP configuration changes. Like the traffic shaper,
+     * Kea reservation add/set/delete calls don't take effect until this runs.
+     */
+    public function reconfigureKeaDhcp(): bool
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return false;
+        }
+
+        try {
+            $response = $this->client()->post("{$this->baseUrl}/api/kea/service/reconfigure");
+
+            if ($response->successful()) {
+                Log::info("OPNsense: Kea DHCP reconfigured.");
+                return true;
+            }
+
+            Log::error("OPNsense: Failed to reconfigure Kea DHCP.", [
+                'status' => $response->status(),
+                'response' => $response->json(),
+            ]);
+            return false;
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception reconfiguring Kea DHCP: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Look up the captive portal zone's model UUID from the numeric zone id
+     * this app is configured against (Setting::opnsense_zone). The
+     * session/access endpoints address a zone by that number; the zone
+     * *settings* endpoints (used below to edit its Allowed IP/MAC
+     * passthrough lists) only accept the model UUID, so this bridges the
+     * two identifiers.
+     */
+    protected function resolveCaptivePortalZoneUuid(): ?string
+    {
+        try {
+            $response = $this->client()->post("{$this->baseUrl}/api/captiveportal/settings/search_zones");
+
+            if (!$response->successful()) {
+                return null;
+            }
+
+            foreach ($response->json('rows') ?? [] as $row) {
+                if ((string) ($row['zoneid'] ?? '') === (string) $this->zone) {
+                    return $row['uuid'] ?? null;
+                }
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception resolving captive portal zone UUID: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Split an OPNsense "AsList" field's raw value (newline-separated
+     * entries) into a clean array. Defensive against the field coming back
+     * as an already-decoded array, since option-style fields sometimes
+     * serialize as a {value: {selected: 0|1}} map instead of a plain string.
+     */
+    protected function splitZoneListField($raw): array
+    {
+        if (is_array($raw)) {
+            $raw = implode("\n", array_keys(array_filter($raw, function ($v) {
+                return is_array($v) ? (($v['selected'] ?? 0) == 1) : (bool) $v;
+            })));
+        }
+
+        return array_values(array_filter(array_map('trim', preg_split('/\r?\n/', (string) $raw))));
+    }
+
+    /**
+     * Read the captive portal zone's "Allowed IP addresses" and "Allowed MAC
+     * addresses" passthrough lists. Devices on these lists skip the portal
+     * entirely — no voucher, ever — which is a different, stronger guarantee
+     * than a Kea static IP reservation (see addKeaReservation): that only
+     * pins the device's IP, it still has to authenticate at the portal.
+     *
+     * @return array{ips: string[], macs: string[]}
+     */
+    public function getAllowedAddresses(): array
+    {
+        $empty = ['ips' => [], 'macs' => []];
+
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return $empty;
+        }
+
+        $uuid = $this->resolveCaptivePortalZoneUuid();
+        if (!$uuid) {
+            return $empty;
+        }
+
+        try {
+            $response = $this->client()->get("{$this->baseUrl}/api/captiveportal/settings/get_zone/{$uuid}");
+
+            if (!$response->successful()) {
+                return $empty;
+            }
+
+            $zone = $response->json('zone') ?? [];
+
+            return [
+                'ips' => $this->splitZoneListField($zone['allowedAddresses'] ?? ''),
+                'macs' => $this->splitZoneListField($zone['allowedMACAddresses'] ?? ''),
+            ];
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception fetching captive portal allowed addresses: " . $e->getMessage());
+            return $empty;
+        }
+    }
+
+    public function addAllowedIp(string $address): array
+    {
+        return $this->modifyZoneListField('allowedAddresses', $address, true);
+    }
+
+    public function removeAllowedIp(string $address): array
+    {
+        return $this->modifyZoneListField('allowedAddresses', $address, false);
+    }
+
+    public function addAllowedMac(string $mac): array
+    {
+        return $this->modifyZoneListField('allowedMACAddresses', strtoupper($mac), true);
+    }
+
+    public function removeAllowedMac(string $mac): array
+    {
+        return $this->modifyZoneListField('allowedMACAddresses', strtoupper($mac), false);
+    }
+
+    /**
+     * Add or remove one entry from the zone's allowedAddresses /
+     * allowedMACAddresses list. Only the changed field is posted back to
+     * set_zone — OPNsense's model layer (setNodes) leaves every field absent
+     * from the payload untouched (interfaces, auth servers, template, ...),
+     * the same partial-update approach writeKeaReservation() relies on — so
+     * this can't clobber the rest of the zone's configuration.
+     *
+     * @return array{success: bool, message: ?string}
+     */
+    protected function modifyZoneListField(string $field, string $value, bool $add): array
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return ['success' => false, 'message' => 'OPNsense API credentials are not configured.'];
+        }
+
+        $uuid = $this->resolveCaptivePortalZoneUuid();
+        if (!$uuid) {
+            return ['success' => false, 'message' => "Could not find captive portal zone {$this->zone} on OPNsense."];
+        }
+
+        try {
+            $getResponse = $this->client()->get("{$this->baseUrl}/api/captiveportal/settings/get_zone/{$uuid}");
+            $zone = $getResponse->json('zone') ?? [];
+            $current = $this->splitZoneListField($zone[$field] ?? '');
+
+            if ($add) {
+                if (in_array($value, $current, true)) {
+                    return ['success' => true, 'message' => null];
+                }
+                $current[] = $value;
+            } else {
+                $current = array_values(array_filter($current, fn ($v) => $v !== $value));
+            }
+
+            $response = $this->client()->post("{$this->baseUrl}/api/captiveportal/settings/set_zone/{$uuid}", [
+                'zone' => [$field => implode("\n", $current)],
+            ]);
+            $data = $response->json();
+
+            if ($response->successful() && ($data['result'] ?? null) === 'saved') {
+                $this->reconfigureCaptivePortal();
+                $this->forgetSessionsCache();
+                return ['success' => true, 'message' => null];
+            }
+
+            Log::error("OPNsense: Failed to update captive portal {$field}.", [
+                'status' => $response->status(),
+                'response' => $data,
+            ]);
+            return ['success' => false, 'message' => 'OPNsense rejected the change: ' . json_encode($data['validations'] ?? $data)];
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception updating captive portal {$field}: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not reach OPNsense.'];
+        }
+    }
+
+    /**
+     * Apply pending captive portal zone configuration changes — allowed
+     * address list edits don't take effect until this runs.
+     */
+    public function reconfigureCaptivePortal(): bool
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return false;
+        }
+
+        try {
+            $response = $this->client()->post("{$this->baseUrl}/api/captiveportal/service/reconfigure");
+
+            if ($response->successful()) {
+                Log::info("OPNsense: captive portal reconfigured.");
+                return true;
+            }
+
+            Log::error("OPNsense: Failed to reconfigure captive portal.", [
+                'status' => $response->status(),
+                'response' => $response->json(),
+            ]);
+            return false;
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception reconfiguring captive portal: " . $e->getMessage());
             return false;
         }
     }

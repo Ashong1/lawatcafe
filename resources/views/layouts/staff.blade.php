@@ -1,4 +1,13 @@
 <!DOCTYPE html>
+@php
+    $sidebarOpen = request()->cookie('lk_sidebar_open', '1') === '1';
+    $cookieMenus = json_decode(request()->cookie('lk_staff_menus', '{}'), true);
+    $routeDefaults = [
+        'inventory' => request()->is('inventory*'),
+        'network'   => request()->is('network*'),
+    ];
+    $menus = is_array($cookieMenus) && !empty($cookieMenus) ? array_merge($routeDefaults, $cookieMenus) : $routeDefaults;
+@endphp
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -19,7 +28,7 @@
                 toast: true,
                 position: 'top-end',
                 icon: 'success',
-                title: '{{ session('success') }}',
+                title: {!! \Illuminate\Support\Js::from(session('success')) !!},
                 showConfirmButton: false,
                 timer: 4000,
                 timerProgressBar: true,
@@ -36,7 +45,7 @@
                 toast: true,
                 position: 'top-end',
                 icon: 'error',
-                title: '{{ session('error') }}',
+                title: {!! \Illuminate\Support\Js::from(session('error')) !!},
                 showConfirmButton: false,
                 timer: 4000,
                 timerProgressBar: true,
@@ -53,7 +62,7 @@
                 toast: true,
                 position: 'top-end',
                 icon: 'info',
-                title: '{{ session('status') === 'profile-updated' ? 'Profile Updated' : (session('status') === 'password-updated' ? 'Password Updated' : (session('status') === 'verification-link-sent' ? 'Verification Link Sent' : session('status'))) }}',
+                title: {!! \Illuminate\Support\Js::from(session('status') === 'profile-updated' ? 'Profile Updated' : (session('status') === 'password-updated' ? 'Password Updated' : (session('status') === 'verification-link-sent' ? 'Verification Link Sent' : session('status')))) !!},
                 showConfirmButton: false,
                 timer: 4000,
                 timerProgressBar: true,
@@ -71,7 +80,7 @@
                 position: 'top-end',
                 icon: 'error',
                 title: 'Validation Error',
-                text: '{{ $errors->first() }}',
+                text: {!! \Illuminate\Support\Js::from($errors->first()) !!},
                 showConfirmButton: false,
                 timer: 6000,
                 timerProgressBar: true,
@@ -97,8 +106,8 @@
     />
 
     <aside
-        :class="sidebarOpen ? 'w-64' : 'w-20'"
-        class="bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl z-20 transition-all duration-300 ease-in-out shrink-0 relative [view-transition-name:app-sidebar]">
+        class="{{ $sidebarOpen ? 'w-64' : 'w-20' }} flex-none bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl z-20 transition-[width] duration-300 ease-in-out shrink-0 relative [view-transition-name:app-sidebar]"
+        :class="{ '!w-20': !sidebarOpen }">
         
         <div class="h-20 flex items-center px-6 border-b border-[#5D4037] shrink-0 overflow-hidden relative">
             <x-lucide-coffee class="w-8 h-8 text-amber-500 mr-2 shrink-0 absolute left-6" />
@@ -190,6 +199,11 @@
             </a>
 
             </nav>
+
+        <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.0</span>
+            <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
+        </div>
     </aside>
 
     <div class="flex-1 flex flex-col overflow-hidden">
@@ -255,15 +269,12 @@
 
         document.addEventListener('alpine:init', () => {
             Alpine.data('staffLayout', () => ({
-                sidebarOpen: true,
-                menus: {
-                    inventory: {{ request()->is('inventory*') ? 'true' : 'false' }},
-                    network: {{ request()->is('network*') ? 'true' : 'false' }}
-                },
+                sidebarOpen: @json($sidebarOpen),
+                menus: @json($menus),
                 init() {
-                    // See the matching logic in layouts/admin.blade.php: a fresh
-                    // page load always starts the sidebar nav scrolled to the top,
-                    // which resets any scroll position the user had — restore it.
+                    this.$watch('sidebarOpen', v => document.cookie = `lk_sidebar_open=${v ? 1 : 0};path=/;max-age=31536000;SameSite=Lax`);
+                    this.$watch('menus', v => document.cookie = `lk_staff_menus=${encodeURIComponent(JSON.stringify(v))};path=/;max-age=31536000;SameSite=Lax`);
+
                     const savedScroll = parseInt(localStorage.getItem('lawatkape_staff_nav_scroll'), 10);
                     if (!isNaN(savedScroll)) {
                         this.$refs.sidebarNav.scrollTop = savedScroll;

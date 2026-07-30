@@ -17,6 +17,7 @@
             csrf: @js($csrf),
             csrfToken: @js(csrf_token()),
             rateLimitMessage: @js($rateLimitMessage),
+            anchorId: @js($anchorId),
         })"
         class="flex-1 min-h-0 flex flex-col"
         @open-agent-chat.window="handleExternalOpen($event.detail.prompt)"
@@ -72,6 +73,7 @@
         csrf: @js($csrf),
         csrfToken: @js(csrf_token()),
         rateLimitMessage: @js($rateLimitMessage),
+        anchorId: @js($anchorId),
     })"
      class="fixed flex flex-col"
      :style="`left: ${posX}px; top: ${posY}px; width: 380px; position: fixed !important; z-index: 9999 !important; bottom: auto !important; right: auto !important; transition: ${isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'}; touch-action: none;`"
@@ -233,6 +235,7 @@ document.addEventListener('alpine:init', () => {
         csrf: config.csrf,
         csrfToken: config.csrfToken,
         rateLimitMessage: config.rateLimitMessage,
+        storageKey: 'agentChatHistory:' + config.anchorId,
 
         open: false,
         message: '',
@@ -254,6 +257,18 @@ document.addEventListener('alpine:init', () => {
         initialY: 0,
 
         init() {
+            // Restores the conversation across full page navigations (this app has no
+            // SPA routing, so every link click destroys and recreates this component).
+            // sessionStorage rather than localStorage: these terminals/kiosks are often
+            // shared, so history shouldn't outlive the browser tab.
+            try {
+                const saved = sessionStorage.getItem(this.storageKey);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed) && parsed.length) this.history = parsed;
+                }
+            } catch (e) { /* corrupt/unavailable storage — keep the default greeting */ }
+
             if (this.open) {
                 this.posY = window.innerHeight - 646;
             }
@@ -265,6 +280,14 @@ document.addEventListener('alpine:init', () => {
 
             this.$watch('history.length', () => this.scrollToBottom());
             this.$watch('thinking', () => this.scrollToBottom());
+
+            // Pending confirmations rendered here can also be resolved elsewhere
+            // (the Agent Activity page) — poll so this bubble doesn't keep saying
+            // "needs confirmation" forever after that happens. Guests (csrf: false)
+            // never get confirm-tier tools, so skip entirely for the portal widget.
+            if (this.csrf) {
+                setInterval(() => this.syncPendingActions(), 12000);
+            }
         },
 
         startDrag(e) {
@@ -325,6 +348,7 @@ document.addEventListener('alpine:init', () => {
             this.message = '';
             this.thinking = true;
             this.scrollToBottom();
+            this.save();
 
             // Client-side ceiling matching the worst-case server-side provider
             // cascade, so a dead request reads as "slow, try again" rather than
@@ -435,6 +459,38 @@ document.addEventListener('alpine:init', () => {
                 clearTimeout(timeoutId);
                 this.thinking = false;
                 this.scrollToBottom();
+                this.save();
+            }
+        },
+
+        async syncPendingActions() {
+            const unresolved = this.history.filter(m => m.kind === 'pending' && !m.resolved);
+            if (unresolved.length === 0) return;
+
+            try {
+                const ids = unresolved.map(m => m.audit_id).join(',');
+                const response = await fetch(`{{ route('admin.ai.actions.statuses') }}?ids=${ids}`, { headers: { 'Accept': 'application/json' } });
+                if (!response.ok) return;
+
+                const results = await response.json();
+                let changed = false;
+
+                results.forEach(r => {
+                    if (r.status === 'proposed') return;
+                    const entry = unresolved.find(m => m.audit_id === r.id);
+                    if (!entry) return;
+
+                    entry.resolved = true;
+                    entry.resolution = r.status === 'executed' ? 'approved' : (r.status === 'rejected' ? 'rejected' : 'failed');
+                    entry.resolutionMessage = r.status === 'rejected'
+                        ? (r.approved_by ? `Rejected by ${r.approved_by}.` : 'Rejected.')
+                        : r.message;
+                    changed = true;
+                });
+
+                if (changed) this.save();
+            } catch (error) {
+                // Silent — this is a background sync, not a user-initiated action.
             }
         },
 
@@ -459,6 +515,7 @@ document.addEventListener('alpine:init', () => {
             } finally {
                 this.resolvingId = null;
                 this.scrollToBottom();
+                this.save();
             }
         },
 
@@ -482,6 +539,7 @@ document.addEventListener('alpine:init', () => {
             } finally {
                 this.resolvingId = null;
                 this.scrollToBottom();
+                this.save();
             }
         },
 
@@ -514,6 +572,12 @@ document.addEventListener('alpine:init', () => {
                     }
                 }, 50);
             });
+        },
+
+        save() {
+            try {
+                sessionStorage.setItem(this.storageKey, JSON.stringify(this.history));
+            } catch (e) { /* storage full/unavailable — history just won't survive navigation */ }
         }
     }));
 });

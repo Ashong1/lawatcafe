@@ -101,6 +101,25 @@
   - Removed obsolete `imap_*` rows from the `settings` database table.
 - **Rule**: When removing deprecated third-party integrations, clean up scheduled console commands, controller validation, UI settings views, database keys, and composer dependencies to maintain a lean application footprint.
 
+### 2026-07-28 - Eliminating Paint-Holding Blank Page (~530ms TTFB) & Sidebar Width Dips
+- **Action**: Diagnosed and resolved page paint-holding timeout (~500ms blank page at t=27.13–27.60) and 220px sidebar width dips during navigation.
+- **Root Causes**:
+  1. Synchronous OPNsense API calls (`listSessions()`, `getArpTable()`, `getGatewayStatus()`, `getInterfaceStats()`) running during page render without tight timeouts and short cache TTLs (5s). Under high network latency or cold cache, request latency exceeded Chrome's ~500ms paint-holding budget, causing Chrome to dump the previous DOM and render an empty document (`#FDF8F5` background).
+  2. The sidebar `<aside>` element relied solely on Alpine.js reactive class binding (`:class="sidebarOpen ? 'w-64' : 'w-20'"`) without having `w-64 flex-none` in its static HTML `class="..."` attribute. During cross-document View Transitions, the un-hydrated HTML snapshot of the incoming page was parsed before JS execution, momentarily rendering at content auto-width (~220px) before expanding to 256px (`w-64`).
+- **Outcome**:
+  - Reduced OPNsense HTTP client connect timeout to 1s and total timeout to 2s in `OpnSenseService.php`, ensuring failure/fallback occurs fast without hanging web requests.
+  - Increased OPNsense cache TTLs to 15s with stale-cache fallback (`Cache::get(...)`) when API requests fail or time out.
+  - Reduced `/network/sessions` server render time (TTFB) from ~400ms-600ms down to **~18ms** (warm) / **~99ms** (cold).
+  - Added `w-64 flex-none` directly to static `class="..."` on `<aside>` in both `admin.blade.php` and `staff.blade.php` to eliminate the 220px initial-render width dip during View Transitions.
+  - Added `html { scrollbar-gutter: stable; }` to `resources/css/app.css` to prevent layout jumps when vertical scrollbars toggle.
+- **Rule**: Never allow un-bounded or long-timeout external API calls in HTTP request handling paths. Always set explicit HTTP connect & total timeouts (1s-2s max) and use cached fallbacks to protect TTFB against browser paint-holding limits (~500ms). Always include default static size classes on view-transition elements so raw HTML snapshots render with correct layout bounds before JS hydration.
+
+### 2026-07-30 - Captive Portal Vouchers Silently Rejected by the 1s/2s OPNsense Timeout
+- **Action**: Diagnosed customer reports that generated Wi-Fi vouchers "wouldn't be accepted" at the captive portal.
+- **Root Cause**: `OpnSenseService::authorizeDevice()` — the call that redeems a voucher via `captiveportal/session/connect` — shares `client()`'s global 1s/2s budget from the 2026-07-28 entry above. That budget is correct for the cached, stale-fallback render/poll methods it was designed for, but `authorizeDevice()` is a one-shot write with **no fallback**: a timeout there isn't stale data, it's an outright rejected voucher. Production logs show this exact router occasionally taking well over 2s (even 10s+, and one SSL handshake failure) to respond, so real customers were hitting this.
+- **Outcome**: `client()` now takes optional `$connectTimeout`/`$timeoutSeconds` params (still defaulting to 1s/2s for every existing render-path caller). `authorizeDevice()` explicitly requests `client(4, 8)` instead.
+- **Rule**: A shared low-timeout HTTP client tuned for a cached/fallback read path is wrong for a write with no fallback. Before applying a render-path timeout rule to a new OPNsense call, check whether that call has a cached value to fall back to — if not (auth, disconnect, any mutation), it needs its own longer, explicit budget rather than inheriting the render-path default.
+
 
 
 
