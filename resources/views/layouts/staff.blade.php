@@ -2,12 +2,13 @@
 @php
     $sidebarOpen = request()->cookie('lk_sidebar_open', '1') === '1';
     // See the matching change (and full reasoning) in layouts/admin.blade.php
-    // — submenu state is now purely route-derived, no cookie stickiness.
+    // — submenu state is sticky across navigation once manually opened.
     $routeDefaults = [
         'inventory' => request()->is('inventory*'),
         'network'   => request()->is('network*'),
     ];
-    $menus = $routeDefaults;
+    $cookieMenus = json_decode(request()->cookie('lk_staff_menus', '{}'), true);
+    $menus = is_array($cookieMenus) && !empty($cookieMenus) ? array_merge($routeDefaults, $cookieMenus) : $routeDefaults;
 @endphp
 <html lang="en">
 <head>
@@ -203,7 +204,7 @@
             </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.11</span>
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.12</span>
             <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
@@ -276,6 +277,7 @@
                 menus: @json($menus),
                 init() {
                     this.$watch('sidebarOpen', v => document.cookie = `lk_sidebar_open=${v ? 1 : 0};path=/;max-age=31536000;SameSite=Lax`);
+                    this.$watch('menus', v => document.cookie = `lk_staff_menus=${encodeURIComponent(JSON.stringify(v))};path=/;max-age=31536000;SameSite=Lax`);
 
                     const savedScroll = parseInt(localStorage.getItem('lawatkape_staff_nav_scroll'), 10);
                     if (!isNaN(savedScroll)) {

@@ -7,27 +7,24 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Submenu open/closed state is derived purely from the current route on
- * every page load — no cookie-based cross-page stickiness. That cookie
- * blending went through two prior designs, each with its own bug:
- *   1. array_merge($routeDefaults, $cookieMenus) let a stale cookie value
- *      beat the current page (a dropdown left open stayed visibly open on
- *      totally unrelated pages).
- *   2. "cookie only when no section matches the current route" still let a
- *      section unexpectedly collapse/expand depending on which route
- *      pattern happened to match, and depended on every section having a
- *      complete route pattern (an incomplete one, like the original
- *      `finance` pattern missing the Z-Reads/audit routes, silently fell
- *      through to the cookie in a confusing way).
- * Removed entirely: x-cloak (see AgentChatHistoryUiTest era fix) already
- * solves the visible-flash problem the cookie was introduced to prevent,
- * so pure route-derived state can't ever contradict the page you're on.
+ * Submenu open/closed state is sticky: once a section is opened it stays
+ * open across navigation to any page, until manually closed (explicit user
+ * request, 2026-07-30). Two earlier route-derived designs (stale-cookie-wins
+ * array_merge, then "cookie only when no section matches", then pure
+ * route-based with no stickiness at all) were each tried and rejected before
+ * landing back on stickiness — see memory
+ * project_sidebar_submenu_final_design_2026-07-30.md for the full history.
+ *
+ * Route defaults ($routeDefaults) only seed the very first visit, before any
+ * lk_admin_menus/lk_staff_menus cookie has ever been written. Once that
+ * cookie exists, it wins wholesale for every key it contains — the current
+ * route never overrides a manually-set value.
  */
 class SidebarMenuStateTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_inventory_page_opens_only_the_inventory_section(): void
+    public function test_admin_inventory_page_opens_only_the_inventory_section_on_first_visit(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
@@ -37,7 +34,7 @@ class SidebarMenuStateTest extends TestCase
         $response->assertSee('menus: {"inventory":true,"network":false,"finance":false,"settings":false,"system":false}', false);
     }
 
-    public function test_admin_network_page_opens_only_the_network_section(): void
+    public function test_admin_network_page_opens_only_the_network_section_on_first_visit(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
@@ -52,7 +49,7 @@ class SidebarMenuStateTest extends TestCase
      * only) didn't cover the Z-Reads/end-of-day-audit routes, so this page
      * showed Finance closed despite clearly belonging to that section.
      */
-    public function test_admin_zreads_page_opens_the_finance_section(): void
+    public function test_admin_zreads_page_opens_the_finance_section_on_first_visit(): void
     {
         $admin = User::factory()->create(['role' => 'super_admin']);
 
@@ -62,7 +59,7 @@ class SidebarMenuStateTest extends TestCase
         $response->assertSee('menus: {"inventory":false,"network":false,"finance":true,"settings":false,"system":false}', false);
     }
 
-    public function test_admin_dashboard_opens_no_section_regardless_of_any_cookie(): void
+    public function test_admin_section_opened_via_cookie_stays_open_on_an_unrelated_page(): void
     {
         $admin = User::factory()->create(['role' => 'super_admin']);
 
@@ -71,10 +68,22 @@ class SidebarMenuStateTest extends TestCase
             ->get(route('dashboard'));
 
         $response->assertOk();
+        $response->assertSee('menus: {"inventory":true,"network":false,"finance":false,"settings":false,"system":false}', false);
+    }
+
+    public function test_admin_section_closed_via_cookie_stays_closed_even_on_its_own_page(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        $response = $this->actingAs($admin)
+            ->withCookie('lk_admin_menus', json_encode(['inventory' => false, 'network' => false, 'finance' => false, 'settings' => false, 'system' => false]))
+            ->get(route('inventory.categories.index'));
+
+        $response->assertOk();
         $response->assertSee('menus: {"inventory":false,"network":false,"finance":false,"settings":false,"system":false}', false);
     }
 
-    public function test_staff_network_page_opens_only_the_network_section(): void
+    public function test_staff_network_page_opens_only_the_network_section_on_first_visit(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
 
@@ -82,6 +91,18 @@ class SidebarMenuStateTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('menus: {"inventory":false,"network":true}', false);
+    }
+
+    public function test_staff_section_opened_via_cookie_stays_open_on_an_unrelated_page(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+
+        $response = $this->actingAs($staff)
+            ->withCookie('lk_staff_menus', json_encode(['inventory' => true, 'network' => false]))
+            ->get(route('staff.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('menus: {"inventory":true,"network":false}', false);
     }
 
     public function test_submenu_dropdowns_have_x_cloak_to_prevent_a_flash_before_alpine_hydrates(): void
