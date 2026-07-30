@@ -7,74 +7,83 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Regression: `array_merge($routeDefaults, $cookieMenus)` let a stale
- * cookie value win even when it contradicted the current page — e.g. the
- * Inventory dropdown, once opened, stayed rendered as open while browsing
- * completely unrelated pages like Network, since the cookie's stale `true`
- * always overrode the fresh route-computed `false`. Reported as the sidebar
- * dropdown "opening on every page" (2026-07-30).
- *
- * Fix: when the current page belongs to a section, that section's own
- * route-computed state is authoritative for every key (no blending), so
- * only the current section is ever open. The cookie only applies as a
- * sticky fallback on pages that don't belong to any section at all.
+ * Submenu open/closed state is derived purely from the current route on
+ * every page load — no cookie-based cross-page stickiness. That cookie
+ * blending went through two prior designs, each with its own bug:
+ *   1. array_merge($routeDefaults, $cookieMenus) let a stale cookie value
+ *      beat the current page (a dropdown left open stayed visibly open on
+ *      totally unrelated pages).
+ *   2. "cookie only when no section matches the current route" still let a
+ *      section unexpectedly collapse/expand depending on which route
+ *      pattern happened to match, and depended on every section having a
+ *      complete route pattern (an incomplete one, like the original
+ *      `finance` pattern missing the Z-Reads/audit routes, silently fell
+ *      through to the cookie in a confusing way).
+ * Removed entirely: x-cloak (see AgentChatHistoryUiTest era fix) already
+ * solves the visible-flash problem the cookie was introduced to prevent,
+ * so pure route-derived state can't ever contradict the page you're on.
  */
 class SidebarMenuStateTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_network_page_does_not_show_inventory_stuck_open_from_a_stale_cookie(): void
+    public function test_admin_inventory_page_opens_only_the_inventory_section(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $staleCookie = json_encode(['inventory' => true, 'network' => false, 'finance' => false, 'settings' => false, 'system' => false]);
 
-        $response = $this->actingAs($admin)
-            ->withCookie('lk_admin_menus', $staleCookie)
-            ->get(route('network.sessions'));
-
-        $response->assertOk();
-        $response->assertSee('menus: {"inventory":false,"network":true,"finance":false,"settings":false,"system":false}', false);
-    }
-
-    public function test_admin_dashboard_falls_back_to_the_sticky_cookie_since_it_has_no_section_of_its_own(): void
-    {
-        $admin = User::factory()->create(['role' => 'super_admin']);
-        $cookie = json_encode(['inventory' => true, 'network' => false, 'finance' => false, 'settings' => false, 'system' => false]);
-
-        $response = $this->actingAs($admin)
-            ->withCookie('lk_admin_menus', $cookie)
-            ->get(route('dashboard'));
+        $response = $this->actingAs($admin)->get(route('inventory.categories.index'));
 
         $response->assertOk();
         $response->assertSee('menus: {"inventory":true,"network":false,"finance":false,"settings":false,"system":false}', false);
     }
 
-    public function test_staff_network_page_does_not_show_inventory_stuck_open_from_a_stale_cookie(): void
+    public function test_admin_network_page_opens_only_the_network_section(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->get(route('network.sessions'));
+
+        $response->assertOk();
+        $response->assertSee('menus: {"inventory":false,"network":true,"finance":false,"settings":false,"system":false}', false);
+    }
+
+    /**
+     * Regression: the original `finance` pattern (`request()->is('sales*')`
+     * only) didn't cover the Z-Reads/end-of-day-audit routes, so this page
+     * showed Finance closed despite clearly belonging to that section.
+     */
+    public function test_admin_zreads_page_opens_the_finance_section(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        $response = $this->actingAs($admin)->get(route('admin.finance.z-reads'));
+
+        $response->assertOk();
+        $response->assertSee('menus: {"inventory":false,"network":false,"finance":true,"settings":false,"system":false}', false);
+    }
+
+    public function test_admin_dashboard_opens_no_section_regardless_of_any_cookie(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        $response = $this->actingAs($admin)
+            ->withCookie('lk_admin_menus', json_encode(['inventory' => true, 'network' => false, 'finance' => false, 'settings' => false, 'system' => false]))
+            ->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('menus: {"inventory":false,"network":false,"finance":false,"settings":false,"system":false}', false);
+    }
+
+    public function test_staff_network_page_opens_only_the_network_section(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
-        $staleCookie = json_encode(['inventory' => true, 'network' => false]);
 
-        $response = $this->actingAs($staff)
-            ->withCookie('lk_staff_menus', $staleCookie)
-            ->get(route('network.vouchers.index'));
+        $response = $this->actingAs($staff)->get(route('network.vouchers.index'));
 
         $response->assertOk();
         $response->assertSee('menus: {"inventory":false,"network":true}', false);
     }
 
-    /**
-     * Separate bug from the stale-cookie one above: these submenu
-     * <div x-show="menus.X && sidebarOpen"> blocks had no x-cloak and no
-     * static display:none fallback, so on every page load the browser
-     * painted them in their default *visible* state before Alpine.js (a
-     * deferred module script) finished hydrating and applied the correct
-     * hidden/shown state — a visible "flash open, then closes" on every
-     * closed section, on every navigation, independent of whether the
-     * final logical state was correct. x-cloak (already defined in
-     * app.css as `[x-cloak] { display: none !important; }`, applied via a
-     * synchronously-loaded stylesheet) hides them from first paint until
-     * Alpine settles, eliminating the flash.
-     */
     public function test_submenu_dropdowns_have_x_cloak_to_prevent_a_flash_before_alpine_hydrates(): void
     {
         $admin = User::factory()->create(['role' => 'super_admin']);

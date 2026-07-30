@@ -1,18 +1,13 @@
 <!DOCTYPE html>
 @php
     $sidebarOpen = request()->cookie('lk_sidebar_open', '1') === '1';
-    $cookieMenus = json_decode(request()->cookie('lk_staff_menus', '{}'), true);
+    // See the matching change (and full reasoning) in layouts/admin.blade.php
+    // — submenu state is now purely route-derived, no cookie stickiness.
     $routeDefaults = [
         'inventory' => request()->is('inventory*'),
         'network'   => request()->is('network*'),
     ];
-    // See the matching fix (and full reasoning) in layouts/admin.blade.php —
-    // the current page's own section is always authoritative when it
-    // matches one, so a stale cookie can't leave a dropdown stuck open on
-    // an unrelated page; the cookie only applies on pages with no section
-    // of their own (e.g. the dashboard).
-    $onASection = in_array(true, $routeDefaults, true);
-    $menus = $onASection || !is_array($cookieMenus) || empty($cookieMenus) ? $routeDefaults : $cookieMenus;
+    $menus = $routeDefaults;
 @endphp
 <html lang="en">
 <head>
@@ -208,7 +203,7 @@
             </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.10</span>
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.11</span>
             <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
@@ -281,7 +276,6 @@
                 menus: @json($menus),
                 init() {
                     this.$watch('sidebarOpen', v => document.cookie = `lk_sidebar_open=${v ? 1 : 0};path=/;max-age=31536000;SameSite=Lax`);
-                    this.$watch('menus', v => document.cookie = `lk_staff_menus=${encodeURIComponent(JSON.stringify(v))};path=/;max-age=31536000;SameSite=Lax`);
 
                     const savedScroll = parseInt(localStorage.getItem('lawatkape_staff_nav_scroll'), 10);
                     if (!isNaN(savedScroll)) {

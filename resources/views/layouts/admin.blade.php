@@ -1,25 +1,27 @@
 <!DOCTYPE html>
 @php
     $sidebarOpen = request()->cookie('lk_sidebar_open', '1') === '1';
-    $cookieMenus = json_decode(request()->cookie('lk_admin_menus', '{}'), true);
+    // Which submenu is open is derived purely from the current route, fresh
+    // on every page load — no cookie/cross-page stickiness. This used to be
+    // blended with a sticky cookie (array_merge($routeDefaults, $cookieMenus),
+    // then a "cookie only when no section matches" compromise), but every
+    // version of that blending produced its own bug: a stale cookie value
+    // beating the current page, or a section unexpectedly collapsing on
+    // navigation because a later page's route didn't happen to match the
+    // pattern the cookie was tracking. x-cloak (see the submenu divs below)
+    // already eliminates the original visible-flash problem the cookie was
+    // introduced to solve, so there's no remaining reason to persist this —
+    // pure route-based state can't ever contradict the page you're actually
+    // on. A manual click still toggles a submenu open/closed reactively for
+    // as long as you stay on that page; it just doesn't survive navigation.
     $routeDefaults = [
         'inventory' => request()->is('inventory*'),
         'network'   => request()->is('network*'),
-        'finance'   => request()->is('sales*'),
+        'finance'   => request()->is('sales*') || request()->routeIs('admin.finance.*'),
         'settings'  => request()->is('accounts*') || request()->routeIs('admin.settings.store') || request()->routeIs('admin.settings.ai-providers*'),
         'system'    => request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent'),
     ];
-    // If the current page belongs to a section, that's authoritative for
-    // ALL sections — we know exactly which one should be open (this one)
-    // and which shouldn't (everything else), no ambiguity to resolve via
-    // the cookie. array_merge($routeDefaults, $cookieMenus) previously let
-    // a stale cookie value win even when it contradicted the current page
-    // (e.g. Inventory left open from an earlier visit stayed visibly open
-    // while browsing Network) — only fall back to the user's last
-    // manual/sticky preference on pages that don't belong to any section
-    // (e.g. the dashboard), where there's no route signal to go on.
-    $onASection = in_array(true, $routeDefaults, true);
-    $menus = $onASection || !is_array($cookieMenus) || empty($cookieMenus) ? $routeDefaults : $cookieMenus;
+    $menus = $routeDefaults;
 @endphp
 <html lang="en">
 <head>
@@ -399,7 +401,7 @@
         </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.10</span>
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.11</span>
             <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
@@ -472,7 +474,6 @@
                 menus: @json($menus),
                 init() {
                     this.$watch('sidebarOpen', v => document.cookie = `lk_sidebar_open=${v ? 1 : 0};path=/;max-age=31536000;SameSite=Lax`);
-                    this.$watch('menus', v => document.cookie = `lk_admin_menus=${encodeURIComponent(JSON.stringify(v))};path=/;max-age=31536000;SameSite=Lax`);
 
                     const savedScroll = parseInt(localStorage.getItem('lawatkape_admin_nav_scroll'), 10);
                     if (!isNaN(savedScroll)) {
