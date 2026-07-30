@@ -103,9 +103,13 @@ class StaffController extends Controller
 
     public function staffChat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator, \App\Services\Agent\ConversationHistoryService $conversations)
     {
+        // history.*.role restricted to user/assistant — see the matching
+        // fix (and full reasoning) on CaptivePortalController::chat().
         $request->validate([
             'message' => 'required|string|max:1000',
-            'history' => 'nullable|array',
+            'history' => 'nullable|array|max:30',
+            'history.*.role' => 'required_with:history|in:user,assistant',
+            'history.*.content' => 'required_with:history|string|max:4000',
             'conversation_id' => 'nullable|integer',
         ]);
 

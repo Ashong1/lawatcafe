@@ -292,9 +292,19 @@ class CaptivePortalController extends Controller
 
     public function chat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator, \App\Services\OpnSenseService $opnsense)
     {
+        // history.*.role is deliberately restricted to user/assistant: this
+        // endpoint is unauthenticated and reachable directly (not just via
+        // the JS widget), so nothing stops an attacker from POSTing
+        // {"history":[{"role":"system","content":"..."}]} to inject a fake
+        // system-level instruction ahead of the real one — a classic prompt
+        // injection vector via conversation history rather than the message
+        // itself. The array/content caps bound cost-abuse from an oversized
+        // payload (guest endpoint, no auth to rate-limit by account).
         $request->validate([
             'message' => 'required|string|max:500',
-            'history' => 'nullable|array'
+            'history' => 'nullable|array|max:20',
+            'history.*.role' => 'required_with:history|in:user,assistant',
+            'history.*.content' => 'required_with:history|string|max:2000',
         ]);
 
         $messages = [['role' => 'system', 'content' => $ai->buildGuestSystemPrompt()]];
@@ -306,9 +316,36 @@ class CaptivePortalController extends Controller
         [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
         $context = ['ip' => $ip, 'mac' => $mac];
 
-        $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_GUEST, null, $context);
+        // The shared agent-chat.blade.php widget (embedded here, floating on
+        // admin/staff) always requests `Accept: text/event-stream` and reads
+        // the response as a chunked SSE stream — this used to return a plain
+        // JSON body instead, which the client's stream reader never matched
+        // against its `data: ...\n\n` parser, so a guest's reply silently
+        // never arrived. Mirrors DashboardController::adminChat()'s shape.
+        return response()->stream(function () use ($messages, $orchestrator, $context) {
+            $onTextDelta = function (string $delta) {
+                echo 'data: ' . json_encode(['type' => 'delta', 'text' => $delta]) . "\n\n";
+                if (ob_get_level() > 0) @ob_flush();
+                flush();
+            };
 
-        return response()->json(['reply' => $result['reply'] ?? "☕ Serving guests! Check Menu or Wi-Fi tabs!"]);
+            $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_GUEST, null, $context, $onTextDelta);
+
+            $reply = $result['reply'] ?? "☕ Serving guests! Check Menu or Wi-Fi tabs!";
+
+            echo 'data: ' . json_encode([
+                'type' => 'meta',
+                'reply' => $reply,
+                'pending' => $result['pending'] ?? [],
+                'executed' => $result['executed'] ?? [],
+            ]) . "\n\n";
+            if (ob_get_level() > 0) @ob_flush();
+            flush();
+        }, 200, [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+            'X-Accel-Buffering' => 'no',
+        ]);
     }
 
     // Show the digital menu for Walled Garden access
