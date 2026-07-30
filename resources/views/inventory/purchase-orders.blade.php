@@ -81,7 +81,11 @@
                                                 text: 'This will email the linked supplier (if on file) and mark the draft as sent.',
                                                 icon: 'info',
                                                 confirmText: 'Yes, Send',
-                                                callback: () => document.getElementById('send-po-form-{{ $po->id }}').submit()
+                                                callback: () => {
+                                                    this.disabled = true;
+                                                    this.classList.add('opacity-40', 'cursor-wait');
+                                                    document.getElementById('send-po-form-{{ $po->id }}').submit();
+                                                }
                                             })"
                                             class="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition" title="Send">
                                         <x-lucide-send class="w-4 h-4" />
@@ -97,7 +101,11 @@
                                                 text: 'Delete this purchase order draft forever? This cannot be undone.',
                                                 icon: 'warning',
                                                 confirmText: 'Yes, Delete',
-                                                callback: () => document.getElementById('delete-po-form-{{ $po->id }}').submit()
+                                                callback: () => {
+                                                    this.disabled = true;
+                                                    this.classList.add('opacity-40', 'cursor-wait');
+                                                    document.getElementById('delete-po-form-{{ $po->id }}').submit();
+                                                }
                                             })"
                                             class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
                                         <x-lucide-trash-2 class="w-4 h-4" />

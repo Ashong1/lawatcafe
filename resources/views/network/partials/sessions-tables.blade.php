@@ -110,7 +110,11 @@
                                                 text: 'This device will be moved to the {{ $targetTier }} bandwidth tier.',
                                                 icon: 'warning',
                                                 confirmText: 'Yes, {{ $targetTier === 'premium' ? 'Upgrade' : 'Downgrade' }}',
-                                                callback: () => document.getElementById('tier-form-{{ $session->code }}').submit()
+                                                callback: () => {
+                                                    this.disabled = true;
+                                                    this.classList.add('opacity-40', 'cursor-wait');
+                                                    document.getElementById('tier-form-{{ $session->code }}').submit();
+                                                }
                                             })"
                                             title="{{ $targetTier === 'premium' ? 'Upgrade to Premium' : 'Downgrade to Free' }}"
                                             class="p-2 text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition-all active:scale-95 group/btn">
@@ -132,7 +136,11 @@
                                             text: 'Are you sure you want to disconnect this device from the network?',
                                             icon: 'warning',
                                             confirmText: 'Yes, Disconnect',
-                                            callback: () => document.getElementById('kick-form-{{ $session->sessionId }}').submit()
+                                            callback: () => {
+                                                this.disabled = true;
+                                                this.classList.add('opacity-40', 'cursor-wait');
+                                                document.getElementById('kick-form-{{ $session->sessionId }}').submit();
+                                            }
                                         })"
                                         class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-95 group/btn">                <x-lucide-log-out class="w-5 h-5" />
                                 </button>
