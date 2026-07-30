@@ -61,4 +61,29 @@ class SidebarMenuStateTest extends TestCase
         $response->assertOk();
         $response->assertSee('menus: {"inventory":false,"network":true}', false);
     }
+
+    /**
+     * Separate bug from the stale-cookie one above: these submenu
+     * <div x-show="menus.X && sidebarOpen"> blocks had no x-cloak and no
+     * static display:none fallback, so on every page load the browser
+     * painted them in their default *visible* state before Alpine.js (a
+     * deferred module script) finished hydrating and applied the correct
+     * hidden/shown state — a visible "flash open, then closes" on every
+     * closed section, on every navigation, independent of whether the
+     * final logical state was correct. x-cloak (already defined in
+     * app.css as `[x-cloak] { display: none !important; }`, applied via a
+     * synchronously-loaded stylesheet) hides them from first paint until
+     * Alpine settles, eliminating the flash.
+     */
+    public function test_submenu_dropdowns_have_x_cloak_to_prevent_a_flash_before_alpine_hydrates(): void
+    {
+        $admin = User::factory()->create(['role' => 'super_admin']);
+
+        $response = $this->actingAs($admin)->get(route('dashboard'));
+
+        $response->assertOk();
+        foreach (['menus.inventory', 'menus.network', 'menus.settings', 'menus.system'] as $expr) {
+            $response->assertSee("x-show=\"{$expr} && sidebarOpen\" x-cloak", false);
+        }
+    }
 }
