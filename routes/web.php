@@ -139,7 +139,9 @@ Route::middleware(['auth'])->group(function () {
             
             // Supplier Deliveries (Receiving)
             Route::resource('deliveries', \App\Http\Controllers\IngredientDeliveryController::class)->only(['index', 'store', 'destroy']);
-            
+            Route::post('deliveries/{delivery}/confirm', [\App\Http\Controllers\IngredientDeliveryController::class, 'confirm'])->name('deliveries.confirm');
+            Route::post('deliveries/{delivery}/reject', [\App\Http\Controllers\IngredientDeliveryController::class, 'reject'])->name('deliveries.reject');
+
             // Suppliers Database
             Route::resource('suppliers', \App\Http\Controllers\SupplierController::class)->except(['create', 'show', 'edit']);
 
@@ -237,6 +239,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/staff-dashboard', [StaffController::class, 'index'])->name('staff.dashboard');
         Route::get('/staff-dashboard/live', [StaffController::class, 'getLiveData'])->name('staff.dashboard.live');
         Route::post('/staff/ai/chat', [StaffController::class, 'staffChat'])->name('staff.ai.chat')->middleware('throttle:staff-ai-chat');
+
+        // Delivery Receiving (staff-submitted; auto-confirms on a matching
+        // sent purchase order, otherwise held for admin review)
+        Route::get('/staff/deliveries', [\App\Http\Controllers\StaffDeliveryController::class, 'index'])->name('staff.deliveries.index');
+        Route::post('/staff/deliveries', [\App\Http\Controllers\StaffDeliveryController::class, 'store'])->name('staff.deliveries.store');
 
     });
 });

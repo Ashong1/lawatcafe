@@ -6,6 +6,7 @@ use App\Models\Ingredient;
 use App\Models\IngredientDelivery;
 use App\Models\IngredientDeliveryItem;
 use App\Models\InventoryLog;
+use App\Services\DeliveryReceivingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,9 +14,21 @@ class IngredientDeliveryController extends Controller
 {
     public function index()
     {
-        $deliveries = IngredientDelivery::with(['items.ingredient', 'user'])->latest()->paginate(15);
+        $deliveries = IngredientDelivery::with(['items.ingredient', 'items.purchaseOrderDraft', 'user', 'reviewedBy'])->latest()->paginate(15);
         $ingredients = Ingredient::orderBy('name')->get();
         return view('inventory.deliveries', compact('deliveries', 'ingredients'));
+    }
+
+    public function confirm(IngredientDelivery $delivery, DeliveryReceivingService $service)
+    {
+        $service->confirm($delivery, auth()->id());
+        return redirect()->route('inventory.deliveries.index')->with('success', 'Delivery confirmed and stock updated.');
+    }
+
+    public function reject(IngredientDelivery $delivery, DeliveryReceivingService $service)
+    {
+        $service->reject($delivery, auth()->id());
+        return redirect()->route('inventory.deliveries.index')->with('success', 'Delivery rejected. No stock changes were made.');
     }
 
     public function store(Request $request)

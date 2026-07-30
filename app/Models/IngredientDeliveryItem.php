@@ -10,7 +10,8 @@ class IngredientDeliveryItem extends Model
         'ingredient_delivery_id',
         'ingredient_id',
         'quantity',
-        'cost_per_unit'
+        'cost_per_unit',
+        'purchase_order_draft_id',
     ];
 
     public function delivery()
@@ -21,5 +22,10 @@ class IngredientDeliveryItem extends Model
     public function ingredient()
     {
         return $this->belongsTo(Ingredient::class);
+    }
+
+    public function purchaseOrderDraft()
+    {
+        return $this->belongsTo(PurchaseOrderDraft::class);
     }
 }

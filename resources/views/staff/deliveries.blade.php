@@ -1,33 +1,60 @@
-@extends('layouts.admin')
-@section('title', 'Supplier Deliveries')
+@extends('layouts.staff')
+@section('title', 'Receive Delivery')
 
 @section('content')
-<div x-data="deliveryManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+<div x-data="deliveryManager()" class="bg-[#FDF8F5] min-h-screen -m-8 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
-    
+
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Inventory Receiving</span>
+                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Receive Delivery</span>
             </h2>
-            <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Record new supplies from vendors and automatically restock ingredients.</p>
+            <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Record supplies as they arrive. If the details match a pending order, stock updates automatically — otherwise an admin will review it first.</p>
+        </div>
+
+        <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2 shrink-0">
+            <x-lucide-truck class="w-4 h-4" />
+            <span>Receive Delivery</span>
+        </button>
+    </div>
+
+    {{-- Pending Purchase Orders --}}
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
+        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest mb-1">Pending Orders</h3>
+        <p class="text-xs text-[#A1887F] mb-6 font-medium">Orders already sent to suppliers, waiting to arrive. Check delivered quantities against these before recording.</p>
+
+        <div class="overflow-x-auto pr-2">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
+                        <th class="pb-3 font-black">Ingredient</th>
+                        <th class="pb-3 font-black">Supplier</th>
+                        <th class="pb-3 font-black text-right">Expected Qty</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm">
+                    @forelse($pendingOrders as $order)
+                    <tr class="border-b border-[#FAFAFA]">
+                        <td class="py-3 font-bold text-[#3E2723]">{{ $order->ingredient->name }}</td>
+                        <td class="py-3 text-[#8D6E63] font-medium">{{ $order->supplier->name ?? 'No supplier on file' }}</td>
+                        <td class="py-3 text-right font-bold text-[#3E2723]">{{ number_format($order->suggested_quantity, 2) }}{{ $order->ingredient->unit }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="3" class="py-10 text-center text-[#A1887F] text-xs font-bold uppercase tracking-widest">No orders currently pending.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 
+    {{-- My Recent Deliveries --}}
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
-        
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-            <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Delivery Records</h3>
-                <p class="text-xs text-[#A1887F] mt-1 font-medium">History of all stock replenishments.</p>
-            </div>
-            
-            <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
-                <x-lucide-truck class="w-4 h-4" />
-                <span>Receive Delivery</span>
-            </button>
-        </div>
+        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest mb-1">My Recent Deliveries</h3>
+        <p class="text-xs text-[#A1887F] mb-6 font-medium">Deliveries you've recorded and their status.</p>
 
         <div class="overflow-x-auto pr-2">
             <table class="w-full text-left border-collapse">
@@ -35,29 +62,18 @@
                     <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
                         <th class="pb-4 font-black">Date</th>
                         <th class="pb-4 font-black">Supplier</th>
-                        <th class="pb-4 font-black hidden md:table-cell">Ref #</th>
                         <th class="pb-4 font-black hidden md:table-cell">Items</th>
-                        <th class="pb-4 font-black">Total Cost</th>
                         <th class="pb-4 font-black">Status</th>
-                        <th class="pb-4 font-black text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
-                    @forelse($deliveries as $delivery)
-                    <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
+                    @forelse($myDeliveries as $delivery)
+                    <tr class="border-b border-[#FAFAFA]">
                         <td class="py-4">
                             <span class="font-bold text-[#3E2723] block">{{ $delivery->delivery_date->format('M d, Y') }}</span>
-                            <span class="text-[10px] text-[#A1887F] font-medium uppercase tracking-widest">{{ $delivery->delivery_date->format('h:i A') }}</span>
-                            <span class="text-[10px] text-[#A1887F] font-mono font-bold block md:hidden">Ref: {{ $delivery->reference_number ?: 'N/A' }}</span>
                         </td>
                         <td class="py-4">
                             <span class="font-bold text-[#4A3B32]">{{ $delivery->supplier_name }}</span>
-                            @if($delivery->user)
-                                <span class="text-[9px] text-[#A1887F] font-bold uppercase tracking-widest block">by {{ $delivery->user->name }}</span>
-                            @endif
-                        </td>
-                        <td class="py-4 hidden md:table-cell">
-                            <span class="text-xs font-mono font-bold text-[#8D6E63]">{{ $delivery->reference_number ?: 'N/A' }}</span>
                         </td>
                         <td class="py-4 hidden md:table-cell">
                             <div class="flex flex-col gap-0.5">
@@ -72,60 +88,23 @@
                             </div>
                         </td>
                         <td class="py-4">
-                            <span class="font-extrabold text-[#3E2723]">₱{{ number_format($delivery->total_cost, 2) }}</span>
-                            <span class="text-[10px] text-[#A1887F] font-bold block md:hidden">{{ $delivery->items->count() }} item{{ $delivery->items->count() === 1 ? '' : 's' }}</span>
-                        </td>
-                        <td class="py-4">
                             @if($delivery->status === 'confirmed' && $delivery->auto_confirmed)
-                                <span class="text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full whitespace-nowrap">Auto-Confirmed</span>
+                                <span class="text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full">Auto-Confirmed</span>
                             @elseif($delivery->status === 'confirmed')
-                                <span class="text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full whitespace-nowrap">Confirmed</span>
+                                <span class="text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full">Confirmed</span>
                             @elseif($delivery->status === 'pending_review')
-                                <span class="text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full whitespace-nowrap">Pending Review</span>
+                                <span class="text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full">Pending Review</span>
                             @else
-                                <span class="text-[9px] font-black uppercase tracking-widest text-red-700 bg-red-50 border border-red-100 px-3 py-1.5 rounded-full whitespace-nowrap">Rejected</span>
+                                <span class="text-[9px] font-black uppercase tracking-widest text-red-700 bg-red-50 border border-red-100 px-3 py-1.5 rounded-full">Rejected</span>
                             @endif
-                        </td>
-                        <td class="py-4 text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                @if($delivery->status === 'pending_review')
-                                    <form action="{{ route('inventory.deliveries.confirm', $delivery->id) }}" method="POST" class="inline">
-                                        @csrf
-                                        <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 hover:bg-green-100 border border-green-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">
-                                            Confirm
-                                        </button>
-                                    </form>
-                                    <form action="{{ route('inventory.deliveries.reject', $delivery->id) }}" method="POST" class="inline">
-                                        @csrf
-                                        <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">
-                                            Reject
-                                        </button>
-                                    </form>
-                                @endif
-                                <form action="{{ route('inventory.deliveries.destroy', $delivery->id) }}" method="POST" id="delete-delivery-{{ $delivery->id }}" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="button"
-                                            @click="window.confirmAction({
-                                                title: 'Remove Record?',
-                                                text: 'This will hide the delivery record but WILL NOT revert stock levels.',
-                                                icon: 'warning',
-                                                confirmText: 'Yes, Remove It',
-                                                callback: () => document.getElementById('delete-delivery-{{ $delivery->id }}').submit()
-                                            })"
-                                            class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                        <x-lucide-trash-2 class="w-4 h-4" />
-                                    </button>
-                                </form>
-                            </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="py-20 text-center">
+                        <td colspan="4" class="py-20 text-center">
                             <div class="flex flex-col items-center opacity-30">
                                 <x-lucide-receipt class="w-12 h-12 mb-4" />
-                                <p class="text-[#A1887F] text-sm font-bold uppercase tracking-widest">No delivery records found.</p>
+                                <p class="text-[#A1887F] text-sm font-bold uppercase tracking-widest">No deliveries recorded yet.</p>
                             </div>
                         </td>
                     </tr>
@@ -135,7 +114,7 @@
         </div>
 
         <div class="mt-8">
-            {{ $deliveries->links() }}
+            {{ $myDeliveries->links() }}
         </div>
     </div>
 
@@ -144,10 +123,10 @@
 
             <div class="px-8 py-6 border-b border-[#FDF8F5]">
                 <h2 id="receive-delivery-heading" class="text-xl font-black text-[#3E2723] uppercase tracking-widest">Receive Supplies</h2>
-                <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter">Input vendor details to update inventory.</p>
+                <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter">Input what actually arrived — it'll be checked against pending orders.</p>
             </div>
 
-            <form action="{{ route('inventory.deliveries.store') }}" method="POST" @submit="submitting = true">
+            <form action="{{ route('staff.deliveries.store') }}" method="POST" @submit="submitting = true">
                 @csrf
                 <div class="p-8 space-y-6">
                     <div class="grid grid-cols-2 gap-4">
@@ -195,7 +174,6 @@
                                     </div>
 
                                     <div class="grid grid-cols-3 gap-3 items-end">
-                                        <!-- Pack Input (Conditional) -->
                                         <div x-show="getIngredient(item.ingredient_id)?.packaging_unit" class="flex flex-col">
                                             <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">
                                                 <span x-text="'# of ' + getIngredient(item.ingredient_id)?.packaging_unit + 's'"></span>
@@ -203,7 +181,6 @@
                                             <input type="number" step="0.1" x-model="item.packs" @input="updateFromPacks(index)" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723] bg-white">
                                         </div>
 
-                                        <!-- Total Quantity -->
                                         <div class="flex flex-col">
                                             <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">
                                                 Total Qty (<span x-text="getIngredient(item.ingredient_id)?.unit || '...'"></span>)
@@ -211,7 +188,6 @@
                                             <input type="number" step="0.01" :name="'items['+index+'][quantity]'" x-model="item.quantity" @input="updateFromQty(index)" required class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723] bg-white">
                                         </div>
 
-                        <!-- Cost -->
                                         <div class="flex flex-col">
                                             <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Unit Cost</label>
                                             <div class="flex items-center gap-1 w-full border border-[#F0E6D2] rounded-lg bg-white pl-2 focus-within:border-[#3E2723] transition-all">
@@ -220,8 +196,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Conversion Helper Text -->
+
                                     <div x-show="getIngredient(item.ingredient_id)?.packaging_unit" class="text-[8px] font-black text-amber-800 uppercase tracking-tighter italic">
                                         Note: 1 <span x-text="getIngredient(item.ingredient_id)?.packaging_unit"></span> = <span x-text="getIngredient(item.ingredient_id)?.capacity_per_pack"></span> <span x-text="getIngredient(item.ingredient_id)?.unit"></span>
                                     </div>
@@ -238,7 +213,7 @@
 
                 <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
                     <button type="button" @click="closeModal()" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-[#FDF8F5] font-black transition text-[10px] uppercase tracking-widest whitespace-nowrap">Cancel</button>
-                    <x-submit-button label="Record Delivery" />
+                    <x-submit-button label="Record Delivery" state="submitting" />
                 </div>
             </form>
     </x-modal-shell>
@@ -261,7 +236,7 @@
             closeModal() { this.isModalOpen = false; },
             addItemRow() { this.items.push({ ingredient_id: '', quantity: '', cost_per_unit: '', packs: '', use_packs: false }); },
             removeItemRow(index) { if (this.items.length > 1) this.items.splice(index, 1); },
-            
+
             getIngredient(id) {
                 return this.ingredients.find(i => i.id == id);
             },

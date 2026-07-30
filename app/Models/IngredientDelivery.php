@@ -12,11 +12,17 @@ class IngredientDelivery extends Model
         'total_cost',
         'reference_number',
         'note',
-        'user_id'
+        'user_id',
+        'status',
+        'auto_confirmed',
+        'reviewed_by',
+        'reviewed_at',
     ];
 
     protected $casts = [
         'delivery_date' => 'datetime',
+        'auto_confirmed' => 'boolean',
+        'reviewed_at' => 'datetime',
     ];
 
     public function items()
@@ -27,5 +33,10 @@ class IngredientDelivery extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function reviewedBy()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
     }
 }
