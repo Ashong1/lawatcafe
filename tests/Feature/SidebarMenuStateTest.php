@@ -27,6 +27,15 @@ use Tests\TestCase;
  * using withCookie() here made every "sticky cookie" test pass while the
  * feature was actually completely non-functional in production, since
  * EncryptCookies silently nulls any cookie it can't decrypt.
+ *
+ * In admin.blade.php specifically, the server-computed state is exposed as
+ * `initialMenus` (not `menus`) in the Alpine data object — `menus` itself
+ * starts as {} and only gets set to `initialMenus` ~50ms after mount, so
+ * Alpine's x-transition treats it as a real state change and the submenu
+ * panel visibly animates open every time a section carries over open to a
+ * new page, instead of rendering already-open with no animation (explicit
+ * user request, 2026-07-30). staff.blade.php has no visual dropdowns, so its
+ * `menus` key is untouched and still holds the value directly.
  */
 class SidebarMenuStateTest extends TestCase
 {
@@ -39,7 +48,7 @@ class SidebarMenuStateTest extends TestCase
         $response = $this->actingAs($admin)->get(route('inventory.categories.index'));
 
         $response->assertOk();
-        $response->assertSee('menus: {"inventory":true,"network":false,"finance":false,"settings":false,"system":false}', false);
+        $response->assertSee('initialMenus: {"inventory":true,"network":false,"finance":false,"settings":false,"system":false}', false);
     }
 
     public function test_admin_network_page_opens_only_the_network_section_on_first_visit(): void
@@ -49,7 +58,7 @@ class SidebarMenuStateTest extends TestCase
         $response = $this->actingAs($admin)->get(route('network.sessions'));
 
         $response->assertOk();
-        $response->assertSee('menus: {"inventory":false,"network":true,"finance":false,"settings":false,"system":false}', false);
+        $response->assertSee('initialMenus: {"inventory":false,"network":true,"finance":false,"settings":false,"system":false}', false);
     }
 
     /**
@@ -64,7 +73,7 @@ class SidebarMenuStateTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.finance.z-reads'));
 
         $response->assertOk();
-        $response->assertSee('menus: {"inventory":false,"network":false,"finance":true,"settings":false,"system":false}', false);
+        $response->assertSee('initialMenus: {"inventory":false,"network":false,"finance":true,"settings":false,"system":false}', false);
     }
 
     public function test_admin_section_opened_via_cookie_stays_open_on_an_unrelated_page(): void
@@ -76,7 +85,7 @@ class SidebarMenuStateTest extends TestCase
             ->get(route('dashboard'));
 
         $response->assertOk();
-        $response->assertSee('menus: {"inventory":true,"network":false,"finance":false,"settings":false,"system":false}', false);
+        $response->assertSee('initialMenus: {"inventory":true,"network":false,"finance":false,"settings":false,"system":false}', false);
     }
 
     public function test_admin_section_closed_via_cookie_stays_closed_even_on_its_own_page(): void
@@ -88,7 +97,7 @@ class SidebarMenuStateTest extends TestCase
             ->get(route('inventory.categories.index'));
 
         $response->assertOk();
-        $response->assertSee('menus: {"inventory":false,"network":false,"finance":false,"settings":false,"system":false}', false);
+        $response->assertSee('initialMenus: {"inventory":false,"network":false,"finance":false,"settings":false,"system":false}', false);
     }
 
     public function test_staff_network_page_opens_only_the_network_section_on_first_visit(): void

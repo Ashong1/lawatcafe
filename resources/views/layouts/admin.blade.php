@@ -398,7 +398,7 @@
         </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.17</span>
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.18</span>
             <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
@@ -468,16 +468,29 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('adminLayout', () => ({
                 sidebarOpen: @json($sidebarOpen),
-                menus: @json($menus),
+                // Starts empty (every key falsy) on purpose — see the comment
+                // in init() below for why.
+                menus: {},
+                initialMenus: @json($menus),
                 init() {
                     this.$watch('sidebarOpen', v => document.cookie = `lk_sidebar_open=${v ? 1 : 0};path=/;max-age=31536000;SameSite=Lax`);
                     this.$watch('menus', v => document.cookie = `lk_admin_menus=${encodeURIComponent(JSON.stringify(v))};path=/;max-age=31536000;SameSite=Lax`);
-                    // Seed the cookie from the current (possibly route-derived) state on
+                    // Seed the cookie from the real (possibly route-derived) state on
                     // every load too, not just on the $watch above — $watch only fires on
                     // a *change*, so a section that auto-opened purely from matching the
                     // current route (no manual click yet) would never get persisted, and
                     // navigating away from it would look like it "closed on its own".
-                    document.cookie = `lk_admin_menus=${encodeURIComponent(JSON.stringify(this.menus))};path=/;max-age=31536000;SameSite=Lax`;
+                    document.cookie = `lk_admin_menus=${encodeURIComponent(JSON.stringify(this.initialMenus))};path=/;max-age=31536000;SameSite=Lax`;
+
+                    // `menus` starts as {} (all falsy) instead of the real value above so
+                    // that assigning the real value here, shortly after mount, is a genuine
+                    // reactive change — Alpine only plays the x-transition on submenu panels
+                    // for actual state changes, not for a value that was already true at
+                    // init. Without this delay, a section carried over "open" from the
+                    // previous page would just render already-open with no visible
+                    // animation. Explicit user request, 2026-07-30: the open transition
+                    // should be visible every time, not just on a manual click.
+                    setTimeout(() => { this.menus = this.initialMenus; }, 50);
 
                     const savedScroll = parseInt(localStorage.getItem('lawatkape_admin_nav_scroll'), 10);
                     if (!isNaN(savedScroll)) {
