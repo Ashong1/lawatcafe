@@ -19,6 +19,14 @@ use Tests\TestCase;
  * lk_admin_menus/lk_staff_menus cookie has ever been written. Once that
  * cookie exists, it wins wholesale for every key it contains — the current
  * route never overrides a manually-set value.
+ *
+ * These cookies are set by plain client-side JS (document.cookie), not
+ * Laravel's Cookie facade, so they're excluded from EncryptCookies in
+ * bootstrap/app.php. Tests must use withUnencryptedCookie() (not
+ * withCookie(), which auto-encrypts) to match what a real browser sends —
+ * using withCookie() here made every "sticky cookie" test pass while the
+ * feature was actually completely non-functional in production, since
+ * EncryptCookies silently nulls any cookie it can't decrypt.
  */
 class SidebarMenuStateTest extends TestCase
 {
@@ -64,7 +72,7 @@ class SidebarMenuStateTest extends TestCase
         $admin = User::factory()->create(['role' => 'super_admin']);
 
         $response = $this->actingAs($admin)
-            ->withCookie('lk_admin_menus', json_encode(['inventory' => true, 'network' => false, 'finance' => false, 'settings' => false, 'system' => false]))
+            ->withUnencryptedCookie('lk_admin_menus', json_encode(['inventory' => true, 'network' => false, 'finance' => false, 'settings' => false, 'system' => false]))
             ->get(route('dashboard'));
 
         $response->assertOk();
@@ -76,7 +84,7 @@ class SidebarMenuStateTest extends TestCase
         $admin = User::factory()->create(['role' => 'super_admin']);
 
         $response = $this->actingAs($admin)
-            ->withCookie('lk_admin_menus', json_encode(['inventory' => false, 'network' => false, 'finance' => false, 'settings' => false, 'system' => false]))
+            ->withUnencryptedCookie('lk_admin_menus', json_encode(['inventory' => false, 'network' => false, 'finance' => false, 'settings' => false, 'system' => false]))
             ->get(route('inventory.categories.index'));
 
         $response->assertOk();
@@ -98,7 +106,7 @@ class SidebarMenuStateTest extends TestCase
         $staff = User::factory()->create(['role' => 'staff']);
 
         $response = $this->actingAs($staff)
-            ->withCookie('lk_staff_menus', json_encode(['inventory' => true, 'network' => false]))
+            ->withUnencryptedCookie('lk_staff_menus', json_encode(['inventory' => true, 'network' => false]))
             ->get(route('staff.dashboard'));
 
         $response->assertOk();

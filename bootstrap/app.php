@@ -12,6 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        // These are plain client-side JS cookies (document.cookie), not written
+        // through Laravel's Cookie facade — EncryptCookies would otherwise fail
+        // to decrypt them and silently null them out on every request, which is
+        // exactly why the sidebar's sticky-submenu cookie never actually
+        // persisted across page loads despite looking correct in code review.
+        $middleware->encryptCookies(except: [
+            'lk_sidebar_open',
+            'lk_admin_menus',
+            'lk_staff_menus',
+        ]);
         $middleware->validateCsrfTokens(except: [
             'portal/authenticate',
             'portal/verify-payment',
