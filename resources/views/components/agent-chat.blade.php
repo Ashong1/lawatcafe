@@ -82,6 +82,7 @@
         csrfToken: @js(csrf_token()),
         rateLimitMessage: @js($rateLimitMessage),
         anchorId: @js($anchorId),
+        historyEnabled: @js($historyEnabled),
     })"
      class="fixed flex flex-col"
      :style="`left: ${posX}px; top: ${posY}px; width: 380px; position: fixed !important; z-index: 9999 !important; bottom: auto !important; right: auto !important; transition: ${isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'}; touch-action: none;`"
