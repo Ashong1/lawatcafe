@@ -1,5 +1,9 @@
 <li class="group">
-    <form action="{{ route('kds.item.update', $item->id) }}" method="POST">
+    {{-- Was a plain form causing a full page reload on every item tap, unlike the
+         order-level Start/Done/Wait buttons in order-grid.blade.php which already
+         use this exact AJAX pattern — the backend (KdsController::updateItemStatus)
+         already had full wantsJson() support, just unused by this form. --}}
+    <form action="{{ route('kds.item.update', $item->id) }}" method="POST" @submit.prevent="updateStatus('{{ route('kds.item.update', $item->id) }}', '{{ $item->kds_status === 'completed' ? 'pending' : 'completed' }}', $event)">
         @csrf
         <input type="hidden" name="status" value="{{ $item->kds_status === 'completed' ? 'pending' : 'completed' }}">
         <button type="submit" class="w-full flex justify-between items-start gap-3 text-left group-hover:bg-[#FAFAFA] -m-1 p-1 rounded-lg transition-colors">
