@@ -21,24 +21,22 @@
                 <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                     <td class="py-4">
                         <div class="flex flex-col">
-                            <span class="font-extrabold text-[#3E2723] text-sm font-mono flex items-center gap-2">
-                                {{ $session->ip_address }}
+                            <span class="font-extrabold text-[#3E2723] text-sm flex items-center gap-2">
+                                {{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unknown Device' }}
                                 @if($session->has_traffic)
-                                    <span class="flex h-2 w-2 relative">
+                                    <span class="flex h-2 w-2 relative shrink-0">
                                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                         <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                                     </span>
                                 @endif
                             </span>
-                            <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-[#A1887F] font-mono tracking-tighter mt-0.5">{{ $session->ip_address }}</span>
+                            <div class="flex items-center gap-2 mt-0.5">
                                 <span class="text-[10px] text-[#A1887F] font-mono tracking-tighter">{{ $session->mac_address }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
                                     <span class="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
                             </div>
-                            @if($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '')
-                                <span class="text-[10px] text-[#8D6E63] font-bold mt-0.5 italic">{{ $session->hostname }}</span>
-                            @endif
                             <div class="flex items-center gap-2 mt-1 md:hidden">
                                 <span class="text-[9px] font-bold text-blue-600 font-mono">&uarr;{{ $session->speed_in }}</span>
                                 <span class="text-[9px] font-bold text-green-600 font-mono">&darr;{{ $session->speed_out }}</span>
@@ -175,21 +173,19 @@
                 <tr class="border-b border-slate-100/50 hover:bg-slate-100 transition-colors">
                     <td class="py-4 px-6">
                         <div class="flex flex-col">
-                            <span class="font-bold text-slate-800 text-sm font-mono flex items-center gap-2">
-                                {{ $session->ip_address }}
+                            <span class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                {{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unknown Device' }}
                                 @if($session->has_traffic)
-                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0"></span>
                                 @endif
                             </span>
-                            <div class="flex items-center gap-2 mt-1">
+                            <span class="text-[10px] text-slate-500 font-mono mt-0.5">{{ $session->ip_address }}</span>
+                            <div class="flex items-center gap-2 mt-0.5">
                                 <span class="text-[10px] text-slate-500 font-mono">{{ $session->mac_address }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
                                     <span class="text-[9px] px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
                             </div>
-                            @if($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '')
-                                <span class="text-[10px] text-slate-500 font-bold mt-0.5 italic">{{ $session->hostname }}</span>
-                            @endif
                         </div>
                     </td>
                     <td class="py-4 px-6">
@@ -249,16 +245,14 @@
                 <tr class="border-b border-[#FAFAFA] bg-gray-50/30 group hover:bg-[#FDF8F5]/80 transition-colors">
                     <td class="py-3">
                         <div class="flex flex-col">
-                            <span class="font-bold text-[#4A3B32] font-mono">{{ $session->ip_address }}</span>
-                            <div class="flex items-center gap-2 mt-1">
+                            <span class="font-bold text-[#4A3B32]">{{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unknown Device' }}</span>
+                            <span class="text-[9px] text-[#A1887F] font-mono mt-0.5">{{ $session->ip_address }}</span>
+                            <div class="flex items-center gap-2 mt-0.5">
                                 <span class="text-[9px] text-[#A1887F] font-mono">{{ $session->mac_address }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
                                     <span class="text-[8px] px-1 py-0.5 bg-gray-200 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
                             </div>
-                            @if($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '')
-                                <span class="text-[10px] text-gray-500 font-bold mt-0.5 italic">{{ $session->hostname }}</span>
-                            @endif
                         </div>
                     </td>
                     <td class="py-3">

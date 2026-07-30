@@ -67,4 +67,45 @@ class VoucherSessionsTest extends TestCase
         // ---ip--- entry with no ARP match: IP still shows rather than being dropped.
         $response->assertSee('192.168.2.199');
     }
+
+    /**
+     * Device hostname used to be rendered as a small italic footnote that
+     * disappeared entirely when unknown — making every device look
+     * identical by IP/MAC alone. It's now the headline of the device cell
+     * in all three tables, with an honest "Unknown Device" fallback when
+     * OPNsense has no DHCP hostname for that client (a common case — many
+     * devices simply don't send one).
+     */
+    public function test_device_hostname_is_prominently_shown_with_a_fallback_when_unknown(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('listSessions')->andReturn([
+                [
+                    'sessionId' => 'sess-named',
+                    'ipAddress' => '192.168.2.120/32',
+                    'macAddress' => 'AA:BB:CC:DD:EE:01',
+                    'bytes_received' => 0, 'bytes_sent' => 0,
+                ],
+                [
+                    'sessionId' => 'sess-unnamed',
+                    'ipAddress' => '192.168.2.121/32',
+                    'macAddress' => 'AA:BB:CC:DD:EE:02',
+                    'bytes_received' => 0, 'bytes_sent' => 0,
+                ],
+            ]);
+
+            $mock->shouldReceive('getArpTable')->andReturn([
+                ['mac' => 'AA:BB:CC:DD:EE:01', 'ip' => '192.168.2.120', 'hostname' => "Johns-iPhone", 'manufacturer' => 'Apple'],
+                ['mac' => 'AA:BB:CC:DD:EE:02', 'ip' => '192.168.2.121', 'hostname' => '', 'manufacturer' => 'Generic'],
+            ]);
+        });
+
+        $response = $this->actingAs($admin)->get(route('network.sessions'));
+
+        $response->assertOk();
+        $response->assertSee('Johns-iPhone');
+        $response->assertSee('Unknown Device');
+    }
 }
