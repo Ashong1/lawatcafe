@@ -60,7 +60,11 @@
                 </div>
             </template>
             <div x-show="thinking" class="anim-pop-in bg-white p-3 rounded-2xl rounded-bl-sm shadow-sm border border-[#F0E6D2] self-start w-fit mx-1">
-                <span class="text-[9px] text-[#8D6E63] font-black tracking-widest uppercase animate-pulse">Typing...</span>
+                <div class="flex gap-1">
+                    <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce"></div>
+                    <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                    <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                </div>
             </div>
             <div id="{{ $anchorId }}-chat-anchor" class="h-1 w-full"></div>
         </div>

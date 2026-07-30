@@ -9,6 +9,15 @@
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        /* Scoped to this page so it doesn't need an asset rebuild — see the
+           indeterminate progress cue below (shown once the countdown hits 0,
+           before the "taking too long" fallback appears). */
+        @keyframes unlock-indeterminate {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(400%); }
+        }
+    </style>
 </head>
 <body class="bg-[#FAF7F2] text-[#4A3B32] min-h-screen font-sans antialiased overflow-hidden flex items-center justify-center p-4 lg:p-8"
       style="font-family: 'Montserrat', sans-serif;"
@@ -48,6 +57,13 @@
 
         <h2 class="text-3xl font-black text-[#3E2723] mb-4 tracking-tight">Authenticating<span x-show="secondsLeft > 0" x-text="'... (' + secondsLeft + ')'"></span></h2>
         <p class="text-base text-[#8D6E63] font-medium leading-relaxed max-w-md mx-auto">Verifying voucher and configuring firewall access for your device. Please do not close this window.</p>
+
+        {{-- Fills the dead stretch between the countdown ending and the 8s "taking too
+             long" fallback appearing — that middle window (when the real network wait
+             begins) previously had no progress cue at all beyond the static spinner. --}}
+        <div x-show="secondsLeft <= 0 && !showManualButton" x-cloak class="mt-6 w-full max-w-[200px] mx-auto h-1 bg-[#F0E6D2] rounded-full overflow-hidden">
+            <div class="h-full w-1/3 bg-[#3E2723] rounded-full" style="animation: unlock-indeterminate 1.4s ease-in-out infinite;"></div>
+        </div>
 
         <template x-if="showManualButton">
             <button type="button" @click="document.getElementById('unlock-form').submit()"
