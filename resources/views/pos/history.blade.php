@@ -32,13 +32,19 @@
                     <p class="text-xs text-[#4A3B32] font-medium mt-2 italic">"{{ $voidRequest->reason }}"</p>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                    <form action="{{ route('pos.history.void-requests.approve', $voidRequest->id) }}" method="POST">
+                    <form action="{{ route('pos.history.void-requests.approve', $voidRequest->id) }}" method="POST" @submit="formSubmitting = true">
                         @csrf
-                        <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 hover:bg-green-100 border border-green-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">Approve</button>
+                        <button type="submit" :disabled="formSubmitting" class="text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 hover:bg-green-100 border border-green-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5">
+                            <template x-if="formSubmitting"><x-lucide-loader-2 class="w-3 h-3 animate-spin" /></template>
+                            <span>Approve</span>
+                        </button>
                     </form>
-                    <form action="{{ route('pos.history.void-requests.reject', $voidRequest->id) }}" method="POST">
+                    <form action="{{ route('pos.history.void-requests.reject', $voidRequest->id) }}" method="POST" @submit="formSubmitting = true">
                         @csrf
-                        <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">Reject</button>
+                        <button type="submit" :disabled="formSubmitting" class="text-[9px] font-black uppercase tracking-widest text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5">
+                            <template x-if="formSubmitting"><x-lucide-loader-2 class="w-3 h-3 animate-spin" /></template>
+                            <span>Reject</span>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -49,7 +55,7 @@
 
     {{-- FILTERS --}}
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
-        <form action="{{ route('pos.history') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form action="{{ route('pos.history') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4" @submit="formSubmitting = true">
             <div>
                 <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Search ID</label>
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="TRN-..." class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
@@ -68,7 +74,10 @@
                 </select>
             </div>
             <div class="flex items-end">
-                <button type="submit" class="w-full bg-[#3E2723] text-white py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-[#271815] transition shadow-md">Filter Results</button>
+                <button type="submit" :disabled="formSubmitting" class="w-full bg-[#3E2723] text-white py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-[#271815] transition shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <template x-if="formSubmitting"><x-lucide-loader-2 class="w-3.5 h-3.5 animate-spin" /></template>
+                    <span>Filter Results</span>
+                </button>
             </div>
         </form>
     </div>
@@ -134,9 +143,10 @@
                                     <x-ask-ai-button :prompt="'Review sale with ID ' . $sale->id . ' (transaction #' . substr($sale->transaction_number, -8) . ') for anything unusual, and void it if warranted.'" label="Review" />
 
                                     @if(auth()->user()->isAdminOrAbove())
-                                        <form action="{{ route('pos.history.void', $sale->id) }}" method="POST" id="void-form-{{ $sale->id }}" class="inline">
+                                        <form action="{{ route('pos.history.void', $sale->id) }}" method="POST" id="void-form-{{ $sale->id }}" class="inline" @submit="formSubmitting = true">
                                             @csrf
                                             <button type="button"
+                                                    :disabled="formSubmitting"
                                                     @click="window.confirmAction({
                                                         title: 'Void Order?',
                                                         text: 'Are you sure you want to void this transaction? This is recorded for auditing.',
@@ -144,8 +154,9 @@
                                                         confirmText: 'Yes, Void It',
                                                         callback: () => document.getElementById('void-form-{{ $sale->id }}').submit()
                                                     })"
-                                                    class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Void Transaction">
-                                                <x-lucide-slash class="w-4 h-4" />
+                                                    class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed" title="Void Transaction">
+                                                <template x-if="!formSubmitting"><x-lucide-slash class="w-4 h-4" /></template>
+                                                <template x-if="formSubmitting"><x-lucide-loader-2 class="w-4 h-4 animate-spin" /></template>
                                             </button>
                                         </form>
                                     @else
@@ -204,6 +215,7 @@
         Alpine.data('voidRequestManager', () => ({
             isModalOpen: false,
             submitting: false,
+            formSubmitting: false,
             voidingSaleId: null,
             voidingSaleLabel: '',
             reason: '',
