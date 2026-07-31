@@ -96,7 +96,7 @@
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 max-w-4xl mx-auto w-full px-2">
                         <div class="bg-amber-50 border-2 border-amber-200/50 rounded-3xl p-6 shadow-sm col-span-2 flex flex-col items-center justify-center transition-all hover:bg-amber-100/50 group">
                             <span class="text-[10px] font-black text-amber-800 uppercase tracking-widest mb-2 group-hover:scale-110 transition-transform">Time Remaining</span>
-                            <span class="text-4xl lg:text-5xl font-black text-[#3E2723] tabular-nums tracking-tighter" x-text="remainingLabel"></span>
+                            <span class="text-4xl lg:text-5xl font-black text-[#3E2723] tabular-nums tracking-tighter inline-block" x-text="remainingLabel" :class="tickPulse ? 'tick-pulse' : ''"></span>
                             <span class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mt-1" x-text="remainingUnit"></span>
                         </div>
                         
@@ -296,6 +296,7 @@ document.addEventListener('alpine:init', () => {
         connectionStatus: 'connected',
         remainingLabel: '—',
         remainingUnit: 'Left',
+        tickPulse: false,
 
         init() {
             // The embedded agent-chat component instance owns its own chat state/scrolling now —
@@ -333,6 +334,8 @@ document.addEventListener('alpine:init', () => {
             const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
 
+            const previousLabel = this.remainingLabel;
+
             if (days > 0) {
                 this.remainingLabel = `${days}d ${hours}h`;
                 this.remainingUnit = 'Days Left';
@@ -342,6 +345,17 @@ document.addEventListener('alpine:init', () => {
             } else {
                 this.remainingLabel = `${minutes}:${String(seconds).padStart(2, '0')}`;
                 this.remainingUnit = 'Minutes Left';
+            }
+
+            // Pulse the digits whenever the displayed value actually changes
+            // (every second in minutes:seconds mode, every minute/hour once
+            // the countdown rolls up to a coarser unit) — same flashKey()
+            // one-shot pattern dashboard.blade.php uses for its live-poll
+            // numbers, so the passive "watch it count down" moment isn't a
+            // flat re-render.
+            if (previousLabel !== '—' && this.remainingLabel !== previousLabel) {
+                this.tickPulse = true;
+                setTimeout(() => { this.tickPulse = false; }, 500);
             }
         }
     }));

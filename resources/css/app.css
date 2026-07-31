@@ -167,6 +167,27 @@ html {
     }
 }
 
+/* One-shot highlight for the captive-portal countdown digits each time the
+   displayed value changes — same flashKey() one-shot idea dashboard.blade.php
+   uses for its live-poll numbers, applied as a scale/color flash instead of
+   a ring since this sits on inline text, not a card. Requires the element
+   to also have `inline-block` (or block/flex/etc) — transforms don't apply
+   to plain inline elements. */
+@keyframes tick-pulse {
+    0% { transform: scale(1.15); color: #B45309; }
+    100% { transform: scale(1); color: #3E2723; }
+}
+
+.tick-pulse {
+    animation: tick-pulse 0.5s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tick-pulse {
+        animation: none;
+    }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
