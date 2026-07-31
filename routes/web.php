@@ -94,9 +94,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 
-    // Shared Network Info (Vouchers list visible to staff)
+    // Shared Network Info (Vouchers list + Active Sessions visible to staff —
+    // set-tier stays admin-only, see the ADMIN ONLY network group below).
     Route::prefix('network')->name('network.')->group(function () {
         Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
+        Route::get('/sessions', [VoucherController::class, 'sessions'])->name('sessions');
+        Route::post('/sessions/kick', [VoucherController::class, 'kick'])->name('sessions.kick');
     });
 
     // Proactive AI analysis history (shared: audience-scoped in the controller,
@@ -179,8 +182,8 @@ Route::middleware(['auth'])->group(function () {
 
         // Network & Voucher Actions (Admin only)
         Route::prefix('network')->name('network.')->group(function () {
-            Route::get('/sessions', [VoucherController::class, 'sessions'])->name('sessions');
-            Route::post('/sessions/kick', [VoucherController::class, 'kick'])->name('sessions.kick');
+            // GET sessions and kick are shared with staff — see the "Shared
+            // Network Info" group above. Tier changes stay admin-only.
             Route::post('/sessions/set-tier', [VoucherController::class, 'setTier'])->name('sessions.set-tier');
             Route::get('/verifications', [PaymentController::class, 'logs'])->name('verifications');
 

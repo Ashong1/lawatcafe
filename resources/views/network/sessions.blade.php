@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends(auth()->user()->isAdminOrAbove() ? 'layouts.admin' : 'layouts.staff')
 @section('title', 'Active Network Sessions')
 
 @section('content')

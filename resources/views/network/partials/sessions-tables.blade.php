@@ -102,7 +102,7 @@
                     </td>
                     <td class="py-4 text-right">
                         <div class="flex items-center justify-end gap-1">
-                            @if($session->tier ?? null)
+                            @if(($session->tier ?? null) && auth()->user()->isAdminOrAbove())
                                 @php($targetTier = $session->tier === 'premium' ? 'free' : 'premium')
                                 <form action="{{ route('network.sessions.set-tier') }}" method="POST" id="tier-form-{{ $session->code }}">
                                     @csrf
