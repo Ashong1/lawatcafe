@@ -243,7 +243,7 @@
                         <!-- Chat texture overlay -->
                         <div class="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')]"></div>
                         
-                        <div class="absolute top-5 left-8 flex items-center gap-2.5 z-10 bg-[#FAF7F2] px-4 py-1.5 rounded-full border border-[#F0E6D2] shadow-sm">
+                        <div class="absolute top-5 left-8 flex items-center gap-2.5 z-10 bg-[#FAF7F2] px-4 py-1.5 rounded-full border border-[#F0E6D2] shadow-sm" :class="aiCue ? 'animate-bounce' : ''">
                             <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                             <span class="text-[9px] font-black uppercase tracking-[0.2em] text-[#3E2723]">AI Agent Active</span>
                         </div>
@@ -297,6 +297,7 @@ document.addEventListener('alpine:init', () => {
         remainingLabel: '—',
         remainingUnit: 'Left',
         tickPulse: false,
+        aiCue: false,
 
         init() {
             // The embedded agent-chat component instance owns its own chat state/scrolling now —
@@ -304,6 +305,11 @@ document.addEventListener('alpine:init', () => {
             this.$watch('activeTab', value => {
                 if (value === 'help') {
                     window.dispatchEvent(new CustomEvent('portal-tab-changed'));
+                    // One-shot bounce on the "AI Agent Active" pill each time this tab
+                    // activates, reusing the existing animate-bounce vocabulary rather
+                    // than adding new motion — just a "hey, I'm here" cue.
+                    this.aiCue = true;
+                    setTimeout(() => { this.aiCue = false; }, 900);
                 }
             });
 

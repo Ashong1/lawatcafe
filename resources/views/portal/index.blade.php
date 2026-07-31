@@ -308,7 +308,7 @@
                     <div class="text-center mb-4 shrink-0 flex flex-col items-center">
                         <h2 class="text-xl font-black text-[#3E2723] mb-1 tracking-tight">Barista AI</h2>
                         <p class="text-[10px] text-[#8D6E63] font-bold uppercase tracking-widest mb-2">Digital Concierge</p>
-                        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/50 border border-[#F0E6D2] shadow-sm">
+                        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/50 border border-[#F0E6D2] shadow-sm" :class="aiCue ? 'animate-bounce' : ''">
                             <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                             <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">System Online</span>
                         </div>
@@ -382,6 +382,7 @@ document.addEventListener('alpine:init', () => {
         referenceNumber: {{ \Illuminate\Support\Js::from(session('ai_ref', '')) }},
         showTOS: false,
         connectionStatus: 'disconnected',
+        aiCue: false,
 
         init() {
             // The embedded agent-chat component instance owns its own chat state/scrolling now —
@@ -389,6 +390,11 @@ document.addEventListener('alpine:init', () => {
             this.$watch('activeTab', value => {
                 if (value === 'help') {
                     window.dispatchEvent(new CustomEvent('portal-tab-changed'));
+                    // One-shot bounce on the "System Online" pill each time this tab
+                    // activates, reusing the existing animate-bounce vocabulary rather
+                    // than adding new motion — just a "hey, I'm here" cue.
+                    this.aiCue = true;
+                    setTimeout(() => { this.aiCue = false; }, 900);
                 }
             });
         },
