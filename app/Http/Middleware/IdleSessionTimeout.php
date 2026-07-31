@@ -24,10 +24,25 @@ class IdleSessionTimeout
         $timeoutMinutes = (int) config('session.idle_timeout', 20);
         $lastActivity = $request->session()->get('last_activity_at');
 
-        if ($timeoutMinutes > 0 && $lastActivity && now()->diffInMinutes($lastActivity) >= $timeoutMinutes) {
+        // diffInMinutes()'s $absolute param defaults to true in Carbon 2 but to
+        // false in Carbon 3 (this app's version) — without passing it explicitly,
+        // now()->diffInMinutes($pastTime) returns a *negative* number, so this
+        // check silently never fired and idle sessions were never logged out.
+        if ($timeoutMinutes > 0 && $lastActivity && now()->diffInMinutes($lastActivity, true) >= $timeoutMinutes) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
+
+            // A plain redirect() is invisible to fetch()-based callers (e.g. the
+            // AI chat widget's streaming request) — fetch follows it silently,
+            // ends up reading the login page's HTML as if it were the response
+            // body, and the SSE parser just finds nothing and gives up with no
+            // error shown at all. ajax() is checked alongside expectsJson()
+            // because the latter requires an empty/"*/*"/json Accept header —
+            // the widget's "Accept: text/event-stream" fails that on its own.
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json(['message' => 'Your session expired due to inactivity.'], 401);
+            }
 
             return redirect()->route('login')->with('error', 'You were logged out due to inactivity.');
         }

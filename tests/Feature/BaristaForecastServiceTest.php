@@ -45,6 +45,8 @@ class BaristaForecastServiceTest extends TestCase
         $staff = User::factory()->create(['role' => 'staff']);
 
         $this->actingAs($staff)->get(route('admin.analytics'))->assertRedirect(route('staff.dashboard'));
-        $this->actingAs($staff)->getJson(route('admin.ai.insights'))->assertRedirect(route('staff.dashboard'));
+        // A JSON-expecting request now gets a real 403 instead of a redirect it
+        // has no way to detect (see RoleMiddleware's ajax()/expectsJson() check).
+        $this->actingAs($staff)->getJson(route('admin.ai.insights'))->assertStatus(403);
     }
 }

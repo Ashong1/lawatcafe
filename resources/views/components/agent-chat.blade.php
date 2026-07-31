@@ -460,6 +460,11 @@ document.addEventListener('alpine:init', () => {
                     return;
                 }
 
+                if (response.status === 401) {
+                    this.history.push({ kind: 'text', role: 'assistant', content: 'Your session expired due to inactivity — please refresh the page and log in again.' });
+                    return;
+                }
+
                 if (!response.ok || !response.body) {
                     throw new Error('Bad response');
                 }

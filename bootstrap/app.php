@@ -34,5 +34,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Laravel's default expectsJson() requires the Accept header to be
+        // empty/"*/*" or contain "json" — the AI chat widget sends
+        // "Accept: text/event-stream" (it's an SSE stream), which fails that
+        // check even though X-Requested-With makes ajax() true. Without this,
+        // an expired admin/staff session hitting auth-gated fetch() endpoints
+        // (like /admin/ai/chat) got Laravel's default redirect-to-login
+        // response instead of a 401 — fetch() follows the redirect silently,
+        // reads the login page's HTML as the "response", and the caller sees
+        // a dead widget with no error at all.
+        $exceptions->shouldRenderJsonWhen(function ($request, \Throwable $e) {
+            return $request->ajax() || $request->expectsJson();
+        });
     })->create();
