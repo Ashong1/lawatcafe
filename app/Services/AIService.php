@@ -489,8 +489,21 @@ class AIService
      */
     public function chatWithToolsStreaming(array $messages, array $tools, callable $onTextDelta): ?array
     {
+        // One deadline shared across the *entire* cascade (every model of
+        // every provider), not a fresh budget per attempt. Each per-model
+        // Http::timeout() used to reset to the full STREAM_TIMEOUT, but
+        // fast_path_model_limit (default 2) means a provider can try that
+        // many models in sequence — two full-length gemini attempts alone
+        // could take up to 2x STREAM_TIMEOUT, well past the client's fixed
+        // 20s fetch() abort, before groq/openrouter even got a turn. Under
+        // real provider degradation (rate limits, outages) this turned into
+        // a hard client-side abort with no reply at all instead of the
+        // graceful fallback text below arriving in time. See streamGeminiLoop()
+        // / streamOpenAiCompatibleLoop() for how $deadline bounds each attempt.
+        $deadline = microtime(true) + self::STREAM_TIMEOUT;
+
         if ($this->geminiKey && ! $this->providerIsOpen('gemini')) {
-            $response = $this->streamGeminiLoop($messages, $tools, $onTextDelta);
+            $response = $this->streamGeminiLoop($messages, $tools, $onTextDelta, $deadline);
             $this->recordProviderResult('gemini', (bool) $response);
             if ($response) {
                 return $response;
@@ -505,7 +518,8 @@ class AIService
                 $messages,
                 $tools,
                 $onTextDelta,
-                'groq'
+                'groq',
+                $deadline
             );
             $this->recordProviderResult('groq', (bool) $response);
             if ($response) {
@@ -521,7 +535,8 @@ class AIService
                 $messages,
                 $tools,
                 $onTextDelta,
-                'openrouter'
+                'openrouter',
+                $deadline
             );
             $this->recordProviderResult('openrouter', (bool) $response);
             if ($response) {
@@ -532,19 +547,35 @@ class AIService
         return null;
     }
 
-    private function streamGeminiLoop(array $messages, array $tools, callable $onTextDelta): ?array
+    /**
+     * Seconds left before $deadline, clamped to at most STREAM_TIMEOUT (a
+     * fresh loop iteration should never ask for *more* than the original
+     * per-attempt ceiling) and floored at 0. Callers should skip the attempt
+     * entirely when this comes back under ~2s — not enough time left for a
+     * provider round-trip to plausibly succeed, so it's better to move on
+     * (or give up and let the caller's fallback text ship) than to fire a
+     * request doomed to time out anyway.
+     */
+    private function secondsUntil(float $deadline): float
+    {
+        return max(0.0, min((float) self::STREAM_TIMEOUT, $deadline - microtime(true)));
+    }
+
+    private function streamGeminiLoop(array $messages, array $tools, callable $onTextDelta, float $deadline): ?array
     {
         $models = $this->activeModels('gemini');
         shuffle($models);
         $budget = $this->fastPathBudget();
         $models = array_slice($models, 0, max(1, $budget['modelLimit']));
-        // Streaming needs a longer total-request ceiling than the blocking fast
-        // path: responsiveness here comes from time-to-first-byte, not total
-        // duration, since tokens render as they arrive. Kept just under the
-        // client's 20s abort so the server never times out first.
-        $timeout = self::STREAM_TIMEOUT;
 
         foreach ($models as $model) {
+            // Bounded by what's actually left of the *shared* cascade deadline,
+            // not a fresh STREAM_TIMEOUT per model — see chatWithToolsStreaming().
+            $timeout = $this->secondsUntil($deadline);
+            if ($timeout < 2.0) {
+                break;
+            }
+
             try {
                 $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:streamGenerateContent?alt=sse&key=".$this->geminiKey;
                 $contents = $this->buildGeminiContents($messages);
@@ -553,7 +584,7 @@ class AIService
                     $payload['tools'] = $this->toGeminiTools($tools);
                 }
 
-                $response = Http::timeout($timeout)->withOptions(['stream' => true])->post($url, $payload);
+                $response = Http::timeout((int) ceil($timeout))->withOptions(['stream' => true])->post($url, $payload);
 
                 if (! $response->successful()) {
                     $this->recordModelResult('gemini', $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
@@ -602,22 +633,28 @@ class AIService
     }
 
     /** Shared by Groq and OpenRouter — both speak the OpenAI-compatible streaming delta format. */
-    private function streamOpenAiCompatibleLoop(array $models, string $url, array $headers, array $messages, array $tools, callable $onTextDelta, string $provider): ?array
+    private function streamOpenAiCompatibleLoop(array $models, string $url, array $headers, array $messages, array $tools, callable $onTextDelta, string $provider, float $deadline): ?array
     {
         $modelsList = $models;
         shuffle($modelsList);
         $budget = $this->fastPathBudget();
         $modelsList = array_slice($modelsList, 0, max(1, $budget['modelLimit']));
-        $timeout = self::STREAM_TIMEOUT;
 
         foreach ($modelsList as $model) {
+            // Bounded by what's actually left of the *shared* cascade deadline,
+            // not a fresh STREAM_TIMEOUT per model — see chatWithToolsStreaming().
+            $timeout = $this->secondsUntil($deadline);
+            if ($timeout < 2.0) {
+                break;
+            }
+
             try {
                 $payload = ['model' => $model, 'messages' => $messages, 'stream' => true];
                 if (! empty($tools)) {
                     $payload['tools'] = $this->toOpenAiTools($tools);
                 }
 
-                $response = Http::timeout($timeout)->withOptions(['stream' => true])->withHeaders($headers)->post($url, $payload);
+                $response = Http::timeout((int) ceil($timeout))->withOptions(['stream' => true])->withHeaders($headers)->post($url, $payload);
 
                 if (! $response->successful()) {
                     $this->recordModelResult($provider, $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
