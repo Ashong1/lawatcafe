@@ -359,11 +359,16 @@ class CaptivePortalController extends Controller
             'message' => 'required|string|max:500',
             'history' => 'nullable|array|max:20',
             'history.*.role' => 'required_with:history|in:user,assistant',
-            'history.*.content' => 'required_with:history|string|max:2000',
+            // nullable, not required_with — see the matching fix (and full
+            // reasoning) on DashboardController::adminChat().
+            'history.*.content' => 'nullable|string|max:2000',
         ]);
 
         $messages = [['role' => 'system', 'content' => $ai->buildGuestSystemPrompt()]];
         foreach ($request->history ?? [] as $msg) {
+            if (empty($msg['content'])) {
+                continue;
+            }
             $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
         }
         $messages[] = ['role' => 'user', 'content' => $request->message];

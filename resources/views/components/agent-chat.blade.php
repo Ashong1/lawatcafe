@@ -407,8 +407,13 @@ document.addEventListener('alpine:init', () => {
             // guess which entries are "real" — no positional slicing needed,
             // which matters once history can also be a server-loaded past
             // conversation with no synthetic greeting bubble at index 0.
+            // Excludes falsy content too: a tool-only turn with no reply text
+            // can end up stored (or cached in sessionStorage from before that
+            // was guarded server-side) with content null/'' — sending that
+            // back fails the server's `history.*.content` string validation
+            // and 422s every message for the rest of that conversation.
             const historyForRequest = this.history
-                .filter(m => m.kind === 'text' && !m.isGreeting)
+                .filter(m => m.kind === 'text' && !m.isGreeting && m.content)
                 .map(m => ({ role: m.role, content: m.content }));
 
             this.history.push({ kind: 'text', role: 'user', content: userMsg });

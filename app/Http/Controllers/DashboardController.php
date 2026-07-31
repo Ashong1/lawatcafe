@@ -340,7 +340,11 @@ class DashboardController extends Controller
             'message' => 'required|string|max:1000',
             'history' => 'nullable|array|max:30',
             'history.*.role' => 'required_with:history|in:user,assistant',
-            'history.*.content' => 'required_with:history|string|max:4000',
+            // nullable, not required_with: a tool-only turn with no reply text
+            // can end up stored (or cached client-side from before that was
+            // guarded) with content null — that's stale data to drop below,
+            // not a malformed request worth 422ing the whole conversation over.
+            'history.*.content' => 'nullable|string|max:4000',
             'conversation_id' => 'nullable|integer',
         ]);
 
@@ -348,7 +352,9 @@ class DashboardController extends Controller
 
         $messages = [['role' => 'system', 'content' => $ai->buildAdminSystemPrompt()]];
         foreach ($request->history ?? [] as $msg) {
-            $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
+            if (! empty($msg['content'])) {
+                $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
+            }
         }
         $messages[] = ['role' => 'user', 'content' => $request->message];
 
