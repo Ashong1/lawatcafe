@@ -67,7 +67,12 @@ class BaristaForecastService
             ];
         }
 
-        return Cache::remember('barista_forecast_deep', 3600, function () use ($ai, $historicalSales, $daysOfData, $thirtyDaysAgo, $transactionCount) {
+        $cached = Cache::get('barista_forecast_deep');
+        if ($cached) {
+            return $cached;
+        }
+
+        $result = (function () use ($ai, $historicalSales, $daysOfData, $thirtyDaysAgo, $transactionCount) {
             $seventyTwoHoursAgo = Carbon::now()->subHours(72);
 
             $productPerformance = SaleItem::whereHas('sale', fn ($q) => $q->where('status', 'completed'))
@@ -101,7 +106,32 @@ class BaristaForecastService
             $aiResult = $ai->analyzeSalesTrends($historicalSales, $productPerformance, $wastageData, $daysOfData, $recentPerformance);
 
             if (! $aiResult) {
-                return $aiResult;
+                // Every provider failed. Return a well-formed placeholder
+                // (same shape the "calibrating" branch above uses) instead of
+                // null — this used to violate getForecast()'s own `: array`
+                // return type and crash the dashboard/analytics page with a
+                // 500 whenever the AI stack was entirely down. Deliberately
+                // NOT cached (see call site): a transient outage shouldn't
+                // lock every consumer into "AI unavailable" for a full hour.
+                return [
+                    'is_calibrating' => false,
+                    'calibration_days_remaining' => 0,
+                    'meta' => [
+                        'transaction_count' => $transactionCount,
+                        'days_of_data' => $daysOfData,
+                        'is_calibrating' => false,
+                        'confidence_score' => 0,
+                        'confidence_label' => 'Unavailable',
+                        'confidence_max' => 7,
+                    ],
+                    'forecast_total' => 0,
+                    'daily_forecast' => [],
+                    'trend_analysis' => 'The AI forecasting stack is temporarily unavailable. Please check back shortly.',
+                    'predicted_top_products' => [],
+                    'demand_risk_alerts' => [],
+                    'strategic_advice' => 'Barista AI could not be reached — try again in a few minutes.',
+                    'context_tags' => ['AI Unavailable'],
+                ];
             }
 
             // Formatting daily forecast day labels.
@@ -169,6 +199,16 @@ class BaristaForecastService
             }
 
             return $aiResult;
-        });
+        })();
+
+        // Only cache genuine AI results — an "AI unavailable" placeholder
+        // (context_tags === ['AI Unavailable']) must not be locked in for the
+        // full hour, so the next request gets a fresh retry instead of a
+        // guaranteed-stale failure message.
+        if (($result['context_tags'] ?? []) !== ['AI Unavailable']) {
+            Cache::put('barista_forecast_deep', $result, 3600);
+        }
+
+        return $result;
     }
 }
