@@ -95,7 +95,7 @@
                 <div class="space-y-12">
                     
                     <!-- Category: Coffee -->
-                    <div class="space-y-6">
+                    <div class="space-y-6 dash-card-in">
                         <div class="flex items-center w-full mb-8">
                             <h4 class="flex items-center gap-3 text-lg font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap pr-4">
                                 <x-lucide-coffee class="w-5 h-5 text-amber-800" stroke-width="2.5" />
@@ -138,7 +138,7 @@
                     </div>
 
                     <!-- Category: Meals -->
-                    <div class="space-y-6">
+                    <div class="space-y-6 dash-card-in [animation-delay:150ms]">
                         <div class="flex items-center w-full mb-8">
                             <h4 class="flex items-center gap-3 text-lg font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap pr-4">
                                 <x-lucide-utensils class="w-5 h-5 text-amber-800" stroke-width="2.5" />
