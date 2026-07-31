@@ -24,7 +24,7 @@ class AiActionController extends Controller
     public function pendingCount(Request $request)
     {
         $query = AiActionAudit::pending();
-        if (!$request->user()->isAdminOrAbove()) {
+        if (! $request->user()->isAdminOrAbove()) {
             $query->where('actor_user_id', $request->user()->id);
         }
 
@@ -34,7 +34,7 @@ class AiActionController extends Controller
     public function pendingPreview(Request $request)
     {
         $query = AiActionAudit::pending()->with('actor')->latest()->limit(8);
-        if (!$request->user()->isAdminOrAbove()) {
+        if (! $request->user()->isAdminOrAbove()) {
             $query->where('actor_user_id', $request->user()->id);
         }
 
@@ -61,7 +61,7 @@ class AiActionController extends Controller
         $ids = array_filter(array_map('intval', explode(',', (string) $request->query('ids'))));
 
         $query = AiActionAudit::with('approvedBy')->whereIn('id', $ids);
-        if (!$request->user()->isAdminOrAbove()) {
+        if (! $request->user()->isAdminOrAbove()) {
             $query->where('actor_user_id', $request->user()->id);
         }
 

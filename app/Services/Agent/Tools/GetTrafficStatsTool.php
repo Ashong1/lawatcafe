@@ -13,9 +13,7 @@ use App\Services\OpnSenseService;
  */
 class GetTrafficStatsTool implements AgentTool
 {
-    public function __construct(protected OpnSenseService $opnsense)
-    {
-    }
+    public function __construct(protected OpnSenseService $opnsense) {}
 
     public function name(): string
     {
@@ -45,6 +43,6 @@ class GetTrafficStatsTool implements AgentTool
             return ToolResult::ok('No traffic statistics available.', ['interfaces' => []]);
         }
 
-        return ToolResult::ok(count($stats) . ' interface(s) reporting.', ['interfaces' => $stats]);
+        return ToolResult::ok(count($stats).' interface(s) reporting.', ['interfaces' => $stats]);
     }
 }

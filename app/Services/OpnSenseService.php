@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -9,8 +10,11 @@ use Illuminate\Support\Facades\Log;
 class OpnSenseService
 {
     protected $baseUrl;
+
     protected $apiKey;
+
     protected $apiSecret;
+
     protected $zone;
 
     public function __construct()
@@ -19,7 +23,7 @@ class OpnSenseService
         $this->apiKey = config('services.opnsense.key');
         $this->apiSecret = config('services.opnsense.secret');
         // Prioritize database setting, fallback to config
-        $this->zone = \App\Models\Setting::get('opnsense_zone', config('services.opnsense.zone', 0));
+        $this->zone = Setting::get('opnsense_zone', config('services.opnsense.zone', 0));
     }
 
     /**
@@ -53,62 +57,67 @@ class OpnSenseService
     /**
      * Authorize a device on the OPNsense Captive Portal.
      *
-     * @param string $ip The client IP address.
-     * @param string $username A identifier for the session (e.g. Voucher code).
+     * @param  string  $ip  The client IP address.
+     * @param  string  $voucherCode  An identifier for the session (e.g. Voucher code).
      * @return bool
      */
     public function authorizeDevice($ip, $voucherCode = 'guest')
     {
         if (empty($this->apiKey) || empty($this->apiSecret)) {
-            Log::warning("OPNsense: API credentials not configured.");
+            Log::warning('OPNsense: API credentials not configured.');
+
             return false;
         }
 
         if (empty(config('services.opnsense.guest_user')) || empty(config('services.opnsense.guest_pass'))) {
             Log::error("OPNsense: guest_user/guest_pass not configured — refusing to authorize {$ip} rather than fall back to a default credential.");
+
             return false;
         }
 
         try {
             // Use zone from session if available (captured from redirect), otherwise use config default
             $zone = session('zone', $this->zone);
-            
+
             // Following the 'Direct Post' approach via the session/connect API
             // This endpoint is used to manually authorize an IP session in a specific zone.
             $url = "{$this->baseUrl}/api/captiveportal/session/connect/{$zone}/";
-            
-            Log::info("OPNsense Request URL: " . $url);
-            Log::info("OPNsense API Key Length: " . strlen($this->apiKey));
+
+            Log::info('OPNsense Request URL: '.$url);
+            Log::info('OPNsense API Key Length: '.strlen($this->apiKey));
 
             // Longer budget than the shared render-path default (see client()
             // docblock) — this redeems a customer's voucher with no fallback
             // on failure, so it's worth waiting out a slow-but-working router
             // rather than fast-failing a legitimate request.
             $response = $this->client(4, 8)->post($url, [
-                    'user' => config('services.opnsense.guest_user'),
-                    'password' => config('services.opnsense.guest_pass'),
-                    'ip' => $ip,
-                ]);
+                'user' => config('services.opnsense.guest_user'),
+                'password' => config('services.opnsense.guest_pass'),
+                'ip' => $ip,
+            ]);
 
             $data = $response->json();
 
             if ($response->successful()) {
                 // If we get a sessionId or a successful state, the device is authorized
                 if (isset($data['sessionId']) || (isset($data['clientState']) && in_array($data['clientState'], ['AUTHORIZED', 'CONNECTED', 'ALREADY_AUTHORIZED']))) {
-                    Log::info("OPNsense: Successfully authorized IP {$ip} via session/connect. Session: " . ($data['sessionId'] ?? 'N/A'));
+                    Log::info("OPNsense: Successfully authorized IP {$ip} via session/connect. Session: ".($data['sessionId'] ?? 'N/A'));
                     $this->forgetSessionsCache();
+
                     return true;
                 }
             }
 
             Log::error("OPNsense: Failed to authorize IP {$ip} via session/connect", [
                 'status' => $response->status(),
-                'response' => $data
+                'response' => $data,
             ]);
+
             return false;
 
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception during authorization: " . $e->getMessage());
+            Log::error('OPNsense: Exception during authorization: '.$e->getMessage());
+
             return false;
         }
     }
@@ -141,7 +150,8 @@ class OpnSenseService
 
                 return Cache::get('opnsense_arp_table') ?? [];
             } catch (\Exception $e) {
-                Log::error("OPNsense: Exception fetching ARP table: " . $e->getMessage());
+                Log::error('OPNsense: Exception fetching ARP table: '.$e->getMessage());
+
                 return Cache::get('opnsense_arp_table') ?? [];
             }
         });
@@ -177,7 +187,8 @@ class OpnSenseService
 
                 return Cache::get('opnsense_dhcp_leases') ?? [];
             } catch (\Exception $e) {
-                Log::error("OPNsense: Exception fetching DHCP leases: " . $e->getMessage());
+                Log::error('OPNsense: Exception fetching DHCP leases: '.$e->getMessage());
+
                 return Cache::get('opnsense_dhcp_leases') ?? [];
             }
         });
@@ -211,23 +222,27 @@ class OpnSenseService
                     $data = $response->json();
                     $rows = $data['rows'] ?? $data['sessions'] ?? $data;
 
-                    if (!is_array($rows)) return [];
+                    if (! is_array($rows)) {
+                        return [];
+                    }
 
-                    return array_map(function($session) {
+                    return array_map(function ($session) {
                         // Normalize byte keys
-                        if (isset($session['bytes_in']) && !isset($session['bytes_received'])) {
+                        if (isset($session['bytes_in']) && ! isset($session['bytes_received'])) {
                             $session['bytes_received'] = $session['bytes_in'];
                         }
-                        if (isset($session['bytes_out']) && !isset($session['bytes_sent'])) {
+                        if (isset($session['bytes_out']) && ! isset($session['bytes_sent'])) {
                             $session['bytes_sent'] = $session['bytes_out'];
                         }
+
                         return $session;
                     }, $rows);
                 }
 
                 return Cache::get("opnsense_sessions_list_{$zone}") ?? [];
             } catch (\Exception $e) {
-                Log::error("OPNsense: Exception fetching sessions: " . $e->getMessage());
+                Log::error('OPNsense: Exception fetching sessions: '.$e->getMessage());
+
                 return Cache::get("opnsense_sessions_list_{$zone}") ?? [];
             }
         });
@@ -241,7 +256,7 @@ class OpnSenseService
      */
     protected function forgetSessionsCache(): void
     {
-        Cache::forget('opnsense_sessions_list_' . session('zone', $this->zone));
+        Cache::forget('opnsense_sessions_list_'.session('zone', $this->zone));
     }
 
     /**
@@ -259,12 +274,12 @@ class OpnSenseService
         $arp = $this->getArpTable();
         $entries = $arp['arp'] ?? $arp;
 
-        if (!is_array($entries)) {
+        if (! is_array($entries)) {
             return null;
         }
 
         foreach ($entries as $entry) {
-            if (!is_array($entry)) {
+            if (! is_array($entry)) {
                 continue;
             }
 
@@ -274,6 +289,7 @@ class OpnSenseService
             }
 
             $mac = $entry['mac'] ?? $entry['macaddr'] ?? $entry['mac_addr'] ?? null;
+
             return $mac ? strtoupper($mac) : null;
         }
 
@@ -306,7 +322,8 @@ class OpnSenseService
 
                 return Cache::get('opnsense_gateway_status') ?? [];
             } catch (\Exception $e) {
-                Log::error("OPNsense: Exception fetching gateway status: " . $e->getMessage());
+                Log::error('OPNsense: Exception fetching gateway status: '.$e->getMessage());
+
                 return Cache::get('opnsense_gateway_status') ?? [];
             }
         });
@@ -357,7 +374,7 @@ class OpnSenseService
 
                         // We want the aggregate entry for each interface.
                         // Usually, this is the one with the highest traffic count.
-                        if (!isset($normalized[$name]) || ($inBytes + $outBytes) > ($normalized[$name]['inbytes'] + $normalized[$name]['outbytes'])) {
+                        if (! isset($normalized[$name]) || ($inBytes + $outBytes) > ($normalized[$name]['inbytes'] + $normalized[$name]['outbytes'])) {
                             $normalized[$name] = [
                                 'inbytes' => $inBytes,
                                 'outbytes' => $outBytes,
@@ -367,12 +384,14 @@ class OpnSenseService
                             ];
                         }
                     }
+
                     return $normalized;
                 }
 
                 return [];
             } catch (\Exception $e) {
-                Log::error("OPNsense: Exception fetching interface stats: " . $e->getMessage());
+                Log::error('OPNsense: Exception fetching interface stats: '.$e->getMessage());
+
                 return [];
             }
         });
@@ -402,6 +421,7 @@ class OpnSenseService
     protected function alterBlockAlias(string $action, string $macAddress): bool
     {
         $alias = config('services.opnsense.block_alias', 'guest_blocklist');
+
         return $this->alterAlias($alias, $action, $macAddress);
     }
 
@@ -415,6 +435,7 @@ class OpnSenseService
     {
         if (empty($this->apiKey) || empty($this->apiSecret)) {
             Log::warning("OPNsense: API credentials not configured, cannot {$action} {$value} on alias '{$alias}'.");
+
             return false;
         }
 
@@ -425,6 +446,7 @@ class OpnSenseService
 
             if ($response->successful()) {
                 Log::info("OPNsense: {$action} {$value} on alias '{$alias}'.");
+
                 return true;
             }
 
@@ -432,9 +454,11 @@ class OpnSenseService
                 'status' => $response->status(),
                 'response' => $response->json(),
             ]);
+
             return false;
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception during alias {$action} for {$value} on '{$alias}': " . $e->getMessage());
+            Log::error("OPNsense: Exception during alias {$action} for {$value} on '{$alias}': ".$e->getMessage());
+
             return false;
         }
     }
@@ -471,11 +495,12 @@ class OpnSenseService
     {
         if (empty($this->apiKey) || empty($this->apiSecret)) {
             Log::warning("OPNsense: API credentials not configured, cannot upsert shaper pipe for tier {$tier}.");
+
             return false;
         }
 
         $settingKey = "opnsense_pipe_uuid_{$tier}";
-        $uuid = \App\Models\Setting::get($settingKey);
+        $uuid = Setting::get($settingKey);
 
         $payload = [
             'pipe' => [
@@ -496,10 +521,11 @@ class OpnSenseService
                 $data = $response->json();
                 $newUuid = $data['uuid'] ?? $uuid;
                 if ($newUuid && $newUuid !== $uuid) {
-                    \App\Models\Setting::set($settingKey, $newUuid);
+                    Setting::set($settingKey, $newUuid);
                 }
 
                 Log::info("OPNsense: upserted shaper pipe for tier {$tier}.", ['uuid' => $newUuid]);
+
                 return true;
             }
 
@@ -507,9 +533,11 @@ class OpnSenseService
                 'status' => $response->status(),
                 'response' => $response->json(),
             ]);
+
             return false;
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception upserting shaper pipe for tier {$tier}: " . $e->getMessage());
+            Log::error("OPNsense: Exception upserting shaper pipe for tier {$tier}: ".$e->getMessage());
+
             return false;
         }
     }
@@ -522,7 +550,8 @@ class OpnSenseService
     public function reconfigureShaper(): bool
     {
         if (empty($this->apiKey) || empty($this->apiSecret)) {
-            Log::warning("OPNsense: API credentials not configured, cannot reconfigure shaper.");
+            Log::warning('OPNsense: API credentials not configured, cannot reconfigure shaper.');
+
             return false;
         }
 
@@ -532,17 +561,20 @@ class OpnSenseService
             $response = $this->client()->post($url);
 
             if ($response->successful()) {
-                Log::info("OPNsense: traffic shaper reconfigured.");
+                Log::info('OPNsense: traffic shaper reconfigured.');
+
                 return true;
             }
 
-            Log::error("OPNsense: Failed to reconfigure traffic shaper.", [
+            Log::error('OPNsense: Failed to reconfigure traffic shaper.', [
                 'status' => $response->status(),
                 'response' => $response->json(),
             ]);
+
             return false;
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception reconfiguring traffic shaper: " . $e->getMessage());
+            Log::error('OPNsense: Exception reconfiguring traffic shaper: '.$e->getMessage());
+
             return false;
         }
     }
@@ -557,7 +589,7 @@ class OpnSenseService
         try {
             $response = $this->client()->get("{$this->baseUrl}/api/kea/dhcpv4/searchSubnet");
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return null;
             }
 
@@ -569,14 +601,15 @@ class OpnSenseService
 
             return null;
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception searching Kea subnets: " . $e->getMessage());
+            Log::error('OPNsense: Exception searching Kea subnets: '.$e->getMessage());
+
             return null;
         }
     }
 
     protected function cidrContainsIp(string $cidr, string $ip): bool
     {
-        if (!str_contains($cidr, '/')) {
+        if (! str_contains($cidr, '/')) {
             return false;
         }
 
@@ -628,7 +661,7 @@ class OpnSenseService
         }
 
         $subnetUuid = $this->findKeaSubnetUuidForIp($ip);
-        if (!$subnetUuid) {
+        if (! $subnetUuid) {
             return [
                 'success' => false,
                 'uuid' => null,
@@ -655,6 +688,7 @@ class OpnSenseService
 
             if ($response->successful() && ($data['result'] ?? null) === 'saved') {
                 $this->reconfigureKeaDhcp();
+
                 return [
                     'success' => true,
                     'uuid' => $data['uuid'] ?? $reservationUuid,
@@ -672,10 +706,11 @@ class OpnSenseService
                 'success' => false,
                 'uuid' => null,
                 'subnet_uuid' => $subnetUuid,
-                'message' => 'OPNsense rejected the reservation: ' . json_encode($data['validations'] ?? $data),
+                'message' => 'OPNsense rejected the reservation: '.json_encode($data['validations'] ?? $data),
             ];
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception writing Kea reservation for {$mac} -> {$ip}: " . $e->getMessage());
+            Log::error("OPNsense: Exception writing Kea reservation for {$mac} -> {$ip}: ".$e->getMessage());
+
             return ['success' => false, 'uuid' => null, 'subnet_uuid' => $subnetUuid, 'message' => 'Could not reach OPNsense.'];
         }
     }
@@ -687,6 +722,7 @@ class OpnSenseService
     {
         if (empty($this->apiKey) || empty($this->apiSecret)) {
             Log::warning("OPNsense: API credentials not configured, cannot delete Kea reservation {$reservationUuid}.");
+
             return false;
         }
 
@@ -696,6 +732,7 @@ class OpnSenseService
 
             if ($response->successful() && ($data['result'] ?? null) === 'deleted') {
                 $this->reconfigureKeaDhcp();
+
                 return true;
             }
 
@@ -703,9 +740,11 @@ class OpnSenseService
                 'status' => $response->status(),
                 'response' => $data,
             ]);
+
             return false;
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception deleting Kea reservation {$reservationUuid}: " . $e->getMessage());
+            Log::error("OPNsense: Exception deleting Kea reservation {$reservationUuid}: ".$e->getMessage());
+
             return false;
         }
     }
@@ -724,17 +763,20 @@ class OpnSenseService
             $response = $this->client()->post("{$this->baseUrl}/api/kea/service/reconfigure");
 
             if ($response->successful()) {
-                Log::info("OPNsense: Kea DHCP reconfigured.");
+                Log::info('OPNsense: Kea DHCP reconfigured.');
+
                 return true;
             }
 
-            Log::error("OPNsense: Failed to reconfigure Kea DHCP.", [
+            Log::error('OPNsense: Failed to reconfigure Kea DHCP.', [
                 'status' => $response->status(),
                 'response' => $response->json(),
             ]);
+
             return false;
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception reconfiguring Kea DHCP: " . $e->getMessage());
+            Log::error('OPNsense: Exception reconfiguring Kea DHCP: '.$e->getMessage());
+
             return false;
         }
     }
@@ -752,7 +794,7 @@ class OpnSenseService
         try {
             $response = $this->client()->post("{$this->baseUrl}/api/captiveportal/settings/search_zones");
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return null;
             }
 
@@ -764,7 +806,8 @@ class OpnSenseService
 
             return null;
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception resolving captive portal zone UUID: " . $e->getMessage());
+            Log::error('OPNsense: Exception resolving captive portal zone UUID: '.$e->getMessage());
+
             return null;
         }
     }
@@ -804,14 +847,14 @@ class OpnSenseService
         }
 
         $uuid = $this->resolveCaptivePortalZoneUuid();
-        if (!$uuid) {
+        if (! $uuid) {
             return $empty;
         }
 
         try {
             $response = $this->client()->get("{$this->baseUrl}/api/captiveportal/settings/get_zone/{$uuid}");
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 return $empty;
             }
 
@@ -822,7 +865,8 @@ class OpnSenseService
                 'macs' => $this->splitZoneListField($zone['allowedMACAddresses'] ?? ''),
             ];
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception fetching captive portal allowed addresses: " . $e->getMessage());
+            Log::error('OPNsense: Exception fetching captive portal allowed addresses: '.$e->getMessage());
+
             return $empty;
         }
     }
@@ -864,7 +908,7 @@ class OpnSenseService
         }
 
         $uuid = $this->resolveCaptivePortalZoneUuid();
-        if (!$uuid) {
+        if (! $uuid) {
             return ['success' => false, 'message' => "Could not find captive portal zone {$this->zone} on OPNsense."];
         }
 
@@ -890,6 +934,7 @@ class OpnSenseService
             if ($response->successful() && ($data['result'] ?? null) === 'saved') {
                 $this->reconfigureCaptivePortal();
                 $this->forgetSessionsCache();
+
                 return ['success' => true, 'message' => null];
             }
 
@@ -897,9 +942,11 @@ class OpnSenseService
                 'status' => $response->status(),
                 'response' => $data,
             ]);
-            return ['success' => false, 'message' => 'OPNsense rejected the change: ' . json_encode($data['validations'] ?? $data)];
+
+            return ['success' => false, 'message' => 'OPNsense rejected the change: '.json_encode($data['validations'] ?? $data)];
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception updating captive portal {$field}: " . $e->getMessage());
+            Log::error("OPNsense: Exception updating captive portal {$field}: ".$e->getMessage());
+
             return ['success' => false, 'message' => 'Could not reach OPNsense.'];
         }
     }
@@ -918,17 +965,20 @@ class OpnSenseService
             $response = $this->client()->post("{$this->baseUrl}/api/captiveportal/service/reconfigure");
 
             if ($response->successful()) {
-                Log::info("OPNsense: captive portal reconfigured.");
+                Log::info('OPNsense: captive portal reconfigured.');
+
                 return true;
             }
 
-            Log::error("OPNsense: Failed to reconfigure captive portal.", [
+            Log::error('OPNsense: Failed to reconfigure captive portal.', [
                 'status' => $response->status(),
                 'response' => $response->json(),
             ]);
+
             return false;
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception reconfiguring captive portal: " . $e->getMessage());
+            Log::error('OPNsense: Exception reconfiguring captive portal: '.$e->getMessage());
+
             return false;
         }
     }
@@ -936,30 +986,31 @@ class OpnSenseService
     /**
      * Terminate an active session on OPNsense.
      *
-     * @param string $sessionId
+     * @param  string  $sessionId
      * @return bool
      */
     public function disconnectDevice($sessionId)
     {
         if (empty($this->apiKey) || empty($this->apiSecret)) {
-            Log::warning("OPNsense Disconnect: API credentials missing.");
+            Log::warning('OPNsense Disconnect: API credentials missing.');
+
             return false;
         }
 
         try {
             $zone = session('zone', $this->zone);
             $url = "{$this->baseUrl}/api/captiveportal/session/disconnect/{$zone}/";
-            
+
             // We send both camelCase and lowercase to be safe across OPNsense versions
             $response = $this->client()->post($url, [
-                    'sessionId' => $sessionId,
-                    'sessionid' => $sessionId 
-                ]);
+                'sessionId' => $sessionId,
+                'sessionid' => $sessionId,
+            ]);
 
             $data = $response->json();
 
             if ($response->successful()) {
-                Log::info("OPNsense: Disconnect request sent for session {$sessionId}. Response: " . json_encode($data));
+                Log::info("OPNsense: Disconnect request sent for session {$sessionId}. Response: ".json_encode($data));
                 $this->forgetSessionsCache();
 
                 // If the session was deleted or returned successfully
@@ -968,11 +1019,13 @@ class OpnSenseService
 
             Log::error("OPNsense: Failed to disconnect session {$sessionId}", [
                 'status' => $response->status(),
-                'response' => $data
+                'response' => $data,
             ]);
+
             return false;
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception disconnecting session {$sessionId}: " . $e->getMessage());
+            Log::error("OPNsense: Exception disconnecting session {$sessionId}: ".$e->getMessage());
+
             return false;
         }
     }

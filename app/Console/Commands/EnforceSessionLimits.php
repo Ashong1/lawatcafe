@@ -38,15 +38,16 @@ class EnforceSessionLimits extends Command
 
     public function handle(OpnSenseService $opnsense, TrafficShapingService $shaping)
     {
-        $this->info("Fetching active sessions from OPNsense...");
+        $this->info('Fetching active sessions from OPNsense...');
         $sessions = $opnsense->listSessions();
 
         if (empty($sessions)) {
-            $this->warn("No active sessions found.");
+            $this->warn('No active sessions found.');
+
             return;
         }
 
-        $this->info("Scanning " . count($sessions) . " sessions for expiration...");
+        $this->info('Scanning '.count($sessions).' sessions for expiration...');
 
         // Never touch statically-permitted / infrastructure / VIP devices —
         // these intentionally have no voucher and are not meant to expire.
@@ -61,22 +62,25 @@ class EnforceSessionLimits extends Command
             $mac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $session['macAddress'] ?? ''));
             $sessionId = $session['sessionId'] ?? null;
 
-            if (!$sessionId) continue;
+            if (! $sessionId) {
+                continue;
+            }
 
             // Find matching used voucher
             // We search for used vouchers that haven't been 'purged' yet
             $voucher = Voucher::where('is_used', true)
-                ->where(function($query) use ($ip, $mac) {
+                ->where(function ($query) use ($ip, $mac) {
                     $query->where('ip_address', $ip);
-                    if (!empty($mac)) {
+                    if (! empty($mac)) {
                         $query->orWhere('mac_address', $mac);
                     }
                 })
                 ->orderBy('used_at', 'desc')
                 ->first();
 
-            if (!$voucher) {
+            if (! $voucher) {
                 $this->handleOrphanedSession($opnsense, $shaping, $session, $ip, $sessionId, $protectedIps);
+
                 continue;
             }
 
@@ -87,7 +91,7 @@ class EnforceSessionLimits extends Command
             // different device or someone is riding an authorized IP with a
             // different MAC — either way, kick it rather than trust the IP alone.
             $boundMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $voucher->mac_address ?? ''));
-            if (!empty($boundMac) && !empty($mac) && $boundMac !== $mac) {
+            if (! empty($boundMac) && ! empty($mac) && $boundMac !== $mac) {
                 $this->warn(" - Session {$ip}: MAC MISMATCH (voucher {$voucher->code} bound to {$boundMac}, live session is {$mac}). Disconnecting...");
 
                 $disconnected = $opnsense->disconnectDevice($sessionId);
@@ -96,8 +100,9 @@ class EnforceSessionLimits extends Command
                     $shaping->releaseIp($ip, $opnsense);
                     Log::warning("EnforceSessions: Disconnected {$ip} due to MAC binding violation (voucher {$voucher->code} bound to {$boundMac}, saw {$mac}).");
                 } else {
-                    $this->error("   [FAILED] Could not kick device for MAC mismatch.");
+                    $this->error('   [FAILED] Could not kick device for MAC mismatch.');
                 }
+
                 continue;
             }
 
@@ -111,10 +116,10 @@ class EnforceSessionLimits extends Command
 
                 if ($disconnected) {
                     $shaping->releaseIp($ip, $opnsense);
-                    $this->info("   [SUCCESS] Device kicked.");
+                    $this->info('   [SUCCESS] Device kicked.');
                     Log::info("EnforceSessions: Disconnected {$ip} (Voucher: {$voucher->code}) due to expiration.");
                 } else {
-                    $this->error("   [FAILED] Could not kick device.");
+                    $this->error('   [FAILED] Could not kick device.');
                 }
             } else {
                 $remaining = now()->diffInMinutes($expirationTime, false);
@@ -122,7 +127,7 @@ class EnforceSessionLimits extends Command
             }
         }
 
-        $this->info("Session enforcement complete.");
+        $this->info('Session enforcement complete.');
     }
 
     /**
@@ -140,11 +145,13 @@ class EnforceSessionLimits extends Command
     {
         if (in_array($ip, $protectedIps)) {
             $this->line(" - Session {$ip}: Allowlisted (ignored/VIP/infrastructure). Skipping.");
+
             return;
         }
 
         if (($session['authenticated_via'] ?? null) !== 'API') {
             $this->line(" - Session {$ip}: Static/firewall-permit entry, not app-authorized. Skipping.");
+
             return;
         }
 
@@ -152,7 +159,8 @@ class EnforceSessionLimits extends Command
         $idleMinutes = $lastAccessed ? abs(now()->diffInMinutes(Carbon::createFromTimestamp($lastAccessed))) : 0;
 
         if ($idleMinutes < self::ORPHAN_GRACE_MINUTES) {
-            $this->line(" - Session {$ip}: No matching voucher, idle {$idleMinutes}m (grace " . self::ORPHAN_GRACE_MINUTES . "m). Skipping.");
+            $this->line(" - Session {$ip}: No matching voucher, idle {$idleMinutes}m (grace ".self::ORPHAN_GRACE_MINUTES.'m). Skipping.');
+
             return;
         }
 
@@ -162,10 +170,10 @@ class EnforceSessionLimits extends Command
 
         if ($disconnected) {
             $shaping->releaseIp($ip, $opnsense);
-            $this->info("   [SUCCESS] Orphaned device kicked.");
+            $this->info('   [SUCCESS] Orphaned device kicked.');
             Log::info("EnforceSessions: Disconnected orphaned session {$ip} (idle {$idleMinutes}m, no voucher record).");
         } else {
-            $this->error("   [FAILED] Could not kick orphaned device.");
+            $this->error('   [FAILED] Could not kick orphaned device.');
         }
     }
 }

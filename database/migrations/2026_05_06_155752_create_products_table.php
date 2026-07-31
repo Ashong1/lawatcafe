@@ -10,16 +10,16 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up()
-{
-    Schema::create('products', function (Blueprint $table) {
-        $table->id();
-        $table->string('name');
-        $table->string('category')->default('Coffee'); // e.g., Coffee, Pastries, Add-ons
-        $table->decimal('price', 10, 2);
-        $table->string('status')->default('Active'); // e.g., Active, Out of Stock
-        $table->timestamps();
-    });
-}
+    {
+        Schema::create('products', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('category')->default('Coffee'); // e.g., Coffee, Pastries, Add-ons
+            $table->decimal('price', 10, 2);
+            $table->string('status')->default('Active'); // e.g., Active, Out of Stock
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

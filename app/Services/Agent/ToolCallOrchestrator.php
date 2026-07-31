@@ -21,16 +21,15 @@ class ToolCallOrchestrator
         protected ToolRegistry $registry,
         protected PermissionResolver $permissions,
         protected AuditLogger $auditLogger,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array $messages Canonical chat history: [['role'=>'user'|'assistant'|'system','content'=>string], ...]
-     * @param string $audience 'guest'|'staff'|'admin' — determines which tools the model is even offered.
-     * @param array $context Request-scoped data tools may need (e.g. guest's own IP/MAC). Never model-supplied.
-     * @param ?callable $onTextDelta Invoked with each text chunk as it streams in from the model.
-     *                                Defaults to a no-op for non-interactive callers (e.g. the scheduled
-     *                                agent:analyze run) that don't need live output.
+     * @param  array  $messages  Canonical chat history: [['role'=>'user'|'assistant'|'system','content'=>string], ...]
+     * @param  string  $audience  'guest'|'staff'|'admin' — determines which tools the model is even offered.
+     * @param  array  $context  Request-scoped data tools may need (e.g. guest's own IP/MAC). Never model-supplied.
+     * @param  ?callable  $onTextDelta  Invoked with each text chunk as it streams in from the model.
+     *                                  Defaults to a no-op for non-interactive callers (e.g. the scheduled
+     *                                  agent:analyze run) that don't need live output.
      * @return array{reply: ?string, pending: array, executed: array}
      */
     public function run(array $messages, string $audience, ?User $actor, array $context = [], ?callable $onTextDelta = null): array
@@ -50,7 +49,7 @@ class ToolCallOrchestrator
         for ($roundTrip = 0; $roundTrip < self::MAX_ROUND_TRIPS; $roundTrip++) {
             $response = $this->ai->chatWithToolsStreaming($messages, $canonicalTools, $onTextDelta);
 
-            if (!$response) {
+            if (! $response) {
                 return ['reply' => null, 'pending' => $pending, 'executed' => $executed];
             }
 
@@ -73,11 +72,12 @@ class ToolCallOrchestrator
                 // registry independent of whatever the model was prompted with.
                 $tool = $registryTools[$toolName] ?? null;
 
-                if (!$tool) {
+                if (! $tool) {
                     Log::warning("ToolCallOrchestrator: model requested out-of-audience tool '{$toolName}' for audience '{$audience}'.");
                     $result = ToolResult::fail("Tool '{$toolName}' is not available.");
                     $this->auditLogger->record($toolName, $arguments, $result->toArray(), 'ai', $actor?->id, 'rejected');
                     $messages[] = ['role' => 'tool', 'name' => $toolName, 'tool_call_id' => $call['id'], 'content' => json_encode($result->toArray())];
+
                     continue;
                 }
 
@@ -136,17 +136,17 @@ class ToolCallOrchestrator
             return ToolResult::fail('This action is no longer pending.');
         }
 
-        if (!$approvedBy->isAdminOrAbove() && $audit->actor_user_id !== null && $audit->actor_user_id !== $approvedBy->id) {
+        if (! $approvedBy->isAdminOrAbove() && $audit->actor_user_id !== null && $audit->actor_user_id !== $approvedBy->id) {
             return ToolResult::fail('You can only confirm your own proposed actions.');
         }
 
         $tool = $this->registry->forAudience(ToolRegistry::AUDIENCE_ADMIN)[$audit->tool_name] ?? null;
-        if (!$tool) {
+        if (! $tool) {
             return ToolResult::fail("Tool '{$audit->tool_name}' no longer exists.");
         }
 
         $tier = $this->permissions->tierFor($tool, $approvedBy);
-        if ($tier === PermissionResolver::TIER_ADMIN_ONLY && !$approvedBy->isAdminOrAbove()) {
+        if ($tier === PermissionResolver::TIER_ADMIN_ONLY && ! $approvedBy->isAdminOrAbove()) {
             return ToolResult::fail('Only an admin can approve this action.');
         }
 
@@ -158,9 +158,9 @@ class ToolCallOrchestrator
 
     /**
      * @return bool whether the rejection actually happened — false if the
-     * action was no longer pending, or the rejecting user doesn't own it and
-     * isn't an admin. The controller uses this to report failure instead of
-     * always claiming success regardless of what happened.
+     *              action was no longer pending, or the rejecting user doesn't own it and
+     *              isn't an admin. The controller uses this to report failure instead of
+     *              always claiming success regardless of what happened.
      */
     public function rejectPending(AiActionAudit $audit, User $rejectedBy): bool
     {
@@ -168,7 +168,7 @@ class ToolCallOrchestrator
             return false;
         }
 
-        if (!$rejectedBy->isAdminOrAbove() && $audit->actor_user_id !== null && $audit->actor_user_id !== $rejectedBy->id) {
+        if (! $rejectedBy->isAdminOrAbove() && $audit->actor_user_id !== null && $audit->actor_user_id !== $rejectedBy->id) {
             return false;
         }
 

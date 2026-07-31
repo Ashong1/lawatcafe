@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Setting;
+use App\Models\StaticIpAssignment;
 use App\Services\Agent\PermissionResolver;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
 use App\Services\OpnSenseService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
@@ -71,7 +72,7 @@ class SettingController extends Controller
      */
     public function testAiProvider(string $provider, AIService $ai)
     {
-        if (!in_array($provider, ['gemini', 'groq', 'openrouter'], true)) {
+        if (! in_array($provider, ['gemini', 'groq', 'openrouter'], true)) {
             abort(404);
         }
 
@@ -86,7 +87,7 @@ class SettingController extends Controller
      */
     public function replaceProviderModel(Request $request, string $provider, AIService $ai)
     {
-        if (!in_array($provider, ['gemini', 'groq', 'openrouter'], true)) {
+        if (! in_array($provider, ['gemini', 'groq', 'openrouter'], true)) {
             abort(404);
         }
 
@@ -97,13 +98,13 @@ class SettingController extends Controller
 
         $result = $ai->replaceModel($provider, $validated['old_model'], $validated['new_model']);
 
-        if (!$result['replaced']) {
+        if (! $result['replaced']) {
             return redirect()->back()->with('error', "Couldn't find {$validated['old_model']} in the {$provider} model list.");
         }
 
         return redirect()->back()->with(
             $result['new_model_ok'] ? 'success' : 'error',
-            "Replaced {$validated['old_model']} with {$validated['new_model']} — " . ($result['new_model_ok'] ? 'it tested healthy.' : 'but it failed too. Try a different model ID.')
+            "Replaced {$validated['old_model']} with {$validated['new_model']} — ".($result['new_model_ok'] ? 'it tested healthy.' : 'but it failed too. Try a different model ID.')
         );
     }
 
@@ -112,13 +113,13 @@ class SettingController extends Controller
      */
     public function resetProviderModels(string $provider, AIService $ai)
     {
-        if (!in_array($provider, ['gemini', 'groq', 'openrouter'], true)) {
+        if (! in_array($provider, ['gemini', 'groq', 'openrouter'], true)) {
             abort(404);
         }
 
         $ai->resetModels($provider);
 
-        return redirect()->back()->with('success', ucfirst($provider) . "'s model list reset to defaults.");
+        return redirect()->back()->with('success', ucfirst($provider)."'s model list reset to defaults.");
     }
 
     /**
@@ -132,7 +133,7 @@ class SettingController extends Controller
             'network_infrastructure_ips' => Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4'),
         ];
 
-        $staticIps = \App\Models\StaticIpAssignment::latest()->get();
+        $staticIps = StaticIpAssignment::latest()->get();
         $allowedAddresses = $opnsense->getAllowedAddresses();
 
         return view('admin.settings.network', compact('settings', 'staticIps', 'allowedAddresses'));
@@ -178,7 +179,7 @@ class SettingController extends Controller
 
         $validated = $request->validate([
             'tiers' => 'required|array',
-            'tiers.*' => 'required|string|in:' . implode(',', $validTiers),
+            'tiers.*' => 'required|string|in:'.implode(',', $validTiers),
         ]);
 
         $tierByToolName = array_intersect_key($validated['tiers'], array_flip($knownTools));
@@ -242,7 +243,7 @@ class SettingController extends Controller
     private function applySettings(array $validated, array $exclude = []): void
     {
         foreach ($validated as $key => $value) {
-            if (!in_array($key, $exclude, true)) {
+            if (! in_array($key, $exclude, true)) {
                 Setting::set($key, $value);
             }
         }

@@ -43,7 +43,7 @@ class BlocklistService
         $existing = BannedDevice::where('mac_address', $macAddress)->first();
         $banned = false;
 
-        if (!$existing) {
+        if (! $existing) {
             $this->banDevice($macAddress, $reason, $hostname, $opnsense);
             $banned = true;
         }

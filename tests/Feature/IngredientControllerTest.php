@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Ingredient;
 use App\Models\User;
+use App\Notifications\SystemAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
 use Tests\TestCase;
@@ -70,7 +71,7 @@ class IngredientControllerTest extends TestCase
             'status' => 'Low Stock',
         ]);
 
-        NotificationFacade::assertSentTo($admin, \App\Notifications\SystemAlert::class);
+        NotificationFacade::assertSentTo($admin, SystemAlert::class);
     }
 
     public function test_add_stock_increases_current_stock_and_updates_status(): void

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\PurchaseOrderRequest;
 use App\Models\Ingredient;
 use App\Models\PurchaseOrderDraft;
 use App\Models\Supplier;
@@ -51,7 +52,7 @@ class PurchaseOrderControllerTest extends TestCase
         $response->assertSessionHas('success');
         $draft->refresh();
         $this->assertSame('sent', $draft->status);
-        Mail::assertSent(\App\Mail\PurchaseOrderRequest::class);
+        Mail::assertSent(PurchaseOrderRequest::class);
     }
 
     public function test_send_flashes_error_when_already_sent(): void

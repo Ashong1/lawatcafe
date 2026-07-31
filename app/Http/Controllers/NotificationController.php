@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
 class NotificationController extends Controller
 {
     public function index()
     {
         $notifications = auth()->user()->notifications()->paginate(10);
+
         return response()->json($notifications);
     }
 
@@ -18,12 +17,14 @@ class NotificationController extends Controller
         if ($notification) {
             $notification->markAsRead();
         }
+
         return response()->json(['success' => true]);
     }
 
     public function markAllAsRead()
     {
         auth()->user()->unreadNotifications->markAsRead();
+
         return response()->json(['success' => true]);
     }
 

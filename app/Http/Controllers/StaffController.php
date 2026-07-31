@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\AiFinding;
-use App\Models\Voucher;
-use App\Models\Sale;
 use App\Models\Ingredient;
+use App\Models\Sale;
 use App\Models\Setting;
 use App\Models\Shift;
+use App\Models\Voucher;
+use App\Services\Agent\ConversationHistoryService;
+use App\Services\Agent\ToolCallOrchestrator;
+use App\Services\Agent\ToolRegistry;
+use App\Services\AIService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
@@ -42,7 +47,7 @@ class StaffController extends Controller
                 'name' => $item->name,
                 'current_stock' => $item->current_stock,
                 'unit' => $item->unit,
-                'is_sold_out' => $item->current_stock <= 0
+                'is_sold_out' => $item->current_stock <= 0,
             ];
         });
 
@@ -55,8 +60,8 @@ class StaffController extends Controller
         return response()->json([
             'hasActiveShift' => (bool) $activeShift,
             'shift' => $activeShift ? [
-                'started_at' => \Carbon\Carbon::parse($activeShift->started_at)->format('h:i A'),
-                'duration' => \Carbon\Carbon::parse($activeShift->started_at)->diffForHumans(),
+                'started_at' => Carbon::parse($activeShift->started_at)->format('h:i A'),
+                'duration' => Carbon::parse($activeShift->started_at)->diffForHumans(),
                 'starting_cash' => number_format($activeShift->starting_cash, 2),
                 'role' => auth()->user()->role,
             ] : null,
@@ -83,7 +88,7 @@ class StaffController extends Controller
 
     private function getShiftNotes(): string
     {
-        return Setting::get('shift_notes', "Welcome to your shift! No special announcements right now.");
+        return Setting::get('shift_notes', 'Welcome to your shift! No special announcements right now.');
     }
 
     private function getPendingOrdersCount(): int
@@ -101,7 +106,7 @@ class StaffController extends Controller
         return AiFinding::where('audience', 'staff')->latest()->take(5)->get(['summary', 'severity', 'created_at']);
     }
 
-    public function staffChat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator, \App\Services\Agent\ConversationHistoryService $conversations)
+    public function staffChat(Request $request, AIService $ai, ToolCallOrchestrator $orchestrator, ConversationHistoryService $conversations)
     {
         // history.*.role restricted to user/assistant — see the matching
         // fix (and full reasoning) on CaptivePortalController::chat().
@@ -123,24 +128,28 @@ class StaffController extends Controller
 
         return response()->stream(function () use ($messages, $orchestrator, $request, $conversations, $conversation) {
             $onTextDelta = function (string $delta) {
-                echo 'data: ' . json_encode(['type' => 'delta', 'text' => $delta]) . "\n\n";
-                if (ob_get_level() > 0) @ob_flush();
+                echo 'data: '.json_encode(['type' => 'delta', 'text' => $delta])."\n\n";
+                if (ob_get_level() > 0) {
+                    @ob_flush();
+                }
                 flush();
             };
 
-            $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_STAFF, $request->user(), [], $onTextDelta);
+            $result = $orchestrator->run($messages, ToolRegistry::AUDIENCE_STAFF, $request->user(), [], $onTextDelta);
 
-            $reply = $result['reply'] ?? "☕ Staff AI stack offline.";
+            $reply = $result['reply'] ?? '☕ Staff AI stack offline.';
             $conversations->append($conversation, $request->message, $reply, $result['executed'] ?? [], $result['pending'] ?? []);
 
-            echo 'data: ' . json_encode([
+            echo 'data: '.json_encode([
                 'type' => 'meta',
                 'reply' => $reply,
                 'pending' => $result['pending'],
                 'executed' => $result['executed'],
                 'conversation_id' => $conversation->id,
-            ]) . "\n\n";
-            if (ob_get_level() > 0) @ob_flush();
+            ])."\n\n";
+            if (ob_get_level() > 0) {
+                @ob_flush();
+            }
             flush();
         }, 200, [
             'Content-Type' => 'text/event-stream',

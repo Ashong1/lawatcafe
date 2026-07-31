@@ -2,10 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Sale;
-use App\Models\Voucher;
-use App\Models\Product;
+use App\Models\AiAnalysisRun;
+use App\Models\AiFinding;
+use App\Models\Category;
+use App\Models\EwalletPayment;
 use App\Models\Ingredient;
+use App\Models\Product;
+use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\Setting;
+use App\Models\Voucher;
+use App\Services\Agent\ConversationHistoryService;
+use App\Services\Agent\ToolCallOrchestrator;
+use App\Services\Agent\ToolRegistry;
+use App\Services\AIService;
+use App\Services\BaristaForecastService;
+use App\Services\OpnSenseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -13,7 +25,7 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request, \App\Services\OpnSenseService $opnsense)
+    public function index(Request $request, OpnSenseService $opnsense)
     {
         $range = $request->get('range', 'today');
 
@@ -24,21 +36,24 @@ class DashboardController extends Controller
         $networkPulse = Cache::flexible('network_pulse_initial', [15, 60], function () use ($opnsense) {
             try {
                 $arpTable = collect($opnsense->getArpTable());
-                $allConnected = $arpTable->filter(fn($entry) => !empty($entry['mac']) && $entry['mac'] !== '(incomplete)');
+                $allConnected = $arpTable->filter(fn ($entry) => ! empty($entry['mac']) && $entry['mac'] !== '(incomplete)');
 
-                $infraIps = \App\Models\Setting::infrastructureIps();
+                $infraIps = Setting::infrastructureIps();
 
-                $systemNodes = $allConnected->filter(fn($s) => in_array($s['ip'] ?? '', $infraIps))
+                $systemNodes = $allConnected->filter(fn ($s) => in_array($s['ip'] ?? '', $infraIps))
                     ->unique('mac')->count();
-                    
-                $activeGuests = $allConnected->filter(fn($s) => !in_array($s['ip'] ?? '', $infraIps))
+
+                $activeGuests = $allConnected->filter(fn ($s) => ! in_array($s['ip'] ?? '', $infraIps))
                     ->unique('mac')->count();
-                
+
                 $stats = $opnsense->getInterfaceStats();
                 $iface = $stats['wan'] ?? $stats['lan'] ?? null;
-                if (!$iface) {
+                if (! $iface) {
                     foreach ($stats as $item) {
-                        if ($item['inbytes'] > 0) { $iface = $item; break; }
+                        if ($item['inbytes'] > 0) {
+                            $iface = $item;
+                            break;
+                        }
                     }
                 }
 
@@ -52,7 +67,7 @@ class DashboardController extends Controller
                     'bandwidthDown' => 0, // Initial 0, will be calculated by client
                     'bandwidthUp' => 0,
                     'totalDevices' => $activeGuests + $systemNodes,
-                    'gateways' => $gateways['gateways'] ?? []
+                    'gateways' => $gateways['gateways'] ?? [],
                 ];
             } catch (\Exception $e) {
                 return ['activeGuests' => 0, 'systemNodes' => 0, 'bandwidthDown' => 0, 'bandwidthUp' => 0, 'totalDevices' => 0, 'gateways' => [], 'rawIn' => 0, 'rawOut' => 0];
@@ -103,7 +118,7 @@ class DashboardController extends Controller
                 'cpuLoad' => $cpuLoad,
                 'memoryUsage' => $memoryUsage ?: 45,
                 'cpuTemp' => $cpuTemp ?: 42,
-                'diskUsage' => $diskUsage ?: 18
+                'diskUsage' => $diskUsage ?: 18,
             ];
         });
 
@@ -136,7 +151,7 @@ class DashboardController extends Controller
                     break;
             }
 
-            $lowStockThreshold = (int) \App\Models\Setting::get('low_stock_threshold', 500);
+            $lowStockThreshold = (int) Setting::get('low_stock_threshold', 500);
 
             // System Alerts Logic
             $alerts = [];
@@ -147,21 +162,21 @@ class DashboardController extends Controller
                 $alerts[] = [
                     'type' => 'warning',
                     'icon' => 'package-x',
-                    'message' => $lowStockItems->count() . ' items reaching low stock threshold.',
-                    'action' => route('inventory.ingredients.index')
+                    'message' => $lowStockItems->count().' items reaching low stock threshold.',
+                    'action' => route('inventory.ingredients.index'),
                 ];
             }
 
             // Failed Payments Alert (Unclaimed for > 24 hours)
-            $unclaimedPayments = \App\Models\EwalletPayment::where('is_used', false)
+            $unclaimedPayments = EwalletPayment::where('is_used', false)
                 ->where('created_at', '<', now()->subHours(24))
                 ->count();
             if ($unclaimedPayments > 0) {
                 $alerts[] = [
                     'type' => 'danger',
                     'icon' => 'receipt',
-                    'message' => $unclaimedPayments . ' payment verifications pending > 24h.',
-                    'action' => route('network.verifications')
+                    'message' => $unclaimedPayments.' payment verifications pending > 24h.',
+                    'action' => route('network.verifications'),
                 ];
             }
 
@@ -173,7 +188,7 @@ class DashboardController extends Controller
                 'systemAlerts' => $alerts,
                 'recentVouchers' => Voucher::orderBy('created_at', 'desc')->take(5)->get(),
                 'recentSales' => Sale::with('user')->orderBy('created_at', 'desc')->take(5)->get(),
-                'topProducts' => \App\Models\SaleItem::select('item_name', DB::raw('SUM(quantity) as total_qty'), DB::raw('SUM(quantity * price) as total_revenue'))
+                'topProducts' => SaleItem::select('item_name', DB::raw('SUM(quantity) as total_qty'), DB::raw('SUM(quantity * price) as total_revenue'))
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->groupBy('item_name')
                     ->orderByDesc('total_qty')
@@ -183,7 +198,7 @@ class DashboardController extends Controller
                     ->select('payment_method', DB::raw('SUM(total_amount) as total'))
                     ->groupBy('payment_method')
                     ->pluck('total', 'payment_method')
-                    ->toArray()
+                    ->toArray(),
             ];
         });
     }
@@ -227,7 +242,7 @@ class DashboardController extends Controller
                 ->toArray();
 
             if (empty($categoryData)) {
-                $categoryData = \App\Models\Category::pluck('name')->mapWithKeys(function($name) {
+                $categoryData = Category::pluck('name')->mapWithKeys(function ($name) {
                     return [$name => 0];
                 })->toArray();
             }
@@ -237,7 +252,7 @@ class DashboardController extends Controller
                 'chartValues' => $chartValues,
                 'lastWeekValues' => $lastWeekValues,
                 'categoryData' => $categoryData,
-                'totalItemsSold' => array_sum($categoryData)
+                'totalItemsSold' => array_sum($categoryData),
             ];
         });
     }
@@ -245,8 +260,8 @@ class DashboardController extends Controller
     /** AI brief + proactive findings feed — extracted from index(). */
     private function getAiData(): array
     {
-        $aiFindings = \App\Models\AiFinding::latest()->take(6)->get();
-        $latestAiRun = \App\Models\AiAnalysisRun::latest()->first();
+        $aiFindings = AiFinding::latest()->take(6)->get();
+        $latestAiRun = AiAnalysisRun::latest()->first();
 
         return [
             'aiBrief' => Cache::get('barista_ai_brief', 'Store data is being analyzed for strategic insights...'),
@@ -310,12 +325,12 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function getAIInsights(\App\Services\AIService $ai, \App\Services\BaristaForecastService $forecast)
+    public function getAIInsights(AIService $ai, BaristaForecastService $forecast)
     {
         return response()->json($forecast->getForecast($ai));
     }
 
-    public function adminChat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator, \App\Services\Agent\ConversationHistoryService $conversations)
+    public function adminChat(Request $request, AIService $ai, ToolCallOrchestrator $orchestrator, ConversationHistoryService $conversations)
     {
         // history.*.role restricted to user/assistant — otherwise a client
         // could POST a fake {"role":"system",...} entry to inject an
@@ -339,24 +354,28 @@ class DashboardController extends Controller
 
         return response()->stream(function () use ($messages, $orchestrator, $request, $conversations, $conversation) {
             $onTextDelta = function (string $delta) {
-                echo 'data: ' . json_encode(['type' => 'delta', 'text' => $delta]) . "\n\n";
-                if (ob_get_level() > 0) @ob_flush();
+                echo 'data: '.json_encode(['type' => 'delta', 'text' => $delta])."\n\n";
+                if (ob_get_level() > 0) {
+                    @ob_flush();
+                }
                 flush();
             };
 
-            $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_ADMIN, $request->user(), [], $onTextDelta);
+            $result = $orchestrator->run($messages, ToolRegistry::AUDIENCE_ADMIN, $request->user(), [], $onTextDelta);
 
             $reply = $result['reply'] ?? "☕ I'm having trouble connecting to our business intelligence stack right now.";
             $conversations->append($conversation, $request->message, $reply, $result['executed'] ?? [], $result['pending'] ?? []);
 
-            echo 'data: ' . json_encode([
+            echo 'data: '.json_encode([
                 'type' => 'meta',
                 'reply' => $reply,
                 'pending' => $result['pending'],
                 'executed' => $result['executed'],
                 'conversation_id' => $conversation->id,
-            ]) . "\n\n";
-            if (ob_get_level() > 0) @ob_flush();
+            ])."\n\n";
+            if (ob_get_level() > 0) {
+                @ob_flush();
+            }
             flush();
         }, 200, [
             'Content-Type' => 'text/event-stream',
@@ -368,43 +387,52 @@ class DashboardController extends Controller
     /**
      * Get real-time stats for the dashboard polling.
      */
-    public function liveStats(\App\Services\OpnSenseService $opnsense)
+    public function liveStats(OpnSenseService $opnsense)
     {
         // 1. Network Throughput (Raw Bytes) - Selection logic matches index()
         $stats = $opnsense->getInterfaceStats();
         $iface = $stats['wan'] ?? $stats['lan'] ?? null;
-        if (!$iface) {
+        if (! $iface) {
             foreach ($stats as $item) {
-                if ($item['inbytes'] > 0) { $iface = $item; break; }
+                if ($item['inbytes'] > 0) {
+                    $iface = $item;
+                    break;
+                }
             }
         }
 
         // 2. System Health
         $cpuLoad = function_exists('sys_getloadavg') ? sys_getloadavg()[0] * 10 : 12;
-        $memoryUsage = 0; $cpuTemp = 0;
+        $memoryUsage = 0;
+        $cpuTemp = 0;
         if (PHP_OS_FAMILY === 'Linux') {
             $free = shell_exec('free');
             if ($free) {
-                $free_arr = explode("\n", (string)trim($free));
+                $free_arr = explode("\n", (string) trim($free));
                 if (isset($free_arr[1])) {
                     $mem = preg_split('/\s+/', $free_arr[1]);
-                    if (isset($mem[2]) && isset($mem[1]) && $mem[1] > 0) $memoryUsage = round($mem[2] / $mem[1] * 100);
+                    if (isset($mem[2]) && isset($mem[1]) && $mem[1] > 0) {
+                        $memoryUsage = round($mem[2] / $mem[1] * 100);
+                    }
                 }
             }
             if (file_exists('/sys/class/thermal/thermal_zone0/temp')) {
                 $temp = @file_get_contents('/sys/class/thermal/thermal_zone0/temp');
-                if ($temp !== false) $cpuTemp = round(trim($temp) / 1000);
+                if ($temp !== false) {
+                    $cpuTemp = round(trim($temp) / 1000);
+                }
             }
         }
 
         // 3. Active Guests (Real-time from ARP)
-        $activeGuests = Cache::remember('active_guests_count', 15, function() use ($opnsense) {
+        $activeGuests = Cache::remember('active_guests_count', 15, function () use ($opnsense) {
             $arpTable = collect($opnsense->getArpTable());
-            $infraIps = \App\Models\Setting::infrastructureIps();
+            $infraIps = Setting::infrastructureIps();
 
-            return $arpTable->filter(function($entry) use ($infraIps) {
+            return $arpTable->filter(function ($entry) use ($infraIps) {
                 $ip = $entry['ip'] ?? '';
-                return !empty($ip) && !in_array($ip, $infraIps) && !empty($entry['mac']) && $entry['mac'] !== '(incomplete)';
+
+                return ! empty($ip) && ! in_array($ip, $infraIps) && ! empty($entry['mac']) && $entry['mac'] !== '(incomplete)';
             })->unique('mac')->count();
         });
 
@@ -414,7 +442,7 @@ class DashboardController extends Controller
             'cpuLoad' => $cpuLoad,
             'memoryUsage' => $memoryUsage ?: 45,
             'cpuTemp' => $cpuTemp ?: 42,
-            'activeGuests' => $activeGuests
+            'activeGuests' => $activeGuests,
         ]);
     }
 }

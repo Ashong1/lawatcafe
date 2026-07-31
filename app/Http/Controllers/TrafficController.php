@@ -38,16 +38,17 @@ class TrafficController extends Controller
 
         $applied = $shaping->applyLimits($validated, $opnsense);
 
-        if (!$applied) {
+        if (! $applied) {
             return redirect()->back()->with('error', 'Bandwidth settings saved, but OPNsense could not be reached to apply the shaper pipes. Check the connection and try again.');
         }
 
         return redirect()->back()->with('success', 'Bandwidth shaping rules updated and applied to OPNsense.');
     }
 
-    public function stats(\App\Services\OpnSenseService $opnsense)
+    public function stats(OpnSenseService $opnsense)
     {
         $stats = $opnsense->getInterfaceStats();
+
         return response()->json($stats);
     }
 }

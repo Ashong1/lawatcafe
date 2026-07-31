@@ -13,11 +13,11 @@ class Supplier extends Model
         'viber',
         'email',
         'delivery_days',
-        'status'
+        'status',
     ];
 
     protected $casts = [
         'delivery_days' => 'array',
-        'status' => 'boolean'
+        'status' => 'boolean',
     ];
 }

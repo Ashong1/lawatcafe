@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 
 class StaticIpController extends Controller
 {
-    public function __construct(protected StaticIpService $service)
-    {
-    }
+    public function __construct(protected StaticIpService $service) {}
 
     public function store(Request $request, OpnSenseService $opnsense)
     {
@@ -30,7 +28,7 @@ class StaticIpController extends Controller
             $opnsense,
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return redirect()->back()->withInput()->with('error', $result['message'] ?? 'Could not create the reservation on OPNsense.');
         }
 
@@ -39,7 +37,7 @@ class StaticIpController extends Controller
 
     public function destroy(StaticIpAssignment $assignment, OpnSenseService $opnsense)
     {
-        if (!$this->service->unassignDevice($assignment, $opnsense)) {
+        if (! $this->service->unassignDevice($assignment, $opnsense)) {
             return redirect()->back()->with('error', 'Could not remove the reservation on OPNsense — it has been left in place so it can be retried.');
         }
 

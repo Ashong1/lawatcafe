@@ -11,9 +11,7 @@ use App\Services\OpnSenseService;
 
 class UnblockDeviceTool implements AgentTool
 {
-    public function __construct(protected BlocklistService $blocklist, protected OpnSenseService $opnsense)
-    {
-    }
+    public function __construct(protected BlocklistService $blocklist, protected OpnSenseService $opnsense) {}
 
     public function name(): string
     {
@@ -44,12 +42,12 @@ class UnblockDeviceTool implements AgentTool
     public function execute(array $arguments, ?User $actor, array $context = []): ToolResult
     {
         $mac = trim((string) ($arguments['mac_address'] ?? ''));
-        if (!preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $mac)) {
+        if (! preg_match('/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/', $mac)) {
             return ToolResult::fail("'{$mac}' is not a valid MAC address.");
         }
 
         $device = BannedDevice::where('mac_address', $mac)->first();
-        if (!$device) {
+        if (! $device) {
             return ToolResult::fail("No banned device found with MAC {$mac}.");
         }
 

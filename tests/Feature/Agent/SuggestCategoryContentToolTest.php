@@ -3,8 +3,8 @@
 namespace Tests\Feature\Agent;
 
 use App\Models\Category;
-use App\Services\Agent\Tools\SuggestCategoryContentTool;
 use App\Services\Agent\ToolRegistry;
+use App\Services\Agent\Tools\SuggestCategoryContentTool;
 use App\Services\AIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

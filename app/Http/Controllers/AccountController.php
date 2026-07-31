@@ -32,7 +32,7 @@ class AccountController extends Controller
 
         // A plain admin manages staff only — admin-level accounts (and the
         // super_admin row above) are super_admin's exclusive responsibility.
-        if (!auth()->user()->isSuperAdmin()) {
+        if (! auth()->user()->isSuperAdmin()) {
             $query->where('role', 'staff');
         }
 
@@ -99,6 +99,7 @@ class AccountController extends Controller
         $this->authorizeTarget($account);
 
         $account->delete();
+
         return redirect()->route('accounts.index')->with('success', 'Account deleted successfully!');
     }
 
@@ -109,7 +110,7 @@ class AccountController extends Controller
      */
     private function authorizeTarget(User $account): void
     {
-        if (!auth()->user()->isSuperAdmin() && $account->role !== 'staff') {
+        if (! auth()->user()->isSuperAdmin() && $account->role !== 'staff') {
             abort(403, 'Unauthorized access.');
         }
     }

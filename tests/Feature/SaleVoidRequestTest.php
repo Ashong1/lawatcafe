@@ -5,9 +5,9 @@ namespace Tests\Feature;
 use App\Models\Sale;
 use App\Models\SaleVoidRequest;
 use App\Models\User;
+use App\Notifications\SystemAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use App\Notifications\SystemAlert;
 use Tests\TestCase;
 
 /**
@@ -23,7 +23,7 @@ class SaleVoidRequestTest extends TestCase
     protected function makeSale(User $user, array $overrides = []): Sale
     {
         return Sale::create(array_merge([
-            'transaction_number' => 'TRN-' . uniqid(),
+            'transaction_number' => 'TRN-'.uniqid(),
             'total_amount' => 150,
             'status' => 'completed',
             'payment_method' => 'Cash',

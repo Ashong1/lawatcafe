@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\AIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -116,9 +117,9 @@ class AiProviderStatusTest extends TestCase
             'openrouter_api_key' => 'openrouter-test-key',
         ])->assertRedirect();
 
-        $this->assertSame('gemini-test-key', \App\Models\Setting::get('gemini_api_key'));
-        $this->assertSame('groq-test-key', \App\Models\Setting::get('groq_api_key'));
-        $this->assertSame('openrouter-test-key', \App\Models\Setting::get('openrouter_api_key'));
+        $this->assertSame('gemini-test-key', Setting::get('gemini_api_key'));
+        $this->assertSame('groq-test-key', Setting::get('groq_api_key'));
+        $this->assertSame('openrouter-test-key', Setting::get('openrouter_api_key'));
     }
 
     public function test_plain_admin_can_view_the_ai_providers_page(): void
@@ -139,7 +140,7 @@ class AiProviderStatusTest extends TestCase
             'gemini_api_key' => 'owner-gemini-key',
         ])->assertRedirect();
 
-        $this->assertSame('owner-gemini-key', \App\Models\Setting::get('gemini_api_key'));
+        $this->assertSame('owner-gemini-key', Setting::get('gemini_api_key'));
     }
 
     public function test_plain_admin_does_not_see_super_admin_only_actions(): void
@@ -242,7 +243,7 @@ class AiProviderStatusTest extends TestCase
         $ai = app(AIService::class);
         $defaultModel = $ai->activeModels('gemini')[0];
 
-        \App\Models\Setting::set('ai_models_gemini', json_encode(['some-custom-model']));
+        Setting::set('ai_models_gemini', json_encode(['some-custom-model']));
         $this->assertSame(['some-custom-model'], $ai->activeModels('gemini'));
 
         $ai->resetModels('gemini');
@@ -285,7 +286,7 @@ class AiProviderStatusTest extends TestCase
 
     public function test_super_admin_can_reset_provider_models_via_the_route(): void
     {
-        \App\Models\Setting::set('ai_models_gemini', json_encode(['some-custom-model']));
+        Setting::set('ai_models_gemini', json_encode(['some-custom-model']));
         $superAdmin = User::factory()->create(['role' => 'super_admin']);
 
         $response = $this->actingAs($superAdmin)->post(route('admin.settings.ai-providers.models.reset', 'gemini'));

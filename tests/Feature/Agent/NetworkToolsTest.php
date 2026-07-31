@@ -4,10 +4,10 @@ namespace Tests\Feature\Agent;
 
 use App\Models\BannedDevice;
 use App\Models\Voucher;
+use App\Services\Agent\ToolRegistry;
 use App\Services\Agent\Tools\GetTrafficStatsTool;
 use App\Services\Agent\Tools\SetSessionBandwidthTierTool;
 use App\Services\Agent\Tools\UnblockDeviceTool;
-use App\Services\Agent\ToolRegistry;
 use App\Services\OpnSenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

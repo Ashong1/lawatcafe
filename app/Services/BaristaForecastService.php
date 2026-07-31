@@ -100,7 +100,7 @@ class BaristaForecastService
 
             $aiResult = $ai->analyzeSalesTrends($historicalSales, $productPerformance, $wastageData, $daysOfData, $recentPerformance);
 
-            if (!$aiResult) {
+            if (! $aiResult) {
                 return $aiResult;
             }
 

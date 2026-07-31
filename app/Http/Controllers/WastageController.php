@@ -14,6 +14,7 @@ class WastageController extends Controller
     {
         $wastages = Wastage::with(['ingredient', 'user'])->latest()->paginate(15);
         $ingredients = Ingredient::orderBy('name')->get();
+
         return view('inventory.wastage', compact('wastages', 'ingredients'));
     }
 
@@ -26,7 +27,7 @@ class WastageController extends Controller
             'note' => 'nullable|string',
         ]);
 
-        return DB::transaction(function() use ($request) {
+        return DB::transaction(function () use ($request) {
             $wastage = Wastage::create([
                 'ingredient_id' => $request->ingredient_id,
                 'quantity' => $request->quantity,
@@ -45,7 +46,7 @@ class WastageController extends Controller
                 'ingredient_id' => $ingredient->id,
                 'change_amount' => -$request->quantity,
                 'after_amount' => $ingredient->current_stock,
-                'reason' => 'Wastage: ' . $request->reason,
+                'reason' => 'Wastage: '.$request->reason,
                 'user_id' => auth()->id(),
             ]);
 
@@ -56,6 +57,7 @@ class WastageController extends Controller
     public function destroy(Wastage $wastage)
     {
         $wastage->delete();
+
         return redirect()->route('inventory.wastage.index')->with('success', 'Wastage record removed.');
     }
 }

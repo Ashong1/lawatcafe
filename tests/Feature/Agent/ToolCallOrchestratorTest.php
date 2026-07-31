@@ -22,7 +22,7 @@ class ToolCallOrchestratorTest extends TestCase
      */
     private function sse(array $chunk): string
     {
-        return "data: " . json_encode($chunk) . "\n\n";
+        return 'data: '.json_encode($chunk)."\n\n";
     }
 
     private function geminiFunctionCallResponse(string $name, array $args): string
@@ -75,7 +75,7 @@ class ToolCallOrchestratorTest extends TestCase
         Http::fake([
             'generativelanguage.googleapis.com/*' => Http::response(
                 $this->sse(['candidates' => [['content' => ['parts' => [['text' => 'Hello, ']]]]]])
-                . $this->sse(['candidates' => [['content' => ['parts' => [['text' => 'world!']]]]]]),
+                .$this->sse(['candidates' => [['content' => ['parts' => [['text' => 'world!']]]]]]),
                 200
             ),
         ]);
@@ -87,7 +87,9 @@ class ToolCallOrchestratorTest extends TestCase
             ToolRegistry::AUDIENCE_ADMIN,
             $admin,
             [],
-            function (string $delta) use (&$deltas) { $deltas[] = $delta; }
+            function (string $delta) use (&$deltas) {
+                $deltas[] = $delta;
+            }
         );
 
         $this->assertSame(['Hello, ', 'world!'], $deltas);

@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Services\OpnSenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class OpnSenseServiceTest extends TestCase
@@ -232,7 +232,7 @@ class OpnSenseServiceTest extends TestCase
             'opnsense.test/api/captiveportal/settings/get_zone/zone-uuid-1' => Http::response([
                 'zone' => [
                     'allowedAddresses' => "192.168.2.50\n192.168.2.0/24",
-                    'allowedMACAddresses' => "AA:BB:CC:DD:EE:FF",
+                    'allowedMACAddresses' => 'AA:BB:CC:DD:EE:FF',
                 ],
             ], 200),
         ]);

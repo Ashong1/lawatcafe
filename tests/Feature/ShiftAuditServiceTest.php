@@ -7,6 +7,7 @@ use App\Models\Shift;
 use App\Models\User;
 use App\Notifications\SystemAlert;
 use App\Services\AIService;
+use App\Services\ShiftAuditService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
@@ -45,7 +46,7 @@ class ShiftAuditServiceTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $shift = $this->makeClosedShift($staff, expected: 500, ending: 480);
 
-        app(\App\Services\ShiftAuditService::class)->auditShiftClose($shift);
+        app(ShiftAuditService::class)->auditShiftClose($shift);
 
         Mail::assertSent(ShiftAuditResult::class, fn ($mail) => $mail->hasTo($staff->email));
         Mail::assertSent(ShiftAuditResult::class, fn ($mail) => $mail->hasTo($admin->email));
@@ -62,7 +63,7 @@ class ShiftAuditServiceTest extends TestCase
         $staff = User::factory()->create(['role' => 'staff']);
         $shift = $this->makeClosedShift($staff, expected: 500, ending: 500);
 
-        app(\App\Services\ShiftAuditService::class)->auditShiftClose($shift);
+        app(ShiftAuditService::class)->auditShiftClose($shift);
 
         Mail::assertNothingSent();
         Notification::assertNothingSent();
@@ -77,7 +78,7 @@ class ShiftAuditServiceTest extends TestCase
         $staff = User::factory()->create(['role' => 'staff']);
         $shift = $this->makeClosedShift($staff, expected: 500, ending: 520);
 
-        app(\App\Services\ShiftAuditService::class)->auditShiftClose($shift);
+        app(ShiftAuditService::class)->auditShiftClose($shift);
 
         Mail::assertNothingSent();
         Notification::assertNothingSent();
@@ -92,7 +93,7 @@ class ShiftAuditServiceTest extends TestCase
         $staff = User::factory()->create(['role' => 'staff']);
         $shift = $this->makeClosedShift($staff, expected: 500, ending: 480);
 
-        app(\App\Services\ShiftAuditService::class)->auditShiftClose($shift);
+        app(ShiftAuditService::class)->auditShiftClose($shift);
 
         Mail::assertSent(ShiftAuditResult::class, fn ($mail) => $mail->aiSummary === null);
     }

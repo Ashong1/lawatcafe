@@ -27,7 +27,7 @@ class SaleService
 
         return [
             'success' => true,
-            'message' => 'Order #' . substr($sale->transaction_number, -4) . ' has been voided.',
+            'message' => 'Order #'.substr($sale->transaction_number, -4).' has been voided.',
         ];
     }
 
@@ -59,7 +59,7 @@ class SaleService
         $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
         Notification::send($admins, new SystemAlert(
             'Void Request Pending',
-            "{$staff->name} requested to void order #" . substr($sale->transaction_number, -4) . ': "' . $reason . '"',
+            "{$staff->name} requested to void order #".substr($sale->transaction_number, -4).': "'.$reason.'"',
             'ban',
             route('pos.history')
         ));
@@ -86,7 +86,7 @@ class SaleService
 
         Notification::send($request->requestedBy, new SystemAlert(
             'Void Request Approved',
-            'Your void request for order #' . substr($request->sale->transaction_number, -4) . ' was approved.',
+            'Your void request for order #'.substr($request->sale->transaction_number, -4).' was approved.',
             'check-circle',
             route('pos.history')
         ));
@@ -111,7 +111,7 @@ class SaleService
 
         Notification::send($request->requestedBy, new SystemAlert(
             'Void Request Rejected',
-            'Your void request for order #' . substr($request->sale->transaction_number, -4) . ' was rejected.',
+            'Your void request for order #'.substr($request->sale->transaction_number, -4).' was rejected.',
             'x-circle',
             route('pos.history')
         ));

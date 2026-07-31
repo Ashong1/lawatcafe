@@ -2,6 +2,7 @@
 
 namespace App\Services\Agent;
 
+use App\Services\Agent\Contracts\AgentTool;
 use App\Services\Agent\Tools\BlockDeviceTool;
 use App\Services\Agent\Tools\CheckMySessionTool;
 use App\Services\Agent\Tools\CheckStockLevelsTool;
@@ -30,7 +31,9 @@ use App\Services\Agent\Tools\VoidSaleTool;
 class ToolRegistry
 {
     public const AUDIENCE_GUEST = 'guest';
+
     public const AUDIENCE_STAFF = 'staff';
+
     public const AUDIENCE_ADMIN = 'admin';
 
     /** @return class-string[] */
@@ -72,7 +75,7 @@ class ToolRegistry
     }
 
     /**
-     * @return array<string, \App\Services\Agent\Contracts\AgentTool> keyed by tool name()
+     * @return array<string, AgentTool> keyed by tool name()
      */
     public function forAudience(string $audience): array
     {

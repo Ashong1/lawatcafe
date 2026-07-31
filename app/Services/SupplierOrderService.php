@@ -66,7 +66,7 @@ class SupplierOrderService
         return [
             'drafts' => $drafts,
             'message' => $drafts
-                ? 'Drafted a purchase order for: ' . $names . '.'
+                ? 'Drafted a purchase order for: '.$names.'.'
                 : 'No matching ingredients found to draft a purchase order for.',
         ];
     }
@@ -92,7 +92,7 @@ class SupplierOrderService
                 Mail::to($draft->supplier->email)->send(new PurchaseOrderRequest($draft));
                 $emailed = true;
             } catch (\Exception $e) {
-                Log::error("SupplierOrderService: failed to email PO draft {$draft->id}: " . $e->getMessage());
+                Log::error("SupplierOrderService: failed to email PO draft {$draft->id}: ".$e->getMessage());
             }
         }
 

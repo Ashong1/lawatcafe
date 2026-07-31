@@ -80,7 +80,7 @@ class ConversationHistoryService
 
         $conversation->messages = $messages;
         $conversation->last_message_at = now();
-        if (!$conversation->title) {
+        if (! $conversation->title) {
             $conversation->title = Str::limit($userMessage, 60);
         }
         $conversation->save();

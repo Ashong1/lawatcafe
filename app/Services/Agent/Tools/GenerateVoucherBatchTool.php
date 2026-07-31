@@ -9,9 +9,7 @@ use App\Services\VoucherService;
 
 class GenerateVoucherBatchTool implements AgentTool
 {
-    public function __construct(protected VoucherService $vouchers)
-    {
-    }
+    public function __construct(protected VoucherService $vouchers) {}
 
     public function name(): string
     {
@@ -46,16 +44,12 @@ class GenerateVoucherBatchTool implements AgentTool
         $quantity = max(1, min(100, (int) ($arguments['quantity'] ?? 0)));
         $duration = max(1, (int) ($arguments['duration_minutes'] ?? 0));
 
-        if ($quantity < 1 || $duration < 1) {
-            return ToolResult::fail('quantity and duration_minutes must both be positive.');
-        }
-
         $tier = in_array($arguments['tier'] ?? null, ['free', 'premium'], true) ? $arguments['tier'] : 'free';
 
         $result = $this->vouchers->generateBatch($quantity, $duration, $actor?->id, 'ai', $tier);
 
         return ToolResult::ok(
-            "Generated {$result['count']} voucher(s): " . implode(', ', $result['codes']),
+            "Generated {$result['count']} voucher(s): ".implode(', ', $result['codes']),
             $result,
         );
     }

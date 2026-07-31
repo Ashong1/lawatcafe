@@ -1,0 +1,385 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\ConnectionInterface\:\:getDriverName\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AnalyticsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AiActionAudit\:\:\$actor\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AiActionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AiActionAudit\:\:\$approvedBy\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/AiActionController.php
+
+		-
+			message: '#^Relation ''actor'' is not found in App\\Models\\AiActionAudit model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/AiActionController.php
+
+		-
+			message: '#^Relation ''approvedBy'' is not found in App\\Models\\AiActionAudit model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/AiActionController.php
+
+		-
+			message: '#^Relation ''findings'' is not found in App\\Models\\AiAnalysisRun model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/AiAnalysisController.php
+
+		-
+			message: '#^Parameter \#1 \$user of class Illuminate\\Auth\\Events\\Verified constructor expects Illuminate\\Contracts\\Auth\\MustVerifyEmail, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/VerifyEmailController.php
+
+		-
+			message: '#^Offset ''executed'' on array\{reply\: string\|null, pending\: array, executed\: array\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/CaptivePortalController.php
+
+		-
+			message: '#^Offset ''pending'' on array\{reply\: string\|null, pending\: array, executed\: array\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/CaptivePortalController.php
+
+		-
+			message: '#^Binary operation "/" between string and 1000 results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Binary operation "/" between string and string results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 2
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Offset ''executed'' on array\{reply\: string\|null, pending\: array, executed\: array\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Offset ''pending'' on array\{reply\: string\|null, pending\: array, executed\: array\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Offset 1 on non\-empty\-list\<string\> in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 2
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Sale model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/DashboardController.php
+
+		-
+			message: '#^Relation ''sales'' is not found in App\\Models\\Shift model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/EndOfDayController.php
+
+		-
+			message: '#^Relation ''transactions'' is not found in App\\Models\\Shift model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/EndOfDayController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Shift model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/EndOfDayController.php
+
+		-
+			message: '#^Relation ''ingredient'' is not found in App\\Models\\InventoryLog model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/IngredientController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\InventoryLog model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/IngredientController.php
+
+		-
+			message: '#^Relation ''items'' is not found in App\\Models\\IngredientDelivery model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/IngredientDeliveryController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\SaleItem\:\:\$sale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/KdsController.php
+
+		-
+			message: '#^Relation ''items'' is not found in App\\Models\\Sale model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/KdsController.php
+
+		-
+			message: '#^Relation ''items'' is not found in App\\Models\\Sale model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/OrderHistoryController.php
+
+		-
+			message: '#^Relation ''requestedBy'' is not found in App\\Models\\SaleVoidRequest model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/OrderHistoryController.php
+
+		-
+			message: '#^Relation ''sale'' is not found in App\\Models\\SaleVoidRequest model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/OrderHistoryController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Sale model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/OrderHistoryController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Product\:\:\$ingredients\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/PosController.php
+
+		-
+			message: '#^Relation ''ingredients'' is not found in App\\Models\\Product model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/PosController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/PosController.php
+
+		-
+			message: '#^Relation ''ingredients'' is not found in App\\Models\\Product model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/ProductController.php
+
+		-
+			message: '#^Relation ''ingredient'' is not found in App\\Models\\PurchaseOrderDraft model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/PurchaseOrderController.php
+
+		-
+			message: '#^Relation ''supplier'' is not found in App\\Models\\PurchaseOrderDraft model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/PurchaseOrderController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\ConnectionInterface\:\:getDriverName\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/SalesController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Sale model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/SalesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Shift\:\:\$started_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/StaffController.php
+
+		-
+			message: '#^Offset ''executed'' on array\{reply\: string\|null, pending\: array, executed\: array\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/StaffController.php
+
+		-
+			message: '#^Offset ''pending'' on array\{reply\: string\|null, pending\: array, executed\: array\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/StaffController.php
+
+		-
+			message: '#^Relation ''ingredient'' is not found in App\\Models\\PurchaseOrderDraft model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/StaffDeliveryController.php
+
+		-
+			message: '#^Relation ''items'' is not found in App\\Models\\IngredientDelivery model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/StaffDeliveryController.php
+
+		-
+			message: '#^Relation ''supplier'' is not found in App\\Models\\PurchaseOrderDraft model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/StaffDeliveryController.php
+
+		-
+			message: '#^Relation ''ingredient'' is not found in App\\Models\\Wastage model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/WastageController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Wastage model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/WastageController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\PurchaseOrderDraft\:\:\$ingredient\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Mail/PurchaseOrderRequest.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Product\:\:\$ingredients\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/AIService.php
+
+		-
+			message: '#^Match arm comparison between ''openrouter'' and ''openrouter'' is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 1
+			path: app/Services/AIService.php
+
+		-
+			message: '#^Relation ''ingredients'' is not found in App\\Models\\Product model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/AIService.php
+
+		-
+			message: '#^Relation ''sale'' is not found in App\\Models\\SaleItem model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/AIService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Voucher\:\:\$redemption_count\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Agent/CrossDomainCorrelationService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Voucher\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/Agent/CrossDomainCorrelationService.php
+
+		-
+			message: '#^Relation ''sale'' is not found in App\\Models\\SaleItem model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Agent/CrossDomainCorrelationService.php
+
+		-
+			message: '#^Offset int\<1, 7\> on array\{''None'', ''Insecure'', ''Low'', ''Emerging'', ''Moderate'', ''Good'', ''High'', ''Excellent''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/BaristaForecastService.php
+
+		-
+			message: '#^Relation ''ingredient'' is not found in App\\Models\\Wastage model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/BaristaForecastService.php
+
+		-
+			message: '#^Relation ''sale'' is not found in App\\Models\\SaleItem model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Services/BaristaForecastService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IngredientDelivery\:\:\$items\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DeliveryReceivingService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\PurchaseOrderDraft\:\:\$supplier\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DeliveryReceivingService.php
+
+		-
+			message: '#^Relation ''sale'' is not found in App\\Models\\SaleItem model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/PairingSuggestionService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\SaleVoidRequest\:\:\$requestedBy\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/SaleService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\SaleVoidRequest\:\:\$sale\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/SaleService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Shift\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/ShiftAuditService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IngredientDeliveryItem\:\:\$delivery\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SupplierOrderService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\PurchaseOrderDraft\:\:\$ingredient\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SupplierOrderService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\PurchaseOrderDraft\:\:\$supplier\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/SupplierOrderService.php

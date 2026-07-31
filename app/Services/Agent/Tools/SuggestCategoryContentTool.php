@@ -10,9 +10,7 @@ use App\Services\AIService;
 
 class SuggestCategoryContentTool implements AgentTool
 {
-    public function __construct(protected AIService $ai)
-    {
-    }
+    public function __construct(protected AIService $ai) {}
 
     public function name(): string
     {
@@ -44,18 +42,18 @@ class SuggestCategoryContentTool implements AgentTool
     public function execute(array $arguments, ?User $actor, array $context = []): ToolResult
     {
         $category = null;
-        if (!empty($arguments['category_id'])) {
+        if (! empty($arguments['category_id'])) {
             $category = Category::find($arguments['category_id']);
-        } elseif (!empty($arguments['category_name'])) {
-            $category = Category::where('name', 'like', '%' . $arguments['category_name'] . '%')->first();
+        } elseif (! empty($arguments['category_name'])) {
+            $category = Category::where('name', 'like', '%'.$arguments['category_name'].'%')->first();
         }
 
-        if (!$category) {
+        if (! $category) {
             return ToolResult::fail('Could not find a matching category.');
         }
 
         $suggestion = $this->ai->suggestCategoryContent($category->name);
-        if (!$suggestion) {
+        if (! $suggestion) {
             return ToolResult::fail("Could not generate a suggestion for \"{$category->name}\" right now.");
         }
 

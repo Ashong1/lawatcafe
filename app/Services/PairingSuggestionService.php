@@ -18,8 +18,8 @@ use Illuminate\Support\Facades\DB;
 class PairingSuggestionService
 {
     /**
-     * @param int $productId The product just added to the cart.
-     * @param int[] $excludeProductIds Products already in the cart (never suggest these back).
+     * @param  int  $productId  The product just added to the cart.
+     * @param  int[]  $excludeProductIds  Products already in the cart (never suggest these back).
      * @return array{product_id:int,name:string,price:float}|null
      */
     public function suggestFor(int $productId, array $excludeProductIds = []): ?array
@@ -53,7 +53,7 @@ class PairingSuggestionService
             return $row?->product_id;
         });
 
-        if (!$topPairingId || in_array($topPairingId, $exclude)) {
+        if (! $topPairingId || in_array($topPairingId, $exclude)) {
             return null;
         }
 
@@ -66,13 +66,13 @@ class PairingSuggestionService
     private function fromCategoryFallback(int $productId, array $exclude): ?array
     {
         $product = Product::find($productId);
-        if (!$product) {
+        if (! $product) {
             return null;
         }
 
         $pairings = json_decode(Setting::get('category_pairings', '{}'), true) ?: [];
         $pairedCategory = $pairings[$product->category] ?? null;
-        if (!$pairedCategory) {
+        if (! $pairedCategory) {
             return null;
         }
 

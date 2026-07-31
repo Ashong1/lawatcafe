@@ -31,8 +31,9 @@ class ResetUserPassword extends Command
 
         $user = User::where('email', $email)->first();
 
-        if (!$user) {
+        if (! $user) {
             $this->error("No user found with email: {$email}");
+
             return Command::FAILURE;
         }
 
@@ -40,6 +41,7 @@ class ResetUserPassword extends Command
 
         if (empty($password)) {
             $this->error('Password cannot be empty.');
+
             return Command::FAILURE;
         }
 

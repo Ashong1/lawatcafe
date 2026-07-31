@@ -10,9 +10,7 @@ use App\Services\SupplierOrderService;
 
 class DraftSupplierPoTool implements AgentTool
 {
-    public function __construct(protected SupplierOrderService $orders)
-    {
-    }
+    public function __construct(protected SupplierOrderService $orders) {}
 
     public function name(): string
     {
@@ -45,7 +43,7 @@ class DraftSupplierPoTool implements AgentTool
     {
         $ids = array_map('intval', $arguments['ingredient_ids'] ?? []);
 
-        if (empty($ids) && !empty($arguments['ingredient_names'])) {
+        if (empty($ids) && ! empty($arguments['ingredient_names'])) {
             $ids = Ingredient::whereIn('name', $arguments['ingredient_names'])->pluck('id')->toArray();
         }
 

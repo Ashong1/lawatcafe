@@ -13,9 +13,7 @@ use App\Services\OpnSenseService;
  */
 class GetActiveSessionsTool implements AgentTool
 {
-    public function __construct(protected OpnSenseService $opnsense)
-    {
-    }
+    public function __construct(protected OpnSenseService $opnsense) {}
 
     public function name(): string
     {
@@ -45,6 +43,6 @@ class GetActiveSessionsTool implements AgentTool
             return ToolResult::ok('No active sessions found.', ['sessions' => []]);
         }
 
-        return ToolResult::ok(count($sessions) . ' active session(s).', ['sessions' => $sessions]);
+        return ToolResult::ok(count($sessions).' active session(s).', ['sessions' => $sessions]);
     }
 }

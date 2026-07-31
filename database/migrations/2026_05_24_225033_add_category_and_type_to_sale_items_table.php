@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sale_items', function (Blueprint $table) {
-            if (!Schema::hasColumn('sale_items', 'category')) {
+            if (! Schema::hasColumn('sale_items', 'category')) {
                 $table->string('category')->nullable()->after('product_id');
             }
-            if (!Schema::hasColumn('sale_items', 'type')) {
+            if (! Schema::hasColumn('sale_items', 'type')) {
                 $table->string('type')->default('product')->after('category');
             }
         });

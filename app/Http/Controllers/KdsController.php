@@ -40,7 +40,7 @@ class KdsController extends Controller
     public function updateStatus(Request $request, Sale $sale)
     {
         $request->validate([
-            'status' => 'required|in:pending,preparing,completed,cancelled'
+            'status' => 'required|in:pending,preparing,completed,cancelled',
         ]);
 
         $sale->update(['status' => $request->status]);
@@ -65,7 +65,7 @@ class KdsController extends Controller
     public function updateItemStatus(Request $request, SaleItem $item)
     {
         $request->validate([
-            'status' => 'required|in:pending,completed'
+            'status' => 'required|in:pending,completed',
         ]);
 
         $item->update(['kds_status' => $request->status]);

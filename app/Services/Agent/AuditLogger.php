@@ -3,6 +3,7 @@
 namespace App\Services\Agent;
 
 use App\Models\AiActionAudit;
+use App\Models\User;
 
 /**
  * Single write path for every AI tool invocation (executed, proposed, or
@@ -31,7 +32,7 @@ class AuditLogger
         ]);
     }
 
-    public function markExecuted(AiActionAudit $audit, array $result, \App\Models\User $approvedBy): AiActionAudit
+    public function markExecuted(AiActionAudit $audit, array $result, User $approvedBy): AiActionAudit
     {
         $audit->update([
             'status' => 'executed',
@@ -42,7 +43,7 @@ class AuditLogger
         return $audit;
     }
 
-    public function markRejected(AiActionAudit $audit, \App\Models\User $rejectedBy): AiActionAudit
+    public function markRejected(AiActionAudit $audit, User $rejectedBy): AiActionAudit
     {
         $audit->update([
             'status' => 'rejected',

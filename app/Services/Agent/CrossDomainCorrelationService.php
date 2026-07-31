@@ -4,6 +4,7 @@ namespace App\Services\Agent;
 
 use App\Models\BannedDevice;
 use App\Models\Ingredient;
+use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Setting;
 use App\Models\Voucher;
@@ -18,9 +19,7 @@ use Illuminate\Support\Facades\DB;
  */
 class CrossDomainCorrelationService
 {
-    public function __construct(protected OpnSenseService $opnsense)
-    {
-    }
+    public function __construct(protected OpnSenseService $opnsense) {}
 
     /** @return array{signals: array} */
     public function run(): array
@@ -49,8 +48,8 @@ class CrossDomainCorrelationService
         $currentRedemptions = Voucher::where('is_used', true)->where('used_at', '>=', $now->copy()->subDay())->count();
         $priorRedemptions = Voucher::where('is_used', true)->whereBetween('used_at', [$now->copy()->subDays(2), $now->copy()->subDay()])->count();
 
-        $currentRevenue = (float) \App\Models\Sale::where('status', 'completed')->where('created_at', '>=', $now->copy()->subDay())->sum('total_amount');
-        $priorRevenue = (float) \App\Models\Sale::where('status', 'completed')->whereBetween('created_at', [$now->copy()->subDays(2), $now->copy()->subDay()])->sum('total_amount');
+        $currentRevenue = (float) Sale::where('status', 'completed')->where('created_at', '>=', $now->copy()->subDay())->sum('total_amount');
+        $priorRevenue = (float) Sale::where('status', 'completed')->whereBetween('created_at', [$now->copy()->subDays(2), $now->copy()->subDay()])->sum('total_amount');
 
         $redemptionChange = $priorRedemptions > 0 ? (($currentRedemptions - $priorRedemptions) / $priorRedemptions) * 100 : ($currentRedemptions > 0 ? 100 : 0);
         $revenueChange = $priorRevenue > 0 ? (($currentRevenue - $priorRevenue) / $priorRevenue) * 100 : ($currentRevenue > 0 ? 100 : 0);

@@ -24,7 +24,9 @@ use App\Services\Agent\Contracts\AgentTool;
 class PermissionResolver
 {
     public const TIER_AUTO = 'auto';
+
     public const TIER_CONFIRM = 'confirm';
+
     public const TIER_ADMIN_ONLY = 'admin_only';
 
     public const SETTING_KEY = 'agent_tool_permissions';

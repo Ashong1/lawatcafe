@@ -11,7 +11,7 @@ class EwalletPayment extends Model
         'amount',
         'sender_details',
         'is_used',
-        'email_date'
+        'email_date',
     ];
 
     protected $casts = [

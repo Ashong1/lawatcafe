@@ -16,12 +16,11 @@ class ShiftAuditResult extends Mailable
         public array $summary,
         public float $variance,
         public ?string $aiSummary,
-    ) {
-    }
+    ) {}
 
     public function build()
     {
-        return $this->subject('Shift Audit — Shortage of ₱' . number_format(abs($this->variance), 2))
+        return $this->subject('Shift Audit — Shortage of ₱'.number_format(abs($this->variance), 2))
             ->text('emails.shift-audit-result');
     }
 }

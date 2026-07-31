@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\AiFinding;
 use App\Models\AiAnalysisRun;
+use App\Models\AiFinding;
 use App\Models\Ingredient;
 use App\Models\Sale;
 use App\Models\User;

@@ -20,7 +20,7 @@ class Sale extends Model
         'discount_type',
         'discount_amount',
         'user_id',
-        'shift_id'
+        'shift_id',
     ];
 
     // Optional: Setup the relationship so you can get the user who made the sale

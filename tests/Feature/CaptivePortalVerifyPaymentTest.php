@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BannedDevice;
 use App\Models\EwalletPayment;
 use App\Models\Voucher;
 use App\Services\OpnSenseService;
@@ -129,7 +130,7 @@ class CaptivePortalVerifyPaymentTest extends TestCase
             'is_used' => false,
         ]);
 
-        \App\Models\BannedDevice::create(['mac_address' => 'AA:BB:CC:DD:EE:FF']);
+        BannedDevice::create(['mac_address' => 'AA:BB:CC:DD:EE:FF']);
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn('AA:BB:CC:DD:EE:FF');

@@ -2,15 +2,16 @@
 
 namespace Tests\Feature\Agent;
 
+use App\Mail\PurchaseOrderRequest;
 use App\Models\Ingredient;
 use App\Models\PurchaseOrderDraft;
 use App\Models\Sale;
 use App\Models\Shift;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\Agent\ToolRegistry;
 use App\Services\Agent\Tools\SendSupplierPoTool;
 use App\Services\Agent\Tools\ShiftHandoffSummaryTool;
-use App\Services\Agent\ToolRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -64,7 +65,7 @@ class SupplierAndShiftToolsTest extends TestCase
         $this->assertTrue($result->data['emailed']);
         $draft->refresh();
         $this->assertSame('sent', $draft->status);
-        Mail::assertSent(\App\Mail\PurchaseOrderRequest::class, fn ($mail) => $mail->hasTo($supplier->email));
+        Mail::assertSent(PurchaseOrderRequest::class, fn ($mail) => $mail->hasTo($supplier->email));
     }
 
     public function test_send_supplier_po_still_marks_sent_without_a_supplier_email(): void

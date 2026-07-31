@@ -10,9 +10,7 @@ use App\Services\SupplierOrderService;
 
 class SendSupplierPoTool implements AgentTool
 {
-    public function __construct(protected SupplierOrderService $orders)
-    {
-    }
+    public function __construct(protected SupplierOrderService $orders) {}
 
     public function name(): string
     {
@@ -44,7 +42,7 @@ class SendSupplierPoTool implements AgentTool
     {
         $draft = PurchaseOrderDraft::find($arguments['draft_id'] ?? null);
 
-        if (!$draft) {
+        if (! $draft) {
             return ToolResult::fail('No matching purchase order draft found.');
         }
 

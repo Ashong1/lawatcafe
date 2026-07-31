@@ -20,7 +20,7 @@ class LookupVoucherTool implements AgentTool
 
     public function description(): string
     {
-        return "Check whether a specific Wi-Fi voucher code is valid, used, or expired. Requires the caller to already know the exact code.";
+        return 'Check whether a specific Wi-Fi voucher code is valid, used, or expired. Requires the caller to already know the exact code.';
     }
 
     public function parametersSchema(): array
@@ -47,11 +47,11 @@ class LookupVoucherTool implements AgentTool
         }
 
         $voucher = Voucher::where('code', $code)->first();
-        if (!$voucher) {
+        if (! $voucher) {
             return ToolResult::fail("No voucher found with code {$code}.");
         }
 
-        if (!$voucher->is_used) {
+        if (! $voucher->is_used) {
             return ToolResult::ok("Voucher {$code} is valid and unused ({$voucher->duration_minutes} min).", [
                 'status' => 'unused',
                 'duration_minutes' => $voucher->duration_minutes,

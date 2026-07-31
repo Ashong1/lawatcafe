@@ -38,7 +38,7 @@ class ToolRegistryIsolationTest extends TestCase
             $this->assertNotContains(
                 get_class($tool),
                 self::WRITE_TOOL_CLASSES,
-                get_class($tool) . ' must never be reachable by the guest audience.'
+                get_class($tool).' must never be reachable by the guest audience.'
             );
         }
     }

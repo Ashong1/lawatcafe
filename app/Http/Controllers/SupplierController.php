@@ -10,6 +10,7 @@ class SupplierController extends Controller
     public function index()
     {
         $suppliers = Supplier::orderBy('name')->paginate(20);
+
         return view('inventory.suppliers', compact('suppliers'));
     }
 
@@ -48,6 +49,7 @@ class SupplierController extends Controller
     public function destroy(Supplier $supplier)
     {
         $supplier->delete();
+
         return redirect()->back()->with('success', 'Supplier removed.');
     }
 }

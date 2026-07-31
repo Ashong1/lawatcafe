@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Shift;
+use App\Models\ShiftTransaction;
 use App\Services\ShiftAuditService;
 use Illuminate\Http\Request;
 
@@ -11,7 +12,7 @@ class ShiftController extends Controller
     public function start(Request $request)
     {
         $request->validate([
-            'starting_cash' => 'required|numeric|min:0'
+            'starting_cash' => 'required|numeric|min:0',
         ]);
 
         // Ensure user doesn't already have an open shift
@@ -58,24 +59,24 @@ class ShiftController extends Controller
         $request->validate([
             'type' => 'required|in:pay_in,pay_out',
             'amount' => 'required|numeric|min:0.01',
-            'reason' => 'required|string|max:255'
+            'reason' => 'required|string|max:255',
         ]);
 
-        \App\Models\ShiftTransaction::create([
+        ShiftTransaction::create([
             'shift_id' => $shift->id,
             'type' => $request->type,
             'amount' => $request->amount,
             'reason' => $request->reason,
-            'user_id' => auth()->id()
+            'user_id' => auth()->id(),
         ]);
 
-        return redirect()->back()->with('success', strtoupper(str_replace('_', ' ', $request->type)) . ' recorded successfully.');
+        return redirect()->back()->with('success', strtoupper(str_replace('_', ' ', $request->type)).' recorded successfully.');
     }
 
     public function end(Request $request, Shift $shift, ShiftAuditService $audit)
     {
         $request->validate([
-            'ending_cash' => 'required|numeric|min:0'
+            'ending_cash' => 'required|numeric|min:0',
         ]);
 
         // Calculate expected cash
@@ -95,6 +96,6 @@ class ShiftController extends Controller
 
         $audit->auditShiftClose($shift);
 
-        return redirect()->route('pos')->with('success', 'Shift closed successfully. Variance: ₱' . number_format($request->ending_cash - $expectedCash, 2));
+        return redirect()->route('pos')->with('success', 'Shift closed successfully. Variance: ₱'.number_format($request->ending_cash - $expectedCash, 2));
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\EwalletPayment;
-use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
@@ -15,7 +14,7 @@ class PaymentController extends Controller
         $payments = EwalletPayment::where('sender_details', 'no-reply@gcash.com')
             ->latest()
             ->paginate(50);
-        
+
         return view('network.verifications', compact('payments'));
     }
 }

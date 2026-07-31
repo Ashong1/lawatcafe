@@ -18,10 +18,10 @@ class VoucherService
         $codes = [];
 
         while (count($codes) < $quantity) {
-            $code = 'LAWA-' . strtoupper(Str::random(4));
+            $code = 'LAWA-'.strtoupper(Str::random(4));
 
             // Collision check: only create if the code doesn't already exist
-            if (!Voucher::where('code', $code)->exists()) {
+            if (! Voucher::where('code', $code)->exists()) {
                 Voucher::create([
                     'code' => $code,
                     'duration_minutes' => $durationMinutes,
@@ -41,6 +41,7 @@ class VoucherService
     {
         $count = Voucher::whereIn('id', $ids)->delete();
         Cache::forget('dashboard_stats_today');
+
         return $count;
     }
 
@@ -57,6 +58,7 @@ class VoucherService
         $usedCount = $expired->count();
         Voucher::whereIn('id', $expired->pluck('id'))->delete();
         Cache::forget('dashboard_stats_today');
+
         return $usedCount;
     }
 }

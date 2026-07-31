@@ -10,9 +10,7 @@ use App\Services\IngredientService;
 
 class RestockIngredientTool implements AgentTool
 {
-    public function __construct(protected IngredientService $ingredients)
-    {
-    }
+    public function __construct(protected IngredientService $ingredients) {}
 
     public function name(): string
     {
@@ -50,13 +48,13 @@ class RestockIngredientTool implements AgentTool
         }
 
         $ingredient = null;
-        if (!empty($arguments['ingredient_id'])) {
+        if (! empty($arguments['ingredient_id'])) {
             $ingredient = Ingredient::find($arguments['ingredient_id']);
-        } elseif (!empty($arguments['ingredient_name'])) {
-            $ingredient = Ingredient::where('name', 'like', '%' . $arguments['ingredient_name'] . '%')->first();
+        } elseif (! empty($arguments['ingredient_name'])) {
+            $ingredient = Ingredient::where('name', 'like', '%'.$arguments['ingredient_name'].'%')->first();
         }
 
-        if (!$ingredient) {
+        if (! $ingredient) {
             return ToolResult::fail('Could not find a matching ingredient.');
         }
 

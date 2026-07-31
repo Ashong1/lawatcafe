@@ -13,7 +13,7 @@ class StaticIpService
     {
         $result = $opnsense->addKeaReservation($macAddress, $ipAddress, $hostname);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return ['success' => false, 'assignment' => null, 'message' => $result['message']];
         }
 
@@ -36,7 +36,7 @@ class StaticIpService
      */
     public function unassignDevice(StaticIpAssignment $assignment, OpnSenseService $opnsense): bool
     {
-        if ($assignment->kea_reservation_uuid && !$opnsense->deleteKeaReservation($assignment->kea_reservation_uuid)) {
+        if ($assignment->kea_reservation_uuid && ! $opnsense->deleteKeaReservation($assignment->kea_reservation_uuid)) {
             return false;
         }
 

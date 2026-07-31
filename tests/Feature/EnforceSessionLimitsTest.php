@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\StaticIpAssignment;
 use App\Models\Voucher;
 use App\Services\OpnSenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -98,7 +99,7 @@ class EnforceSessionLimitsTest extends TestCase
 
     public function test_never_disconnects_allowlisted_ip_even_when_orphaned(): void
     {
-        \App\Models\StaticIpAssignment::create([
+        StaticIpAssignment::create([
             'mac_address' => 'AA:BB:CC:DD:EE:FF',
             'ip_address' => '192.168.2.99',
         ]);

@@ -12,7 +12,7 @@ class EndOfDayController extends Controller
         $query = Shift::with(['user', 'sales', 'transactions'])->latest();
 
         // Default to showing only today's closed shifts or recent ones
-        if (!$request->filled('all')) {
+        if (! $request->filled('all')) {
             $query->whereDate('created_at', now()->toDateString());
         }
 

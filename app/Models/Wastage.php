@@ -11,7 +11,7 @@ class Wastage extends Model
         'quantity',
         'reason',
         'note',
-        'user_id'
+        'user_id',
     ];
 
     public function ingredient()

@@ -40,7 +40,7 @@ class CheckMySessionTool implements AgentTool
         $ip = $context['ip'] ?? null;
         $mac = $context['mac'] ?? null;
 
-        if (!$ip && !$mac) {
+        if (! $ip && ! $mac) {
             return ToolResult::fail('No session context available for this request.');
         }
 
@@ -54,7 +54,7 @@ class CheckMySessionTool implements AgentTool
             ->latest('used_at')
             ->first();
 
-        if (!$voucher) {
+        if (! $voucher) {
             return ToolResult::ok("You don't have an active Wi-Fi session right now.", ['active' => false]);
         }
 

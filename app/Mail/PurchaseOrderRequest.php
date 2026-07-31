@@ -11,9 +11,7 @@ class PurchaseOrderRequest extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public PurchaseOrderDraft $draft)
-    {
-    }
+    public function __construct(public PurchaseOrderDraft $draft) {}
 
     public function build()
     {

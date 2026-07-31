@@ -8,8 +8,7 @@ class ToolResult
         public readonly bool $success,
         public readonly array $data = [],
         public readonly string $message = '',
-    ) {
-    }
+    ) {}
 
     public static function ok(string $message, array $data = []): self
     {

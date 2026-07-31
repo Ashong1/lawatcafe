@@ -16,18 +16,21 @@ class IngredientDeliveryController extends Controller
     {
         $deliveries = IngredientDelivery::with(['items.ingredient', 'items.purchaseOrderDraft', 'user', 'reviewedBy'])->latest()->paginate(15);
         $ingredients = Ingredient::orderBy('name')->get();
+
         return view('inventory.deliveries', compact('deliveries', 'ingredients'));
     }
 
     public function confirm(IngredientDelivery $delivery, DeliveryReceivingService $service)
     {
         $service->confirm($delivery, auth()->id());
+
         return redirect()->route('inventory.deliveries.index')->with('success', 'Delivery confirmed and stock updated.');
     }
 
     public function reject(IngredientDelivery $delivery, DeliveryReceivingService $service)
     {
         $service->reject($delivery, auth()->id());
+
         return redirect()->route('inventory.deliveries.index')->with('success', 'Delivery rejected. No stock changes were made.');
     }
 
@@ -44,8 +47,8 @@ class IngredientDeliveryController extends Controller
             'items.*.cost_per_unit' => 'required|numeric|min:0',
         ]);
 
-        return DB::transaction(function() use ($request) {
-            $totalCost = collect($request->items)->sum(function($item) {
+        return DB::transaction(function () use ($request) {
+            $totalCost = collect($request->items)->sum(function ($item) {
                 return $item['quantity'] * $item['cost_per_unit'];
             });
 
@@ -77,7 +80,7 @@ class IngredientDeliveryController extends Controller
                     'ingredient_id' => $ingredient->id,
                     'change_amount' => $itemData['quantity'],
                     'after_amount' => $ingredient->current_stock,
-                    'reason' => 'Supplier Delivery: ' . $request->supplier_name . ($request->reference_number ? ' (#' . $request->reference_number . ')' : ''),
+                    'reason' => 'Supplier Delivery: '.$request->supplier_name.($request->reference_number ? ' (#'.$request->reference_number.')' : ''),
                     'user_id' => auth()->id(),
                 ]);
             }
@@ -91,6 +94,7 @@ class IngredientDeliveryController extends Controller
         // Revert stock changes? Usually not recommended to just delete deliveries without audit.
         // But for this system, we'll allow deletion which won't affect stock (just removes the record).
         $delivery->delete();
+
         return redirect()->route('inventory.deliveries.index')->with('success', 'Delivery record removed.');
     }
 }

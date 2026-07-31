@@ -2,9 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BannedDevice;
+use App\Models\EwalletPayment;
+use App\Models\Setting;
 use App\Models\Voucher;
+use App\Services\Agent\ToolCallOrchestrator;
+use App\Services\Agent\ToolRegistry;
+use App\Services\AIService;
+use App\Services\OpnSenseService;
+use App\Services\TrafficShapingService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class CaptivePortalController extends Controller
 {
@@ -18,12 +30,12 @@ class CaptivePortalController extends Controller
      * previously pass `?clientIp=<victim-ip>` and have that IP authorized
      * outright.
      */
-    private function resolveTrustedIdentity(Request $request, \App\Services\OpnSenseService $opnsense): array
+    private function resolveTrustedIdentity(Request $request, OpnSenseService $opnsense): array
     {
         $ip = $request->ip();
         $mac = $opnsense->resolveMacForIp($ip);
 
-        if (!$mac) {
+        if (! $mac) {
             Log::warning("MAC binding: could not resolve MAC for IP {$ip} via ARP table; falling back to redirect-supplied value.");
             $mac = session('clientMac');
         }
@@ -38,30 +50,37 @@ class CaptivePortalController extends Controller
      */
     private function isMacBanned(?string $mac): bool
     {
-        if (!$mac) {
+        if (! $mac) {
             return false;
         }
 
         $clean = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac));
 
-        return \App\Models\BannedDevice::get()->contains(function ($device) use ($clean) {
+        return BannedDevice::get()->contains(function ($device) use ($clean) {
             return strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $device->mac_address)) === $clean;
         });
     }
+
     // Show the main captive portal page
-    public function index(Request $request, \App\Services\OpnSenseService $opnsense)
+    public function index(Request $request, OpnSenseService $opnsense)
     {
         // 1. Capture OPNsense redirect parameters
-        if ($request->has('clientIp')) session(['clientIp' => $request->query('clientIp')]);
-        if ($request->has('clientMac')) session(['clientMac' => $request->query('clientMac')]);
-        if ($request->has('zone')) session(['zone' => $request->query('zone')]);
+        if ($request->has('clientIp')) {
+            session(['clientIp' => $request->query('clientIp')]);
+        }
+        if ($request->has('clientMac')) {
+            session(['clientMac' => $request->query('clientMac')]);
+        }
+        if ($request->has('zone')) {
+            session(['zone' => $request->query('zone')]);
+        }
 
         [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
 
-        $qrCode = \App\Models\Setting::get('payment_qr_code');
+        $qrCode = Setting::get('payment_qr_code');
 
         // Fetch and sort durations
-        $durationsRaw = \App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}');
+        $durationsRaw = Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}');
         $durations = json_decode($durationsRaw, true);
         if ($durations) {
             ksort($durations); // Sort by price ascending
@@ -71,20 +90,20 @@ class CaptivePortalController extends Controller
 
         // 2. Check if already connected
         $sessions = $opnsense->listSessions();
-        $activeSession = collect($sessions)->filter(function($s) use ($ip, $mac) {
+        $activeSession = collect($sessions)->filter(function ($s) use ($ip, $mac) {
             $sessionIp = str_replace('/32', '', $s['ipAddress'] ?? '');
             $sessionMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $s['macAddress'] ?? ''));
             $cleanMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac ?? ''));
-            
-            return $sessionIp === $ip || (!empty($cleanMac) && $sessionMac === $cleanMac);
+
+            return $sessionIp === $ip || (! empty($cleanMac) && $sessionMac === $cleanMac);
         })->first();
 
         if ($activeSession) {
             // VERIFY IF VOUCHER IS STILL VALID
             $voucher = Voucher::where('is_used', true)
-                ->where(function($query) use ($ip, $mac) {
+                ->where(function ($query) use ($ip, $mac) {
                     $query->where('ip_address', $ip);
-                    if (!empty($mac)) {
+                    if (! empty($mac)) {
                         $query->orWhere('mac_address', $mac);
                     }
                 })
@@ -96,12 +115,13 @@ class CaptivePortalController extends Controller
                 if (now()->greaterThan($expirationTime)) {
                     // DISCONNECT EXPIRED SESSION
                     $opnsense->disconnectDevice($activeSession['sessionId']);
+
                     return redirect()->route('portal.index')->with('error', 'Your session has expired. Please enter a new voucher.');
                 }
 
                 return view('portal.status', [
                     'session' => $activeSession,
-                    'startTime' => \Carbon\Carbon::createFromTimestamp($activeSession['startTime']),
+                    'startTime' => Carbon::createFromTimestamp($activeSession['startTime']),
                     'expirationTime' => $expirationTime,
                     'userName' => $activeSession['userName'] ?? 'Guest',
                     'qrCode' => $qrCode,
@@ -114,7 +134,7 @@ class CaptivePortalController extends Controller
     }
 
     // Handle session termination
-    public function disconnect(Request $request, \App\Services\OpnSenseService $opnsense, \App\Services\TrafficShapingService $shaping)
+    public function disconnect(Request $request, OpnSenseService $opnsense, TrafficShapingService $shaping)
     {
         $sessionId = $request->input('session_id');
 
@@ -128,7 +148,8 @@ class CaptivePortalController extends Controller
                 }
                 $sessionIp = str_replace('/32', '', $s['ipAddress'] ?? '');
                 $sessionMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $s['macAddress'] ?? ''));
-                return $sessionIp === $ip || (!empty($cleanMac) && $sessionMac === $cleanMac);
+
+                return $sessionIp === $ip || (! empty($cleanMac) && $sessionMac === $cleanMac);
             });
 
             if ($ownsSession) {
@@ -143,7 +164,7 @@ class CaptivePortalController extends Controller
     }
 
     // Handle e-wallet reference number verification
-    public function verifyPayment(Request $request, \App\Services\OpnSenseService $opnsense, \App\Services\TrafficShapingService $shaping)
+    public function verifyPayment(Request $request, OpnSenseService $opnsense, TrafficShapingService $shaping)
     {
         $request->validate([
             'reference_number' => 'required|string',
@@ -160,26 +181,26 @@ class CaptivePortalController extends Controller
             ? response()->json(['success' => false, 'message' => $message], 422)
             : back()->with('error', $message);
 
-        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $opnsense, $shaping, $wantsJson, $fail) {
-            $payment = \App\Models\EwalletPayment::where('reference_number', $request->reference_number)
-                                                 ->where('is_used', false)
-                                                 ->lockForUpdate() // Lock to prevent race conditions
-                                                 ->first();
+        return DB::transaction(function () use ($request, $opnsense, $shaping, $wantsJson, $fail) {
+            $payment = EwalletPayment::where('reference_number', $request->reference_number)
+                ->where('is_used', false)
+                ->lockForUpdate() // Lock to prevent race conditions
+                ->first();
 
-            if (!$payment) {
+            if (! $payment) {
                 return $fail('GCash payment not found or already verified. If you just paid, please wait a minute for the system to process the GCash notification email.');
             }
 
             // Determine duration based on amount from dynamic settings
-            $durations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
+            $durations = json_decode(Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
             $amount = (float) $payment->amount;
             $duration = 0;
 
             // Sort keys descending to find the highest matching tier
             krsort($durations);
             foreach ($durations as $minAmount => $mins) {
-                if ($amount >= (float)$minAmount) {
-                    $duration = (int)$mins;
+                if ($amount >= (float) $minAmount) {
+                    $duration = (int) $mins;
                     break;
                 }
             }
@@ -194,13 +215,14 @@ class CaptivePortalController extends Controller
 
             if ($this->isMacBanned($mac)) {
                 Log::warning("Portal verify-payment: rejected banned device {$mac} ({$ip}).");
+
                 return $fail('This device has been blocked from network access. Please see staff for assistance.');
             }
 
             // Generate the voucher
-            $code = 'LAWA-' . strtoupper(\Illuminate\Support\Str::random(4));
+            $code = 'LAWA-'.strtoupper(Str::random(4));
 
-            $voucher = \App\Models\Voucher::create([
+            $voucher = Voucher::create([
                 'code' => $code,
                 'duration_minutes' => $duration,
                 'tier' => 'premium',
@@ -229,24 +251,24 @@ class CaptivePortalController extends Controller
     }
 
     // Handle standard passcode entry
-    public function authenticate(Request $request, \App\Services\OpnSenseService $opnsense, \App\Services\TrafficShapingService $shaping)
+    public function authenticate(Request $request, OpnSenseService $opnsense, TrafficShapingService $shaping)
     {
         $request->validate([
             'passcode' => 'required|string',
         ]);
 
-        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $opnsense, $shaping) {
+        return DB::transaction(function () use ($request, $opnsense, $shaping) {
             // 1. Verify the Lawa't Voucher in your Database
             $code = trim($request->passcode);
-            $voucher = \App\Models\Voucher::where('code', $code)
-                              ->lockForUpdate()
-                              ->first();
+            $voucher = Voucher::where('code', $code)
+                ->lockForUpdate()
+                ->first();
 
             // Distinguish "doesn't exist / mistyped" from "already redeemed" —
             // a single generic message for both makes it impossible for a guest
             // (or the staff helping them) to tell whether they mistyped the code
             // or are trying to reuse one that already worked.
-            if (!$voucher) {
+            if (! $voucher) {
                 return back()->with('error', 'That code doesn\'t match any voucher — double-check it against your receipt.');
             }
 
@@ -258,13 +280,14 @@ class CaptivePortalController extends Controller
 
             if ($this->isMacBanned($mac)) {
                 Log::warning("Portal authenticate: rejected banned device {$mac} ({$ip}).");
+
                 return back()->with('error', 'This device has been blocked from network access. Please see staff for assistance.');
             }
 
             // 2. Authorize via backend API first
             $authorized = $opnsense->authorizeDevice($ip, $voucher->code);
 
-            if (!$authorized) {
+            if (! $authorized) {
                 return back()->with('error', 'Failed to communicate with the firewall. Please try again.');
             }
 
@@ -283,7 +306,7 @@ class CaptivePortalController extends Controller
     }
 
     // Handle e-wallet receipt uploads
-    public function uploadReceipt(Request $request, \App\Services\AIService $ai)
+    public function uploadReceipt(Request $request, AIService $ai)
     {
         $request->validate([
             'receipt' => 'required|image|max:5120', // Max 5MB
@@ -298,9 +321,9 @@ class CaptivePortalController extends Controller
         $aiResult = $ai->extractPaymentDetails($path);
 
         // Cleanup temp file
-        \Illuminate\Support\Facades\Storage::disk('local')->delete($path);
+        Storage::disk('local')->delete($path);
 
-        if ($aiResult && !empty($aiResult['reference_number'])) {
+        if ($aiResult && ! empty($aiResult['reference_number'])) {
             $message = 'Receipt parsed! Please confirm the reference number and verify.';
 
             if ($wantsJson) {
@@ -309,6 +332,7 @@ class CaptivePortalController extends Controller
 
             // Store in session so the view can populate it on the non-JS <form> fallback path.
             session()->flash('ai_ref', $aiResult['reference_number']);
+
             return back()->with('message', $message);
         }
 
@@ -321,7 +345,7 @@ class CaptivePortalController extends Controller
         return back()->with('error', $errorMessage);
     }
 
-    public function chat(Request $request, \App\Services\AIService $ai, \App\Services\Agent\ToolCallOrchestrator $orchestrator, \App\Services\OpnSenseService $opnsense)
+    public function chat(Request $request, AIService $ai, ToolCallOrchestrator $orchestrator, OpnSenseService $opnsense)
     {
         // history.*.role is deliberately restricted to user/assistant: this
         // endpoint is unauthenticated and reachable directly (not just via
@@ -355,22 +379,26 @@ class CaptivePortalController extends Controller
         // never arrived. Mirrors DashboardController::adminChat()'s shape.
         return response()->stream(function () use ($messages, $orchestrator, $context) {
             $onTextDelta = function (string $delta) {
-                echo 'data: ' . json_encode(['type' => 'delta', 'text' => $delta]) . "\n\n";
-                if (ob_get_level() > 0) @ob_flush();
+                echo 'data: '.json_encode(['type' => 'delta', 'text' => $delta])."\n\n";
+                if (ob_get_level() > 0) {
+                    @ob_flush();
+                }
                 flush();
             };
 
-            $result = $orchestrator->run($messages, \App\Services\Agent\ToolRegistry::AUDIENCE_GUEST, null, $context, $onTextDelta);
+            $result = $orchestrator->run($messages, ToolRegistry::AUDIENCE_GUEST, null, $context, $onTextDelta);
 
-            $reply = $result['reply'] ?? "☕ Serving guests! Check Menu or Wi-Fi tabs!";
+            $reply = $result['reply'] ?? '☕ Serving guests! Check Menu or Wi-Fi tabs!';
 
-            echo 'data: ' . json_encode([
+            echo 'data: '.json_encode([
                 'type' => 'meta',
                 'reply' => $reply,
                 'pending' => $result['pending'] ?? [],
                 'executed' => $result['executed'] ?? [],
-            ]) . "\n\n";
-            if (ob_get_level() > 0) @ob_flush();
+            ])."\n\n";
+            if (ob_get_level() > 0) {
+                @ob_flush();
+            }
             flush();
         }, 200, [
             'Content-Type' => 'text/event-stream',
@@ -391,8 +419,9 @@ class CaptivePortalController extends Controller
      */
     public function unlock()
     {
-        $opnsenseIp = \App\Models\Setting::get('opnsense_ip', '192.168.1.1');
-        $zone = session('zone', \App\Models\Setting::get('opnsense_zone', '0'));
+        $opnsenseIp = Setting::get('opnsense_ip', '192.168.1.1');
+        $zone = session('zone', Setting::get('opnsense_zone', '0'));
+
         return view('portal.unlock', compact('opnsenseIp', 'zone'));
     }
 

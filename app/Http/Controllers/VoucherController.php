@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Setting;
+use App\Models\StaticIpAssignment;
 use App\Models\Voucher;
+use App\Services\OpnSenseService;
+use App\Services\TrafficShapingService;
 use App\Services\VoucherService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class VoucherController extends Controller
 {
-    public function __construct(protected VoucherService $vouchers)
-    {
-    }
+    public function __construct(protected VoucherService $vouchers) {}
 
     /**
      * Display a listing of all generated vouchers.
@@ -21,7 +25,7 @@ class VoucherController extends Controller
 
         // Search by Code
         if ($request->filled('search')) {
-            $query->where('code', 'like', '%' . $request->search . '%');
+            $query->where('code', 'like', '%'.$request->search.'%');
         }
 
         // Filter by Status
@@ -36,8 +40,8 @@ class VoucherController extends Controller
         $vouchers = $query->paginate(50);
 
         // Load Wi-Fi options from dynamic settings for the generation modal
-        $durations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
-        
+        $durations = json_decode(Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
+
         return view('network.vouchers', compact('vouchers', 'durations'));
     }
 
@@ -67,7 +71,7 @@ class VoucherController extends Controller
      * Manually move a voucher/session to a different bandwidth tier — the
      * human-facing counterpart to the AI's setSessionBandwidthTier tool.
      */
-    public function setTier(Request $request, \App\Services\OpnSenseService $opnsense, \App\Services\TrafficShapingService $shaping)
+    public function setTier(Request $request, OpnSenseService $opnsense, TrafficShapingService $shaping)
     {
         $validated = $request->validate([
             'voucher_code' => 'required|string',
@@ -76,14 +80,14 @@ class VoucherController extends Controller
 
         $voucher = Voucher::where('code', $validated['voucher_code'])->first();
 
-        if (!$voucher) {
+        if (! $voucher) {
             return redirect()->back()->with('error', 'No matching voucher found.');
         }
 
         $voucher->tier = $validated['tier'];
         $voucher->save();
 
-        if (!empty($voucher->ip_address)) {
+        if (! empty($voucher->ip_address)) {
             $shaping->releaseIp($voucher->ip_address, $opnsense);
             $shaping->assignTier($voucher, $voucher->ip_address, $opnsense);
         }
@@ -110,7 +114,7 @@ class VoucherController extends Controller
         ]);
 
         $vouchers = Voucher::whereIn('id', $request->ids)->get();
-        
+
         return view('network.print-vouchers-batch', compact('vouchers'));
     }
 
@@ -122,7 +126,7 @@ class VoucherController extends Controller
         $voucher->delete();
 
         // Clear dashboard cache
-        \Illuminate\Support\Facades\Cache::forget('dashboard_stats_today');
+        Cache::forget('dashboard_stats_today');
 
         return redirect()->back()->with('success', 'Voucher removed from the system.');
     }
@@ -158,15 +162,15 @@ class VoucherController extends Controller
     public function plans()
     {
         $settings = [
-            'voucher_durations' => \App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'),
-            'free_wifi_min_amount' => \App\Models\Setting::get('free_wifi_min_amount', '200'),
-            'free_wifi_duration' => \App\Models\Setting::get('free_wifi_duration', '60'),
+            'voucher_durations' => Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'),
+            'free_wifi_min_amount' => Setting::get('free_wifi_min_amount', '200'),
+            'free_wifi_duration' => Setting::get('free_wifi_duration', '60'),
         ];
 
         return view('network.plans', compact('settings'));
     }
 
-    public function sessions(\App\Services\OpnSenseService $opnsense)
+    public function sessions(OpnSenseService $opnsense)
     {
         // 1. Get real-time sessions from OPNsense
         $opnSessions = collect($opnsense->listSessions());
@@ -174,24 +178,24 @@ class VoucherController extends Controller
         $dhcpLeases = collect($opnsense->getDhcpLeases());
 
         // 2. Identify ignored and VIP IPs
-        $ignoredIpsStr = \App\Models\Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.1');
+        $ignoredIpsStr = Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.1');
         $ignoredIps = explode(',', $ignoredIpsStr);
-        
+
         // "VIP" devices are now MAC-bound Kea DHCP reservations (see
         // StaticIpAssignment) rather than a freeform IP whitelist — the OPNsense
         // side guarantees the IP, this just tells the view which sessions to
         // badge as permanent/system devices instead of guest sessions.
-        $staticAssignments = \App\Models\StaticIpAssignment::all();
+        $staticAssignments = StaticIpAssignment::all();
         $vipIps = $staticAssignments->pluck('ip_address')->all();
         $vipMacs = $staticAssignments->pluck('mac_address')->map(fn ($m) => strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $m)))->all();
 
-        $normalizeMac = fn($mac) => strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac ?? ''));
+        $normalizeMac = fn ($mac) => strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac ?? ''));
 
         // 3. Create maps for quick lookup
-        $arpByMac = $arpTable->keyBy(fn($item) => $normalizeMac($item['mac'] ?? ''));
-        $arpByIp = $arpTable->keyBy(fn($item) => $item['ip'] ?? '');
-        $cpByMac = $opnSessions->keyBy(fn($item) => $normalizeMac($item['macAddress'] ?? ''));
-        $cpByIp = $opnSessions->keyBy(fn($item) => str_replace('/32', '', $item['ipAddress'] ?? ''));
+        $arpByMac = $arpTable->keyBy(fn ($item) => $normalizeMac($item['mac'] ?? ''));
+        $arpByIp = $arpTable->keyBy(fn ($item) => $item['ip'] ?? '');
+        $cpByMac = $opnSessions->keyBy(fn ($item) => $normalizeMac($item['macAddress'] ?? ''));
+        $cpByIp = $opnSessions->keyBy(fn ($item) => str_replace('/32', '', $item['ipAddress'] ?? ''));
 
         // Kea's DHCP leases carry each client's self-reported hostname —
         // populated far more often in practice than the ARP table's own
@@ -199,8 +203,8 @@ class VoucherController extends Controller
         // source below; ARP's hostname is only a fallback for devices Kea
         // has no current lease for (e.g. a manually static-configured IP).
         $hostnameByMac = $dhcpLeases
-            ->keyBy(fn($lease) => $normalizeMac($lease['hwaddr'] ?? ''))
-            ->map(fn($lease) => $lease['hostname'] ?? '')
+            ->keyBy(fn ($lease) => $normalizeMac($lease['hwaddr'] ?? ''))
+            ->map(fn ($lease) => $lease['hostname'] ?? '')
             ->filter();
 
         // OPNsense's static passthrough entries only populate HALF of a
@@ -218,7 +222,7 @@ class VoucherController extends Controller
                 'cpSession' => $cp,
                 'isAuthorized' => $cp && (
                     (isset($cp['clientState']) && in_array(strtoupper($cp['clientState']), ['AUTHORIZED', 'CONNECTED', 'ALREADY_AUTHORIZED'])) ||
-                    (!isset($cp['clientState']) && (!empty($cp['ipAddress']) || !empty($cp['macAddress'])))
+                    (! isset($cp['clientState']) && (! empty($cp['ipAddress']) || ! empty($cp['macAddress'])))
                 ),
                 'sessionId' => $cp['sessionId'] ?? null,
                 'bytes_received' => $cp['bytes_received'] ?? 0,
@@ -236,15 +240,17 @@ class VoucherController extends Controller
             $cp = $cpByMac->get($mac);
 
             // If no match by MAC, try matching by the IP from the ARP table
-            if (!$cp && $arp && isset($arp['ip'])) {
+            if (! $cp && $arp && isset($arp['ip'])) {
                 $cp = $cpByIp->get($arp['ip']);
             }
 
-            $ip = $arp['ip'] ?? (!empty($cp['ipAddress'] ?? null) ? $cp['ipAddress'] : null);
+            $ip = $arp['ip'] ?? (! empty($cp['ipAddress'] ?? null) ? $cp['ipAddress'] : null);
             $ip = $ip ? str_replace('/32', '', $ip) : null;
 
             // Skip ignored IPs
-            if ($ip && in_array($ip, $ignoredIps)) return null;
+            if ($ip && in_array($ip, $ignoredIps)) {
+                return null;
+            }
 
             return $buildRow($cp, $arp, $mac, $ip);
         })->filter();
@@ -254,7 +260,7 @@ class VoucherController extends Controller
         // (device idle / cache expired) — without this pass they'd be
         // silently dropped from the list entirely instead of showing with a
         // resolvable IP and an honest "N/A" MAC.
-        $knownIps = $macDevices->pluck('ipAddress')->filter(fn($ip) => $ip !== 'N/A')->values();
+        $knownIps = $macDevices->pluck('ipAddress')->filter(fn ($ip) => $ip !== 'N/A')->values();
 
         $ipOnlyDevices = $opnSessions
             ->map(function ($cp) use ($arpByIp, $ignoredIps, $knownIps, $normalizeMac, $buildRow) {
@@ -278,9 +284,9 @@ class VoucherController extends Controller
         $macs = $combinedDevices->pluck('macAddress')->toArray();
 
         $voucherList = Voucher::where('is_used', true)
-            ->where(function($q) use ($ips, $macs) {
+            ->where(function ($q) use ($ips, $macs) {
                 $q->whereIn('ip_address', $ips);
-                if (!empty($macs)) {
+                if (! empty($macs)) {
                     $q->orWhereIn('mac_address', $macs);
                 }
             })
@@ -290,20 +296,21 @@ class VoucherController extends Controller
         // 6. Throughput Speed Calculation (Real-time delta)
         $now = now();
         $snapshotKey = 'network_sessions_throughput_snapshot';
-        $oldSnapshot = \Illuminate\Support\Facades\Cache::get($snapshotKey, []);
+        $oldSnapshot = Cache::get($snapshotKey, []);
         $newSnapshot = [];
 
         // 7. Map and cross-reference for the view
-        $sessions = $combinedDevices->map(function($device) use ($voucherList, $vipIps, $vipMacs, $oldSnapshot, &$newSnapshot, $now, $normalizeMac) {
+        $sessions = $combinedDevices->map(function ($device) use ($voucherList, $vipIps, $vipMacs, $oldSnapshot, &$newSnapshot, $now, $normalizeMac) {
             $ip = $device['ipAddress'];
             $mac = $device['macAddress'];
-            
+
             // Speed logic
-            $curIn = (int)$device['bytes_received'];
-            $curOut = (int)$device['bytes_sent'];
+            $curIn = (int) $device['bytes_received'];
+            $curOut = (int) $device['bytes_sent'];
             $newSnapshot[$mac] = ['in' => $curIn, 'out' => $curOut, 't' => $now->timestamp];
 
-            $speedIn = 0; $speedOut = 0;
+            $speedIn = 0;
+            $speedOut = 0;
             if (isset($oldSnapshot[$mac])) {
                 $prev = $oldSnapshot[$mac];
                 $dt = $now->timestamp - $prev['t'];
@@ -313,26 +320,34 @@ class VoucherController extends Controller
                 }
             }
 
-            $formatSpeed = function($bps) {
-                if ($bps >= 1048576) return round($bps / 1048576, 2) . ' Mbps';
-                if ($bps >= 1024) return round($bps / 1024, 1) . ' Kbps';
-                return round($bps) . ' bps';
+            $formatSpeed = function ($bps) {
+                if ($bps >= 1048576) {
+                    return round($bps / 1048576, 2).' Mbps';
+                }
+                if ($bps >= 1024) {
+                    return round($bps / 1024, 1).' Kbps';
+                }
+
+                return round($bps).' bps';
             };
 
             // Check if this is a VIP (statically-assigned) device, by IP or MAC
             $isVip = in_array($ip, $vipIps) || ($mac && in_array($mac, $vipMacs));
 
             // Find the latest voucher
-            $voucher = $voucherList->filter(function($v) use ($ip, $mac, $normalizeMac) {
+            $voucher = $voucherList->filter(function ($v) use ($ip, $mac, $normalizeMac) {
                 return $v->ip_address === $ip || ($mac && $normalizeMac($v->mac_address) === $mac);
             })->first();
 
             // Format bytes
-            $formatBytes = function($bytes) {
-                if ($bytes <= 0) return '0 B';
+            $formatBytes = function ($bytes) {
+                if ($bytes <= 0) {
+                    return '0 B';
+                }
                 $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-                $i = floor(log($bytes, 1024));
-                return round($bytes / pow(1024, $i), 2) . ' ' . $units[$i];
+                $i = (int) floor(log($bytes, 1024));
+
+                return round($bytes / pow(1024, $i), 2).' '.$units[$i];
             };
 
             $res = (object) [
@@ -346,7 +361,7 @@ class VoucherController extends Controller
                 'speed_in' => $formatSpeed($speedIn),
                 'speed_out' => $formatSpeed($speedOut),
                 'has_traffic' => ($speedIn + $speedOut) > 1000, // Show active indicator if > 1Kbps
-                'connected_at' => $device['startTime'] ? \Carbon\Carbon::createFromTimestamp($device['startTime'])->diffForHumans() : 'Just Connected',
+                'connected_at' => $device['startTime'] ? Carbon::createFromTimestamp($device['startTime'])->diffForHumans() : 'Just Connected',
                 'is_authorized' => $device['isAuthorized'] || $isVip,
                 // Only genuine voucher-backed sessions have a meaningful tier —
                 // VIP/orphaned/static entries stay null so the view can hide
@@ -361,7 +376,7 @@ class VoucherController extends Controller
                 $res->is_system = true;
                 $res->is_unauthorized = false;
                 $res->is_orphaned = false;
-            } elseif (!$voucher) {
+            } elseif (! $voucher) {
                 // App-authorized (real captive-portal auth) but no voucher record left —
                 // most likely its voucher was purged while it was still connected.
                 // Static/firewall-permit entries (---ip---/---mac---) are expected to
@@ -371,15 +386,15 @@ class VoucherController extends Controller
                 $res->code = $isOrphaned ? 'ORPHANED' : ($device['isAuthorized'] ? 'SYSTEM/STATIC' : 'UNAUTHORIZED');
                 $res->timeLeft = $isOrphaned ? 'Stale' : '∞';
                 $res->progress = $device['isAuthorized'] ? 100 : 0;
-                $res->is_system = $device['isAuthorized'] && !$isOrphaned;
-                $res->is_unauthorized = !$device['isAuthorized'];
+                $res->is_system = $device['isAuthorized'] && ! $isOrphaned;
+                $res->is_unauthorized = ! $device['isAuthorized'];
                 $res->is_orphaned = $isOrphaned;
             } else {
                 // Calculate time remaining
-                $usedAt = \Carbon\Carbon::parse($voucher->used_at);
+                $usedAt = Carbon::parse($voucher->used_at);
                 $expiryTime = $usedAt->copy()->addMinutes($voucher->duration_minutes);
                 $now_c = now();
-                
+
                 $timeLeft = $now_c->greaterThan($expiryTime) ? 0 : (int) $now_c->diffInMinutes($expiryTime);
                 $progress = $voucher->duration_minutes > 0 ? ($timeLeft / $voucher->duration_minutes) * 100 : 0;
 
@@ -390,16 +405,16 @@ class VoucherController extends Controller
                 $res->is_orphaned = false;
 
                 // CRITICAL FIX: If OPNsense has kicked them OR the voucher is expired, they are unauthorized
-                $res->is_unauthorized = !$device['isAuthorized'] || $timeLeft <= 0;
+                $res->is_unauthorized = ! $device['isAuthorized'] || $timeLeft <= 0;
             }
 
             return $res;
         });
 
-        \Illuminate\Support\Facades\Cache::put($snapshotKey, $newSnapshot, 120);
+        Cache::put($snapshotKey, $newSnapshot, 120);
 
         // 8. Identify Infrastructure IPs
-        $infraIps = \App\Models\Setting::infrastructureIps();
+        $infraIps = Setting::infrastructureIps();
 
         // 9. Split into three collections for the UI. is_system covers both
         // VIP (static IP reservation) and captive-portal allow-list
@@ -408,9 +423,9 @@ class VoucherController extends Controller
         // whether their IP happens to also be in the network_infrastructure_ips
         // list (the allow-list is a separate, OPNsense-side list — a device
         // can be on it without ever being added to the app's own IP list).
-        $infrastructureSessions = $sessions->filter(fn($s) => in_array($s->ip_address, $infraIps) || $s->is_system);
-        $activeSessions = $sessions->filter(fn($s) => !in_array($s->ip_address, $infraIps) && !$s->is_system && !$s->is_unauthorized);
-        $pendingSessions = $sessions->filter(fn($s) => !in_array($s->ip_address, $infraIps) && !$s->is_system && $s->is_unauthorized);
+        $infrastructureSessions = $sessions->filter(fn ($s) => in_array($s->ip_address, $infraIps) || $s->is_system);
+        $activeSessions = $sessions->filter(fn ($s) => ! in_array($s->ip_address, $infraIps) && ! $s->is_system && ! $s->is_unauthorized);
+        $pendingSessions = $sessions->filter(fn ($s) => ! in_array($s->ip_address, $infraIps) && ! $s->is_system && $s->is_unauthorized);
 
         if (request()->ajax() || request()->wantsJson()) {
             return view('network.partials.sessions-tables', compact('activeSessions', 'infrastructureSessions', 'pendingSessions'));
@@ -422,10 +437,10 @@ class VoucherController extends Controller
     /**
      * Terminate an active network session.
      */
-    public function kick(Request $request, \App\Services\OpnSenseService $opnsense)
+    public function kick(Request $request, OpnSenseService $opnsense)
     {
         $request->validate([
-            'sessionId' => 'required|string'
+            'sessionId' => 'required|string',
         ]);
 
         $success = $opnsense->disconnectDevice($request->sessionId);

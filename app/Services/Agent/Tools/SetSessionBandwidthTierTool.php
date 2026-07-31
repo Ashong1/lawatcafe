@@ -15,9 +15,7 @@ use App\Services\TrafficShapingService;
  */
 class SetSessionBandwidthTierTool implements AgentTool
 {
-    public function __construct(protected TrafficShapingService $shaping, protected OpnSenseService $opnsense)
-    {
-    }
+    public function __construct(protected TrafficShapingService $shaping, protected OpnSenseService $opnsense) {}
 
     public function name(): string
     {
@@ -50,7 +48,7 @@ class SetSessionBandwidthTierTool implements AgentTool
     public function execute(array $arguments, ?User $actor, array $context = []): ToolResult
     {
         $tier = $arguments['tier'] ?? null;
-        if (!in_array($tier, ['free', 'premium'], true)) {
+        if (! in_array($tier, ['free', 'premium'], true)) {
             return ToolResult::fail("tier must be 'free' or 'premium'.");
         }
 
@@ -65,14 +63,14 @@ class SetSessionBandwidthTierTool implements AgentTool
             ? Voucher::where('code', $code)->first()
             : Voucher::where('is_used', true)->where('ip_address', $ip)->orderBy('used_at', 'desc')->first();
 
-        if (!$voucher) {
+        if (! $voucher) {
             return ToolResult::fail('No matching voucher/session found.');
         }
 
         $voucher->tier = $tier;
         $voucher->save();
 
-        if (!empty($voucher->ip_address)) {
+        if (! empty($voucher->ip_address)) {
             $this->shaping->releaseIp($voucher->ip_address, $this->opnsense);
             $this->shaping->assignTier($voucher, $voucher->ip_address, $this->opnsense);
         }

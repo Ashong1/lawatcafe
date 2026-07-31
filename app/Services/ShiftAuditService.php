@@ -12,9 +12,7 @@ use Illuminate\Support\Facades\Notification;
 
 class ShiftAuditService
 {
-    public function __construct(protected AIService $ai)
-    {
-    }
+    public function __construct(protected AIService $ai) {}
 
     /**
      * Runs after a shift closes. If the counted cash came up short of what
@@ -50,29 +48,29 @@ class ShiftAuditService
         try {
             $aiSummary = $this->ai->summarizeShiftAudit($summary);
         } catch (\Exception $e) {
-            Log::error('ShiftAuditService: AI summary failed for shift ' . $shift->id . ': ' . $e->getMessage());
+            Log::error('ShiftAuditService: AI summary failed for shift '.$shift->id.': '.$e->getMessage());
         }
 
         $recipients = User::whereIn('role', ['admin', 'super_admin'])->get();
-        if (!$recipients->contains('id', $shift->user_id)) {
+        if (! $recipients->contains('id', $shift->user_id)) {
             $recipients->push($shift->user);
         }
 
         foreach ($recipients as $recipient) {
-            if (!$recipient->email) {
+            if (! $recipient->email) {
                 continue;
             }
 
             try {
                 Mail::to($recipient->email)->send(new ShiftAuditResult($shift, $summary, $variance, $aiSummary));
             } catch (\Exception $e) {
-                Log::error("ShiftAuditService: failed to email shift audit to {$recipient->email}: " . $e->getMessage());
+                Log::error("ShiftAuditService: failed to email shift audit to {$recipient->email}: ".$e->getMessage());
             }
         }
 
         Notification::send($recipients, new SystemAlert(
             'Shift Shortage Detected',
-            "{$shift->user->name}'s shift on {$shift->closed_at->format('M d, Y')} came up ₱" . number_format(abs($variance), 2) . ' short.',
+            "{$shift->user->name}'s shift on {$shift->closed_at->format('M d, Y')} came up ₱".number_format(abs($variance), 2).' short.',
             'alert-triangle',
             route('admin.finance.z-reads')
         ));

@@ -2,11 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Category;
+use App\Models\Ingredient;
+use App\Models\InventoryLog;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\Setting;
+use App\Models\Shift;
+use App\Models\User;
 use App\Models\Voucher;
-use App\Models\Product;
+use App\Notifications\SystemAlert;
+use App\Services\AIService;
+use App\Services\PairingSuggestionService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 class PosController extends Controller
@@ -14,7 +26,7 @@ class PosController extends Controller
     public function index()
     {
         // Fetch only Active products from the database with ingredients to check stock
-        $products = Product::with('ingredients')->where('status', 'Active')->get()->map(function($product) {
+        $products = Product::with('ingredients')->where('status', 'Active')->get()->map(function ($product) {
             // Check if we have enough ingredients for at least one serving and if stock is low
             $inStock = true;
             $isLowStock = false;
@@ -26,13 +38,13 @@ class PosController extends Controller
                     'id' => $ingredient->id,
                     'name' => $ingredient->name,
                     'required' => $requiredQty,
-                    'current' => (float) $ingredient->current_stock
+                    'current' => (float) $ingredient->current_stock,
                 ];
 
                 if ($ingredient->current_stock < $requiredQty) {
                     $inStock = false;
                 }
-                
+
                 if ($ingredient->current_stock <= $ingredient->low_stock_threshold) {
                     $isLowStock = true;
                 }
@@ -46,32 +58,32 @@ class PosController extends Controller
                 'type' => 'product', // Distinguishes it from Wi-Fi add-ons
                 'inStock' => $inStock,
                 'isLowStock' => $isLowStock,
-                'requirements' => $requirements
+                'requirements' => $requirements,
             ];
         });
 
         // Load Wi-Fi options from dynamic settings
-        $durations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
+        $durations = json_decode(Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
         $wifiOptions = [];
         $index = 1;
         foreach ($durations as $price => $mins) {
             $mins = (int) $mins;
-            $name = $mins >= 1440 ? 'Whole Day Wi-Fi' : ($mins >= 60 ? ($mins/60) . ' Hour(s) Wi-Fi' : $mins . ' Mins Wi-Fi');
+            $name = $mins >= 1440 ? 'Whole Day Wi-Fi' : ($mins >= 60 ? ($mins / 60).' Hour(s) Wi-Fi' : $mins.' Mins Wi-Fi');
             $wifiOptions[] = [
-                'id' => 'w' . $index++,
+                'id' => 'w'.$index++,
                 'name' => $name,
                 'price' => (float) $price,
                 'type' => 'wifi',
                 'category' => 'Wi-Fi',
-                'duration' => $mins
+                'duration' => $mins,
             ];
         }
 
         // Check for active shift
-        $activeShift = \App\Models\Shift::where('user_id', auth()->id())->where('status', 'open')->latest()->first();
+        $activeShift = Shift::where('user_id', auth()->id())->where('status', 'open')->latest()->first();
 
         // Load Categories from database, including icons and colors
-        $dbCategories = \App\Models\Category::orderBy('sort_order')->get()->map(function($cat) {
+        $dbCategories = Category::orderBy('sort_order')->get()->map(function ($cat) {
             return [
                 'name' => $cat->name,
                 'icon' => $cat->icon,
@@ -80,17 +92,17 @@ class PosController extends Controller
         });
 
         $categories = collect([
-            ['name' => 'All', 'icon' => 'layout-grid', 'color' => '#3E2723']
+            ['name' => 'All', 'icon' => 'layout-grid', 'color' => '#3E2723'],
         ])->concat($dbCategories)->concat([
-            ['name' => 'Wi-Fi', 'icon' => 'wifi', 'color' => '#1565C0']
+            ['name' => 'Wi-Fi', 'icon' => 'wifi', 'color' => '#1565C0'],
         ])->unique('name')->values();
 
         // Merge WiFi options into products list so Alpine logic stays simple
         $mergedProducts = collect($products)->merge($wifiOptions)->toArray();
 
         // Get Free Wi-Fi settings
-        $freeWifiMinAmount = (float) \App\Models\Setting::get('free_wifi_min_amount', 200);
-        $freeWifiDuration = (int) \App\Models\Setting::get('free_wifi_duration', 60);
+        $freeWifiMinAmount = (float) Setting::get('free_wifi_min_amount', 200);
+        $freeWifiDuration = (int) Setting::get('free_wifi_duration', 60);
 
         return view('pos.index', [
             'products' => $mergedProducts,
@@ -98,7 +110,7 @@ class PosController extends Controller
             'dbCategories' => $dbCategories,
             'activeShift' => $activeShift,
             'freeWifiMinAmount' => $freeWifiMinAmount,
-            'freeWifiDuration' => $freeWifiDuration
+            'freeWifiDuration' => $freeWifiDuration,
         ]);
     }
 
@@ -113,13 +125,13 @@ class PosController extends Controller
             'order_type' => 'required|in:dine_in,takeaway',
             'discount_type' => 'nullable|string|max:50',
             'discount_amount' => 'nullable|numeric',
-            'shift_id' => 'required|exists:shifts,id'
+            'shift_id' => 'required|exists:shifts,id',
         ]);
 
         // Pre-fetch all products in the cart with ingredients to avoid N+1
         $productIds = collect($request->cart)->where('type', 'product')->pluck('id')->toArray();
         $products = Product::with('ingredients')->whereIn('id', $productIds)->get()->keyBy('id');
-        $wifiDurations = json_decode(\App\Models\Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
+        $wifiDurations = json_decode(Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
 
         // 2. Recalculate total and validate stock BEFORE starting transaction
         $calculatedTotal = 0;
@@ -127,7 +139,7 @@ class PosController extends Controller
 
         foreach ($request->cart as $item) {
             if ($item['type'] === 'product') {
-                if (!isset($products[$item['id']])) {
+                if (! isset($products[$item['id']])) {
                     return response()->json(['success' => false, 'message' => "Product {$item['name']} not found."], 422);
                 }
                 $product = $products[$item['id']];
@@ -136,14 +148,14 @@ class PosController extends Controller
                 // Check ingredients stock
                 foreach ($product->ingredients as $ingredient) {
                     $required = $ingredient->pivot->quantity * $item['quantity'];
-                    
+
                     // Track cumulative deduction for same ingredient across different products in cart
                     $stockToDeduct[$ingredient->id] = ($stockToDeduct[$ingredient->id] ?? 0) + $required;
-                    
+
                     if ($ingredient->current_stock < $stockToDeduct[$ingredient->id]) {
                         return response()->json([
-                            'success' => false, 
-                            'message' => "Insufficient stock for {$ingredient->name} (needed for {$product->name})."
+                            'success' => false,
+                            'message' => "Insufficient stock for {$ingredient->name} (needed for {$product->name}).",
                         ], 422);
                     }
                 }
@@ -151,12 +163,12 @@ class PosController extends Controller
                 // Ensure the wifi price is valid according to settings
                 $foundPrice = false;
                 foreach ($wifiDurations as $price => $duration) {
-                    if (abs((float)$price - (float)$item['price']) < 0.01) {
+                    if (abs((float) $price - (float) $item['price']) < 0.01) {
                         $foundPrice = true;
                         break;
                     }
                 }
-                if (!$foundPrice) {
+                if (! $foundPrice) {
                     return response()->json(['success' => false, 'message' => "Invalid Wi-Fi option: {$item['name']}"], 422);
                 }
                 $calculatedTotal += (float) $item['price'] * $item['quantity'];
@@ -166,7 +178,7 @@ class PosController extends Controller
         // 3. Securely handle discounts
         $discountAmount = (float) ($request->discount_amount ?? 0);
         $expectedDiscount = 0;
-        
+
         if ($request->discount_type === 'senior') {
             // Senior/PWD discount is 20% of the calculated subtotal
             $expectedDiscount = round($calculatedTotal * 0.20, 2);
@@ -175,8 +187,8 @@ class PosController extends Controller
         // Validate that the discount provided by the frontend matches our server calculation
         if (abs($discountAmount - $expectedDiscount) > 0.01) {
             return response()->json([
-                'success' => false, 
-                'message' => 'Invalid discount amount detected. Please refresh and try again.'
+                'success' => false,
+                'message' => 'Invalid discount amount detected. Please refresh and try again.',
             ], 422);
         }
 
@@ -187,14 +199,14 @@ class PosController extends Controller
             return response()->json(['success' => false, 'message' => 'Amount received is less than the total amount.'], 422);
         }
 
-        return \Illuminate\Support\Facades\DB::transaction(function() use ($request, $finalTotal, $products, $discountAmount) {
+        return DB::transaction(function () use ($request, $finalTotal, $products, $discountAmount) {
             // 3. Create the Sales Record
             $sale = Sale::create([
-                'transaction_number' => 'TRN-' . strtoupper(Str::random(8)),
+                'transaction_number' => 'TRN-'.strtoupper(Str::random(8)),
                 'total_amount' => $finalTotal,
                 'amount_received' => $request->amount_received,
                 'status' => 'pending',
-                'payment_method' => $request->payment_method ?? 'Cash', 
+                'payment_method' => $request->payment_method ?? 'Cash',
                 'order_type' => $request->order_type,
                 'discount_type' => $request->discount_type,
                 'discount_amount' => $discountAmount,
@@ -203,7 +215,7 @@ class PosController extends Controller
             ]);
 
             // Clear dashboard cache
-            \Illuminate\Support\Facades\Cache::forget('dashboard_stats_today');
+            Cache::forget('dashboard_stats_today');
 
             $generatedCodes = [];
             $hasWifi = false;
@@ -216,7 +228,7 @@ class PosController extends Controller
                     'product_id' => $item['type'] === 'product' ? $item['id'] : null,
                     'category' => $item['category'] ?? null,
                     'type' => $item['type'],
-                    'item_name' => $item['name'] . (($item['variant'] ?? null) ? ' (' . $item['variant'] . ')' : ''), 
+                    'item_name' => $item['name'].(($item['variant'] ?? null) ? ' ('.$item['variant'].')' : ''),
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                     'kds_status' => 'pending',
@@ -228,7 +240,7 @@ class PosController extends Controller
                     $hasWifi = true;
                     // Generate one code per quantity
                     for ($i = 0; $i < $item['quantity']; $i++) {
-                        $code = 'LAWA-' . strtoupper(Str::random(4));
+                        $code = 'LAWA-'.strtoupper(Str::random(4));
                         Voucher::create([
                             'code' => $code,
                             'duration_minutes' => $item['duration'] ?? 60,
@@ -245,28 +257,28 @@ class PosController extends Controller
                     $product = $products[$item['id']];
                     foreach ($product->ingredients as $ingredientPivot) {
                         $quantityToDeduct = (float) $ingredientPivot->pivot->quantity * (int) $item['quantity'];
-                        
+
                         // RE-FETCH the ingredient with a row lock so two concurrent checkouts
                         // deducting the same ingredient can't clobber each other's write.
-                        $ingredient = \App\Models\Ingredient::where('id', $ingredientPivot->id)->lockForUpdate()->first();
-                        
+                        $ingredient = Ingredient::where('id', $ingredientPivot->id)->lockForUpdate()->first();
+
                         if ($ingredient) {
                             $ingredient->current_stock -= $quantityToDeduct;
                             $ingredient->save();
 
                             // Log the deduction
-                            \App\Models\InventoryLog::create([
+                            InventoryLog::create([
                                 'ingredient_id' => $ingredient->id,
                                 'change_amount' => -$quantityToDeduct,
                                 'after_amount' => $ingredient->current_stock,
-                                'reason' => 'Sale: ' . $product->name . ' (#' . substr($sale->transaction_number, -4) . ')',
-                                'user_id' => auth()->id()
+                                'reason' => 'Sale: '.$product->name.' (#'.substr($sale->transaction_number, -4).')',
+                                'user_id' => auth()->id(),
                             ]);
 
                             // Check for Low Stock
                             if ($ingredient->current_stock <= $ingredient->low_stock_threshold) {
-                                $admins = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->get();
-                                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\SystemAlert(
+                                $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+                                Notification::send($admins, new SystemAlert(
                                     'Inventory Warning',
                                     "{$ingredient->name} reached low stock during a sale.",
                                     'package-x',
@@ -279,13 +291,13 @@ class PosController extends Controller
             }
 
             // C. Handle Automatic Free Wi-Fi based on Minimum Spend
-            $freeWifiMin = (float) \App\Models\Setting::get('free_wifi_min_amount', 200);
-            $freeWifiDuration = (int) \App\Models\Setting::get('free_wifi_duration', 60);
+            $freeWifiMin = (float) Setting::get('free_wifi_min_amount', 200);
+            $freeWifiDuration = (int) Setting::get('free_wifi_duration', 60);
 
             if ($freeWifiMin > 0 && $finalTotal >= $freeWifiMin) {
                 // Check if they already purchased a wifi voucher explicitly to prevent stacking, or allow it. Let's allow it as a bonus.
                 $hasWifi = true;
-                $freeCode = 'FREE-' . strtoupper(Str::random(4));
+                $freeCode = 'FREE-'.strtoupper(Str::random(4));
                 Voucher::create([
                     'code' => $freeCode,
                     'duration_minutes' => $freeWifiDuration,
@@ -293,14 +305,14 @@ class PosController extends Controller
                     'is_used' => false,
                     'sale_id' => $sale->id,
                 ]);
-                
+
                 // Add to generated codes list, but mark it as free for the UI if needed
                 array_unshift($generatedCodes, $freeCode); // Put the free code first
             }
 
             // Notify Staff of New Order
-            $staff = \App\Models\User::where('role', 'staff')->get();
-            \Illuminate\Support\Facades\Notification::send($staff, new \App\Notifications\SystemAlert(
+            $staff = User::where('role', 'staff')->get();
+            Notification::send($staff, new SystemAlert(
                 'New Order!',
                 "Transaction #{$sale->transaction_number} was just placed.",
                 'shopping-bag',
@@ -323,7 +335,7 @@ class PosController extends Controller
      * action, and routing it through ToolCallOrchestrator would add latency
      * for no benefit.
      */
-    public function suggestPairing(Request $request, \App\Services\PairingSuggestionService $pairing, \App\Services\AIService $ai)
+    public function suggestPairing(Request $request, PairingSuggestionService $pairing, AIService $ai)
     {
         $request->validate([
             'product_id' => 'required|integer',
@@ -333,7 +345,7 @@ class PosController extends Controller
 
         $suggestion = $pairing->suggestFor((int) $request->product_id, $request->input('cart_product_ids', []));
 
-        if (!$suggestion) {
+        if (! $suggestion) {
             return response()->json(['suggestion' => null]);
         }
 
@@ -353,6 +365,7 @@ class PosController extends Controller
     public function receipt(Sale $sale)
     {
         $sale->load(['items', 'user', 'vouchers']);
+
         return view('pos.receipt', compact('sale'));
     }
 }

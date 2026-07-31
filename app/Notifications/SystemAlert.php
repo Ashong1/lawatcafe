@@ -10,8 +10,11 @@ class SystemAlert extends Notification
     use Queueable;
 
     protected $title;
+
     protected $message;
+
     protected $icon;
+
     protected $url;
 
     public function __construct($title, $message, $icon = 'bell', $url = null)

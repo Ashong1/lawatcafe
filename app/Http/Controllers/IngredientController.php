@@ -3,20 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ingredient;
+use App\Models\InventoryLog;
+use App\Models\Setting;
+use App\Models\User;
+use App\Notifications\SystemAlert;
 use App\Services\IngredientService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Notification;
 
 class IngredientController extends Controller
 {
-    public function __construct(protected IngredientService $ingredients)
-    {
-    }
+    public function __construct(protected IngredientService $ingredients) {}
 
     // 1. Display the ingredients
     public function index()
     {
         $ingredients = Ingredient::all();
-        $lowStockThreshold = (int) \App\Models\Setting::get('low_stock_threshold', 500);
+        $lowStockThreshold = (int) Setting::get('low_stock_threshold', 500);
+
         return view('inventory.ingredients', compact('ingredients', 'lowStockThreshold'));
     }
 
@@ -36,15 +41,15 @@ class IngredientController extends Controller
         $ingredient = Ingredient::create($request->all());
 
         // Clear dashboard cache
-        \Illuminate\Support\Facades\Cache::forget('dashboard_stats_today');
+        Cache::forget('dashboard_stats_today');
 
         // Log the initial stock
-        \App\Models\InventoryLog::create([
+        InventoryLog::create([
             'ingredient_id' => $ingredient->id,
             'change_amount' => $ingredient->current_stock,
             'after_amount' => $ingredient->current_stock,
             'reason' => 'Initial Stock',
-            'user_id' => auth()->id()
+            'user_id' => auth()->id(),
         ]);
 
         return redirect()->route('inventory.ingredients.index')->with('success', 'Ingredient added!');
@@ -68,21 +73,21 @@ class IngredientController extends Controller
         $newStock = $ingredient->current_stock;
 
         // Clear dashboard cache
-        \Illuminate\Support\Facades\Cache::forget('dashboard_stats_today');
+        Cache::forget('dashboard_stats_today');
 
         if ($oldStock != $newStock) {
-            \App\Models\InventoryLog::create([
+            InventoryLog::create([
                 'ingredient_id' => $ingredient->id,
                 'change_amount' => $newStock - $oldStock,
                 'after_amount' => $newStock,
                 'reason' => 'Manual Adjustment',
-                'user_id' => auth()->id()
+                'user_id' => auth()->id(),
             ]);
 
             // Check for Low Stock
             if ($newStock <= $ingredient->low_stock_threshold) {
-                $admins = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->get();
-                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\SystemAlert(
+                $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+                Notification::send($admins, new SystemAlert(
                     'Low Stock Alert!',
                     "{$ingredient->name} is running low ({$newStock} {$ingredient->unit} left).",
                     'alert-triangle',
@@ -107,7 +112,7 @@ class IngredientController extends Controller
 
     public function logs(Request $request)
     {
-        $query = \App\Models\InventoryLog::with(['ingredient', 'user'])->latest();
+        $query = InventoryLog::with(['ingredient', 'user'])->latest();
 
         if ($request->filled('ingredient_id')) {
             $query->where('ingredient_id', $request->ingredient_id);
@@ -127,7 +132,7 @@ class IngredientController extends Controller
 
         $logs = $query->paginate(20);
         $ingredients = Ingredient::orderBy('name')->get();
-        $users = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->orderBy('name')->get();
+        $users = User::whereIn('role', ['admin', 'super_admin'])->orderBy('name')->get();
 
         return view('inventory.logs', compact('logs', 'ingredients', 'users'));
     }

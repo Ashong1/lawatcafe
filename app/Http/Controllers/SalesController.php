@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sale;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class SalesController extends Controller
@@ -42,7 +40,7 @@ class SalesController extends Controller
                 ->where('created_at', '>=', now()->subDays(6))
                 ->groupBy('date')->orderBy('date', 'ASC')->get();
 
-            $chartLabels = $weeklySales->pluck('date')->map(fn($date) => date('M d', strtotime($date)));
+            $chartLabels = $weeklySales->pluck('date')->map(fn ($date) => date('M d', strtotime($date)));
             $chartData = $weeklySales->pluck('total');
 
             // --- Sparkline Data for Cards ---
@@ -63,7 +61,9 @@ class SalesController extends Controller
                 ->pluck('total')->toArray();
 
             // Fallback if no sales exist to prevent chart errors
-            if (empty($lifetimeSparkline)) $lifetimeSparkline = [0, 0, 0];
+            if (empty($lifetimeSparkline)) {
+                $lifetimeSparkline = [0, 0, 0];
+            }
 
             return compact(
                 'totalRevenue', 'todaysRevenue',
@@ -82,24 +82,24 @@ class SalesController extends Controller
     {
         // Get all sales from today
         $sales = Sale::whereDate('created_at', today())->get();
-        
+
         // Name the file dynamically based on today's date
-        $fileName = 'lawat_daily_sales_' . today()->format('Y_m_d') . '.csv';
+        $fileName = 'lawat_daily_sales_'.today()->format('Y_m_d').'.csv';
 
         // Set the headers to force a file download
         $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
+            'Content-type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=$fileName",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
         ];
 
         // Create the CSV content
-        $callback = function() use($sales) {
+        $callback = function () use ($sales) {
             // Open output stream
             $file = fopen('php://output', 'w');
-            
+
             // Add the CSV Header Row
             fputcsv($file, ['Transaction Number', 'Total Amount', 'Payment Method', 'Time of Sale']);
 
@@ -109,10 +109,10 @@ class SalesController extends Controller
                     $sale->transaction_number,
                     $sale->total_amount,
                     $sale->payment_method,
-                    $sale->created_at->format('h:i A') // Formats time nicely (e.g., 02:30 PM)
+                    $sale->created_at->format('h:i A'), // Formats time nicely (e.g., 02:30 PM)
                 ]);
             }
-            
+
             // Close the stream
             fclose($file);
         };

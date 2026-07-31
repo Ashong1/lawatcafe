@@ -54,7 +54,7 @@ class DeliveryReceivingService
                     'purchase_order_draft_id' => $draft?->id,
                 ]);
 
-                if (!$draft) {
+                if (! $draft) {
                     $allMatched = false;
                 }
             }
@@ -108,7 +108,7 @@ class DeliveryReceivingService
             ->oldest()
             ->get()
             ->first(function (PurchaseOrderDraft $draft) use ($supplierName) {
-                if (!$draft->supplier_id) {
+                if (! $draft->supplier_id) {
                     // No supplier on file for this draft — ingredient + quantity match is enough.
                     return true;
                 }
@@ -142,7 +142,7 @@ class DeliveryReceivingService
                 'ingredient_id' => $ingredient->id,
                 'change_amount' => $item->quantity,
                 'after_amount' => $ingredient->current_stock,
-                'reason' => 'Supplier Delivery: ' . $delivery->supplier_name . ($delivery->reference_number ? ' (#' . $delivery->reference_number . ')' : ''),
+                'reason' => 'Supplier Delivery: '.$delivery->supplier_name.($delivery->reference_number ? ' (#'.$delivery->reference_number.')' : ''),
                 'user_id' => $delivery->user_id,
             ]);
 

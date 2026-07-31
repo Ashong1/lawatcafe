@@ -10,9 +10,7 @@ use App\Services\SaleService;
 
 class VoidSaleTool implements AgentTool
 {
-    public function __construct(protected SaleService $sales)
-    {
-    }
+    public function __construct(protected SaleService $sales) {}
 
     public function name(): string
     {
@@ -44,13 +42,13 @@ class VoidSaleTool implements AgentTool
     public function execute(array $arguments, ?User $actor, array $context = []): ToolResult
     {
         $sale = null;
-        if (!empty($arguments['sale_id'])) {
+        if (! empty($arguments['sale_id'])) {
             $sale = Sale::find($arguments['sale_id']);
-        } elseif (!empty($arguments['transaction_number'])) {
+        } elseif (! empty($arguments['transaction_number'])) {
             $sale = Sale::where('transaction_number', $arguments['transaction_number'])->first();
         }
 
-        if (!$sale) {
+        if (! $sale) {
             return ToolResult::fail('Could not find a matching sale.');
         }
 

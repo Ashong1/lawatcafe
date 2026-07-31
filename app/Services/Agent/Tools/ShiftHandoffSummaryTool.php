@@ -34,7 +34,7 @@ class ShiftHandoffSummaryTool implements AgentTool
     {
         $shift = Shift::where('user_id', $actor?->id)->latest('opened_at')->first();
 
-        if (!$shift) {
+        if (! $shift) {
             return ToolResult::fail('No shift found to summarize.');
         }
 
@@ -43,7 +43,7 @@ class ShiftHandoffSummaryTool implements AgentTool
 
         $lowStock = Ingredient::whereColumn('current_stock', '<=', 'low_stock_threshold')->pluck('name');
 
-        $status = $shift->status === 'open' ? 'still open' : 'closed at ' . optional($shift->closed_at)->format('h:i A');
+        $status = $shift->status === 'open' ? 'still open' : 'closed at '.optional($shift->closed_at)->format('h:i A');
 
         $summary = sprintf(
             'Shift %s (opened %s): %d completed order(s) totaling ₱%s. Low stock: %s.',

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Setting;
+use App\Models\Voucher;
 use App\Services\OpnSenseService;
 use App\Services\TrafficShapingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -84,7 +85,7 @@ class TrafficShapingServiceTest extends TestCase
             'opnsense.test/api/firewall/alias_util/add/lawatcafe_premium_tier' => Http::response(['status' => 'ok'], 200),
         ]);
 
-        $voucher = \App\Models\Voucher::create([
+        $voucher = Voucher::create([
             'code' => 'LAWA-TEST', 'duration_minutes' => 60, 'tier' => 'premium',
             'is_used' => true, 'used_at' => now(), 'ip_address' => '192.168.2.77',
         ]);

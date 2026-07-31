@@ -18,7 +18,7 @@ class TrafficShapingService
         $free = $opnsense->upsertShaperPipe('free', (float) $settings['bw_free_down'], (float) $settings['bw_free_up']);
         $premium = $opnsense->upsertShaperPipe('premium', (float) $settings['bw_premium_down'], (float) $settings['bw_premium_up']);
 
-        if (!$free || !$premium) {
+        if (! $free || ! $premium) {
             return false;
         }
 

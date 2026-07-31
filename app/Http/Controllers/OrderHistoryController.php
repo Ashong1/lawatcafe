@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 
 class OrderHistoryController extends Controller
 {
-    public function __construct(protected SaleService $sales)
-    {
-    }
+    public function __construct(protected SaleService $sales) {}
 
     public function index(Request $request)
     {
@@ -19,7 +17,7 @@ class OrderHistoryController extends Controller
 
         // Search by Transaction Number
         if ($request->filled('search')) {
-            $query->where('transaction_number', 'like', '%' . $request->search . '%');
+            $query->where('transaction_number', 'like', '%'.$request->search.'%');
         }
 
         // Filter by Date
@@ -47,6 +45,7 @@ class OrderHistoryController extends Controller
     {
         if (auth()->user()->isAdminOrAbove()) {
             $result = $this->sales->void($sale, auth()->id());
+
             return redirect()->back()->with($result['success'] ? 'success' : 'error', $result['message']);
         }
 
@@ -62,12 +61,14 @@ class OrderHistoryController extends Controller
     public function approveVoidRequest(SaleVoidRequest $void_request)
     {
         $result = $this->sales->approveVoidRequest($void_request, auth()->user());
+
         return redirect()->route('pos.history')->with($result['success'] ? 'success' : 'error', $result['message']);
     }
 
     public function rejectVoidRequest(SaleVoidRequest $void_request)
     {
         $result = $this->sales->rejectVoidRequest($void_request, auth()->user());
+
         return redirect()->route('pos.history')->with($result['success'] ? 'success' : 'error', $result['message']);
     }
 }

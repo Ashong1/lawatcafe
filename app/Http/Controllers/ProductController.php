@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product; 
+use App\Models\Category;
+use App\Models\Ingredient;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -13,12 +15,13 @@ class ProductController extends Controller
         $query = Product::with('ingredients');
 
         if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%'.$request->search.'%');
         }
 
         $products = $query->orderBy('name')->get();
-        $categories = \App\Models\Category::orderBy('name')->get();
-        $ingredients = \App\Models\Ingredient::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
+        $ingredients = Ingredient::orderBy('name')->get();
+
         return view('inventory.products', compact('products', 'categories', 'ingredients'));
     }
 
@@ -39,14 +42,14 @@ class ProductController extends Controller
         // Create it in the database
         $product = Product::create($validated);
 
-        if (!empty($request->ingredients)) {
+        if (! empty($request->ingredients)) {
             foreach ($request->ingredients as $ing) {
                 if ($ing['quantity'] > 0) {
                     $product->ingredients()->attach($ing['id'], ['quantity' => $ing['quantity']]);
                 }
             }
         }
-        
+
         // Refresh the page
         return redirect()->route('inventory.products.index')->with('success', 'Product and Recipe added successfully!');
     }
@@ -70,7 +73,7 @@ class ProductController extends Controller
 
         // Sync ingredients for the recipe
         $syncData = [];
-        if (!empty($request->ingredients)) {
+        if (! empty($request->ingredients)) {
             foreach ($request->ingredients as $ing) {
                 if ($ing['quantity'] > 0) {
                     $syncData[$ing['id']] = ['quantity' => $ing['quantity']];
@@ -78,7 +81,7 @@ class ProductController extends Controller
             }
         }
         $product->ingredients()->sync($syncData);
-        
+
         // Refresh the page
         return redirect()->route('inventory.products.index')->with('success', 'Product and Recipe updated successfully!');
     }
@@ -88,7 +91,7 @@ class ProductController extends Controller
     {
         // Delete it from the database
         $product->delete();
-        
+
         // Refresh the page
         return redirect()->route('inventory.products.index')->with('success', 'Product deleted successfully!');
     }

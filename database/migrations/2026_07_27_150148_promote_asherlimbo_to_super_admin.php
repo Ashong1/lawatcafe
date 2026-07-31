@@ -18,7 +18,7 @@ return new class extends Migration
             ->where('email', 'asherlimbo@gmail.com')
             ->update(['role' => 'super_admin']);
 
-        if (!DB::table('users')->where('email', 'admin@gmail.com')->exists()) {
+        if (! DB::table('users')->where('email', 'admin@gmail.com')->exists()) {
             DB::table('users')->insert([
                 'name' => 'Admin',
                 'email' => 'admin@gmail.com',

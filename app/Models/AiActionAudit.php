@@ -68,6 +68,7 @@ class AiActionAudit extends Model
         $formatted = collect($params)->map(function ($value, $key) {
             $label = ucwords(str_replace('_', ' ', $key));
             $value = is_array($value) ? json_encode($value) : $value;
+
             return "{$label}: {$value}";
         })->implode(', ');
 
