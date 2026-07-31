@@ -56,8 +56,26 @@ class WastageController extends Controller
 
     public function destroy(Wastage $wastage)
     {
-        $wastage->delete();
+        DB::transaction(function () use ($wastage) {
+            // Deleting a wastage entry means "this waste record was wrong" —
+            // reverse the stock deduction it made at store() time so the
+            // correction doesn't silently leave the ingredient permanently
+            // short with no paper trail.
+            $ingredient = $wastage->ingredient;
+            $ingredient->current_stock += $wastage->quantity;
+            $ingredient->save();
 
-        return redirect()->route('inventory.wastage.index')->with('success', 'Wastage record removed.');
+            InventoryLog::create([
+                'ingredient_id' => $ingredient->id,
+                'change_amount' => $wastage->quantity,
+                'after_amount' => $ingredient->current_stock,
+                'reason' => 'Wastage record deleted: '.$wastage->reason,
+                'user_id' => auth()->id(),
+            ]);
+
+            $wastage->delete();
+        });
+
+        return redirect()->route('inventory.wastage.index')->with('success', 'Wastage record removed and stock restored.');
     }
 }

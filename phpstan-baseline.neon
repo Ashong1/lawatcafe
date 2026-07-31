@@ -253,6 +253,12 @@ parameters:
 			path: app/Http/Controllers/StaffDeliveryController.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\Wastage\:\:\$ingredient\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/WastageController.php
+
+		-
 			message: '#^Relation ''ingredient'' is not found in App\\Models\\Wastage model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
