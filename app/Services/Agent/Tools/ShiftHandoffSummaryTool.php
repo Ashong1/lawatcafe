@@ -17,7 +17,7 @@ class ShiftHandoffSummaryTool implements AgentTool
 
     public function description(): string
     {
-        return "Summarize the caller's current (or most recently closed) shift for handoff to the next staff member: sales total, order count, and low-stock items. Read-only.";
+        return "Summarize the CALLER's OWN current (or most recently closed) shift for handoff to the next staff member: that shift's sales total, order count, and low-stock items. Scoped to one person's one shift, not shop-wide sales — do not use this for a general 'today's total sales' or 'this week's sales' question. Read-only.";
     }
 
     public function parametersSchema(): array
