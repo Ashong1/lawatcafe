@@ -63,11 +63,11 @@
             <div class="flex-1 overflow-y-auto px-6 py-10 lg:px-16 lg:py-10 no-scrollbar relative z-10 flex flex-col justify-center">
                 
                 <div class="text-center mb-10">
-                    <div class="w-24 h-24 lg:w-28 lg:h-28 bg-green-50 border-2 border-green-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner transition-transform hover:scale-110 duration-500">
+                    <div class="w-24 h-24 lg:w-28 lg:h-28 bg-green-50 border-2 border-green-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner transition-transform hover:scale-110 duration-500 check-pop-in">
                         <x-lucide-check class="w-12 h-12 lg:w-16 lg:h-16 text-green-600" stroke-width="3" />
                     </div>
-                    <h2 class="text-4xl lg:text-6xl font-black text-[#3E2723] mb-4 tracking-tighter uppercase">Success!</h2>
-                    <p class="text-xs lg:text-lg text-[#8D6E63] font-medium leading-relaxed max-w-sm mx-auto">You are now connected to our premium high-speed network. Enjoy your stay!</p>
+                    <h2 class="text-4xl lg:text-6xl font-black text-[#3E2723] mb-4 tracking-tighter uppercase anim-pop-in [animation-delay:250ms]">Success!</h2>
+                    <p class="text-xs lg:text-lg text-[#8D6E63] font-medium leading-relaxed max-w-sm mx-auto anim-pop-in [animation-delay:350ms]">You are now connected to our premium high-speed network. Enjoy your stay!</p>
                 </div>
 
                 <div class="bg-amber-50 border-2 border-amber-200/50 rounded-[2rem] p-8 mb-10 text-center relative overflow-hidden shadow-sm max-w-md mx-auto w-full">

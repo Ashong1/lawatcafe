@@ -188,6 +188,26 @@ html {
     }
 }
 
+/* Celebratory checkmark entrance for portal/success.blade.php — the actual
+   "reward moment" of the guest flow, previously had zero entrance motion.
+   Pair with staggered .anim-pop-in [animation-delay:...] on the heading/
+   subtext beneath it for a staggered reveal, same escape hatch as elsewhere. */
+@keyframes check-pop-in {
+    0% { opacity: 0; transform: scale(0) rotate(-15deg); }
+    60% { opacity: 1; transform: scale(1.15) rotate(5deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+.check-pop-in {
+    animation: check-pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .check-pop-in {
+        animation: none;
+    }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
