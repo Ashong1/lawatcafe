@@ -211,12 +211,7 @@
                 <x-lucide-coffee class="w-5 h-5 text-amber-800" stroke-width="2.5" />
                 <span>Menu</span>
             </a>
-            <a href="{{ route('portal.index') }}?tab=ewallet" 
-               class="flex-1 py-3 px-1 rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-1.5 text-[#A1887F] hover:bg-[#FAF7F2] hover:text-[#3E2723] group">
-                <x-lucide-credit-card class="w-5 h-5 text-[#D7CCC8] group-hover:text-amber-600 transition-colors" stroke-width="2.5" />
-                <span>GCash</span>
-            </a>
-            <a href="{{ route('portal.index') }}?tab=help" 
+            <a href="{{ route('portal.index') }}?tab=help"
                class="flex-1 py-3 px-1 rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-1.5 text-[#A1887F] hover:bg-[#FAF7F2] hover:text-[#3E2723] group">
                 <x-lucide-message-square class="w-6 h-6 text-[#D7CCC8] group-hover:text-amber-600 transition-colors" stroke-width="2.5" />
                 <span>AI Chat</span>

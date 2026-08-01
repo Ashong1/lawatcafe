@@ -130,105 +130,6 @@
                     </div>
                 </div>
 
-                <!-- Tab: E-Wallet (Top-Up) -->
-                <div x-show="activeTab === 'ewallet'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-8" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col h-full justify-center py-6 lg:py-0" x-cloak>
-                    <div class="text-center mb-8 shrink-0">
-                        <div class="inline-block p-4 rounded-full bg-amber-50 border border-amber-100 mb-6 shadow-sm">
-                            <x-lucide-clock class="w-8 h-8 text-amber-800" stroke-width="2.5" />
-                        </div>
-                        <h2 class="text-3xl lg:text-5xl font-black text-[#3E2723] mb-2 tracking-tight">Extend Session</h2>
-                        <p class="text-[11px] text-[#8D6E63] font-bold uppercase tracking-[0.3em]">Add more time instantly</p>
-                    </div>
-
-                    <div class="flex justify-start lg:justify-center gap-4 pb-4 mb-10 shrink-0 overflow-x-auto no-scrollbar w-full px-2">
-                        @foreach($durations as $price => $minutes)
-                            <div class="w-28 lg:w-32 flex-none rounded-3xl py-5 px-3 flex flex-col items-center justify-center transition-all duration-300 border-2 group cursor-pointer relative overflow-hidden shadow-sm"
-                                 x-on:click="selectedPlan = '{{ $price }}'"
-                                 :class="selectedPlan === '{{ $price }}' ? 'border-[#3E2723] bg-white ring-4 ring-[#3E2723]/5 shadow-xl -translate-y-1' : 'border-[#F0E6D2] bg-white/60 hover:border-[#3E2723]/30 hover:bg-white'">
-                                <div class="font-black text-[10px] uppercase tracking-widest mb-1.5 transition-colors"
-                                     :class="selectedPlan === '{{ $price }}' ? 'text-[#3E2723]' : 'text-[#A1887F]'">
-                                    @if($minutes >= 1440) {{ round($minutes / 1440) }} Day @elseif($minutes >= 60) {{ round($minutes / 60) }} Hour @else {{ $minutes }} Min @endif
-                                </div>
-                                <div class="text-2xl font-black transition-all tracking-tighter"
-                                     :class="selectedPlan === '{{ $price }}' ? 'text-[#3E2723] scale-110' : 'text-[#3E2723]'">
-                                    <span class="text-sm font-bold opacity-40">₱</span>{{ $price }}
-                                </div>
-                                <div x-show="selectedPlan === '{{ $price }}'" class="absolute bottom-0 left-0 w-full h-1 bg-[#3E2723] transition-all"></div>
-                            </div>
-                        @endforeach
-                    </div>
-
-                    <div class="bg-white border-2 border-[#F0E6D2] rounded-[2.5rem] lg:rounded-[3rem] p-6 lg:p-8 flex flex-col lg:flex-row gap-8 lg:gap-10 items-center shrink-0 shadow-lg relative overflow-hidden max-w-4xl mx-auto w-full">
-                        <div class="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                        <div class="w-full lg:w-[42%] flex flex-col items-center justify-center bg-[#FAF7F2] rounded-3xl border border-[#F0E6D2] p-6 lg:p-8 relative z-10 shadow-inner min-h-[160px] lg:min-h-[200px]">
-                            @if($qrCode)
-                                <div class="relative p-2 bg-white rounded-2xl shadow-md transition-transform hover:scale-105 duration-500">
-                                    <img src="{{ Storage::url($qrCode) }}" class="h-24 lg:h-32 w-auto object-contain" alt="Payment QR">
-                                </div>
-                                <div class="mt-4 flex items-center gap-2">
-                                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
-                                    <span class="text-[10px] font-black text-green-700 uppercase tracking-widest">G-Cash Supported</span>
-                                </div>
-                            @else
-                                <div class="bg-amber-50 p-6 rounded-full mb-3">
-                                    <x-lucide-qr-code class="w-10 h-10 lg:w-14 lg:h-14 text-amber-200" />
-                                </div>
-                                <p class="text-[10px] font-black text-[#A1887F] uppercase tracking-widest text-center leading-tight">Payments Offline</p>
-                            @endif
-                        </div>
-
-                        {{-- Fetch-based (not a plain native submit) so the "Verifying..." button
-                             state survives the whole OPNsense auth round trip instead of
-                             vanishing the instant the browser starts navigating away. --}}
-                        <form action="{{ route('portal.verify-payment') }}" method="POST" id="lawat-payment-form" class="w-full lg:w-[58%] flex flex-col relative z-10 gap-5"
-                              x-data="{
-                                  isSubmitting: false,
-                                  async submit(e) {
-                                      this.isSubmitting = true;
-                                      try {
-                                          const formData = new FormData(e.target);
-                                          const res = await fetch(e.target.action, { method: 'POST', headers: { 'Accept': 'application/json' }, body: formData });
-                                          const data = await res.json().catch(() => null);
-                                          if (res.ok && data?.success) {
-                                              window.location.href = data.redirect;
-                                              return;
-                                          }
-                                          this.isSubmitting = false;
-                                          Swal.fire({ icon: 'error', title: 'Verification Failed', text: data?.message || 'Something went wrong. Please try again.', confirmButtonColor: '#3E2723' });
-                                      } catch (err) {
-                                          this.isSubmitting = false;
-                                          Swal.fire({ icon: 'error', title: 'Connection Error', text: 'Please check your connection and try again.', confirmButtonColor: '#3E2723' });
-                                      }
-                                  }
-                              }"
-                              @submit.prevent="submit($event)"> @csrf
-                            {{-- Full-bleed overlay, matching the one on portal/index.blade.php's
-                                 GCash form, for the same reason: keeps a visible loading state for
-                                 the whole OPNsense round trip instead of a bare button spinner. --}}
-                            <div x-show="isSubmitting" x-cloak
-                                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                                 class="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center gap-4 text-white text-center px-6">
-                                <x-lucide-loader-2 class="w-10 h-10 animate-spin text-amber-500" />
-                                <p class="text-sm font-black uppercase tracking-widest">Verifying payment…</p>
-                                <p class="text-[10px] text-white/60 font-medium max-w-xs">Please don't close this window.</p>
-                            </div>
-                            <div>
-                                <label class="flex justify-between items-end mb-2.5 ml-2">
-                                    <span class="text-[11px] font-black text-[#A1887F] uppercase tracking-[0.2em]">Transaction Ref #</span>
-                                </label>
-                                <input type="text" name="reference_number" required placeholder="Enter G-Cash Ref #" value="{{ session('ai_ref') }}"
-                                        class="w-full bg-white border-2 border-[#F0E6D2] rounded-2xl py-4 lg:py-5 px-6 text-center text-xl font-mono font-bold text-[#3E2723] focus:outline-none focus:border-[#3E2723] focus:ring-4 focus:ring-[#3E2723]/5 transition-all shadow-sm">
-                            </div>
-                            <button type="submit" :disabled="isSubmitting" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 lg:py-5 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] text-[11px] flex items-center justify-center gap-3 mt-auto disabled:opacity-70">
-                                <span x-text="isSubmitting ? 'Verifying...' : 'Add Time & Connect'"></span>
-                                <x-lucide-shield-check x-show="!isSubmitting" class="w-5 h-5" />
-                                <x-lucide-loader-2 x-show="isSubmitting" class="w-5 h-5 animate-spin" />
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
                 <!-- Tab: AI Assistant -->
                 <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-8" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col h-full py-6 lg:py-0 max-w-4xl mx-auto w-full" x-cloak>
                     <div class="text-center mb-6 shrink-0">
@@ -269,13 +170,7 @@
                     <x-lucide-wifi class="w-5 h-5 lg:w-6 lg:h-6 transition-colors" x-bind:class="activeTab === 'status' ? 'text-amber-500' : 'text-[#D7CCC8] group-hover:text-[#8D6E63]'" stroke-width="2.5" />
                     <span>Status</span>
                 </button>
-                <button x-on:click="activeTab = 'ewallet'" 
-                        class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex flex-col items-center gap-2.5 group"
-                        :class="activeTab === 'ewallet' ? 'text-white bg-[#3E2723] shadow-2xl shadow-amber-900/30 -translate-y-1' : 'text-[#A1887F] hover:bg-white hover:shadow-md hover:border-[#F0E6D2] border border-transparent'">
-                    <x-lucide-credit-card class="w-5 h-5 lg:w-6 lg:h-6 transition-colors" x-bind:class="activeTab === 'ewallet' ? 'text-amber-500' : 'text-[#D7CCC8] group-hover:text-[#8D6E63]'" stroke-width="2.5" />
-                    <span>Top-Up</span>
-                </button>
-                <button x-on:click="activeTab = 'help'" 
+                <button x-on:click="activeTab = 'help'"
                         class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex flex-col items-center gap-2.5 group"
                         :class="activeTab === 'help' ? 'text-white bg-[#3E2723] shadow-2xl shadow-amber-900/30 -translate-y-1' : 'text-[#A1887F] hover:bg-white hover:shadow-md hover:border-[#F0E6D2] border border-transparent'">
                     <x-lucide-message-square class="w-5 h-5 lg:w-6 lg:h-6 transition-colors" x-bind:class="activeTab === 'help' ? 'text-amber-500' : 'text-[#D7CCC8] group-hover:text-[#8D6E63]'" stroke-width="2.5" />
@@ -291,8 +186,6 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('portalSystem', (expiresAtMs) => ({
         activeTab: 'status',
-        selectedPlan: null,
-        isSubmitting: false,
         connectionStatus: 'connected',
         remainingLabel: '—',
         remainingUnit: 'Left',

@@ -138,11 +138,7 @@
     <div class="grid grid-cols-2 gap-3">
         <div>
             <label class="block text-[9px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1.5">Payment Method</label>
-            <select x-model="paymentMethod" class="w-full py-2 px-2 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[11px] font-bold text-[#3E2723]">
-                <option value="Cash">Cash</option>
-                <option value="GCash">GCash</option>
-                <option value="Card">Credit/Debit</option>
-            </select>
+            <div class="w-full py-2 px-2 border border-[#F0E6D2] rounded-lg bg-[#FAFAFA] text-[11px] font-bold text-[#3E2723]">Cash</div>
         </div>
         <div>
             <label class="block text-[9px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1.5">Amount Tendered (₱)</label>

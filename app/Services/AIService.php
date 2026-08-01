@@ -1212,35 +1212,6 @@ OPERATIONAL GUIDELINES:
         return $text !== '' ? $text : null;
     }
 
-    public function extractPaymentDetails($input)
-    {
-        $isText = ! file_exists(storage_path('app/'.$input)) || (strlen($input) > 255);
-        $messages = [];
-        if ($isText) {
-            $messages[] = [
-                'role' => 'user',
-                'content' => 'Extract GCash Ref Number and Amount from this email. Return ONLY JSON: {"reference_number": "string", "amount": float}. Text:'."\n".$input,
-            ];
-        } else {
-            $imageData = base64_encode(file_get_contents(storage_path('app/'.$input)));
-            $messages[] = [
-                'role' => 'user',
-                'content' => [
-                    ['type' => 'text', 'text' => 'Extract GCash Reference Number. Return ONLY JSON: {"reference_number": "string"}'],
-                    ['type' => 'image_url', 'image_url' => ['url' => 'data:image/jpeg;base64,'.$imageData]],
-                ],
-            ];
-        }
-        $data = $this->callAI($messages, ! $isText);
-        if ($data) {
-            $raw = str_replace(['```json', '```'], '', trim($data['choices'][0]['message']['content']));
-
-            return json_decode($raw, true);
-        }
-
-        return null;
-    }
-
     /**
      * One-shot suggestion of a short description and an icon for a product
      * category, given just its name. The icon is constrained to

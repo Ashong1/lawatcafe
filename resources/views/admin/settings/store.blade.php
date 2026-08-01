@@ -11,7 +11,7 @@
                     <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                     <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Store Preferences</span>
                 </h2>
-                <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Configure e-wallet payments, threshold alerts, and default guest access.</p>
+                <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Configure threshold alerts and default guest access.</p>
             </div>
         </div>
 
@@ -20,37 +20,6 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
                 <div class="space-y-8">
-                    {{-- Payment QR Code --}}
-                    <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
-                        <div class="flex items-center gap-3 mb-8">
-                            <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700">
-                                <x-lucide-qr-code class="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">E-Wallet QR Code</h3>
-                                <p class="text-[10px] text-[#A1887F] font-medium italic">Display this QR for GCash payments.</p>
-                            </div>
-                        </div>
-
-                        @if($settings['payment_qr_code'])
-                            <div class="mb-6 flex justify-center p-4 bg-[#FDF8F5] rounded-2xl border border-[#F0E6D2] relative group">
-                                <img src="{{ asset('storage/' . $settings['payment_qr_code']) }}" alt="Current e-wallet payment QR code" class="w-48 h-48 object-contain rounded-lg">
-                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
-                                    <span class="text-white text-[10px] font-black uppercase tracking-widest">Current QR Code</span>
-                                </div>
-                            </div>
-                        @endif
-
-                        <div class="relative">
-                            <input type="file" name="payment_qr_code" aria-label="Upload new e-wallet payment QR code (PNG or JPG, up to 2MB)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                            <div class="border-2 border-dashed border-[#F0E6D2] rounded-2xl p-8 text-center group-hover:border-[#3E2723] transition-colors">
-                                <x-lucide-upload class="w-8 h-8 text-[#A1887F] mx-auto mb-2" />
-                                <p class="text-xs font-bold text-[#3E2723]">Upload New QR Code</p>
-                                <p class="text-[10px] text-[#A1887F] mt-1">PNG, JPG up to 2MB</p>
-                            </div>
-                        </div>
-                    </div>
-
                     {{-- Inventory Threshold --}}
                     <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
                         <div class="flex items-center gap-3 mb-8">

@@ -11,7 +11,6 @@ use App\Services\AIService;
 use App\Services\OpnSenseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 
 class SettingController extends Controller
 {
@@ -21,7 +20,6 @@ class SettingController extends Controller
     public function store()
     {
         $settings = [
-            'payment_qr_code' => Setting::get('payment_qr_code', ''),
             'low_stock_threshold' => Setting::get('low_stock_threshold', '500'),
             'store_open_time' => Setting::get('store_open_time', '08:00'),
             'store_close_time' => Setting::get('store_close_time', '22:00'),
@@ -194,7 +192,6 @@ class SettingController extends Controller
     public function updateStore(Request $request)
     {
         $validated = $request->validate([
-            'payment_qr_code' => 'nullable|image|max:2048',
             'voucher_durations' => 'nullable|json',
             'low_stock_threshold' => 'nullable|numeric',
             'free_wifi_min_amount' => 'nullable|numeric|min:0',
@@ -204,17 +201,7 @@ class SettingController extends Controller
             'receipt_header' => 'nullable|string|max:255',
         ]);
 
-        $this->applySettings($validated, exclude: ['payment_qr_code']);
-
-        if ($request->hasFile('payment_qr_code')) {
-            $oldQr = Setting::get('payment_qr_code');
-            if ($oldQr) {
-                Storage::disk('public')->delete($oldQr);
-            }
-
-            $path = $request->file('payment_qr_code')->store('qrcodes', 'public');
-            Setting::set('payment_qr_code', $path);
-        }
+        $this->applySettings($validated);
 
         Cache::forget('dashboard_stats_today');
 

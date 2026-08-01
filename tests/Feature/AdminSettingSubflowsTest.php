@@ -6,8 +6,6 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\OpnSenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminSettingSubflowsTest extends TestCase
@@ -39,23 +37,6 @@ class AdminSettingSubflowsTest extends TestCase
 
         $this->assertSame('250', Setting::get('low_stock_threshold'));
         $this->assertSame('Salamat po!', Setting::get('receipt_header'));
-    }
-
-    public function test_updating_store_preferences_replaces_the_qr_code_and_deletes_the_old_one(): void
-    {
-        Storage::fake('public');
-        $admin = User::factory()->create(['role' => 'admin']);
-        Storage::disk('public')->put('qrcodes/old.png', 'old-contents');
-        Setting::set('payment_qr_code', 'qrcodes/old.png');
-
-        $this->actingAs($admin)->post(route('admin.settings.store.update'), [
-            'payment_qr_code' => UploadedFile::fake()->create('new-qr.png', 10, 'image/png'),
-        ])->assertRedirect();
-
-        Storage::disk('public')->assertMissing('qrcodes/old.png');
-        $newPath = Setting::get('payment_qr_code');
-        $this->assertNotSame('qrcodes/old.png', $newPath);
-        Storage::disk('public')->assertExists($newPath);
     }
 
     public function test_staff_cannot_view_or_update_store_preferences(): void

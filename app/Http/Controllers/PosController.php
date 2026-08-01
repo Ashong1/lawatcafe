@@ -121,7 +121,7 @@ class PosController extends Controller
             'total_amount' => 'required|numeric',
             'amount_received' => 'required|numeric',
             'cart' => 'required|array',
-            'payment_method' => 'nullable|string|max:50',
+            'payment_method' => 'nullable|in:Cash',
             'order_type' => 'required|in:dine_in,takeaway',
             'discount_type' => 'nullable|string|max:50',
             'discount_amount' => 'nullable|numeric',

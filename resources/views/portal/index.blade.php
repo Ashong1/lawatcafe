@@ -104,19 +104,19 @@
         </p>
     </div>
 
-    {{-- Persistent full-bleed loading overlay for the payment-verify/receipt-upload/
-         voucher-redeem round trip — previously a native form submit meant the browser
-         blanked the tab mid-wait and any in-page loading state disappeared with it,
-         right when the real wait (OPNsense auth / AI OCR) began. submitForm() (voucher
-         passcode) still does a native e.target.submit() rather than a fetch conversion
-         — the overlay just shows immediately beforehand so the pre-navigation instant
-         isn't a bare button spinner like the other two paths used to be. --}}
-    <div x-show="verifyingPayment || uploadingReceipt || isSubmitting" x-cloak
+    {{-- Persistent full-bleed loading overlay for the voucher-redeem round trip —
+         previously a native form submit meant the browser blanked the tab mid-wait
+         and any in-page loading state disappeared with it, right when the real
+         wait (OPNsense auth) began. submitForm() still does a native
+         e.target.submit() rather than a fetch conversion — the overlay just shows
+         immediately beforehand so the pre-navigation instant isn't a bare button
+         spinner. --}}
+    <div x-show="isSubmitting" x-cloak
          x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
          x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
          class="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center gap-4 text-white text-center px-6">
         <x-lucide-loader-2 class="w-10 h-10 animate-spin text-amber-500" />
-        <p class="text-sm font-black uppercase tracking-widest" x-text="uploadingReceipt ? 'Reading your receipt…' : (isSubmitting ? 'Redeeming your voucher…' : 'Verifying payment…')"></p>
+        <p class="text-sm font-black uppercase tracking-widest">Redeeming your voucher…</p>
         <p class="text-[10px] text-white/60 font-medium max-w-xs">Please don't close this window.</p>
     </div>
 
@@ -218,91 +218,6 @@
                     </form>
                 </div>
 
-                <!-- Tab: GCash -->
-                <div x-show="activeTab === 'ewallet'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col flex-1" x-cloak>
-                    <div class="text-center mb-3 shrink-0">
-                        <h2 class="text-xl font-black text-[#3E2723] mb-1 tracking-tight">Instant Access</h2>
-                        <p class="text-[10px] text-[#8D6E63] font-bold uppercase tracking-wider">Select a plan & scan to pay</p>
-                    </div>
-
-                    <div class="shrink-0 space-y-3 mb-3">
-                        <div class="grid grid-cols-2 gap-2">
-                            @foreach($durations as $price => $minutes)
-                                <div class="rounded-2xl py-2.5 px-3 flex flex-col items-center justify-center transition-all border-2 group cursor-pointer relative overflow-hidden text-center"
-                                     x-on:click="selectedPlan = '{{ $price }}'"
-                                     :class="selectedPlan === '{{ $price }}' ? 'border-[#3E2723] bg-amber-50 shadow-md scale-[1.02]' : 'border-[#F0E6D2] bg-white'">
-                                    <span class="font-black text-[8px] uppercase tracking-widest mb-1" :class="selectedPlan === '{{ $price }}' ? 'text-[#3E2723]' : 'text-[#8D6E63]'">
-                                        @if($minutes >= 1440) {{ round($minutes / 1440) }} Day @elseif($minutes >= 60) {{ round($minutes / 60) }} Hour @else {{ $minutes }} Min @endif
-                                    </span>
-                                    <span class="text-lg font-black tracking-tighter text-[#3E2723] leading-none">
-                                        <span class="text-[10px] font-bold opacity-50">₱</span>{{ $price }}
-                                    </span>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        <div class="bg-white border-2 border-[#F0E6D2] rounded-2xl p-3 flex flex-row items-center justify-center gap-3 shadow-inner relative overflow-hidden"
-                             :class="!{{ $qrCode ? 'true' : 'false' }} ? 'bg-gray-50/50' : ''">
-                            @if($qrCode)
-                                <img src="{{ Storage::url($qrCode) }}" class="h-12 w-auto object-contain transition-transform hover:scale-105" alt="Payment QR">
-                                <div class="flex flex-col">
-                                    <div class="flex items-center gap-1.5">
-                                        <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                                        <span class="text-[9px] font-black text-green-700 uppercase tracking-widest">GCash</span>
-                                    </div>
-                                    <span class="text-[8px] font-bold text-[#A1887F] uppercase tracking-tighter">Scan to Pay</span>
-                                </div>
-                            @else
-                                <x-lucide-qr-code class="w-8 h-8 text-[#D7CCC8]" />
-                                <div class="flex flex-col items-center">
-                                    <p class="text-[9px] font-black text-[#A1887F] uppercase tracking-widest leading-none">System Offline</p>
-                                    <p class="text-[7px] font-bold text-[#D7CCC8] uppercase mt-0.5">Pay at Counter</p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <form action="{{ route('portal.verify-payment') }}" method="POST" class="space-y-3 shrink-0" @submit.prevent="submitPaymentForm($event)">
-                        @csrf
-                        <div>
-                            <label class="flex justify-between items-end mb-1 ml-1">
-                                <span class="text-[9px] font-black text-[#A1887F] uppercase tracking-widest">Reference No.</span>
-                            </label>
-                            <div class="flex items-center bg-white border-2 border-[#F0E6D2] rounded-2xl shadow-sm focus-within:border-[#3E2723] transition-all">
-                                <input type="text" name="reference_number" x-model="referenceNumber" required placeholder="G-Cash Ref #" value="{{ session('ai_ref') }}"
-                                        :disabled="!{{ $qrCode ? 'true' : 'false' }}"
-                                        class="flex-1 min-w-0 border-0 bg-transparent py-3 pl-4 text-center text-base font-mono font-black text-[#3E2723] tracking-widest focus:outline-none focus:ring-0 disabled:bg-[#F5EFE8] disabled:text-[#8D6E63] disabled:cursor-not-allowed rounded-2xl">
-
-                                <div class="h-4 w-[1px] bg-[#F0E6D2] shrink-0"></div>
-                                <div class="relative overflow-hidden shrink-0 inline-flex items-center justify-center w-11 h-11 group cursor-pointer">
-                                    <input type="file" name="receipt" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                           @change="submitReceiptUpload($event)">
-                                    <x-lucide-sparkles x-show="!uploadingReceipt" class="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
-                                    <x-lucide-loader-2 x-show="uploadingReceipt" x-cloak class="w-4 h-4 text-amber-600 animate-spin" />
-                                </div>
-                            </div>
-                            @if(!$qrCode)
-                                <p class="text-[9px] text-[#A1887F] font-medium text-center mt-2 px-2">QR payment is temporarily unavailable — please pay at the counter and ask staff to confirm.</p>
-                            @endif
-                        </div>
-
-                        <p x-show="uploadingReceipt" x-cloak class="text-[9px] text-amber-700 font-black uppercase tracking-widest text-center flex items-center justify-center gap-1.5">
-                            <x-lucide-loader-2 class="w-3 h-3 animate-spin" />
-                            Uploading &amp; reading receipt&hellip;
-                        </p>
-
-                        <button type="submit" :disabled="verifyingPayment || !{{ $qrCode ? 'true' : 'false' }}"
-                                class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 text-[10px] flex items-center justify-center gap-2 disabled:opacity-50 disabled:bg-gray-400">
-                            <template x-if="!verifyingPayment">
-                                <span>@if($qrCode) Verify & Connect @else Counter Payment Only @endif</span>
-                            </template>
-                            <template x-if="verifyingPayment">
-                                <span>Verifying...</span>
-                            </template>
-                        </button>
-                    </form>
-                </div>
-
                 <!-- Tab: AI Help -->
                 <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col flex-1" x-cloak>
                     <div class="text-center mb-4 shrink-0 flex flex-col items-center">
@@ -342,13 +257,7 @@
                 <x-lucide-coffee class="w-5 h-5" />
                 <span>Menu</span>
             </a>
-            <button x-on:click="activeTab = 'ewallet'" 
-                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
-                    :class="activeTab === 'ewallet' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#A1887F] hover:bg-gray-50/50 border border-transparent'">
-                <x-lucide-credit-card class="w-5 h-5" />
-                <span>GCash</span>
-            </button>
-            <button x-on:click="activeTab = 'help'" 
+            <button x-on:click="activeTab = 'help'"
                     class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
                     :class="activeTab === 'help' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#A1887F] hover:bg-gray-50/50 border border-transparent'">
                 <x-lucide-message-square class="w-5 h-5" />
@@ -375,11 +284,7 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('portalSystem', () => ({
         activeTab: new URLSearchParams(window.location.search).get('tab') || 'code',
-        selectedPlan: null,
         isSubmitting: false,
-        verifyingPayment: false,
-        uploadingReceipt: false,
-        referenceNumber: {{ \Illuminate\Support\Js::from(session('ai_ref', '')) }},
         showTOS: false,
         connectionStatus: 'disconnected',
         aiCue: false,
@@ -409,109 +314,6 @@ document.addEventListener('alpine:init', () => {
             this.connectionStatus = 'authenticating';
             e.target.submit();
         },
-
-        // Fetch-based (not a native form submit) so the "Verifying payment..."
-        // overlay actually stays on screen for the whole OPNsense auth round
-        // trip instead of vanishing the instant the browser starts navigating
-        // away — see the full-bleed overlay near the top of this file.
-        async submitPaymentForm(e) {
-            this.verifyingPayment = true;
-            this.connectionStatus = 'authenticating';
-
-            try {
-                const formData = new FormData(e.target);
-                const res = await fetch(e.target.action, {
-                    method: 'POST',
-                    headers: { 'Accept': 'application/json' },
-                    body: formData,
-                });
-                const data = await res.json().catch(() => null);
-
-                if (res.ok && data?.success) {
-                    window.location.href = data.redirect;
-                    return; // stay "verifying" — the page is navigating away
-                }
-
-                this.verifyingPayment = false;
-                this.connectionStatus = 'disconnected';
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Verification Failed',
-                    text: data?.message || 'Something went wrong. Please try again.',
-                    confirmButtonColor: '#3E2723',
-                });
-            } catch (err) {
-                this.verifyingPayment = false;
-                this.connectionStatus = 'disconnected';
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Connection Error',
-                    text: 'Please check your connection and try again.',
-                    confirmButtonColor: '#3E2723',
-                });
-            }
-        },
-
-        // Same reasoning as submitPaymentForm() — this used to hijack the
-        // verify-payment form's own action/submit() to piggyback a native
-        // POST to the upload endpoint, which meant the "reading your
-        // receipt" state vanished the moment the browser started navigating,
-        // right as the multi-second AI OCR call was the real wait.
-        async submitReceiptUpload(e) {
-            const fileInput = e.target;
-            const file = fileInput.files[0];
-            if (!file) return;
-
-            this.uploadingReceipt = true;
-
-            try {
-                const formData = new FormData();
-                formData.append('receipt', file);
-                formData.append('_token', fileInput.form.querySelector('[name="_token"]').value);
-
-                const res = await fetch('{{ route('portal.upload') }}', {
-                    method: 'POST',
-                    headers: { 'Accept': 'application/json' },
-                    body: formData,
-                });
-                const data = await res.json().catch(() => null);
-
-                this.uploadingReceipt = false;
-
-                if (res.ok && data?.success) {
-                    this.referenceNumber = data.reference_number;
-                    Swal.fire({
-                        toast: true,
-                        position: 'top',
-                        icon: 'success',
-                        title: data.message,
-                        showConfirmButton: false,
-                        timer: 4000,
-                        timerProgressBar: true,
-                        background: '#E8F5E9',
-                        color: '#2E7D32',
-                        iconColor: '#2E7D32',
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Could Not Read Receipt',
-                        text: data?.message || 'Please enter the reference number manually.',
-                        confirmButtonColor: '#3E2723',
-                    });
-                }
-            } catch (err) {
-                this.uploadingReceipt = false;
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Upload Failed',
-                    text: 'Please check your connection and try again.',
-                    confirmButtonColor: '#3E2723',
-                });
-            } finally {
-                fileInput.value = '';
-            }
-        }
 }));
 
 // Mobile Keyboard Layout Shift Fix: Center focused inputs

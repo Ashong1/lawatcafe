@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\BannedDevice;
-use App\Models\EwalletPayment;
 use App\Models\Setting;
 use App\Models\Voucher;
 use App\Services\Agent\ToolCallOrchestrator;
@@ -15,8 +14,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class CaptivePortalController extends Controller
 {
@@ -77,17 +74,6 @@ class CaptivePortalController extends Controller
 
         [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
 
-        $qrCode = Setting::get('payment_qr_code');
-
-        // Fetch and sort durations
-        $durationsRaw = Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}');
-        $durations = json_decode($durationsRaw, true);
-        if ($durations) {
-            ksort($durations); // Sort by price ascending
-        } else {
-            $durations = [];
-        }
-
         // 2. Check if already connected
         $sessions = $opnsense->listSessions();
         $activeSession = collect($sessions)->filter(function ($s) use ($ip, $mac) {
@@ -124,13 +110,11 @@ class CaptivePortalController extends Controller
                     'startTime' => Carbon::createFromTimestamp($activeSession['startTime']),
                     'expirationTime' => $expirationTime,
                     'userName' => $activeSession['userName'] ?? 'Guest',
-                    'qrCode' => $qrCode,
-                    'durations' => $durations,
                 ]);
             }
         }
 
-        return view('portal.index', compact('qrCode', 'durations'));
+        return view('portal.index');
     }
 
     // Handle session termination
@@ -163,91 +147,16 @@ class CaptivePortalController extends Controller
         return redirect()->route('portal.index')->with('message', 'Successfully disconnected.');
     }
 
-    // Handle e-wallet reference number verification
-    public function verifyPayment(Request $request, OpnSenseService $opnsense, TrafficShapingService $shaping)
+    // The self-service GCash tab was removed from the portal UI (system is
+    // cash-only now) — reject direct POSTs here too, not just hide the
+    // button, so the flow is actually closed off rather than just hidden.
+    public function verifyPayment(Request $request)
     {
-        $request->validate([
-            'reference_number' => 'required|string',
-        ]);
+        $message = 'This location only accepts cash. Please pay at the counter.';
 
-        // Guests on a captive portal can have unusual/no-JS browsers, so both
-        // response modes are supported from the same handler: JSON for the
-        // JS-driven fetch (see portalSystem() in portal/index.blade.php,
-        // added so the loading state survives the whole round-trip instead
-        // of disappearing the moment a native form POST starts navigating),
-        // and the original redirect+flash for a plain <form> fallback.
-        $wantsJson = $request->wantsJson();
-        $fail = fn (string $message) => $wantsJson
+        return $request->wantsJson()
             ? response()->json(['success' => false, 'message' => $message], 422)
             : back()->with('error', $message);
-
-        return DB::transaction(function () use ($request, $opnsense, $shaping, $wantsJson, $fail) {
-            $payment = EwalletPayment::where('reference_number', $request->reference_number)
-                ->where('is_used', false)
-                ->lockForUpdate() // Lock to prevent race conditions
-                ->first();
-
-            if (! $payment) {
-                return $fail('GCash payment not found or already verified. If you just paid, please wait a minute for the system to process the GCash notification email.');
-            }
-
-            // Determine duration based on amount from dynamic settings
-            $durations = json_decode(Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
-            $amount = (float) $payment->amount;
-            $duration = 0;
-
-            // Sort keys descending to find the highest matching tier
-            krsort($durations);
-            foreach ($durations as $minAmount => $mins) {
-                if ($amount >= (float) $minAmount) {
-                    $duration = (int) $mins;
-                    break;
-                }
-            }
-
-            if ($duration === 0) {
-                return $fail('Insufficient amount for a Wi-Fi voucher. Minimum is ₱20.00.');
-            }
-
-            // Authorize device on OPNsense — IP/MAC resolved from the gateway,
-            // never trusted from client-suppliable input.
-            [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
-
-            if ($this->isMacBanned($mac)) {
-                Log::warning("Portal verify-payment: rejected banned device {$mac} ({$ip}).");
-
-                return $fail('This device has been blocked from network access. Please see staff for assistance.');
-            }
-
-            // Generate the voucher
-            $code = 'LAWA-'.strtoupper(Str::random(4));
-
-            $voucher = Voucher::create([
-                'code' => $code,
-                'duration_minutes' => $duration,
-                'tier' => 'premium',
-                'is_used' => true,
-                'used_at' => now(),
-                'ip_address' => $ip,
-                'mac_address' => $mac,
-            ]);
-
-            // Mark payment as used
-            $payment->update(['is_used' => true]);
-
-            // Authorize device via backend API
-            $opnsense->authorizeDevice($ip, $code);
-
-            $shaping->assignTier($voucher, $ip, $opnsense);
-
-            session()->flash('passcode', $code);
-
-            if ($wantsJson) {
-                return response()->json(['success' => true, 'redirect' => route('portal.success')]);
-            }
-
-            return redirect()->route('portal.success');
-        });
     }
 
     // Handle standard passcode entry
@@ -306,43 +215,15 @@ class CaptivePortalController extends Controller
     }
 
     // Handle e-wallet receipt uploads
-    public function uploadReceipt(Request $request, AIService $ai)
+    // Same reasoning as verifyPayment() — the receipt-OCR-to-reference-number
+    // flow it fed only existed to support the now-removed GCash tab.
+    public function uploadReceipt(Request $request)
     {
-        $request->validate([
-            'receipt' => 'required|image|max:5120', // Max 5MB
-        ]);
+        $message = 'This location only accepts cash. Please pay at the counter.';
 
-        $wantsJson = $request->wantsJson();
-
-        // Store the image temporarily
-        $path = $request->file('receipt')->store('temp_receipts', 'local');
-
-        // Pass this image to the Gemini/OpenRouter API for OCR.
-        $aiResult = $ai->extractPaymentDetails($path);
-
-        // Cleanup temp file
-        Storage::disk('local')->delete($path);
-
-        if ($aiResult && ! empty($aiResult['reference_number'])) {
-            $message = 'Receipt parsed! Please confirm the reference number and verify.';
-
-            if ($wantsJson) {
-                return response()->json(['success' => true, 'reference_number' => $aiResult['reference_number'], 'message' => $message]);
-            }
-
-            // Store in session so the view can populate it on the non-JS <form> fallback path.
-            session()->flash('ai_ref', $aiResult['reference_number']);
-
-            return back()->with('message', $message);
-        }
-
-        $errorMessage = 'Could not clearly read the reference number from the receipt. Please enter it manually.';
-
-        if ($wantsJson) {
-            return response()->json(['success' => false, 'message' => $errorMessage], 422);
-        }
-
-        return back()->with('error', $errorMessage);
+        return $request->wantsJson()
+            ? response()->json(['success' => false, 'message' => $message], 422)
+            : back()->with('error', $message);
     }
 
     public function chat(Request $request, AIService $ai, ToolCallOrchestrator $orchestrator, OpnSenseService $opnsense)
