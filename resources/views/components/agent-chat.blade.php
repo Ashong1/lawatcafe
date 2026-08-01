@@ -37,7 +37,7 @@
                     <template x-if="msg.kind === 'text'">
                         <div class="p-3 rounded-2xl shadow-sm text-xs font-medium relative w-fit max-w-[85%] break-words whitespace-normal mx-1"
                              :class="msg.role === 'user' ? 'bg-[#3E2723] text-white self-end rounded-br-sm' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] self-start rounded-bl-sm'">
-                            <span x-text="msg.content" class="leading-relaxed"></span>
+                            <span x-html="formatMarkdown(msg.content)" class="leading-relaxed"></span>
                         </div>
                     </template>
 
@@ -59,12 +59,13 @@
                     </template>
                 </div>
             </template>
-            <div x-show="thinking" class="anim-pop-in bg-white p-3 rounded-2xl rounded-bl-sm shadow-sm border border-[#F0E6D2] self-start w-fit mx-1">
+            <div x-show="thinking" class="anim-pop-in bg-white p-3 rounded-2xl rounded-bl-sm shadow-sm border border-[#F0E6D2] self-start w-fit mx-1 flex items-center gap-2">
                 <div class="flex gap-1">
                     <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce"></div>
                     <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
                     <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                 </div>
+                <span x-show="toolStatusLabel" x-text="toolStatusLabel" class="text-[10px] font-bold text-amber-700"></span>
             </div>
             <div id="{{ $anchorId }}-chat-anchor" class="h-1 w-full"></div>
         </div>
@@ -167,7 +168,7 @@
                         <div class="flex flex-col" :class="msg.role === 'user' ? 'items-end' : 'items-start'">
                             <div class="max-w-[85%] p-4 rounded-2xl text-xs font-medium leading-relaxed shadow-sm"
                                  :class="msg.role === 'user' ? 'bg-[#3E2723] text-white rounded-tr-none' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] rounded-tl-none'">
-                                <span x-html="msg.content.replace(/\n/g, '<br>')"></span>
+                                <span x-html="formatMarkdown(msg.content)"></span>
                             </div>
                             <span class="text-[8px] font-black uppercase tracking-widest text-[#A1887F] mt-1.5 mx-1" x-text="msg.role === 'user' ? 'You' : @js($title)"></span>
                         </div>
@@ -215,12 +216,13 @@
             </template>
 
             <div x-show="thinking" class="anim-pop-in flex flex-col items-start">
-                <div class="bg-white border border-[#F0E6D2] p-4 rounded-2xl rounded-tl-none shadow-sm">
+                <div class="bg-white border border-[#F0E6D2] p-4 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-2">
                     <div class="flex gap-1">
                         <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce"></div>
                         <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
                         <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                     </div>
+                    <span x-show="toolStatusLabel" x-text="toolStatusLabel" class="text-[11px] font-bold text-amber-700"></span>
                 </div>
             </div>
             <div id="{{ $anchorId }}-chat-anchor" class="h-px w-full"></div>
@@ -289,6 +291,7 @@ document.addEventListener('alpine:init', () => {
         open: false,
         message: '',
         thinking: false,
+        toolStatusLabel: null,
         history: [
             { kind: 'text', role: 'assistant', content: config.greeting, isGreeting: true }
         ],
@@ -412,13 +415,20 @@ document.addEventListener('alpine:init', () => {
             // was guarded server-side) with content null/'' — sending that
             // back fails the server's `history.*.content` string validation
             // and 422s every message for the rest of that conversation.
+            // Proactively bounded here too (not just server-side via
+            // ConversationHistoryService::slidingWindow()) so a long-running
+            // conversation doesn't keep growing the request payload forever —
+            // this is a size optimization, not the actual safety boundary,
+            // since the server never trusts the client to have done it.
             const historyForRequest = this.history
                 .filter(m => m.kind === 'text' && !m.isGreeting && m.content)
-                .map(m => ({ role: m.role, content: m.content }));
+                .map(m => ({ role: m.role, content: m.content }))
+                .slice(-30);
 
             this.history.push({ kind: 'text', role: 'user', content: userMsg });
             this.message = '';
             this.thinking = true;
+            this.toolStatusLabel = null;
             this.scrollToBottom();
             this.save();
 
@@ -498,12 +508,19 @@ document.addEventListener('alpine:init', () => {
                         let event;
                         try { event = JSON.parse(json); } catch (e) { continue; }
 
-                        if (event.type === 'delta') {
+                        if (event.type === 'tool_start') {
+                            // Fires before the tool actually runs — including for one that
+                            // ends up needing confirmation — so this is "what's happening
+                            // right now", not "this succeeded". The thinking dots stay
+                            // visible; this just adds a label next to them.
+                            this.toolStatusLabel = this.labelForTool(event.tool);
+                        } else if (event.type === 'delta') {
                             if (!assistantEntry) {
                                 assistantEntry = { kind: 'text', role: 'assistant', content: '' };
                                 this.history.push(assistantEntry);
                                 this.thinking = false;
                             }
+                            this.toolStatusLabel = null;
                             assistantEntry.content += event.text;
                             this.scrollToBottom();
                         } else if (event.type === 'meta') {
@@ -537,6 +554,7 @@ document.addEventListener('alpine:init', () => {
             } finally {
                 clearTimeout(timeoutId);
                 this.thinking = false;
+                this.toolStatusLabel = null;
                 this.scrollToBottom();
                 this.save();
             }
@@ -627,6 +645,56 @@ document.addEventListener('alpine:init', () => {
             return Object.entries(args)
                 .map(([key, value]) => key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) + ': ' + value)
                 .join(', ');
+        },
+
+        // Friendly labels for the live "tool_start" status shown next to the
+        // thinking dots. Deliberately falls back to a generic label for any
+        // tool name not listed here, rather than showing nothing — a new
+        // AgentTool class never needs a frontend change just to avoid this
+        // looking broken.
+        labelForTool(toolName) {
+            const labels = {
+                checkStockLevels: 'Checking stock levels…',
+                getActiveSessions: 'Looking up connected devices…',
+                getTrafficStats: 'Checking network traffic…',
+                getSalesSummary: 'Pulling up sales figures…',
+                getAnomalySignals: 'Scanning for anomalies…',
+                listSupplierPoDrafts: 'Checking purchase order drafts…',
+                shiftHandoffSummary: 'Summarizing the shift…',
+                lookupVoucher: 'Looking up that voucher…',
+                checkMySession: 'Checking your session…',
+                restockIngredient: 'Updating stock…',
+                voidSale: 'Voiding that sale…',
+                draftSupplierPo: 'Drafting a purchase order…',
+                sendSupplierPo: 'Sending the purchase order…',
+                generateVoucherBatch: 'Generating vouchers…',
+                blockDevice: 'Blocking that device…',
+                unblockDevice: 'Unblocking that device…',
+                setSessionBandwidthTier: 'Adjusting bandwidth…',
+                suggestCategoryContent: 'Writing a suggestion…',
+            };
+
+            return labels[toolName] || 'Using a tool…';
+        },
+
+        // Minimal hand-rolled formatting instead of a markdown library —
+        // this component is reused by the guest portal chat, the highest
+        // prompt-injection-exposed surface in the app, so the raw text is
+        // ALWAYS HTML-escaped first and only the escaped string is pattern-
+        // matched afterward. That ordering is what keeps this safe to pipe
+        // into x-html: no raw model-supplied markup can ever reach the DOM
+        // unescaped, no matter what a guest gets the model to echo back.
+        formatMarkdown(text) {
+            if (!text) return '';
+
+            const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            return escaped
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/`([^`]+?)`/g, '<code class="px-1 py-0.5 rounded bg-black/5 font-mono text-[0.9em]">$1</code>')
+                .split('\n')
+                .map(line => /^\s*[-*]\s+/.test(line) ? line.replace(/^\s*[-*]\s+/, '• ') : line)
+                .join('<br>');
         },
 
         toast(icon, title) {

@@ -24,7 +24,7 @@ class SetSessionBandwidthTierTool implements AgentTool
 
     public function description(): string
     {
-        return "Change a Wi-Fi session's bandwidth tier (free or premium) by voucher code or IP address — e.g. to throttle a device suspected of abuse instead of outright blocking it.";
+        return "Change a Wi-Fi session's bandwidth tier (free or premium) by voucher code or IP address — e.g. to throttle a device suspected of abuse instead of outright blocking it. Prefer this over blockDevice unless the behavior is clearly malicious or repeated.";
     }
 
     public function parametersSchema(): array

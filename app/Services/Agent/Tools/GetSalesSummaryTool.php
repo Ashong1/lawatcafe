@@ -19,7 +19,7 @@ class GetSalesSummaryTool implements AgentTool
 
     public function description(): string
     {
-        return "Report shop-wide completed sales (total revenue and order count) for a period: today, yesterday, this_week, last_7_days, or this_month. Today's own revenue is already in your system prompt context with no tool call needed — use this instead for any sales/revenue question about a *different* period.";
+        return 'Report shop-wide completed sales (total revenue and order count) for a period: today, yesterday, this_week, last_7_days, or this_month. Use this for any general sales/revenue question — it is not scoped to one shift or one person.';
     }
 
     public function parametersSchema(): array

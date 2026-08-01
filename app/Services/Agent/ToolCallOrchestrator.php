@@ -14,7 +14,13 @@ use Illuminate\Support\Facades\Log;
  */
 class ToolCallOrchestrator
 {
-    private const MAX_ROUND_TRIPS = 3;
+    private const MAX_ROUND_TRIPS = 5;
+
+    /** Per-array-value cap applied by truncateForHistory() below. */
+    private const MAX_ARRAY_ITEMS_IN_HISTORY = 20;
+
+    /** Hard backstop on the whole encoded result, mirroring the history.*.content max:4000 convention used in the chat controllers. */
+    private const MAX_HISTORY_JSON_LENGTH = 4000;
 
     public function __construct(
         protected AIService $ai,
@@ -30,11 +36,16 @@ class ToolCallOrchestrator
      * @param  ?callable  $onTextDelta  Invoked with each text chunk as it streams in from the model.
      *                                  Defaults to a no-op for non-interactive callers (e.g. the scheduled
      *                                  agent:analyze run) that don't need live output.
+     * @param  ?callable  $onToolStart  Invoked with a tool's name right before it's resolved to a tier —
+     *                                  fires even for a tool that ends up queued for confirmation, since
+     *                                  "checking whether this needs approval" is still useful live feedback.
+     *                                  Defaults to a no-op for callers that don't stream live status.
      * @return array{reply: ?string, pending: array, executed: array}
      */
-    public function run(array $messages, string $audience, ?User $actor, array $context = [], ?callable $onTextDelta = null): array
+    public function run(array $messages, string $audience, ?User $actor, array $context = [], ?callable $onTextDelta = null, ?callable $onToolStart = null): array
     {
         $onTextDelta ??= function (string $delta) {};
+        $onToolStart ??= function (string $toolName) {};
 
         $registryTools = $this->registry->forAudience($audience);
         $canonicalTools = array_values(array_map(fn ($t) => [
@@ -76,18 +87,21 @@ class ToolCallOrchestrator
                     Log::warning("ToolCallOrchestrator: model requested out-of-audience tool '{$toolName}' for audience '{$audience}'.");
                     $result = ToolResult::fail("Tool '{$toolName}' is not available.");
                     $this->auditLogger->record($toolName, $arguments, $result->toArray(), 'ai', $actor?->id, 'rejected');
-                    $messages[] = ['role' => 'tool', 'name' => $toolName, 'tool_call_id' => $call['id'], 'content' => json_encode($result->toArray())];
+                    $messages[] = ['role' => 'tool', 'name' => $toolName, 'tool_call_id' => $call['id'], 'content' => json_encode($this->truncateForHistory($result->toArray()))];
 
                     continue;
                 }
+
+                $onToolStart($toolName);
 
                 $tier = $this->permissions->tierFor($tool, $actor);
 
                 if ($tier === PermissionResolver::TIER_AUTO) {
                     $result = $tool->execute($arguments, $actor, $context);
-                    $audit = $this->auditLogger->record($toolName, $arguments, $result->toArray(), 'ai', $actor?->id, 'executed');
+                    $status = $result->success ? 'executed' : 'failed';
+                    $audit = $this->auditLogger->record($toolName, $arguments, $result->toArray(), 'ai', $actor?->id, $status);
                     $executed[] = ['tool' => $toolName, 'result' => $result->toArray(), 'audit_id' => $audit->id];
-                    $messages[] = ['role' => 'tool', 'name' => $toolName, 'tool_call_id' => $call['id'], 'content' => json_encode($result->toArray())];
+                    $messages[] = ['role' => 'tool', 'name' => $toolName, 'tool_call_id' => $call['id'], 'content' => json_encode($this->truncateForHistory($result->toArray()))];
                 } else {
                     $audit = $this->auditLogger->record($toolName, $arguments, [], 'ai', $actor?->id, 'proposed');
                     $pending[] = ['tool' => $toolName, 'arguments' => $arguments, 'tier' => $tier, 'audit_id' => $audit->id];
@@ -112,6 +126,38 @@ class ToolCallOrchestrator
         }
 
         return ['reply' => 'I was unable to finish this after several tool calls — please try rephrasing.', 'pending' => $pending, 'executed' => $executed];
+    }
+
+    /**
+     * Bounds a tool result before it's re-serialized into $messages so
+     * raising MAX_ROUND_TRIPS doesn't mean more copies of an unbounded
+     * payload (e.g. GetActiveSessionsTool's full OPNsense session list)
+     * sitting in context on every remaining round trip. Only affects what
+     * the model sees on the next round — the caller's $executed/$pending
+     * arrays and the audit log both still get the untruncated result, so
+     * nothing shown to a human or written to the audit trail is lossy.
+     */
+    private function truncateForHistory(array $resultArray): array
+    {
+        if (isset($resultArray['data']) && is_array($resultArray['data'])) {
+            foreach ($resultArray['data'] as $key => $value) {
+                if (is_array($value) && count($value) > self::MAX_ARRAY_ITEMS_IN_HISTORY) {
+                    $total = count($value);
+                    $kept = array_slice($value, 0, self::MAX_ARRAY_ITEMS_IN_HISTORY);
+                    $kept[] = '... and '.($total - self::MAX_ARRAY_ITEMS_IN_HISTORY).' more (full result available to the user, not shown here to save context)';
+                    $resultArray['data'][$key] = $kept;
+                }
+            }
+        }
+
+        if (strlen(json_encode($resultArray)) > self::MAX_HISTORY_JSON_LENGTH) {
+            return [
+                'success' => $resultArray['success'] ?? false,
+                'message' => mb_strimwidth($resultArray['message'] ?? '', 0, 500, '... [truncated: result too large for context]'),
+            ];
+        }
+
+        return $resultArray;
     }
 
     /**

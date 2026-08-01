@@ -70,6 +70,17 @@ class PermissionResolverTest extends TestCase
         $this->assertTrue($resolver->isConfigurable($tools['checkStockLevels']));
     }
 
+    public function test_suggest_category_content_floors_to_confirm_for_staff(): void
+    {
+        // Regression: this tool used to default to 'auto' despite being a
+        // destructive overwrite — now 'confirm', same as restockIngredient.
+        $resolver = app(PermissionResolver::class);
+        $tool = app(ToolRegistry::class)->forAudience(ToolRegistry::AUDIENCE_ADMIN)['suggestCategoryContent'];
+        $staff = User::factory()->create(['role' => 'staff']);
+
+        $this->assertSame(PermissionResolver::TIER_CONFIRM, $resolver->tierFor($tool, $staff));
+    }
+
     public function test_guest_actor_null_gets_no_extra_floor_beyond_configured_tier(): void
     {
         $resolver = app(PermissionResolver::class);

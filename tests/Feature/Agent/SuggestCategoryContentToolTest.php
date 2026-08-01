@@ -13,9 +13,13 @@ class SuggestCategoryContentToolTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_is_auto_tier(): void
+    public function test_it_is_confirm_tier(): void
     {
-        $this->assertSame('auto', app(SuggestCategoryContentTool::class)->permissionTier());
+        // It overwrites the category's current description/icon (its own
+        // description says so) — every other content/state-mutating admin
+        // tool (restockIngredient, voidSale, the PO tools, generateVoucherBatch,
+        // blockDevice) is 'confirm' or 'admin_only'; this was the odd one out.
+        $this->assertSame('confirm', app(SuggestCategoryContentTool::class)->permissionTier());
     }
 
     public function test_it_is_reachable_by_admin_but_not_staff_or_guest(): void

@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\BannedDevice;
 use App\Models\Setting;
 use App\Models\Voucher;
-use App\Services\Agent\ToolCallOrchestrator;
+use App\Services\Agent\ChatStreamResponder;
+use App\Services\Agent\ConversationHistoryService;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
 use App\Services\OpnSenseService;
@@ -226,7 +227,7 @@ class CaptivePortalController extends Controller
             : back()->with('error', $message);
     }
 
-    public function chat(Request $request, AIService $ai, ToolCallOrchestrator $orchestrator, OpnSenseService $opnsense)
+    public function chat(Request $request, AIService $ai, OpnSenseService $opnsense, ConversationHistoryService $conversations, ChatStreamResponder $responder)
     {
         // history.*.role is deliberately restricted to user/assistant: this
         // endpoint is unauthenticated and reachable directly (not just via
@@ -234,11 +235,12 @@ class CaptivePortalController extends Controller
         // {"history":[{"role":"system","content":"..."}]} to inject a fake
         // system-level instruction ahead of the real one — a classic prompt
         // injection vector via conversation history rather than the message
-        // itself. The array/content caps bound cost-abuse from an oversized
-        // payload (guest endpoint, no auth to rate-limit by account).
+        // itself. The array cap here is a generous DoS backstop, not a
+        // conversation-length limit — slidingWindow() below is what actually
+        // bounds what reaches the model (see DashboardController::adminChat()).
         $request->validate([
             'message' => 'required|string|max:500',
-            'history' => 'nullable|array|max:20',
+            'history' => 'nullable|array|max:100',
             'history.*.role' => 'required_with:history|in:user,assistant',
             // nullable, not required_with — see the matching fix (and full
             // reasoning) on DashboardController::adminChat().
@@ -246,7 +248,7 @@ class CaptivePortalController extends Controller
         ]);
 
         $messages = [['role' => 'system', 'content' => $ai->buildGuestSystemPrompt()]];
-        foreach ($request->history ?? [] as $msg) {
+        foreach ($conversations->slidingWindow($request->history ?? [], 20) as $msg) {
             if (empty($msg['content'])) {
                 continue;
             }
@@ -262,35 +264,16 @@ class CaptivePortalController extends Controller
         // the response as a chunked SSE stream — this used to return a plain
         // JSON body instead, which the client's stream reader never matched
         // against its `data: ...\n\n` parser, so a guest's reply silently
-        // never arrived. Mirrors DashboardController::adminChat()'s shape.
-        return response()->stream(function () use ($messages, $orchestrator, $context) {
-            $onTextDelta = function (string $delta) {
-                echo 'data: '.json_encode(['type' => 'delta', 'text' => $delta])."\n\n";
-                if (ob_get_level() > 0) {
-                    @ob_flush();
-                }
-                flush();
-            };
-
-            $result = $orchestrator->run($messages, ToolRegistry::AUDIENCE_GUEST, null, $context, $onTextDelta);
-
-            $reply = $result['reply'] ?? '☕ Serving guests! Check Menu or Wi-Fi tabs!';
-
-            echo 'data: '.json_encode([
-                'type' => 'meta',
-                'reply' => $reply,
-                'pending' => $result['pending'] ?? [],
-                'executed' => $result['executed'] ?? [],
-            ])."\n\n";
-            if (ob_get_level() > 0) {
-                @ob_flush();
-            }
-            flush();
-        }, 200, [
-            'Content-Type' => 'text/event-stream',
-            'Cache-Control' => 'no-cache',
-            'X-Accel-Buffering' => 'no',
-        ]);
+        // never arrived. No $conversation/$conversations here — guest chat
+        // has no durable per-user history (shared kiosks, no account to key it off).
+        return $responder->stream(
+            $messages,
+            ToolRegistry::AUDIENCE_GUEST,
+            null,
+            $context,
+            $request->message,
+            '☕ Serving guests! Check Menu or Wi-Fi tabs!',
+        );
     }
 
     // Show the digital menu for Walled Garden access

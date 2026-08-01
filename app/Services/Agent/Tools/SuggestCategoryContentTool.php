@@ -36,7 +36,7 @@ class SuggestCategoryContentTool implements AgentTool
 
     public function permissionTier(): string
     {
-        return 'auto';
+        return 'confirm';
     }
 
     public function execute(array $arguments, ?User $actor, array $context = []): ToolResult

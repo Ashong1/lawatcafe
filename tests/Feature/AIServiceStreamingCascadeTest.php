@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Setting;
 use App\Services\AIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -91,6 +92,42 @@ class AIServiceStreamingCascadeTest extends TestCase
         );
 
         $this->assertSame('OpenRouter streamed instead.', $result['choices'][0]['message']['content']);
+    }
+
+    /**
+     * The tool-calling streaming path used to shuffle its model list before
+     * trying it — a strong tool-reliable model and a weak one were equally
+     * likely to be tried first on every call, regardless of the order an
+     * admin configured via the ai_models_gemini Setting. This path no longer
+     * shuffles, so the configured order should now be followed exactly and
+     * deterministically (not "usually" — this would be flaky under the old
+     * shuffled behavior, which is the point).
+     */
+    public function test_tool_calling_streaming_tries_models_in_configured_order_not_shuffled(): void
+    {
+        Setting::set('ai_models_gemini', json_encode(['model-a-first', 'model-b-second']));
+
+        Http::fake([
+            '*model-a-first*' => Http::response([], 500),
+            '*model-b-second*' => Http::response(
+                $this->sse([['candidates' => [['content' => ['parts' => [['text' => 'From model B.']]]]]]]),
+                200
+            ),
+        ]);
+
+        $result = app(AIService::class)->chatWithToolsStreaming(
+            [['role' => 'user', 'content' => 'hi']],
+            [],
+            function () {}
+        );
+
+        $this->assertSame('From model B.', $result['choices'][0]['message']['content']);
+
+        $requestedModels = collect(Http::recorded())
+            ->map(fn ($pair) => str_contains($pair[0]->url(), 'model-a-first') ? 'a' : 'b')
+            ->values();
+
+        $this->assertSame(['a', 'b'], $requestedModels->all(), 'model-a-first must always be tried before model-b-second, not randomly ordered.');
     }
 
     public function test_returns_null_when_every_provider_fails_so_the_caller_can_send_a_graceful_fallback(): void

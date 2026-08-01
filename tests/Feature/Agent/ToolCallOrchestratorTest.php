@@ -66,6 +66,77 @@ class ToolCallOrchestratorTest extends TestCase
         ]);
     }
 
+    public function test_auto_tier_tool_failure_logs_a_failed_audit_not_executed(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::sequence()
+                ->push($this->geminiFunctionCallResponse('checkStockLevels', ['ingredient_name' => 'Nonexistent Thing']), 200)
+                ->push($this->geminiTextResponse("I couldn't find that ingredient."), 200),
+        ]);
+
+        $orchestrator = app(ToolCallOrchestrator::class);
+        $result = $orchestrator->run([['role' => 'user', 'content' => 'how much nonexistent thing do we have?']], ToolRegistry::AUDIENCE_ADMIN, $admin);
+
+        $this->assertCount(1, $result['executed']);
+        $this->assertFalse($result['executed'][0]['result']['success']);
+        $this->assertDatabaseHas('ai_action_audits', [
+            'tool_name' => 'checkStockLevels',
+            'status' => 'failed',
+            'actor_type' => 'ai',
+            'actor_user_id' => $admin->id,
+        ]);
+    }
+
+    public function test_on_tool_start_fires_with_the_tool_name_before_execution(): void
+    {
+        Ingredient::create(['name' => 'Milk', 'current_stock' => 50, 'unit' => 'ml', 'low_stock_threshold' => 500, 'status' => 'Low Stock']);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::sequence()
+                ->push($this->geminiFunctionCallResponse('checkStockLevels', []), 200)
+                ->push($this->geminiTextResponse('Milk is low.'), 200),
+        ]);
+
+        $started = [];
+        $orchestrator = app(ToolCallOrchestrator::class);
+        $orchestrator->run(
+            [['role' => 'user', 'content' => 'any low stock?']],
+            ToolRegistry::AUDIENCE_ADMIN,
+            $admin,
+            [],
+            null,
+            function (string $toolName) use (&$started) { $started[] = $toolName; }
+        );
+
+        $this->assertSame(['checkStockLevels'], $started);
+    }
+
+    public function test_on_tool_start_fires_even_for_a_tool_that_ends_up_pending(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::sequence()
+                ->push($this->geminiFunctionCallResponse('restockIngredient', ['ingredient_id' => 1, 'added_amount' => 5]), 200),
+        ]);
+
+        $started = [];
+        $orchestrator = app(ToolCallOrchestrator::class);
+        $orchestrator->run(
+            [['role' => 'user', 'content' => 'restock milk']],
+            ToolRegistry::AUDIENCE_STAFF,
+            $staff,
+            [],
+            null,
+            function (string $toolName) use (&$started) { $started[] = $toolName; }
+        );
+
+        $this->assertSame(['restockIngredient'], $started);
+    }
+
     public function test_on_text_delta_is_invoked_with_streamed_content(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

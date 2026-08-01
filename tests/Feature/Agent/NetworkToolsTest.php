@@ -5,6 +5,7 @@ namespace Tests\Feature\Agent;
 use App\Models\BannedDevice;
 use App\Models\Voucher;
 use App\Services\Agent\ToolRegistry;
+use App\Services\Agent\Tools\BlockDeviceTool;
 use App\Services\Agent\Tools\GetTrafficStatsTool;
 use App\Services\Agent\Tools\SetSessionBandwidthTierTool;
 use App\Services\Agent\Tools\UnblockDeviceTool;
@@ -29,6 +30,16 @@ class NetworkToolsTest extends TestCase
     public function test_set_session_bandwidth_tier_tool_is_admin_only(): void
     {
         $this->assertSame('admin_only', app(SetSessionBandwidthTierTool::class)->permissionTier());
+    }
+
+    public function test_block_and_throttle_tools_reference_each_other_as_the_lighter_touch_option(): void
+    {
+        // Only the scheduled agent:analyze command carried this guidance
+        // before (hardcoded into its own prompt string) — interactive chat
+        // never saw it. Putting it on the tools means both surfaces get it
+        // from one place.
+        $this->assertStringContainsString('setSessionBandwidthTier', app(BlockDeviceTool::class)->description());
+        $this->assertStringContainsString('blockDevice', app(SetSessionBandwidthTierTool::class)->description());
     }
 
     public function test_new_network_tools_are_reachable_by_the_right_audiences(): void

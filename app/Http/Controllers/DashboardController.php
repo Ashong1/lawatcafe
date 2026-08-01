@@ -12,8 +12,8 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Setting;
 use App\Models\Voucher;
+use App\Services\Agent\ChatStreamResponder;
 use App\Services\Agent\ConversationHistoryService;
-use App\Services\Agent\ToolCallOrchestrator;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
 use App\Services\BaristaForecastService;
@@ -330,7 +330,7 @@ class DashboardController extends Controller
         return response()->json($forecast->getForecast($ai));
     }
 
-    public function adminChat(Request $request, AIService $ai, ToolCallOrchestrator $orchestrator, ConversationHistoryService $conversations)
+    public function adminChat(Request $request, AIService $ai, ConversationHistoryService $conversations, ChatStreamResponder $responder)
     {
         // history.*.role restricted to user/assistant — otherwise a client
         // could POST a fake {"role":"system",...} entry to inject an
@@ -338,7 +338,12 @@ class DashboardController extends Controller
         // (and full reasoning) on CaptivePortalController::chat().
         $request->validate([
             'message' => 'required|string|max:1000',
-            'history' => 'nullable|array|max:30',
+            // A generous DoS backstop, not a conversation-length limit — the
+            // client sends its whole in-memory history unsliced every request,
+            // so a real ceiling here would 422 a legitimately long
+            // conversation instead of degrading it. slidingWindow() below is
+            // what actually bounds what reaches the model.
+            'history' => 'nullable|array|max:200',
             'history.*.role' => 'required_with:history|in:user,assistant',
             // nullable, not required_with: a tool-only turn with no reply text
             // can end up stored (or cached client-side from before that was
@@ -351,43 +356,23 @@ class DashboardController extends Controller
         $conversation = $conversations->resolve($request->integer('conversation_id') ?: null, $request->user()->id, 'admin');
 
         $messages = [['role' => 'system', 'content' => $ai->buildAdminSystemPrompt()]];
-        foreach ($request->history ?? [] as $msg) {
+        foreach ($conversations->slidingWindow($request->history ?? []) as $msg) {
             if (! empty($msg['content'])) {
                 $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
             }
         }
         $messages[] = ['role' => 'user', 'content' => $request->message];
 
-        return response()->stream(function () use ($messages, $orchestrator, $request, $conversations, $conversation) {
-            $onTextDelta = function (string $delta) {
-                echo 'data: '.json_encode(['type' => 'delta', 'text' => $delta])."\n\n";
-                if (ob_get_level() > 0) {
-                    @ob_flush();
-                }
-                flush();
-            };
-
-            $result = $orchestrator->run($messages, ToolRegistry::AUDIENCE_ADMIN, $request->user(), [], $onTextDelta);
-
-            $reply = $result['reply'] ?? "☕ I'm having trouble connecting to our business intelligence stack right now.";
-            $conversations->append($conversation, $request->message, $reply, $result['executed'] ?? [], $result['pending'] ?? []);
-
-            echo 'data: '.json_encode([
-                'type' => 'meta',
-                'reply' => $reply,
-                'pending' => $result['pending'],
-                'executed' => $result['executed'],
-                'conversation_id' => $conversation->id,
-            ])."\n\n";
-            if (ob_get_level() > 0) {
-                @ob_flush();
-            }
-            flush();
-        }, 200, [
-            'Content-Type' => 'text/event-stream',
-            'Cache-Control' => 'no-cache',
-            'X-Accel-Buffering' => 'no',
-        ]);
+        return $responder->stream(
+            $messages,
+            ToolRegistry::AUDIENCE_ADMIN,
+            $request->user(),
+            [],
+            $request->message,
+            "☕ I'm having trouble connecting to our business intelligence stack right now.",
+            $conversation,
+            $conversations,
+        );
     }
 
     /**

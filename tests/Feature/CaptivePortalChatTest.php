@@ -92,14 +92,40 @@ class CaptivePortalChatTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function test_an_oversized_history_array_is_rejected(): void
+    /**
+     * Superseded: a history array past the old hard cap (20) used to 422 the
+     * whole request outright — a client sending its whole real conversation
+     * unsliced got hard-rejected instead of gracefully degraded. Now
+     * ConversationHistoryService::slidingWindow() truncates to the most
+     * recent entries server-side instead (see ChatHistorySlidingWindowTest);
+     * only a request past the much higher max:100 DoS backstop 422s.
+     */
+    public function test_a_long_history_array_is_accepted_and_truncated_not_rejected(): void
+    {
+        $this->mock(ToolCallOrchestrator::class, function ($mock) {
+            $mock->shouldReceive('run')->once()->andReturn(['reply' => 'Sure!', 'pending' => [], 'executed' => []]);
+        });
+
+        $history = [];
+        for ($i = 0; $i < 25; $i++) {
+            $history[] = ['role' => 'user', 'content' => "message {$i}"];
+        }
+
+        $response = $this->withHeader('Accept', 'text/event-stream')
+            ->postJson(route('portal.chat'), ['message' => 'hi', 'history' => $history]);
+
+        $response->assertOk();
+        $response->streamedContent();
+    }
+
+    public function test_a_history_array_past_the_dos_backstop_is_rejected(): void
     {
         $this->mock(ToolCallOrchestrator::class, function ($mock) {
             $mock->shouldNotReceive('run');
         });
 
         $history = [];
-        for ($i = 0; $i < 25; $i++) {
+        for ($i = 0; $i < 101; $i++) {
             $history[] = ['role' => 'user', 'content' => "message {$i}"];
         }
 

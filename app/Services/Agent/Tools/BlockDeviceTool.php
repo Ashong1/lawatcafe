@@ -19,7 +19,7 @@ class BlockDeviceTool implements AgentTool
 
     public function description(): string
     {
-        return 'Permanently ban a device (by MAC address) from the Wi-Fi network and disconnect its current session if it has one.';
+        return 'Permanently ban a device (by MAC address) from the Wi-Fi network and disconnect its current session if it has one. Use only for clearly malicious or repeated abuse — prefer setSessionBandwidthTier as a lighter-touch first response when the signal is ambiguous.';
     }
 
     public function parametersSchema(): array

@@ -14,6 +14,19 @@ use Illuminate\Support\Str;
 class ConversationHistoryService
 {
     /**
+     * Keep only the most recent $keep entries of a client-supplied history
+     * array. The client (agent-chat.blade.php) sends its whole in-memory
+     * history unsliced on every request — a long-running conversation must
+     * degrade gracefully here rather than trip a hard validation ceiling and
+     * 422 the whole request (see the matching `max:N` bump on each chat
+     * controller's validation rule).
+     */
+    public function slidingWindow(array $history, int $keep = 30): array
+    {
+        return array_slice($history, -$keep);
+    }
+
+    /**
      * Find the conversation a chat request is continuing, scoped to the
      * requesting user and context so one user can never resolve into
      * another's row. Falls back to a fresh conversation if the id is

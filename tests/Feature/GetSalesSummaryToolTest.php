@@ -87,6 +87,18 @@ class GetSalesSummaryToolTest extends TestCase
         $this->assertSame(300.0, $month->data['total']);
     }
 
+    public function test_description_is_audience_neutral(): void
+    {
+        // Regression: the description used to assume it was only reachable
+        // from the admin prompt ("today's revenue is already in your system
+        // prompt context") — wrong once staff (whose prompt has no such
+        // baked-in figure) can reach this tool too. That guidance belongs in
+        // the admin prompt's own guidelines, not this tool's description.
+        $description = app(GetSalesSummaryTool::class)->description();
+
+        $this->assertStringNotContainsString('system prompt', $description);
+    }
+
     public function test_invalid_period_fails_gracefully(): void
     {
         $result = app(GetSalesSummaryTool::class)->execute(['period' => 'next_century'], null);
@@ -94,11 +106,29 @@ class GetSalesSummaryToolTest extends TestCase
         $this->assertFalse($result->success);
     }
 
-    public function test_registered_for_admin_but_not_staff(): void
+    public function test_registered_for_admin_and_staff_but_not_guest(): void
     {
+        // Staff previously had zero shop-wide sales tool at all, which was
+        // the structural reason staff chat kept misusing shiftHandoffSummary
+        // (a single shift's numbers) for general sales questions — see
+        // AIServiceStaffPromptTest for the matching disambiguation-prompt fix.
         $registry = app(ToolRegistry::class);
 
         $this->assertArrayHasKey('getSalesSummary', $registry->forAudience(ToolRegistry::AUDIENCE_ADMIN));
-        $this->assertArrayNotHasKey('getSalesSummary', $registry->forAudience(ToolRegistry::AUDIENCE_STAFF));
+        $this->assertArrayHasKey('getSalesSummary', $registry->forAudience(ToolRegistry::AUDIENCE_STAFF));
+        $this->assertArrayNotHasKey('getSalesSummary', $registry->forAudience(ToolRegistry::AUDIENCE_GUEST));
+    }
+
+    public function test_resolves_to_confirm_tier_for_staff_despite_auto_default(): void
+    {
+        // Same role-floor architecture every other read-only staff tool
+        // already goes through (checkStockLevels, getActiveSessions, etc.) —
+        // not a new inconsistency introduced by widening this tool's audience.
+        $resolver = app(\App\Services\Agent\PermissionResolver::class);
+        $registry = app(ToolRegistry::class);
+        $tool = $registry->forAudience(ToolRegistry::AUDIENCE_STAFF)['getSalesSummary'];
+        $staff = User::factory()->create(['role' => 'staff']);
+
+        $this->assertSame(\App\Services\Agent\PermissionResolver::TIER_CONFIRM, $resolver->tierFor($tool, $staff));
     }
 }

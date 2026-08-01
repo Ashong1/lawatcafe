@@ -8,6 +8,8 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Setting;
+use App\Models\Shift;
+use App\Models\User;
 use App\Models\Voucher;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -563,8 +565,13 @@ class AIService
 
     private function streamGeminiLoop(array $messages, array $tools, callable $onTextDelta, float $deadline): ?array
     {
+        // Deliberately NOT shuffled (unlike the plain-chat cascade below) —
+        // this is the tool-calling path, where an admin's configured model
+        // order (see activeModels()) should be tried deterministically so a
+        // stronger/more tool-reliable model an admin lists first actually
+        // gets tried first, rather than being equally likely to lose a coin
+        // flip to a weaker free-tier model on a hard multi-tool turn.
         $models = $this->activeModels('gemini');
-        shuffle($models);
         $budget = $this->fastPathBudget();
         $models = array_slice($models, 0, max(1, $budget['modelLimit']));
 
@@ -632,11 +639,14 @@ class AIService
         return null;
     }
 
-    /** Shared by Groq and OpenRouter — both speak the OpenAI-compatible streaming delta format. */
+    /**
+     * Shared by Groq and OpenRouter — both speak the OpenAI-compatible
+     * streaming delta format. Deliberately NOT shuffled — see the matching
+     * comment on streamGeminiLoop(), this is the same tool-calling path.
+     */
     private function streamOpenAiCompatibleLoop(array $models, string $url, array $headers, array $messages, array $tools, callable $onTextDelta, string $provider, float $deadline): ?array
     {
         $modelsList = $models;
-        shuffle($modelsList);
         $budget = $this->fastPathBudget();
         $modelsList = array_slice($modelsList, 0, max(1, $budget['modelLimit']));
 
@@ -1065,10 +1075,44 @@ OPERATIONAL GUIDELINES:
 5. For sales/revenue questions about a period OTHER than today (yesterday, this week, last 7 days, this month), use the getSalesSummary tool rather than guessing or saying the data isn\'t available.';
     }
 
-    /** Shared by staffChat() and ToolCallOrchestrator (staff audience). */
-    public function buildStaffSystemPrompt(): string
+    /**
+     * Shared by staffChat() and ToolCallOrchestrator (staff audience).
+     * Previously this baked in nothing but the menu — no shop-status data at
+     * all, unlike the admin prompt — which left staff chat with no ambient
+     * truth to check itself against and was the structural root cause of it
+     * misusing shiftHandoffSummary (a single shift's numbers) for general
+     * "how were sales this week" questions (fixed piecemeal in faf46a8;
+     * this closes the actual gap). $actor is optional so the legacy
+     * staffChat() helper below (no per-user context) still works unchanged.
+     */
+    public function buildStaffSystemPrompt(?User $actor = null): string
     {
-        return "You are Barista Support for staff. Menu & Recipes:\n".$this->getMenuContext()."\nSTRICT RULE: Do not guess recipes if not listed above. If a tool is available to do what's being asked (e.g. checking stock, restocking, voiding a sale), use it.";
+        $lowStockThreshold = (int) Setting::get('low_stock_threshold', 500);
+        $lowStockIngredients = Ingredient::where('current_stock', '<', $lowStockThreshold)->pluck('name')->toArray();
+
+        $shiftStatus = 'No shift currently open — open one before starting service.';
+        if ($actor) {
+            $shift = Shift::where('user_id', $actor->id)->where('status', 'open')->latest('opened_at')->first();
+            if ($shift) {
+                $shiftStatus = 'Open since '.$shift->opened_at->format('h:i A').'.';
+            }
+        }
+
+        return "CORE IDENTITY:
+You are Barista Support, an assistant for Lawa't Kape's on-shift staff.
+
+CURRENT SHOP STATUS:
+- Low Stock Alerts: ".(empty($lowStockIngredients) ? 'None' : implode(', ', $lowStockIngredients)).'
+- Your Shift: '.$shiftStatus.'
+
+MENU & RECIPES:
+'.$this->getMenuContext().'
+
+OPERATIONAL GUIDELINES:
+1. Do not guess recipes if not listed above.
+2. If a tool is available to do what\'s being asked (e.g. checking stock, restocking, voiding a sale), use it.
+3. CURRENT SHOP STATUS above already has low stock alerts and your own shift status — answer questions about those directly from it, with no tool call needed.
+4. Use shiftHandoffSummary only for a specific shift handoff; use getSalesSummary for any general sales/revenue question (e.g. today\'s/this week\'s total sales) — never shiftHandoffSummary for that.';
     }
 
     public function chat($message, $history = [])

@@ -8,8 +8,8 @@ use App\Models\Sale;
 use App\Models\Setting;
 use App\Models\Shift;
 use App\Models\Voucher;
+use App\Services\Agent\ChatStreamResponder;
 use App\Services\Agent\ConversationHistoryService;
-use App\Services\Agent\ToolCallOrchestrator;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
 use Carbon\Carbon;
@@ -106,13 +106,15 @@ class StaffController extends Controller
         return AiFinding::where('audience', 'staff')->latest()->take(5)->get(['summary', 'severity', 'created_at']);
     }
 
-    public function staffChat(Request $request, AIService $ai, ToolCallOrchestrator $orchestrator, ConversationHistoryService $conversations)
+    public function staffChat(Request $request, AIService $ai, ConversationHistoryService $conversations, ChatStreamResponder $responder)
     {
         // history.*.role restricted to user/assistant — see the matching
         // fix (and full reasoning) on CaptivePortalController::chat().
         $request->validate([
             'message' => 'required|string|max:1000',
-            'history' => 'nullable|array|max:30',
+            // A generous DoS backstop, not a conversation-length limit — see
+            // the matching comment on DashboardController::adminChat().
+            'history' => 'nullable|array|max:200',
             'history.*.role' => 'required_with:history|in:user,assistant',
             // nullable, not required_with: a tool-only turn with no reply text
             // can end up stored (or cached client-side from before that was
@@ -124,43 +126,23 @@ class StaffController extends Controller
 
         $conversation = $conversations->resolve($request->integer('conversation_id') ?: null, $request->user()->id, 'staff');
 
-        $messages = [['role' => 'system', 'content' => $ai->buildStaffSystemPrompt()]];
-        foreach ($request->history ?? [] as $msg) {
+        $messages = [['role' => 'system', 'content' => $ai->buildStaffSystemPrompt($request->user())]];
+        foreach ($conversations->slidingWindow($request->history ?? []) as $msg) {
             if (! empty($msg['content'])) {
                 $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
             }
         }
         $messages[] = ['role' => 'user', 'content' => $request->message];
 
-        return response()->stream(function () use ($messages, $orchestrator, $request, $conversations, $conversation) {
-            $onTextDelta = function (string $delta) {
-                echo 'data: '.json_encode(['type' => 'delta', 'text' => $delta])."\n\n";
-                if (ob_get_level() > 0) {
-                    @ob_flush();
-                }
-                flush();
-            };
-
-            $result = $orchestrator->run($messages, ToolRegistry::AUDIENCE_STAFF, $request->user(), [], $onTextDelta);
-
-            $reply = $result['reply'] ?? '☕ Staff AI stack offline.';
-            $conversations->append($conversation, $request->message, $reply, $result['executed'] ?? [], $result['pending'] ?? []);
-
-            echo 'data: '.json_encode([
-                'type' => 'meta',
-                'reply' => $reply,
-                'pending' => $result['pending'],
-                'executed' => $result['executed'],
-                'conversation_id' => $conversation->id,
-            ])."\n\n";
-            if (ob_get_level() > 0) {
-                @ob_flush();
-            }
-            flush();
-        }, 200, [
-            'Content-Type' => 'text/event-stream',
-            'Cache-Control' => 'no-cache',
-            'X-Accel-Buffering' => 'no',
-        ]);
+        return $responder->stream(
+            $messages,
+            ToolRegistry::AUDIENCE_STAFF,
+            $request->user(),
+            [],
+            $request->message,
+            '☕ Staff AI stack offline.',
+            $conversation,
+            $conversations,
+        );
     }
 }
