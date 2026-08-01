@@ -9,6 +9,7 @@ use App\Services\Agent\Tools\CheckStockLevelsTool;
 use App\Services\Agent\Tools\DraftSupplierPoTool;
 use App\Services\Agent\Tools\GenerateVoucherBatchTool;
 use App\Services\Agent\Tools\GetActiveSessionsTool;
+use App\Services\Agent\Tools\GetSalesSummaryTool;
 use App\Services\Agent\Tools\GetTrafficStatsTool;
 use App\Services\Agent\Tools\LookupVoucherTool;
 use App\Services\Agent\Tools\RestockIngredientTool;
@@ -71,6 +72,7 @@ class ToolRegistry
             UnblockDeviceTool::class,
             SetSessionBandwidthTierTool::class,
             SuggestCategoryContentTool::class,
+            GetSalesSummaryTool::class,
         ];
     }
 
