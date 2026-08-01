@@ -15,7 +15,7 @@
             </div>
         </div>
 
-        <form action="{{ route('admin.settings.store.update') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('admin.settings.store.update') }}" method="POST" enctype="multipart/form-data" x-data="{ submitting: false }" @submit="submitting = true">
             @csrf
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
@@ -28,13 +28,14 @@
                             </div>
                             <div>
                                 <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">Stock Alerts</h3>
-                                <p class="text-[10px] text-[#A1887F] font-medium italic">Trigger notifications when stock drops below this.</p>
+                                <p class="text-[10px] text-[#6D4C41] font-medium italic">Trigger notifications when stock drops below this.</p>
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Low Stock Threshold (Grams/Units)</label>
-                            <input type="number" name="low_stock_threshold" value="{{ $settings['low_stock_threshold'] }}" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723]">
+                            <label for="low-stock-threshold" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Low Stock Threshold (Grams/Units)</label>
+                            <input id="low-stock-threshold" type="number" name="low_stock_threshold" value="{{ old('low_stock_threshold', $settings['low_stock_threshold']) }}" class="w-full bg-[#FDF8F5] border-2 @error('low_stock_threshold') border-red-500 @enderror rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723]">
+                            <x-field-error name="low_stock_threshold" />
                         </div>
                     </div>
                 </div>
@@ -55,18 +56,18 @@
                         <div class="space-y-6">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-[10px] font-black text-amber-200 uppercase mb-2 tracking-widest">Opening Time</label>
-                                    <input type="time" name="store_open_time" value="{{ $settings['store_open_time'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
+                                    <label for="store-open-time" class="block text-[10px] font-black text-amber-200 uppercase mb-2 tracking-widest">Opening Time</label>
+                                    <input id="store-open-time" type="time" name="store_open_time" value="{{ $settings['store_open_time'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-black text-amber-200 uppercase mb-2 tracking-widest">Closing Time</label>
-                                    <input type="time" name="store_close_time" value="{{ $settings['store_close_time'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
+                                    <label for="store-close-time" class="block text-[10px] font-black text-amber-200 uppercase mb-2 tracking-widest">Closing Time</label>
+                                    <input id="store-close-time" type="time" name="store_close_time" value="{{ $settings['store_close_time'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
                                 </div>
                             </div>
 
                             <div>
-                                <label class="block text-[10px] font-black text-amber-200 uppercase mb-2 tracking-widest">Receipt Header Text</label>
-                                <input type="text" name="receipt_header" value="{{ $settings['receipt_header'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white placeholder-white/30" placeholder="Thank you for visiting!">
+                                <label for="receipt-header" class="block text-[10px] font-black text-amber-200 uppercase mb-2 tracking-widest">Receipt Header Text</label>
+                                <input id="receipt-header" type="text" name="receipt_header" value="{{ $settings['receipt_header'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white placeholder-white/30" placeholder="Thank you for visiting!">
                             </div>
                         </div>
 
@@ -78,11 +79,8 @@
                         </div>
                     </div>
 
-                    <div class="pt-8">
-                        <button type="submit" class="w-full py-5 bg-[#3E2723] hover:bg-[#271815] text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-amber-900/20 active:scale-[0.98] flex items-center justify-center gap-3">
-                            <x-lucide-save class="w-5 h-5" />
-                            <span>Update Store Preferences</span>
-                        </button>
+                    <div class="pt-8 flex">
+                        <x-submit-button label="Update Store Preferences" loading-label="Saving…" />
                     </div>
                 </div>
 

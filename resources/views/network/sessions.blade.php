@@ -45,7 +45,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Network Traffic Control</h3>
-                <p class="text-xs text-[#A1887F] mt-1 font-medium">Monitoring both active revenue-generating users and pending connections.</p>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Monitoring both active revenue-generating users and pending connections.</p>
             </div>
             
             <div class="flex items-center gap-3 px-5 py-2.5 bg-[#E8F5E9] border border-green-200 rounded-full shadow-sm">

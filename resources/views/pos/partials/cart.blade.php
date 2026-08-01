@@ -6,7 +6,7 @@
             <p class="text-xs font-medium text-[#8D6E63] mt-0.5"><span x-text="cart.length"></span> items in cart</p>
         </div>
 
-        <button type="button" x-show="cart.length > 0" @click="resetCart()" class="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center shadow-sm" title="Clear All">
+        <button type="button" x-show="cart.length > 0" @click="resetCart()" class="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center shadow-sm" title="Clear All" aria-label="Clear All">
             <x-lucide-trash-2 class="w-4 h-4" />
         </button>
     </div>
@@ -37,7 +37,7 @@
     </div>
     <p class="flex-1 text-[11px] font-bold text-amber-900 leading-snug" x-text="suggestion && suggestion.message"></p>
     <button type="button" @click="addSuggestion()" class="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition">Add</button>
-    <button type="button" @click="dismissSuggestion()" class="shrink-0 w-6 h-6 flex items-center justify-center text-amber-700/50 hover:text-amber-900 transition">
+    <button type="button" @click="dismissSuggestion()" aria-label="Dismiss suggestion" class="shrink-0 w-6 h-6 flex items-center justify-center text-amber-700/50 hover:text-amber-900 transition">
         <x-lucide-x class="w-3.5 h-3.5" />
     </button>
 </div>
@@ -66,27 +66,27 @@
                 </div>
 
                 <div class="flex-1 min-w-0">
-                    <h4 @click="editNote(index)" class="font-bold text-sm text-[#3E2723] truncate pr-2 flex items-center cursor-pointer hover:text-amber-800 transition-colors" title="Click to add note">
+                    <h4 @click="editNote(index)" tabindex="0" role="button" @keydown.enter="editNote(index)" @keydown.space.prevent="editNote(index)" class="font-bold text-sm text-[#3E2723] truncate pr-2 flex items-center cursor-pointer hover:text-amber-800 transition-colors" title="Click to add note">
                         <span x-text="cartItem.name"></span>
                         <span x-show="cartItem.variant" class="ml-1.5 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full shrink-0" :class="cartItem.variant === 'Hot' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'" x-text="cartItem.variant"></span>
                     </h4>
-                    <p x-show="cartItem.note" x-text="cartItem.note" @click="editNote(index)" class="text-[9px] text-amber-700 font-bold italic truncate cursor-pointer"></p>
+                    <p x-show="cartItem.note" x-text="cartItem.note" @click="editNote(index)" tabindex="0" role="button" @keydown.enter="editNote(index)" @keydown.space.prevent="editNote(index)" class="text-[9px] text-amber-700 font-bold italic truncate cursor-pointer"></p>
                     <div class="flex justify-between items-center mt-0.5">
                         <p class="font-black text-xs text-[#8D6E63]" x-text="'₱' + (Number(cartItem.price) * cartItem.quantity).toFixed(2)"></p>
 
                         <div class="flex items-center bg-[#FAFAFA] border border-[#F0E6D2] rounded-full px-1 py-0.5 shrink-0">
-                            <button type="button" @click="removeFromCart(index)" class="w-5 h-5 flex items-center justify-center text-[#8D6E63] hover:text-[#3E2723] font-bold transition text-xs">-</button>
+                            <button type="button" @click="removeFromCart(index)" aria-label="Decrease quantity" class="w-5 h-5 flex items-center justify-center text-[#8D6E63] hover:text-[#3E2723] font-bold transition text-xs">-</button>
                             <span class="w-5 text-center text-[11px] font-bold transition-all duration-200"
                                   :class="flashKey === (cartItem.id + '-' + cartItem.variant) ? 'text-amber-600 scale-125' : 'text-[#3E2723] scale-100'"
                                   x-text="cartItem.quantity"></span>
-                            <button type="button" @click="addToCart(cartItem)" class="w-5 h-5 flex items-center justify-center text-[#8D6E63] hover:text-[#3E2723] font-bold transition text-xs">+</button>
+                            <button type="button" @click="addToCart(cartItem)" aria-label="Increase quantity" class="w-5 h-5 flex items-center justify-center text-[#8D6E63] hover:text-[#3E2723] font-bold transition text-xs">+</button>
                         </div>
                     </div>
                 </div>
             </div>
         </template>
 
-        <div x-show="cart.length === 0" class="flex flex-col items-center justify-center py-10 text-[#A1887F] text-sm font-medium">
+        <div x-show="cart.length === 0" class="flex flex-col items-center justify-center py-10 text-[#6D4C41] text-sm font-medium">
             <x-lucide-shopping-cart class="w-10 h-10 mb-3 opacity-20" />
             Your cart is empty.
         </div>
@@ -117,7 +117,7 @@
                  :style="`width: ${Math.min(100, (grandTotal / freeWifiMinAmount) * 100)}%`"></div>
         </div>
 
-        <p class="text-[9px] text-[#A1887F] font-medium text-center">
+        <p class="text-[9px] text-[#6D4C41] font-medium text-center">
             <template x-if="grandTotal >= freeWifiMinAmount">
                 <span x-text="`Order qualifies for ${freeWifiDuration} mins free access.`"></span>
             </template>

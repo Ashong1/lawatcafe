@@ -16,7 +16,7 @@
         </div>
         <!-- Date Display -->
         <div class="text-right">
-            <p class="text-xs font-bold uppercase tracking-widest text-[#A1887F]">{{ now()->format('l, F jS') }}</p>
+            <p class="text-xs font-bold uppercase tracking-widest text-[#6D4C41]">{{ now()->format('l, F jS') }}</p>
         </div>
     </div>
 
@@ -96,7 +96,7 @@
                             <td colspan="4" class="py-20 text-center">
                                 <div class="flex flex-col items-center opacity-30">
                                     <x-lucide-receipt class="w-10 h-10 mb-2" />
-                                    <p class="text-[#A1887F] text-sm font-medium">No sales recorded yet.</p>
+                                    <p class="text-[#6D4C41] text-sm font-medium">No sales recorded yet.</p>
                                 </div>
                             </td>
                         </tr>

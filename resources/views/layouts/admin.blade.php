@@ -394,31 +394,31 @@
         </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.57</span>
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.58</span>
             <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
 
     <div class="flex-1 flex flex-col overflow-hidden [contain:layout_style]">
         
-        <header class="h-14 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center justify-between px-6 z-10 shrink-0 [view-transition-name:app-header]">
-            
-            <button @click="sidebarOpen = !sidebarOpen" class="text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none flex items-center justify-center">
+        <header class="min-h-14 h-auto py-2 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center flex-wrap justify-between gap-y-2 px-6 z-10 shrink-0 [view-transition-name:app-header]">
+
+            <button @click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar" class="text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none flex items-center justify-center">
                 <x-lucide-menu class="w-6 h-6" />
             </button>
-            
+
             <div class="flex items-center space-x-6">
                 <x-notification-bell />
                 <x-agent-pending-badge :is-admin="true" />
 
-                <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
+                <div class="hidden lg:block h-4 w-[1px] bg-[#F0E6D2]"></div>
 
                 <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group cursor-pointer">
-                    <span class="text-[11px] uppercase tracking-widest text-[#A1887F] group-hover:text-[#3E2723] transition font-bold">Admin Status:</span>
+                    <span class="hidden lg:inline text-[11px] uppercase tracking-widest text-[#6D4C41] group-hover:text-[#3E2723] transition font-bold">Admin Status:</span>
                     <span class="text-sm font-bold text-[#3E2723] group-hover:text-amber-700 transition">{{ Auth::user()->name }}</span>
                 </a>
 
-                <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
+                <div class="hidden lg:block h-4 w-[1px] bg-[#F0E6D2]"></div>
 
                 <form method="POST" action="{{ route('logout') }}"
                       onsubmit="try { sessionStorage.removeItem('agentChatHistory:admin'); sessionStorage.removeItem('agentChatConversationId:admin'); } catch (e) {}">

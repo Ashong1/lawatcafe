@@ -32,7 +32,7 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">API Keys</h3>
-                        <p class="text-[10px] text-[#A1887F] font-medium italic">Used only if the matching env var (GEMINI_API_KEY / GROQ_API_KEY / OPENROUTER_API_KEY) isn't already set on the server.</p>
+                        <p class="text-[10px] text-[#6D4C41] font-medium italic">Used only if the matching env var (GEMINI_API_KEY / GROQ_API_KEY / OPENROUTER_API_KEY) isn't already set on the server.</p>
                     </div>
                 </div>
 
@@ -40,10 +40,10 @@
                     @csrf
                     @foreach (['gemini_api_key' => 'Gemini API Key', 'groq_api_key' => 'Groq API Key', 'openrouter_api_key' => 'OpenRouter API Key'] as $field => $label)
                         <div>
-                            <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">{{ $label }}</label>
+                            <label for="{{ $field }}" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">{{ $label }}</label>
                             <div x-data="{ show: false }" class="relative">
-                                <input :type="show ? 'text' : 'password'" name="{{ $field }}" value="{{ $settings[$field] }}" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all" placeholder="Enter API Key...">
-                                <button type="button" @click="show = !show" class="absolute right-4 top-1/2 -translate-y-1/2 text-[#A1887F] hover:text-[#3E2723]">
+                                <input id="{{ $field }}" :type="show ? 'text' : 'password'" name="{{ $field }}" value="{{ $settings[$field] }}" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all" placeholder="Enter API Key...">
+                                <button type="button" @click="show = !show" :aria-label="show ? 'Hide API key' : 'Show API key'" class="absolute right-4 top-1/2 -translate-y-1/2 text-[#6D4C41] hover:text-[#3E2723]">
                                     <x-lucide-eye x-show="!show" class="w-4 h-4" />
                                     <x-lucide-eye-off x-show="show" class="w-4 h-4" />
                                 </button>
@@ -128,7 +128,7 @@
                                         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Never tested</span>
                                     @endif
                                     @if ($model['at'])
-                                        <span class="block text-[9px] text-[#A1887F]">{{ $model['at']->diffForHumans() }}</span>
+                                        <span class="block text-[9px] text-[#6D4C41]">{{ $model['at']->diffForHumans() }}</span>
                                     @endif
                                     @if ($model['status'] === 'failed' && auth()->user()->isSuperAdmin())
                                         <button type="button" @click="editing = !editing" class="block text-[9px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-800 mt-1 ml-auto">
@@ -188,7 +188,7 @@
                 @if (auth()->user()->isSuperAdmin())
                 <form action="{{ route('admin.settings.ai-providers.models.reset', $key) }}" method="POST" class="mt-4 pt-4 border-t border-[#F0E6D2]">
                     @csrf
-                    <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-[#A1887F] hover:text-[#3E2723] transition">
+                    <button type="submit" class="text-[10px] font-black uppercase tracking-widest text-[#6D4C41] hover:text-[#3E2723] transition">
                         Reset to default models
                     </button>
                 </form>

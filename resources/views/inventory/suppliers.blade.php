@@ -92,7 +92,7 @@
                         </td>
                         <td class="py-4 text-right">
                             <div class="flex justify-end items-center gap-2">
-                                <button @click="openEditModal({{ json_encode($supplier) }})" class="p-2 text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-lg transition" title="Edit">
+                                <button @click="openEditModal({{ json_encode($supplier) }})" class="p-2 text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-lg transition" title="Edit" aria-label="Edit">
                                     <x-lucide-edit-2 class="w-4 h-4" />
                                 </button>
                                 <form action="{{ route('inventory.suppliers.destroy', $supplier->id) }}" method="POST" id="delete-form-{{ $supplier->id }}">
@@ -104,7 +104,7 @@
                                         icon: 'warning',
                                         confirmText: 'Yes, Remove',
                                         callback: () => document.getElementById('delete-form-{{ $supplier->id }}').submit()
-                                    })" class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                    })" class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Delete" aria-label="Delete">
                                         <x-lucide-trash-2 class="w-4 h-4" />
                                     </button>
                                 </form>
@@ -113,7 +113,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="py-20 text-center text-[#A1887F]">
+                        <td colspan="5" class="py-20 text-center text-[#6D4C41]">
                             <x-lucide-users class="w-12 h-12 mb-4 mx-auto opacity-20" />
                             <p class="font-bold uppercase tracking-widest text-xs">No suppliers added yet.</p>
                         </td>
@@ -135,7 +135,7 @@
                     <h3 id="supplier-modal-title" class="text-2xl font-black text-[#3E2723] uppercase tracking-widest" x-text="modalTitle"></h3>
                     <p class="text-[10px] text-[#8D6E63] font-black uppercase tracking-widest mt-1">Vendor information and schedule</p>
                 </div>
-                <button @click="isModalOpen = false" class="p-2 hover:bg-gray-100 rounded-full transition">
+                <button @click="isModalOpen = false" class="p-2 hover:bg-gray-100 rounded-full transition" aria-label="Close">
                     <x-lucide-x class="w-6 h-6 text-[#8D6E63]" />
                 </button>
             </div>
@@ -148,18 +148,19 @@
 
                 <div class="p-8 space-y-6 overflow-y-auto max-h-[60vh] no-scrollbar">
                     <div>
-                        <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Vendor Name</label>
-                        <input type="text" name="name" x-model="formData.name" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
+                        <label for="supplier-name" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Vendor Name</label>
+                        <input type="text" id="supplier-name" name="name" x-model="formData.name" required class="w-full p-3 border-2 @error('name') border-red-500 @enderror rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm">
+                        <x-field-error name="name" />
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Contact Person</label>
-                            <input type="text" name="contact_person" x-model="formData.contact_person" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-xs">
+                            <label for="supplier-contact-person" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Contact Person</label>
+                            <input type="text" id="supplier-contact-person" name="contact_person" x-model="formData.contact_person" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-xs">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Phone Number</label>
-                            <input type="text" name="phone" x-model="formData.phone" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-xs">
+                            <label for="supplier-phone" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Phone Number</label>
+                            <input type="text" id="supplier-phone" name="phone" x-model="formData.phone" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-xs">
                         </div>
                     </div>
 
@@ -187,7 +188,7 @@
 <script>
     function supplierManager() {
         return {
-            isModalOpen: false,
+            isModalOpen: {{ $errors->any() ? 'true' : 'false' }},
             isEditing: false,
             submitting: false,
             modalTitle: 'Add Supplier',

@@ -34,9 +34,9 @@
                                     </span>
                                 @endif
                             </span>
-                            <span class="text-[10px] text-[#A1887F] font-mono tracking-tighter mt-0.5">{{ $session->ip_address }}</span>
+                            <span class="text-[10px] text-[#6D4C41] font-mono tracking-tighter mt-0.5">{{ $session->ip_address }}</span>
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-[10px] text-[#A1887F] font-mono tracking-tighter">{{ $session->mac_address }}</span>
+                                <span class="text-[10px] text-[#6D4C41] font-mono tracking-tighter">{{ $session->mac_address }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
                                     <span class="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
@@ -98,7 +98,7 @@
                                 </span>
                             </div>
                         @endif
-                        <span class="text-[10px] text-[#A1887F] font-medium md:hidden">{{ $session->connected_at }}</span>
+                        <span class="text-[10px] text-[#6D4C41] font-medium md:hidden">{{ $session->connected_at }}</span>
                     </td>
                     <td class="py-4 text-right">
                         <div class="flex items-center justify-end gap-1">
@@ -156,7 +156,7 @@
                 @empty
                 <tr>
                     <td colspan="6" class="py-12 text-center opacity-30">
-                        <p class="text-[#A1887F] text-xs font-bold uppercase tracking-widest">No active customers.</p>
+                        <p class="text-[#6D4C41] text-xs font-bold uppercase tracking-widest">No active customers.</p>
                     </td>
                 </tr>
                 @endforelse
@@ -171,7 +171,7 @@
         <x-lucide-server class="w-4 h-4 text-blue-500" />
         <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest">Network Infrastructure</h3>
     </div>
-    <div class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+    <div class="bg-slate-50 rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="text-slate-500 text-[9px] uppercase tracking-[0.2em] border-b border-slate-200 bg-slate-100/50">
@@ -246,7 +246,7 @@
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
-                <tr class="text-[#A1887F] text-[9px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]/50">
+                <tr class="text-[#6D4C41] text-[9px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]/50">
                     <th class="pb-3 font-black">Device Info</th>
                     <th class="pb-3 font-black">Firewall Status</th>
                     <th class="pb-3 font-black text-right">Last Seen</th>
@@ -258,9 +258,9 @@
                     <td class="py-3">
                         <div class="flex flex-col">
                             <span class="font-bold text-[#4A3B32]">{{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unknown Device' }}</span>
-                            <span class="text-[9px] text-[#A1887F] font-mono mt-0.5">{{ $session->ip_address }}</span>
+                            <span class="text-[9px] text-[#6D4C41] font-mono mt-0.5">{{ $session->ip_address }}</span>
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-[9px] text-[#A1887F] font-mono">{{ $session->mac_address }}</span>
+                                <span class="text-[9px] text-[#6D4C41] font-mono">{{ $session->mac_address }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
                                     <span class="text-[8px] px-1 py-0.5 bg-gray-200 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
@@ -272,14 +272,14 @@
                             Blocked by Firewall
                         </span>
                     </td>
-                    <td class="py-3 text-right text-[#A1887F] font-medium pr-2">
+                    <td class="py-3 text-right text-[#6D4C41] font-medium pr-2">
                         {{ $session->connected_at }}
                     </td>
                 </tr>
                 @empty
                 <tr>
                     <td colspan="3" class="py-8 text-center opacity-30">
-                        <p class="text-[#A1887F] text-[10px] font-bold uppercase tracking-widest">No pending devices.</p>
+                        <p class="text-[#6D4C41] text-[10px] font-bold uppercase tracking-widest">No pending devices.</p>
                     </td>
                 </tr>
                 @endforelse

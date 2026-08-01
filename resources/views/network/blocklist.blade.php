@@ -28,16 +28,16 @@
                     <form action="{{ route('network.blocklist.store') }}" method="POST" class="space-y-6" @submit="submitting = true">
                         @csrf
                         <div>
-                            <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">MAC Address</label>
-                            <input type="text" name="mac_address" required placeholder="00:11:22:33:44:55" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all uppercase font-mono">
+                            <label for="mac_address" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">MAC Address</label>
+                            <input type="text" id="mac_address" name="mac_address" required placeholder="00:11:22:33:44:55" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all uppercase font-mono">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Device Name (Optional)</label>
-                            <input type="text" name="hostname" placeholder="e.g. Malicious User" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723]">
+                            <label for="hostname" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Device Name (Optional)</label>
+                            <input type="text" id="hostname" name="hostname" placeholder="e.g. Malicious User" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723]">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Reason for Ban</label>
-                            <textarea name="reason" rows="2" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-[#3E2723]"></textarea>
+                            <label for="reason" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Reason for Ban</label>
+                            <textarea id="reason" name="reason" rows="2" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-[#3E2723]"></textarea>
                         </div>
 
                         <div class="flex gap-3 pt-4">
@@ -57,7 +57,7 @@
             </div>
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Restricted Hardware Nodes</h3>
-                <p class="text-xs text-[#A1887F] font-medium">Devices on this list are automatically dropped by the OPNsense firewall.</p>
+                <p class="text-xs text-[#6D4C41] font-medium">Devices on this list are automatically dropped by the OPNsense firewall.</p>
             </div>
         </div>
 
@@ -82,12 +82,12 @@
                         </td>
                         <td class="py-4">
                             <span class="text-xs font-bold text-[#3E2723] block">{{ $device->hostname ?: 'Unnamed Device' }}</span>
-                            <span class="text-[10px] text-[#A1887F] font-medium md:hidden">{{ $device->created_at->format('M d, Y') }}</span>
+                            <span class="text-[10px] text-[#6D4C41] font-medium md:hidden">{{ $device->created_at->format('M d, Y') }}</span>
                         </td>
                         <td class="py-4 hidden md:table-cell">
                             <span class="text-xs text-[#8D6E63] font-medium italic">{{ $device->reason ?: 'No reason provided' }}</span>
                         </td>
-                        <td class="py-4 text-[#A1887F] text-xs font-bold hidden md:table-cell">
+                        <td class="py-4 text-[#6D4C41] text-xs font-bold hidden md:table-cell">
                             {{ $device->created_at->format('M d, Y') }}
                         </td>
                         <td class="py-4 text-right">
@@ -102,6 +102,7 @@
                                             confirmText: 'Yes, Unban',
                                             callback: () => document.getElementById('unban-form-{{ $device->id }}').submit()
                                         })"
+                                        aria-label="Unban device"
                                         class="p-2 text-green-500 hover:text-green-700 hover:bg-green-50 rounded-xl transition-all">
                                     <x-lucide-shield-check class="w-5 h-5" />
                                 </button>
@@ -113,7 +114,7 @@
                         <td colspan="5" class="py-20 text-center opacity-30">
                             <div class="flex flex-col items-center">
                                 <x-lucide-shield-check class="w-12 h-12 mb-4 text-green-600" />
-                                <p class="text-[#A1887F] text-sm font-bold uppercase tracking-widest">No devices are currently banned.</p>
+                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-widest">No devices are currently banned.</p>
                             </div>
                         </td>
                     </tr>

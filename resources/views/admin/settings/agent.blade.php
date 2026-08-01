@@ -26,7 +26,7 @@
                         </div>
                         <div>
                             <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">Tool Permission Tiers</h3>
-                            <p class="text-[10px] text-[#A1887F] font-medium italic">Auto = runs immediately. Confirm = staged for your approval. Admin Only = staff can never trigger it, even indirectly.</p>
+                            <p class="text-[10px] text-[#6D4C41] font-medium italic">Auto = runs immediately. Confirm = staged for your approval. Admin Only = staff can never trigger it, even indirectly.</p>
                         </div>
                     </div>
 
@@ -44,7 +44,7 @@
                                         <option value="admin_only" {{ $tool['tier'] === 'admin_only' ? 'selected' : '' }}>Admin only</option>
                                     </select>
                                 @else
-                                    <span class="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#A1887F] bg-[#FDF8F5] rounded-xl border-2 border-[#F0E6D2]" title="This action has direct financial/network-access consequences and is locked to Admin Only.">
+                                    <span class="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#6D4C41] bg-[#FDF8F5] rounded-xl border-2 border-[#F0E6D2]" title="This action has direct financial/network-access consequences and is locked to Admin Only.">
                                         Admin Only (locked)
                                     </span>
                                 @endif

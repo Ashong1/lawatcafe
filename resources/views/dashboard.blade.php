@@ -21,7 +21,7 @@
             <x-lucide-brain-circuit class="w-4 h-4" />
             Full AI Report
         </button>
-        <p class="text-xs font-bold uppercase tracking-widest text-[#A1887F]">{{ now()->format('l, F jS') }}</p>
+        <p class="text-xs font-bold uppercase tracking-widest text-[#6D4C41]">{{ now()->format('l, F jS') }}</p>
     </div>
 </div>
 
@@ -129,7 +129,7 @@
             </div>
             <div class="flex items-baseline gap-2">
                 <p class="text-4xl font-black text-[#3E2723]" x-text="Math.round(live.availableVouchers)">{{ $availableVouchers ?? 0 }}</p>
-                <p class="text-xs text-[#A1887F] font-bold uppercase tracking-tighter">Codes</p>
+                <p class="text-xs text-[#6D4C41] font-bold uppercase tracking-tighter">Codes</p>
             </div>
             <p class="text-[9px] text-amber-800/60 font-bold uppercase mt-1">Ready for issuance</p>
         </div>
@@ -316,7 +316,7 @@
                 <div class="flex flex-col items-center">
                     <div class="flex items-baseline gap-1 mb-1">
                         <span class="text-xl font-black text-[#1565C0]" x-text="liveData.bandwidthDown.toFixed(2)">{{ number_format($bandwidthDown ?? 0, 2) }}</span>
-                        <span class="text-[10px] font-bold text-[#A1887F] uppercase">Mbps</span>
+                        <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Mbps</span>
                     </div>
                     <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Download</span>
                 </div>
@@ -324,7 +324,7 @@
                 <div class="flex flex-col items-center">
                     <div class="flex items-baseline gap-1 mb-1">
                         <span class="text-xl font-black text-[#059669]" x-text="liveData.bandwidthUp.toFixed(2)">{{ number_format($bandwidthUp ?? 0, 2) }}</span>
-                        <span class="text-[10px] font-bold text-[#A1887F] uppercase">Mbps</span>
+                        <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Mbps</span>
                     </div>
                     <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Upload</span>
                 </div>
@@ -332,7 +332,7 @@
                 <div class="flex flex-col items-center">
                     <div class="flex items-baseline gap-1 mb-1">
                         <span class="text-xl font-black text-[#3E2723]" x-text="liveData.activeGuests">{{ $activeGuests ?? 0 }}</span>
-                        <span class="text-[10px] font-bold text-[#A1887F] uppercase">Active</span>
+                        <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Active</span>
                     </div>
                     <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Guest Units</span>
                 </div>
@@ -348,7 +348,7 @@
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Recent Activity</h3>
-                <p class="text-xs text-[#A1887F] font-medium mt-1">Live transaction monitoring.</p>
+                <p class="text-xs text-[#6D4C41] font-medium mt-1">Live transaction monitoring.</p>
             </div>
             <a href="{{ route('sales.index') }}" class="text-[10px] font-bold uppercase tracking-widest text-amber-700 hover:text-amber-800 transition-colors">View Journal</a>
         </div>
@@ -368,17 +368,17 @@
                         <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                             <td class="py-4">
                                 <span class="font-black text-[#3E2723] block" x-text="sale.transaction_number.slice(-8)"></span>
-                                <span class="text-[10px] text-[#A1887F] font-bold" x-text="sale.user_name"></span>
+                                <span class="text-[10px] text-[#6D4C41] font-bold" x-text="sale.user_name"></span>
                             </td>
                             <td class="py-4">
                                 <span class="px-2 py-0.5 border text-[9px] font-black uppercase rounded" :class="paymentMethodClass(sale.payment_method)" x-text="sale.payment_method"></span>
                             </td>
                             <td class="py-4 text-right font-black text-[#2E7D32]" x-text="'₱' + sale.total_amount.toFixed(2)"></td>
-                            <td class="py-4 text-[#A1887F] text-xs font-medium text-right" x-text="sale.created_at"></td>
+                            <td class="py-4 text-[#6D4C41] text-xs font-medium text-right" x-text="sale.created_at"></td>
                         </tr>
                     </template>
                     <tr x-show="live.recentSales.length === 0">
-                        <td colspan="4" class="py-16 text-center text-[#A1887F] text-xs italic">No transactions recorded today.</td>
+                        <td colspan="4" class="py-16 text-center text-[#6D4C41] text-xs italic">No transactions recorded today.</td>
                     </tr>
                 </tbody>
             </table>
@@ -435,7 +435,7 @@
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Active Vouchers</h3>
-                <p class="text-xs text-[#A1887F] font-medium mt-1">Recently issued network codes.</p>
+                <p class="text-xs text-[#6D4C41] font-medium mt-1">Recently issued network codes.</p>
             </div>
             <a href="{{ route('network.vouchers.index') }}" class="text-[10px] font-black text-amber-700 uppercase tracking-widest hover:text-amber-800 transition">Manage All</a>
         </div>
@@ -468,7 +468,7 @@
                             </td>
                         </tr>
                     </template>
-                    <tr x-show="live.recentVouchers.length === 0"><td colspan="3" class="py-16 text-center text-[#A1887F] text-xs italic">No vouchers found.</td></tr>
+                    <tr x-show="live.recentVouchers.length === 0"><td colspan="3" class="py-16 text-center text-[#6D4C41] text-xs italic">No vouchers found.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -482,7 +482,7 @@
             </div>
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Top Selling Performance</h3>
-                <p class="text-xs text-[#A1887F] font-medium mt-1">Units sold vs. Revenue impact.</p>
+                <p class="text-xs text-[#6D4C41] font-medium mt-1">Units sold vs. Revenue impact.</p>
             </div>
         </div>
 
@@ -496,7 +496,7 @@
                     <div class="flex gap-6 items-center">
                         <div class="flex flex-col items-end">
                             <span class="text-xs font-black text-[#3E2723]" x-text="Math.round(item.total_qty)"></span>
-                            <span class="text-[9px] font-bold text-[#A1887F] uppercase tracking-tighter">Units</span>
+                            <span class="text-[9px] font-bold text-[#6D4C41] uppercase tracking-tighter">Units</span>
                         </div>
                         <div class="flex flex-col items-end min-w-[70px]">
                             <span class="text-xs font-black text-[#2E7D32]" x-text="'₱' + Math.round(item.total_revenue).toLocaleString()"></span>
@@ -505,14 +505,14 @@
                     </div>
                 </a>
             </template>
-            <p class="text-xs text-[#A1887F] text-center italic py-4" x-show="live.topProducts.length === 0">No sales data yet.</p>
+            <p class="text-xs text-[#6D4C41] text-center italic py-4" x-show="live.topProducts.length === 0">No sales data yet.</p>
         </div>
     </div>
 </div>
 
     <!-- AI Insights Modal -->
     <x-modal-shell show="showInsightsModal" max-width="2xl" panel-class="p-8 border-t-8 border-[#3E2723] max-h-[90vh] flex flex-col relative" labelled-by="ai-insights-heading">
-            <button @click="showInsightsModal = false" class="absolute top-6 right-6 text-[#A1887F] hover:text-[#3E2723] transition">
+            <button @click="showInsightsModal = false" aria-label="Close" class="absolute top-6 right-6 text-[#6D4C41] hover:text-[#3E2723] transition">
                 <x-lucide-x class="w-6 h-6" />
             </button>
 
@@ -601,7 +601,7 @@
                                 </div>
                             </div>
                         </template>
-                        <p class="text-[10px] text-[#A1887F] font-medium mt-1">7-Day Projected Range</p>
+                        <p class="text-[10px] text-[#6D4C41] font-medium mt-1">7-Day Projected Range</p>
                     </div>
                     <div class="bg-[#FDF8F5] border border-[#F0E6D2] p-4 rounded-2xl relative">
                         <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-1">Trend Analysis</p>
@@ -668,7 +668,7 @@
                                 <li class="bg-white border border-[#F0E6D2] px-3 py-2 rounded-xl text-xs font-bold text-[#3E2723] flex items-center before:content-[''] before:w-1.5 before:h-1.5 before:bg-green-500 before:rounded-full before:mr-2" x-text="item"></li>
                             </template>
                             <template x-if="(insights?.predicted_top_products || []).length === 0">
-                                <li class="text-[10px] text-[#A1887F] italic flex items-center gap-2">
+                                <li class="text-[10px] text-[#6D4C41] italic flex items-center gap-2">
                                     <x-lucide-activity class="w-3 h-3 animate-pulse" /> Analyzing performance...
                                 </li>
                             </template>
@@ -683,7 +683,7 @@
                                 <li class="bg-white border border-[#F0E6D2] px-3 py-2 rounded-xl text-xs font-bold text-[#8D6E63] flex items-center before:content-[''] before:w-1.5 before:h-1.5 before:bg-red-400 before:rounded-full before:mr-2" x-text="item"></li>
                             </template>
                             <template x-if="(insights?.predicted_low_products || []).length === 0">
-                                <li class="text-[10px] text-[#A1887F] italic flex items-center gap-2">
+                                <li class="text-[10px] text-[#6D4C41] italic flex items-center gap-2">
                                     <x-lucide-activity class="w-3 h-3 animate-pulse" /> Analyzing performance...
                                 </li>
                             </template>

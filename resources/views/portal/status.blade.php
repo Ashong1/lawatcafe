@@ -102,13 +102,13 @@
                         
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">
                             <x-lucide-download class="w-6 h-6 text-[#8D6E63] mb-3" stroke-width="2.5" />
-                            <span class="text-[10px] font-black text-[#A1887F] uppercase tracking-widest mb-1">Data</span>
+                            <span class="text-[10px] font-black text-[#6D4C41] uppercase tracking-widest mb-1">Data</span>
                             <span class="text-lg font-black text-[#3E2723] tabular-nums">{{ number_format($session['bytes_received'] / (1024 * 1024), 1) }} MB</span>
                         </div>
 
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">
                             <x-lucide-user class="w-6 h-6 text-[#8D6E63] mb-3" stroke-width="2.5" />
-                            <span class="text-[10px] font-black text-[#A1887F] uppercase tracking-widest mb-1">Device</span>
+                            <span class="text-[10px] font-black text-[#6D4C41] uppercase tracking-widest mb-1">Device</span>
                             <span class="text-base font-black text-[#3E2723] truncate w-full text-center px-1">{{ $userName }}</span>
                         </div>
                     </div>
@@ -166,13 +166,13 @@
             <div class="bg-white/90 backdrop-blur-md lg:bg-transparent pt-4 pb-8 lg:pb-12 px-8 lg:px-20 flex justify-center gap-4 lg:gap-6 shrink-0 border-t border-[#F0E6D2]/50 lg:border-none relative z-20">
                 <button x-on:click="activeTab = 'status'" 
                         class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex flex-col items-center gap-2.5 group"
-                        :class="activeTab === 'status' ? 'text-white bg-[#3E2723] shadow-2xl shadow-amber-900/30 -translate-y-1' : 'text-[#A1887F] hover:bg-white hover:shadow-md hover:border-[#F0E6D2] border border-transparent'">
+                        :class="activeTab === 'status' ? 'text-white bg-[#3E2723] shadow-2xl shadow-amber-900/30 -translate-y-1' : 'text-[#6D4C41] hover:bg-white hover:shadow-md hover:border-[#F0E6D2] border border-transparent'">
                     <x-lucide-wifi class="w-5 h-5 lg:w-6 lg:h-6 transition-colors" x-bind:class="activeTab === 'status' ? 'text-amber-500' : 'text-[#D7CCC8] group-hover:text-[#8D6E63]'" stroke-width="2.5" />
                     <span>Status</span>
                 </button>
                 <button x-on:click="activeTab = 'help'"
                         class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex flex-col items-center gap-2.5 group"
-                        :class="activeTab === 'help' ? 'text-white bg-[#3E2723] shadow-2xl shadow-amber-900/30 -translate-y-1' : 'text-[#A1887F] hover:bg-white hover:shadow-md hover:border-[#F0E6D2] border border-transparent'">
+                        :class="activeTab === 'help' ? 'text-white bg-[#3E2723] shadow-2xl shadow-amber-900/30 -translate-y-1' : 'text-[#6D4C41] hover:bg-white hover:shadow-md hover:border-[#F0E6D2] border border-transparent'">
                     <x-lucide-message-square class="w-5 h-5 lg:w-6 lg:h-6 transition-colors" x-bind:class="activeTab === 'help' ? 'text-amber-500' : 'text-[#D7CCC8] group-hover:text-[#8D6E63]'" stroke-width="2.5" />
                     <span>AI Chat</span>
                 </button>

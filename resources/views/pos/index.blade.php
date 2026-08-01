@@ -65,7 +65,7 @@
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#8D6E63]">
                         <x-lucide-search class="w-5 h-5 text-gray-400" />
                     </div>
-                    <input type="text" x-model="searchQuery" placeholder="Search menu..." class="w-full pl-11 pr-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full focus:outline-none focus:ring-2 focus:ring-[#3E2723] transition-all text-sm font-medium placeholder-[#A1887F] text-[#3E2723]">
+                    <input type="text" x-model="searchQuery" placeholder="Search menu..." aria-label="Search menu" class="w-full pl-11 pr-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full focus:outline-none focus:ring-2 focus:ring-[#3E2723] transition-all text-sm font-medium placeholder-[#A1887F] text-[#3E2723]">
                 </div>
                 
                 <div class="flex gap-3 shrink-0 items-center">
@@ -178,17 +178,18 @@
                                     </div>
 
                                     <h4 class="font-bold text-[#3E2723] text-base leading-tight mb-1" x-text="item.name"></h4>
-                                    <p class="text-[11px] text-[#A1887F] font-medium mb-3 line-clamp-2" x-text="item.type === 'wifi' ? 'Seamless high-speed internet access.' : 'Freshly prepared for your enjoyment.'"></p>
+                                    <p class="text-[11px] text-[#6D4C41] font-medium mb-3 line-clamp-2" x-text="item.type === 'wifi' ? 'Seamless high-speed internet access.' : 'Freshly prepared for your enjoyment.'"></p>
                                     
                                     <div class="mt-auto flex justify-between items-center pt-2">
                                         <div class="flex flex-col">
-                                            <span class="text-[10px] uppercase font-black tracking-wider text-[#A1887F]">Price</span>
+                                            <span class="text-[10px] uppercase font-black tracking-wider text-[#6D4C41]">Price</span>
                                             <span class="font-black text-[#3E2723] text-lg" x-text="'₱' + Number(item.price).toFixed(2)"></span>
                                         </div>
                                         
-                                        <button type="button" 
-                                                @click="addToCart(item)" 
+                                        <button type="button"
+                                                @click="addToCart(item)"
                                                 :disabled="item.type === 'product' && !item.inStock"
+                                                :aria-label="'Add ' + item.name + ' to cart'"
                                                 class="w-11 h-11 rounded-full bg-[#3E2723] text-white flex items-center justify-center hover:bg-[#271815] transition-all active:scale-90 shadow-md shadow-[#3E2723]/30 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed">
                                             <x-lucide-plus class="w-5 h-5" />
                                         </button>
@@ -197,7 +198,7 @@
                             </div>
                         </template>
                         
-                        <div x-show="filteredProducts.length === 0" class="col-span-full flex flex-col items-center justify-center py-20 text-[#A1887F]">
+                        <div x-show="filteredProducts.length === 0" class="col-span-full flex flex-col items-center justify-center py-20 text-[#6D4C41]">
                             <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
                                 <span class="text-3xl opacity-50">🔍</span>
                             </div>
@@ -327,7 +328,7 @@
             </form>
 
             <div class="mt-6 text-center">
-                <a href="{{ route(auth()->user()->isAdminOrAbove() ? 'dashboard' : 'staff.dashboard') }}" class="text-[10px] font-black text-[#A1887F] hover:text-[#3E2723] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group">
+                <a href="{{ route(auth()->user()->isAdminOrAbove() ? 'dashboard' : 'staff.dashboard') }}" class="text-[10px] font-black text-[#6D4C41] hover:text-[#3E2723] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group">
                     <x-lucide-arrow-left class="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
                     <span>Back to Hub</span>
                 </a>

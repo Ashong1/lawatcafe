@@ -23,11 +23,11 @@
                 <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
                 <div class="flex items-center gap-3">
                     <div class="flex flex-col">
-                        <span class="text-[8px] font-black text-[#A1887F] uppercase tracking-tighter">Down</span>
+                        <span class="text-[8px] font-black text-[#6D4C41] uppercase tracking-tighter">Down</span>
                         <span class="text-xs font-bold text-[#3E2723]" x-text="downSpeed">0.00 Mbps</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-[8px] font-black text-[#A1887F] uppercase tracking-tighter">Up</span>
+                        <span class="text-[8px] font-black text-[#6D4C41] uppercase tracking-tighter">Up</span>
                         <span class="text-xs font-bold text-[#3E2723]" x-text="upSpeed">0.00 Mbps</span>
                     </div>
                 </div>
@@ -43,7 +43,7 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">QoS Configuration</h3>
-                        <p class="text-[10px] text-[#A1887F] font-medium">Define upload and download pipes for OPNsense automation.</p>
+                        <p class="text-[10px] text-[#6D4C41] font-medium">Define upload and download pipes for OPNsense automation.</p>
                     </div>
                 </div>
 
@@ -58,12 +58,12 @@
                         </h4>
                         <div class="grid grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Download (Mbps)</label>
-                                <input type="number" step="0.1" name="bw_free_down" value="{{ $settings['bw_free_down'] }}" class="w-full bg-white border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
+                                <label for="bw-free-down" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Download (Mbps)</label>
+                                <input type="number" id="bw-free-down" step="0.1" name="bw_free_down" value="{{ $settings['bw_free_down'] }}" class="w-full bg-white border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Upload (Mbps)</label>
-                                <input type="number" step="0.1" name="bw_free_up" value="{{ $settings['bw_free_up'] }}" class="w-full bg-white border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
+                                <label for="bw-free-up" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Upload (Mbps)</label>
+                                <input type="number" id="bw-free-up" step="0.1" name="bw_free_up" value="{{ $settings['bw_free_up'] }}" class="w-full bg-white border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
                             </div>
                         </div>
                     </div>
@@ -76,12 +76,12 @@
                         </h4>
                         <div class="grid grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Download (Mbps)</label>
-                                <input type="number" step="0.1" name="bw_premium_down" value="{{ $settings['bw_premium_down'] }}" class="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                <label for="bw-premium-down" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Download (Mbps)</label>
+                                <input type="number" id="bw-premium-down" step="0.1" name="bw_premium_down" value="{{ $settings['bw_premium_down'] }}" class="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Upload (Mbps)</label>
-                                <input type="number" step="0.1" name="bw_premium_up" value="{{ $settings['bw_premium_up'] }}" class="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                                <label for="bw-premium-up" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Upload (Mbps)</label>
+                                <input type="number" id="bw-premium-up" step="0.1" name="bw_premium_up" value="{{ $settings['bw_premium_up'] }}" class="w-full bg-white border border-amber-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-500">
                             </div>
                         </div>
                     </div>
@@ -89,7 +89,7 @@
                     <div class="flex items-center justify-between p-4 bg-[#FAFAFA] rounded-xl border border-[#F0E6D2]">
                         <div>
                             <span class="text-xs font-bold text-[#3E2723]">Burst Speed Optimization</span>
-                            <p class="text-[9px] text-[#A1887F] font-medium italic">Allow short bursts of higher speed for web page loading.</p>
+                            <p class="text-[9px] text-[#6D4C41] font-medium italic">Allow short bursts of higher speed for web page loading.</p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" name="bw_burst_enabled" value="1" {{ $settings['bw_burst_enabled'] ? 'checked' : '' }} class="sr-only peer">
@@ -151,7 +151,7 @@
                                 <p class="text-sm font-bold text-[#3E2723]" x-text="totalOut">0 GB</p>
                             </div>
                         </div>
-                        <p class="text-[10px] text-[#A1887F] font-medium italic leading-relaxed">
+                        <p class="text-[10px] text-[#6D4C41] font-medium italic leading-relaxed">
                             Shaping rules help prevent "Bandwidth Hogs" from affecting the POS and KDS systems, maintaining sub-millisecond latency for critical business operations.
                         </p>
                     </div>

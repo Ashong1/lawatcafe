@@ -35,6 +35,24 @@ $isBottomSheet = $position === 'bottom-sheet';
 @endphp
 
 <div x-data="{
+        lastFocused: null,
+        init() {
+            // Dialog semantics/Escape/Tab-trap were already handled below —
+            // this adds the other half of accessible modal behavior: move
+            // focus INTO the dialog on open (screen readers/keyboard users
+            // otherwise stay wherever they were, often the trigger button
+            // now hidden behind the backdrop), and restore it to the trigger
+            // on close, rather than leaving focus on a since-removed context.
+            this.$watch('{{ $show }}', (value) => {
+                if (value) {
+                    this.lastFocused = document.activeElement;
+                    this.$nextTick(() => this.firstFocusable()?.focus());
+                } else if (this.lastFocused) {
+                    this.lastFocused.focus();
+                    this.lastFocused = null;
+                }
+            });
+        },
         focusables() {
             let selector = 'a, button, input:not([type=\'hidden\']), textarea, select, details, [tabindex]:not([tabindex=\'-1\'])';
             return [...$el.querySelectorAll(selector)].filter(el => !el.hasAttribute('disabled') && el.offsetParent !== null);
@@ -83,7 +101,7 @@ $isBottomSheet = $position === 'bottom-sheet';
          x-transition:leave-start="translate-y-0"
          x-transition:leave-end="translate-y-full"
          @else
-         class="relative bg-white {{ $radiusClass }} shadow-2xl w-full {{ $maxWidthClass }} overflow-hidden transform transition-all {{ $panelClass }}"
+         class="relative bg-white {{ $radiusClass }} shadow-2xl w-full {{ $maxWidthClass }} max-h-[85vh] overflow-y-auto transform transition-all {{ $panelClass }}"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 scale-95"
          x-transition:enter-end="opacity-100 scale-100"

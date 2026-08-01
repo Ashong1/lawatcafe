@@ -18,31 +18,32 @@
                     </div>
                     <div>
                         <h3 class="font-black text-[#3E2723] uppercase tracking-wider text-sm">Permanent Kape Devices</h3>
-                        <p class="text-[11px] text-[#A1887F] font-medium">Pins a device's IP forever via a real DHCP reservation on OPNsense (Kea) — for POS registers, kitchen displays, etc. This does <span class="font-black">not</span> skip the captive portal; the device still redeems a voucher like any guest. To let a device online with no voucher at all, use the Captive Portal Allow-List below.</p>
+                        <p class="text-[11px] text-[#6D4C41] font-medium">Pins a device's IP forever via a real DHCP reservation on OPNsense (Kea) — for POS registers, kitchen displays, etc. This does <span class="font-black">not</span> skip the captive portal; the device still redeems a voucher like any guest. To let a device online with no voucher at all, use the Captive Portal Allow-List below.</p>
                     </div>
                 </div>
 
-                <form action="{{ route('network.static-ips.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
+                <form action="{{ route('network.static-ips.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6" x-data="{ submitting: false }" @submit="submitting = true">
                     @csrf
                     <div class="md:col-span-1">
-                        <label class="block text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-2">MAC Address</label>
-                        <input type="text" name="mac_address" value="{{ old('mac_address') }}" placeholder="AA:BB:CC:DD:EE:FF" required
-                               class="w-full text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-2xl p-4 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">
+                        <label for="static-ip-mac" class="block text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-2">MAC Address</label>
+                        <input id="static-ip-mac" type="text" name="mac_address" value="{{ old('mac_address') }}" placeholder="AA:BB:CC:DD:EE:FF" required
+                               class="w-full text-sm font-mono font-bold bg-[#FDF8F5] border-2 @error('mac_address') border-red-500 @enderror rounded-2xl p-4 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">
+                        <x-field-error name="mac_address" />
                     </div>
                     <div class="md:col-span-1">
-                        <label class="block text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-2">IP Address</label>
-                        <input type="text" name="ip_address" value="{{ old('ip_address') }}" placeholder="192.168.2.100" required
-                               class="w-full text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-2xl p-4 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">
+                        <label for="static-ip-address" class="block text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-2">IP Address</label>
+                        <input id="static-ip-address" type="text" name="ip_address" value="{{ old('ip_address') }}" placeholder="192.168.2.100" required
+                               class="w-full text-sm font-mono font-bold bg-[#FDF8F5] border-2 @error('ip_address') border-red-500 @enderror rounded-2xl p-4 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">
+                        <x-field-error name="ip_address" />
                     </div>
                     <div class="md:col-span-1">
-                        <label class="block text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-2">Label (optional, no spaces)</label>
-                        <input type="text" name="hostname" value="{{ old('hostname') }}" placeholder="pos-register-1 or kitchen_pos"
-                               class="w-full text-sm font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-2xl p-4 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">
+                        <label for="static-ip-hostname" class="block text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-2">Label (optional, no spaces)</label>
+                        <input id="static-ip-hostname" type="text" name="hostname" value="{{ old('hostname') }}" placeholder="pos-register-1 or kitchen_pos"
+                               class="w-full text-sm font-bold bg-[#FDF8F5] border-2 @error('hostname') border-red-500 @enderror rounded-2xl p-4 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">
+                        <x-field-error name="hostname" />
                     </div>
                     <div class="md:col-span-1 flex items-end">
-                        <button type="submit" class="w-full bg-[#3E2723] hover:bg-[#271815] active:scale-95 text-white font-black text-xs uppercase tracking-[0.2em] py-4 px-6 rounded-2xl transition-all shadow-lg">
-                            Reserve IP
-                        </button>
+                        <x-submit-button label="Reserve IP" loading-label="Reserving…" class="w-full" />
                     </div>
                 </form>
 
@@ -63,16 +64,24 @@
                                 <td class="py-3 font-mono text-xs font-bold text-[#3E2723]">{{ $assignment->ip_address }}</td>
                                 <td class="py-3 text-xs font-bold text-[#8D6E63]">{{ $assignment->hostname ?? '—' }}</td>
                                 <td class="py-3 text-right">
-                                    <form action="{{ route('network.static-ips.destroy', $assignment) }}" method="POST" onsubmit="return confirm('Remove this reservation from OPNsense?');">
+                                    <form id="remove-static-ip-{{ $assignment->id }}" action="{{ route('network.static-ips.destroy', $assignment) }}" method="POST">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="px-3 py-2 text-[10px] font-black uppercase tracking-widest bg-[#FDF8F5] text-[#8D6E63] hover:bg-red-50 hover:text-red-600 rounded-lg transition">Remove</button>
+                                        <button type="button"
+                                                @click="window.confirmAction({
+                                                    title: 'Remove Reservation?',
+                                                    text: 'Remove this reservation from OPNsense?',
+                                                    icon: 'warning',
+                                                    confirmText: 'Yes, Remove',
+                                                    callback: () => document.getElementById('remove-static-ip-{{ $assignment->id }}').submit()
+                                                })"
+                                                class="px-3 py-2 text-[10px] font-black uppercase tracking-widest bg-[#FDF8F5] text-[#8D6E63] hover:bg-red-50 hover:text-red-600 rounded-lg transition">Remove</button>
                                     </form>
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="py-8 text-center text-[#A1887F] text-xs font-bold uppercase tracking-widest opacity-50">No permanent devices yet.</td>
+                                <td colspan="4" class="py-8 text-center text-[#6D4C41] text-xs font-bold uppercase tracking-widest opacity-50">No permanent devices yet.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -87,57 +96,75 @@
                     </div>
                     <div>
                         <h3 class="font-black text-[#3E2723] uppercase tracking-wider text-sm">Captive Portal Allow-List</h3>
-                        <p class="text-[11px] text-[#A1887F] font-medium">Devices/networks here skip the captive portal completely — no voucher, ever. This is OPNsense's own "Allowed IP addresses" / "Allowed MAC addresses" passthrough, not an app-side list.</p>
+                        <p class="text-[11px] text-[#6D4C41] font-medium">Devices/networks here skip the captive portal completely — no voucher, ever. This is OPNsense's own "Allowed IP addresses" / "Allowed MAC addresses" passthrough, not an app-side list.</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                         <h4 class="text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-3">Allowed IP Addresses</h4>
-                        <form action="{{ route('network.allowed-addresses.ips.store') }}" method="POST" class="flex gap-2 mb-4">
+                        <form action="{{ route('network.allowed-addresses.ips.store') }}" method="POST" class="flex gap-2 mb-4" x-data="{ submitting: false }" @submit="submitting = true">
                             @csrf
-                            <input type="text" name="address" required placeholder="192.168.2.50 or 192.168.2.0/24"
+                            <input type="text" name="address" required placeholder="192.168.2.50 or 192.168.2.0/24" aria-label="IP address or CIDR range to allow"
                                    class="flex-1 min-w-0 text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-2xl p-3 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all">
-                            <button type="submit" class="shrink-0 bg-[#3E2723] hover:bg-[#271815] active:scale-95 text-white font-black text-[10px] uppercase tracking-widest py-3 px-4 rounded-2xl transition-all">Allow</button>
+                            {{-- Wrapped (not a flex sibling) so the component's own flex-1
+                                 default doesn't fight the input for the row's width. --}}
+                            <div class="shrink-0"><x-submit-button label="Allow" loading-label="Adding…" /></div>
                         </form>
                         <ul class="space-y-2">
                             @forelse($allowedAddresses['ips'] as $ip)
                             <li class="flex items-center justify-between bg-[#FDF8F5] border border-[#F0E6D2] rounded-xl px-4 py-2.5">
                                 <span class="font-mono text-xs font-bold text-[#3E2723]">{{ $ip }}</span>
-                                <form action="{{ route('network.allowed-addresses.ips.destroy') }}" method="POST" onsubmit="return confirm('Remove {{ $ip }} from the allow-list? It will need a voucher again.');">
+                                <form id="remove-allowed-ip-{{ $loop->index }}" action="{{ route('network.allowed-addresses.ips.destroy') }}" method="POST">
                                     @csrf
                                     @method('DELETE')
                                     <input type="hidden" name="address" value="{{ $ip }}">
-                                    <button type="submit" class="px-2 py-1 text-[10px] font-black uppercase tracking-widest text-[#8D6E63] hover:bg-red-50 hover:text-red-600 rounded-lg transition">Remove</button>
+                                    <button type="button"
+                                            @click="window.confirmAction({
+                                                title: 'Remove From Allow-List?',
+                                                text: 'Remove {{ $ip }} from the allow-list? It will need a voucher again.',
+                                                icon: 'warning',
+                                                confirmText: 'Yes, Remove',
+                                                callback: () => document.getElementById('remove-allowed-ip-{{ $loop->index }}').submit()
+                                            })"
+                                            class="px-2 py-1 text-[10px] font-black uppercase tracking-widest text-[#8D6E63] hover:bg-red-50 hover:text-red-600 rounded-lg transition">Remove</button>
                                 </form>
                             </li>
                             @empty
-                            <li class="text-center text-[#A1887F] text-xs font-bold uppercase tracking-widest opacity-50 py-4">No allowed IPs.</li>
+                            <li class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-widest opacity-50 py-4">No allowed IPs.</li>
                             @endforelse
                         </ul>
                     </div>
 
                     <div>
                         <h4 class="text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-3">Allowed MAC Addresses</h4>
-                        <form action="{{ route('network.allowed-addresses.macs.store') }}" method="POST" class="flex gap-2 mb-4">
+                        <form action="{{ route('network.allowed-addresses.macs.store') }}" method="POST" class="flex gap-2 mb-4" x-data="{ submitting: false }" @submit="submitting = true">
                             @csrf
-                            <input type="text" name="mac_address" required placeholder="AA:BB:CC:DD:EE:FF"
+                            <input type="text" name="mac_address" required placeholder="AA:BB:CC:DD:EE:FF" aria-label="MAC address to allow"
                                    class="flex-1 min-w-0 text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-2xl p-3 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all">
-                            <button type="submit" class="shrink-0 bg-[#3E2723] hover:bg-[#271815] active:scale-95 text-white font-black text-[10px] uppercase tracking-widest py-3 px-4 rounded-2xl transition-all">Allow</button>
+                            <div class="shrink-0"><x-submit-button label="Allow" loading-label="Adding…" /></div>
                         </form>
                         <ul class="space-y-2">
                             @forelse($allowedAddresses['macs'] as $mac)
                             <li class="flex items-center justify-between bg-[#FDF8F5] border border-[#F0E6D2] rounded-xl px-4 py-2.5">
                                 <span class="font-mono text-xs font-bold text-[#3E2723]">{{ $mac }}</span>
-                                <form action="{{ route('network.allowed-addresses.macs.destroy') }}" method="POST" onsubmit="return confirm('Remove {{ $mac }} from the allow-list? It will need a voucher again.');">
+                                <form id="remove-allowed-mac-{{ $loop->index }}" action="{{ route('network.allowed-addresses.macs.destroy') }}" method="POST">
                                     @csrf
                                     @method('DELETE')
                                     <input type="hidden" name="mac_address" value="{{ $mac }}">
-                                    <button type="submit" class="px-2 py-1 text-[10px] font-black uppercase tracking-widest text-[#8D6E63] hover:bg-red-50 hover:text-red-600 rounded-lg transition">Remove</button>
+                                    <button type="button"
+                                            @click="window.confirmAction({
+                                                title: 'Remove From Allow-List?',
+                                                text: 'Remove {{ $mac }} from the allow-list? It will need a voucher again.',
+                                                icon: 'warning',
+                                                confirmText: 'Yes, Remove',
+                                                callback: () => document.getElementById('remove-allowed-mac-{{ $loop->index }}').submit()
+                                            })"
+                                            class="px-2 py-1 text-[10px] font-black uppercase tracking-widest text-[#8D6E63] hover:bg-red-50 hover:text-red-600 rounded-lg transition">Remove</button>
                                 </form>
                             </li>
                             @empty
-                            <li class="text-center text-[#A1887F] text-xs font-bold uppercase tracking-widest opacity-50 py-4">No allowed MACs.</li>
+                            <li class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-widest opacity-50 py-4">No allowed MACs.</li>
                             @endforelse
                         </ul>
                     </div>
@@ -145,7 +172,7 @@
             </div>
         </div>
 
-        <form action="{{ route('admin.settings.network.update') }}" method="POST">
+        <form action="{{ route('admin.settings.network.update') }}" method="POST" x-data="{ submitting: false }" @submit="submitting = true">
             @csrf
             {{-- Preserve technical settings in the background --}}
             <input type="hidden" name="opnsense_zone" value="{{ $settings['opnsense_zone'] }}">
@@ -180,13 +207,13 @@
                             </div>
                             <div>
                                 <h3 class="font-black text-[#3E2723] uppercase tracking-wider text-sm">Hidden System Devices</h3>
-                                <p class="text-[11px] text-[#A1887F] font-medium">Keep your dashboard clean by hiding hardware.</p>
+                                <p class="text-[11px] text-[#6D4C41] font-medium">Keep your dashboard clean by hiding hardware.</p>
                             </div>
                         </div>
                         
                         <div>
-                            <label class="block text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-2">Infrastructure IPs (Comma Separated)</label>
-                            <textarea name="network_infrastructure_ips" rows="3" class="w-full text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-2xl p-4 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">{{ $settings['network_infrastructure_ips'] }}</textarea>
+                            <label for="network-infrastructure-ips" class="block text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-2">Infrastructure IPs (Comma Separated)</label>
+                            <textarea id="network-infrastructure-ips" name="network_infrastructure_ips" rows="3" class="w-full text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-2xl p-4 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">{{ $settings['network_infrastructure_ips'] }}</textarea>
                             <p class="text-[11px] text-[#8D6E63] mt-3 leading-relaxed font-medium italic">
                                 Enter the IPs of your Proxmox server or physical Access Points. They will be isolated in the "Network Infrastructure" table.
                             </p>
@@ -207,9 +234,7 @@
                             Saving these settings will instantly push the updated IP whitelists to the OPNsense gateway for real-time traffic control.
                         </p>
 
-                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-[#3E2723] font-black text-xs uppercase tracking-[0.2em] py-4 px-6 rounded-2xl transition-all shadow-lg shadow-amber-900/40 relative z-10">
-                            Save & Sync Config
-                        </button>
+                        <x-submit-button label="Save & Sync Config" loading-label="Syncing…" class="w-full relative z-10" />
                     </div>
 
                 </div>

@@ -14,7 +14,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">Active Accounts</h3>
-                <p class="text-xs text-[#A1887F] mt-1 font-medium italic">System users with authenticated access to the dashboard.</p>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium italic">System users with authenticated access to the dashboard.</p>
             </div>
             
             <button @click="openAddModal()" 
@@ -45,7 +45,7 @@
                                         <span class="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded text-[9px] font-black uppercase tracking-wider">You</span>
                                     @endif
                                 </div>
-                                <span class="text-[10px] text-[#A1887F] font-medium md:hidden">Joined {{ $user->created_at->format('M d, Y') }}</span>
+                                <span class="text-[10px] text-[#6D4C41] font-medium md:hidden">Joined {{ $user->created_at->format('M d, Y') }}</span>
                             </td>
                             <td class="py-4 px-4 text-[#8D6E63] font-medium font-mono text-xs">
                                 {{ $user->email }}
@@ -61,14 +61,14 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="py-4 px-4 text-[#A1887F] font-bold text-xs hidden md:table-cell">
+                            <td class="py-4 px-4 text-[#6D4C41] font-bold text-xs hidden md:table-cell">
                                 {{ $user->created_at->format('M d, Y') }}
                             </td>
                             <td class="py-4 px-4 text-right">
                                 <div class="flex justify-end gap-3">
-                                    <button @click="openEditModal({{ $user }})" 
+                                    <button @click="openEditModal({{ $user }})"
                                             class="p-2 text-amber-700 hover:text-amber-900 hover:bg-amber-100 rounded-xl transition-all"
-                                            title="Edit Staff">
+                                            title="Edit Staff" aria-label="Edit Staff">
                                         <x-lucide-pencil class="w-4 h-4" />
                                     </button>
                                     
@@ -85,12 +85,12 @@
                                                     callback: () => document.getElementById('delete-form-{{ $user->id }}').submit()
                                                 })"
                                                 class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                                                title="Remove Access">
+                                                title="Remove Access" aria-label="Remove Access">
                                             <x-lucide-trash-2 class="w-4 h-4" />
                                         </button>
                                     </form>
                                     @else
-                                        <button class="p-2 text-gray-300 cursor-not-allowed opacity-30" title="Cannot delete active account">
+                                        <button class="p-2 text-gray-300 cursor-not-allowed opacity-30" title="Cannot delete active account" aria-label="Cannot delete active account" disabled>
                                             <x-lucide-trash-2 class="w-4 h-4" />
                                         </button>
                                     @endif
@@ -98,7 +98,10 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-6 py-16 text-center text-[#8D6E63] italic font-medium opacity-50">No staff accounts found.</td></tr>
+                        <tr><td colspan="5" class="py-20 text-center text-[#6D4C41]">
+                            <x-lucide-users class="w-12 h-12 mb-4 mx-auto opacity-20" />
+                            <p class="font-bold uppercase tracking-widest text-xs">No staff accounts found.</p>
+                        </td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -117,27 +120,31 @@
                 </template>
 
                 <div>
-                    <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Full Name</label>
-                    <input type="text" name="name" x-model="formData.name" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    <label for="account-name" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Full Name</label>
+                    <input id="account-name" type="text" name="name" x-model="formData.name" required class="w-full bg-[#FDF8F5] border-2 @error('name') border-red-500 @enderror rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    <x-field-error name="name" />
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Email Address</label>
-                    <input type="email" name="email" x-model="formData.email" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    <label for="account-email" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Email Address</label>
+                    <input id="account-email" type="email" name="email" x-model="formData.email" required class="w-full bg-[#FDF8F5] border-2 @error('email') border-red-500 @enderror rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    <x-field-error name="email" />
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Account Role</label>
-                    <select name="role" x-model="formData.role" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    <label for="account-role" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Account Role</label>
+                    <select id="account-role" name="role" x-model="formData.role" class="w-full bg-[#FDF8F5] border-2 @error('role') border-red-500 @enderror rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                         @foreach($assignableRoles as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </select>
+                    <x-field-error name="role" />
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Password <span x-show="isEditing" class="text-[9px] text-amber-600 font-bold lowercase">(leave blank to keep current)</span></label>
-                    <input type="password" name="password" :required="!isEditing" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    <label for="account-password" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Password <span x-show="isEditing" class="text-[9px] text-amber-600 font-bold lowercase">(leave blank to keep current)</span></label>
+                    <input id="account-password" type="password" name="password" :required="!isEditing" class="w-full bg-[#FDF8F5] border-2 @error('password') border-red-500 @enderror rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    <x-field-error name="password" />
                 </div>
 
                 <div class="flex gap-3 pt-4">
@@ -151,7 +158,9 @@
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('accountManager', () => ({
-            isModalOpen: false,
+            // Reopens itself on a validation-failure redirect so the
+            // per-field errors above are actually visible.
+            isModalOpen: {{ $errors->any() ? 'true' : 'false' }},
             isEditing: false,
             submitting: false,
             modalTitle: 'Add New Staff',

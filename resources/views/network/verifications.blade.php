@@ -20,7 +20,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">GCash Audit Trail</h3>
-                <p class="text-xs text-[#A1887F] mt-1 font-medium">History of extracted GCash reference numbers and payment amounts.</p>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium">History of extracted GCash reference numbers and payment amounts.</p>
             </div>
             
             <div class="flex items-center gap-3 px-5 py-2.5 bg-blue-50 border border-blue-200 rounded-full shadow-sm">
@@ -55,10 +55,10 @@
                         <td class="py-4">
                             <div class="flex flex-col">
                                 <span class="text-xs font-bold text-[#4A3B32]">{{ $payment->sender_details }}</span>
-                                <span class="text-[9px] uppercase font-black tracking-tighter text-[#A1887F] mt-0.5">
+                                <span class="text-[9px] uppercase font-black tracking-tighter text-[#6D4C41] mt-0.5">
                                     GCash Payment
                                 </span>
-                                <span class="text-[10px] text-[#A1887F] font-medium md:hidden mt-0.5">{{ $payment->email_date ? $payment->email_date->format('M d, Y h:i A') : 'N/A' }}</span>
+                                <span class="text-[10px] text-[#6D4C41] font-medium md:hidden mt-0.5">{{ $payment->email_date ? $payment->email_date->format('M d, Y h:i A') : 'N/A' }}</span>
                             </div>
                         </td>
                         <td class="py-4 text-[#8D6E63] text-xs font-medium hidden md:table-cell">
@@ -74,9 +74,9 @@
                                     Unclaimed
                                 </span>
                             @endif
-                            <span class="block text-[10px] text-[#A1887F] font-medium mt-1 md:hidden">{{ $payment->created_at->diffForHumans() }}</span>
+                            <span class="block text-[10px] text-[#6D4C41] font-medium mt-1 md:hidden">{{ $payment->created_at->diffForHumans() }}</span>
                         </td>
-                        <td class="py-4 text-[#A1887F] text-xs font-bold hidden md:table-cell">
+                        <td class="py-4 text-[#6D4C41] text-xs font-bold hidden md:table-cell">
                             {{ $payment->created_at->diffForHumans() }}
                         </td>
                     </tr>
@@ -85,7 +85,7 @@
                         <td colspan="6" class="py-20 text-center">
                             <div class="flex flex-col items-center opacity-30">
                                 <x-lucide-receipt class="w-12 h-12 mb-4" />
-                                <p class="text-[#A1887F] text-sm font-bold uppercase tracking-widest">No verification logs found.</p>
+                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-widest">No verification logs found.</p>
                             </div>
                         </td>
                     </tr>

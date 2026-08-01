@@ -20,7 +20,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Wastage Logs</h3>
-                <p class="text-xs text-[#A1887F] mt-1 font-medium">Monitoring inventory shrink and spoilage incidents.</p>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Monitoring inventory shrink and spoilage incidents.</p>
             </div>
             
             <button @click="openAddModal()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-red-600/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
@@ -45,8 +45,8 @@
                     <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                         <td class="py-4">
                             <span class="font-bold text-[#3E2723] block">{{ $waste->created_at->format('M d, Y') }}</span>
-                            <span class="text-[10px] text-[#A1887F] font-medium uppercase tracking-widest">{{ $waste->created_at->format('h:i A') }}</span>
-                            <span class="text-[10px] text-[#A1887F] font-bold block md:hidden">by {{ $waste->user->name }}</span>
+                            <span class="text-[10px] text-[#6D4C41] font-medium uppercase tracking-widest">{{ $waste->created_at->format('h:i A') }}</span>
+                            <span class="text-[10px] text-[#6D4C41] font-bold block md:hidden">by {{ $waste->user->name }}</span>
                         </td>
                         <td class="py-4">
                             <span class="font-bold text-[#4A3B32]">{{ $waste->ingredient->name }}</span>
@@ -71,7 +71,7 @@
                         <td colspan="5" class="py-20 text-center">
                             <div class="flex flex-col items-center opacity-30">
                                 <x-lucide-shield-alert class="w-12 h-12 mb-4" />
-                                <p class="text-[#A1887F] text-sm font-bold uppercase tracking-widest">No wastage logged recently.</p>
+                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-widest">No wastage logged recently.</p>
                             </div>
                         </td>
                     </tr>
@@ -96,8 +96,8 @@
                 @csrf
                 <div class="space-y-6">
                     <div>
-                        <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Select Ingredient</label>
-                        <select name="ingredient_id" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all">
+                        <label for="wastage-ingredient" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Select Ingredient</label>
+                        <select id="wastage-ingredient" name="ingredient_id" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all">
                             <option value="">Select...</option>
                             @foreach($ingredients as $ingredient)
                                 <option value="{{ $ingredient->id }}">{{ $ingredient->name }} ({{ $ingredient->unit }})</option>
@@ -106,13 +106,13 @@
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Quantity to Deduct</label>
-                        <input type="number" step="0.01" name="quantity" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all">
+                        <label for="wastage-quantity" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Quantity to Deduct</label>
+                        <input type="number" step="0.01" id="wastage-quantity" name="quantity" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all">
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Reason for Loss</label>
-                        <select name="reason" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all">
+                        <label for="wastage-reason" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Reason for Loss</label>
+                        <select id="wastage-reason" name="reason" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all">
                             <option value="Expired">Expired</option>
                             <option value="Spilled">Spilled / Wasted</option>
                             <option value="Damaged">Damaged Goods</option>
@@ -122,8 +122,8 @@
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Additional Notes</label>
-                        <textarea name="note" rows="2" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-[#3E2723]"></textarea>
+                        <label for="wastage-note" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Additional Notes</label>
+                        <textarea id="wastage-note" name="note" rows="2" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-[#3E2723]"></textarea>
                     </div>
                 </div>
 

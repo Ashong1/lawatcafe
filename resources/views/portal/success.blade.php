@@ -82,7 +82,7 @@
                         <x-lucide-globe class="w-5 h-5 lg:w-6 lg:h-6" />
                     </a>
                     
-                    <p id="countdown" class="text-center text-[10px] font-black text-[#A1887F] uppercase tracking-[0.3em] animate-pulse">
+                    <p id="countdown" class="text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.3em] animate-pulse">
                         Redirecting in 5s... <button type="button" id="cancel-redirect" class="underline decoration-dotted ml-1 normal-case tracking-normal font-bold">Cancel</button>
                     </p>
                 </div>

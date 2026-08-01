@@ -157,7 +157,7 @@
                         </div>
                         <h2 class="text-xl font-black text-[#3E2723] mb-1 tracking-tight">Quick Connect</h2>
                         <p class="text-[10px] text-[#8D6E63] font-bold uppercase tracking-widest mb-1">Enter receipt passcode</p>
-                        <p class="text-[9px] text-[#A1887F] italic font-medium">High-speed browsing with every brew.</p>
+                        <p class="text-[9px] text-[#6D4C41] italic font-medium">High-speed browsing with every brew.</p>
                     </div>
 
                     <form action="{{ route('portal.authenticate') }}" method="POST" id="lawat-login-form" class="space-y-6 relative z-10" @submit.prevent="submitForm($event)">
@@ -165,7 +165,7 @@
                         <input type="hidden" name="zone" value="{{ \App\Models\Setting::get('opnsense_zone', '0') }}">
                         <div class="space-y-3">
                             <div class="relative">
-                                <input type="text" name="passcode" required placeholder="XXXX-XXXX" 
+                                <input type="text" name="passcode" required placeholder="XXXX-XXXX" aria-label="Wi-Fi passcode"
                                         class="w-full bg-white border-2 border-[#F0E6D2] rounded-2xl py-4 px-4 text-center text-xl font-mono font-black text-[#3E2723] tracking-[0.3em] uppercase focus:outline-none focus:border-[#3E2723] shadow-sm placeholder-[#D7CCC8]">
                                 <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[#D7CCC8] pointer-events-none">
                                     <x-lucide-ticket class="w-5 h-5" />
@@ -184,7 +184,7 @@
                                     title: 'text-[#3E2723] font-black uppercase tracking-widest text-sm',
                                     htmlContainer: 'text-xs text-[#4A3B32] font-medium'
                                 }
-                            })" class="w-full text-center text-[9px] font-bold text-[#A1887F] hover:text-[#3E2723] transition-colors uppercase tracking-widest flex items-center justify-center gap-1.5">
+                            })" class="w-full text-center text-[9px] font-bold text-[#6D4C41] hover:text-[#3E2723] transition-colors uppercase tracking-widest flex items-center justify-center gap-1.5">
                                 <x-lucide-help-circle class="w-3 h-3" />
                                 Where can I find my passcode?
                             </button>
@@ -195,7 +195,7 @@
                                 <input type="checkbox" id="terms-voucher" required class="w-5 h-5 text-[#3E2723] border-2 border-[#E6D5C3] rounded-lg focus:ring-[#3E2723] cursor-pointer appearance-none transition-all checked:bg-[#3E2723] checked:border-[#3E2723]">
                                 <x-lucide-check class="w-3.5 h-3.5 text-white absolute pointer-events-none hidden peer-checked:block" stroke-width="4" />
                             </div>
-                            <label for="terms-voucher" class="text-[9px] text-[#A1887F] font-bold leading-tight cursor-pointer uppercase tracking-tight">
+                            <label for="terms-voucher" class="text-[9px] text-[#6D4C41] font-bold leading-tight cursor-pointer uppercase tracking-tight">
                                 I agree to the <a href="javascript:void(0)" @click="showTOS = true" class="text-[#3E2723] underline decoration-[#3E2723]/30">Terms</a>.
                             </label>
                         </div>
@@ -248,18 +248,18 @@
         <div class="shrink-0 bg-white/90 backdrop-blur-lg border-t border-[#F0E6D2] px-3 py-3 flex flex-row justify-evenly items-center gap-1.5">
             <button x-on:click="activeTab = 'code'" 
                     class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
-                    :class="activeTab === 'code' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#A1887F] hover:bg-gray-50/50 border border-transparent'">
+                    :class="activeTab === 'code' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#6D4C41] hover:bg-gray-50/50 border border-transparent'">
                 <x-lucide-keyboard class="w-5 h-5" />
                 <span>Connect</span>
             </button>
             <a href="{{ route('portal.menu') }}" 
-                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5 text-[#A1887F] hover:bg-gray-50/50 border border-transparent">
+                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5 text-[#6D4C41] hover:bg-gray-50/50 border border-transparent">
                 <x-lucide-coffee class="w-5 h-5" />
                 <span>Menu</span>
             </a>
             <button x-on:click="activeTab = 'help'"
                     class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
-                    :class="activeTab === 'help' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#A1887F] hover:bg-gray-50/50 border border-transparent'">
+                    :class="activeTab === 'help' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#6D4C41] hover:bg-gray-50/50 border border-transparent'">
                 <x-lucide-message-square class="w-5 h-5" />
                 <span>AI Chat</span>
             </button>

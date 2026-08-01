@@ -24,13 +24,13 @@
         <div class="bg-white p-6 rounded-3xl shadow-sm border border-[#F0E6D2] flex flex-col items-center text-center">
             <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-4">Total Sales</p>
             <span class="text-3xl font-black text-[#3E2723]">₱{{ number_format($summary['total_sales'], 2) }}</span>
-            <p class="text-[10px] font-bold text-[#A1887F] mt-2 uppercase">{{ $shift->sales()->count() }} Transactions</p>
+            <p class="text-[10px] font-bold text-[#6D4C41] mt-2 uppercase">{{ $shift->sales()->count() }} Transactions</p>
         </div>
 
         <div class="bg-white p-6 rounded-3xl shadow-sm border border-[#F0E6D2] flex flex-col items-center text-center">
             <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-4">Cash in Drawer</p>
             <span class="text-3xl font-black text-green-700">₱{{ number_format($shift->ending_cash, 2) }}</span>
-            <p class="text-[10px] font-bold text-[#A1887F] mt-2 uppercase">Declared physical count</p>
+            <p class="text-[10px] font-bold text-[#6D4C41] mt-2 uppercase">Declared physical count</p>
         </div>
 
         <div class="p-6 rounded-3xl shadow-sm border flex flex-col items-center text-center {{ $variance == 0 ? 'bg-green-50 border-green-200' : ($variance > 0 ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200') }}">
@@ -77,7 +77,7 @@
                         <div class="flex justify-between items-center py-2 border-b border-[#FAFAFA] last:border-0">
                             <div>
                                 <p class="text-xs font-bold text-[#3E2723]">{{ $tx->reason }}</p>
-                                <p class="text-[9px] font-black uppercase text-[#A1887F]">{{ $tx->created_at->format('h:i A') }}</p>
+                                <p class="text-[9px] font-black uppercase text-[#6D4C41]">{{ $tx->created_at->format('h:i A') }}</p>
                             </div>
                             <span class="text-xs font-black {{ $tx->type === 'pay_in' ? 'text-green-600' : 'text-red-600' }}">
                                 {{ $tx->type === 'pay_in' ? '+' : '-' }}₱{{ number_format($tx->amount, 2) }}

@@ -202,7 +202,7 @@
         <!-- Integrated Bottom Nav (Fixed) -->
         <div class="shrink-0 bg-white/90 backdrop-blur-lg border-t border-[#F0E6D2] px-3 py-3 flex flex-row justify-evenly items-center gap-1.5">
             <a href="{{ route('portal.index') }}" 
-               class="flex-1 py-3 px-1 rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-1.5 text-[#A1887F] hover:bg-[#FAF7F2] hover:text-[#3E2723] group">
+               class="flex-1 py-3 px-1 rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-1.5 text-[#6D4C41] hover:bg-[#FAF7F2] hover:text-[#3E2723] group">
                 <x-lucide-keyboard class="w-5 h-5 text-[#D7CCC8] group-hover:text-amber-600 transition-colors" stroke-width="2.5" />
                 <span>Connect</span>
             </a>
@@ -212,7 +212,7 @@
                 <span>Menu</span>
             </a>
             <a href="{{ route('portal.index') }}?tab=help"
-               class="flex-1 py-3 px-1 rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-1.5 text-[#A1887F] hover:bg-[#FAF7F2] hover:text-[#3E2723] group">
+               class="flex-1 py-3 px-1 rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-1.5 text-[#6D4C41] hover:bg-[#FAF7F2] hover:text-[#3E2723] group">
                 <x-lucide-message-square class="w-6 h-6 text-[#D7CCC8] group-hover:text-amber-600 transition-colors" stroke-width="2.5" />
                 <span>AI Chat</span>
             </a>

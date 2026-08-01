@@ -57,7 +57,7 @@
                     <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors {{ $isLow ? 'bg-red-50/30' : '' }}">
                         <td class="py-4">
                             <span class="font-bold text-[#3E2723] text-base block">{{ $ingredient->name }}</span>
-                            <span class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest">
+                            <span class="text-[10px] text-[#6D4C41] font-black uppercase tracking-widest">
                                 @if($ingredient->packaging_unit && $ingredient->capacity_per_pack > 1)
                                     1 {{ $ingredient->packaging_unit }} = {{ number_format($ingredient->capacity_per_pack) }}{{ $ingredient->unit }}
                                 @else
@@ -81,7 +81,7 @@
                                     @endif
                                 </div>
                                 @if($ingredient->packaging_unit && $ingredient->capacity_per_pack > 1)
-                                    <span class="text-[9px] font-bold text-[#A1887F] uppercase tracking-tighter">
+                                    <span class="text-[9px] font-bold text-[#6D4C41] uppercase tracking-tighter">
                                         Total: {{ $formattedStock }} {{ $displayUnit }}
                                     </span>
                                 @endif
@@ -122,10 +122,10 @@
                                 @if($isLow)
                                     <x-ask-ai-button :prompt="'Restock ' . $ingredient->name . ', it is low on stock.'" label="Ask AI" />
                                 @endif
-                                <button @click="openQuickAddModal({{ $ingredient }})" class="p-2 text-[#8D6E63] hover:text-green-700 hover:bg-green-100 rounded-lg transition" title="Quick Add Stock">
+                                <button @click="openQuickAddModal({{ $ingredient }})" class="p-2 text-[#8D6E63] hover:text-green-700 hover:bg-green-100 rounded-lg transition" title="Quick Add Stock" aria-label="Quick Add Stock">
                                     <x-lucide-plus-circle class="w-4 h-4" />
                                 </button>
-                                <button @click="openEditModal({{ $ingredient }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit / Restock">
+                                <button @click="openEditModal({{ $ingredient }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit / Restock" aria-label="Edit / Restock">
                                     <x-lucide-pencil class="w-4 h-4" />
                                 </button>
                             </div>
@@ -136,7 +136,7 @@
                         <td colspan="5" class="py-16 text-center">
                             <div class="flex flex-col items-center opacity-30">
                                 <x-lucide-flask-conical class="w-10 h-10 mb-3" />
-                                <p class="text-[#A1887F] text-sm font-medium">No ingredients found. Click "Add Ingredient" to start.</p>
+                                <p class="text-[#6D4C41] text-sm font-medium">No ingredients found. Click "Add Ingredient" to start.</p>
                             </div>
                         </td>
                     </tr>
@@ -160,14 +160,14 @@
 
                 <div class="p-8 space-y-6">
                     <div>
-                        <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Ingredient Name</label>
-                        <input type="text" name="name" x-model="formData.name" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm" placeholder="e.g. Whole Milk">
+                        <label for="ingredient-name" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Ingredient Name</label>
+                        <input type="text" id="ingredient-name" name="name" x-model="formData.name" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm" placeholder="e.g. Whole Milk">
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Base Unit</label>
-                            <select name="unit" x-model="formData.unit" @change="updateBaseValues()" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
+                            <label for="ingredient-unit" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Base Unit</label>
+                            <select id="ingredient-unit" name="unit" x-model="formData.unit" @change="updateBaseValues()" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
                                 <option value="">Select...</option>
                                 <option value="ml">ml (Milliliters)</option>
                                 <option value="L">L (Liters)</option>
@@ -177,8 +177,8 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Packaging Unit</label>
-                            <select name="packaging_unit" x-model="formData.packaging_unit" @change="updateBaseValues()" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
+                            <label for="ingredient-packaging-unit" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Packaging Unit</label>
+                            <select id="ingredient-packaging-unit" name="packaging_unit" x-model="formData.packaging_unit" @change="updateBaseValues()" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
                                 <option value="">None (Individual)</option>
                                 <option value="piece">Piece</option>
                                 <option value="bottle">Bottle</option>
@@ -193,15 +193,15 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Capacity per Pack</label>
+                            <label for="ingredient-capacity-per-pack" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Capacity per Pack</label>
                             <div class="flex items-center gap-2 w-full px-3 border-2 border-[#F0E6D2] rounded-xl bg-[#FAFAFA] focus-within:border-[#3E2723] transition-all">
-                                <input type="number" name="capacity_per_pack" x-model="formData.capacity_per_pack" @input="updateBaseValues()" required step="0.01" class="flex-1 min-w-0 py-3 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="1.00">
-                                <span class="shrink-0 text-[10px] font-bold text-[#A1887F]" x-text="formData.unit"></span>
+                                <input type="number" id="ingredient-capacity-per-pack" name="capacity_per_pack" x-model="formData.capacity_per_pack" @input="updateBaseValues()" required step="0.01" class="flex-1 min-w-0 py-3 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="1.00">
+                                <span class="shrink-0 text-[10px] font-bold text-[#6D4C41]" x-text="formData.unit"></span>
                             </div>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Initial Status</label>
-                            <select name="status" x-model="formData.status" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
+                            <label for="ingredient-status" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Initial Status</label>
+                            <select id="ingredient-status" name="status" x-model="formData.status" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-bold">
                                 <option value="In Stock">In Stock</option>
                                 <option value="Low Stock">Low Stock</option>
                                 <option value="Out of Stock">Out of Stock</option>
@@ -211,17 +211,17 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1" x-text="formData.packaging_unit ? 'Current Stock (' + formData.packaging_unit + 's)' : 'Current Stock'"></label>
+                            <label for="ingredient-stock-in-packs" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1" x-text="formData.packaging_unit ? 'Current Stock (' + formData.packaging_unit + 's)' : 'Current Stock'"></label>
                             <div class="flex items-center gap-2 w-full px-3 border-2 border-[#F0E6D2] rounded-xl bg-[#FAFAFA] focus-within:border-[#3E2723] transition-all">
-                                <input type="number" x-model="stockInPacks" @input="updateBaseValues()" required step="0.01" class="flex-1 min-w-0 py-3 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                                <span class="shrink-0 text-[10px] font-bold text-[#A1887F]" x-text="formData.packaging_unit || formData.unit"></span>
+                                <input type="number" id="ingredient-stock-in-packs" x-model="stockInPacks" @input="updateBaseValues()" required step="0.01" class="flex-1 min-w-0 py-3 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                                <span class="shrink-0 text-[10px] font-bold text-[#6D4C41]" x-text="formData.packaging_unit || formData.unit"></span>
                             </div>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1" x-text="formData.packaging_unit ? 'Low Alert At (' + formData.packaging_unit + 's)' : 'Low Alert At'"></label>
+                            <label for="ingredient-threshold-in-packs" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1" x-text="formData.packaging_unit ? 'Low Alert At (' + formData.packaging_unit + 's)' : 'Low Alert At'"></label>
                             <div class="flex items-center gap-2 w-full px-3 border-2 border-[#F0E6D2] rounded-xl bg-[#FAFAFA] focus-within:border-[#3E2723] transition-all">
-                                <input type="number" x-model="thresholdInPacks" @input="updateBaseValues()" required step="0.01" class="flex-1 min-w-0 py-3 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                                <span class="shrink-0 text-[10px] font-bold text-[#A1887F]" x-text="formData.packaging_unit || formData.unit"></span>
+                                <input type="number" id="ingredient-threshold-in-packs" x-model="thresholdInPacks" @input="updateBaseValues()" required step="0.01" class="flex-1 min-w-0 py-3 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                                <span class="shrink-0 text-[10px] font-bold text-[#6D4C41]" x-text="formData.packaging_unit || formData.unit"></span>
                             </div>
                         </div>
                     </div>
@@ -263,10 +263,10 @@
                 @csrf
                 <div class="p-8 space-y-6">
                     <div>
-                        <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1" x-text="selectedIngredient?.packaging_unit ? 'Add quantity in ' + selectedIngredient.packaging_unit + 's' : 'Add quantity'"></label>
+                        <label for="ingredient-added-amount" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1" x-text="selectedIngredient?.packaging_unit ? 'Add quantity in ' + selectedIngredient.packaging_unit + 's' : 'Add quantity'"></label>
                         <div class="flex items-center gap-2 w-full px-4 border-2 border-[#F0E6D2] rounded-xl bg-[#FAFAFA] focus-within:border-green-800 transition-all">
-                            <input type="number" name="added_amount" required step="0.01" autofocus class="flex-1 min-w-0 py-4 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-lg text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="0.00">
-                            <span class="shrink-0 text-xs font-bold text-[#A1887F]" x-text="selectedIngredient?.packaging_unit || selectedIngredient?.unit"></span>
+                            <input type="number" id="ingredient-added-amount" name="added_amount" required step="0.01" autofocus class="flex-1 min-w-0 py-4 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-lg text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="0.00">
+                            <span class="shrink-0 text-xs font-bold text-[#6D4C41]" x-text="selectedIngredient?.packaging_unit || selectedIngredient?.unit"></span>
                         </div>
                     </div>
                 </div>

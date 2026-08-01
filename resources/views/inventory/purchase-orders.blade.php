@@ -22,7 +22,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Draft & Sent Orders</h3>
-                <p class="text-xs text-[#A1887F] mt-1 font-medium">Send a draft to email the linked supplier, or dismiss it if it's no longer needed.</p>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Send a draft to email the linked supplier, or dismiss it if it's no longer needed.</p>
             </div>
         </div>
 
@@ -68,7 +68,7 @@
                         </td>
                         <td class="py-4 text-[#8D6E63] text-xs font-medium hidden md:table-cell">
                             {{ $po->created_at->format('M d, Y') }}
-                            <span class="block text-[10px] text-[#A1887F] uppercase tracking-wider">{{ $po->created_by_actor_type === 'ai' ? 'By Barista AI' : 'By Staff' }}</span>
+                            <span class="block text-[10px] text-[#6D4C41] uppercase tracking-wider">{{ $po->created_by_actor_type === 'ai' ? 'By Barista AI' : 'By Staff' }}</span>
                         </td>
                         <td class="py-4 text-right">
                             <div class="flex items-center justify-end gap-2">
@@ -87,7 +87,7 @@
                                                     document.getElementById('send-po-form-{{ $po->id }}').submit();
                                                 }
                                             })"
-                                            class="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition" title="Send">
+                                            class="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition" title="Send" aria-label="Send">
                                         <x-lucide-send class="w-4 h-4" />
                                     </button>
                                 </form>
@@ -107,7 +107,7 @@
                                                     document.getElementById('delete-po-form-{{ $po->id }}').submit();
                                                 }
                                             })"
-                                            class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                            class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete" aria-label="Delete">
                                         <x-lucide-trash-2 class="w-4 h-4" />
                                     </button>
                                 </form>
@@ -119,7 +119,7 @@
                         <td colspan="7" class="py-20 text-center">
                             <div class="flex flex-col items-center opacity-30">
                                 <x-lucide-file-text class="w-12 h-12 mb-4" />
-                                <p class="text-[#A1887F] text-sm font-bold uppercase tracking-widest">No purchase order drafts yet.</p>
+                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-widest">No purchase order drafts yet.</p>
                             </div>
                         </td>
                     </tr>

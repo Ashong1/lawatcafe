@@ -43,7 +43,7 @@
                     <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                         <td class="py-4">
                             <span class="font-bold text-[#3E2723] text-base block">{{ $shift->user->name }}</span>
-                            <span class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest">
+                            <span class="text-[10px] text-[#6D4C41] font-black uppercase tracking-widest">
                                 {{ $shift->created_at->format('M d') }} • {{ $shift->created_at->format('h:i A') }} - {{ $shift->closed_at ? $shift->closed_at->format('h:i A') : 'Active' }}
                             </span>
                         </td>
@@ -88,7 +88,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="py-20 text-center text-[#A1887F]">
+                        <td colspan="6" class="py-20 text-center text-[#6D4C41]">
                             <x-lucide-lock class="w-12 h-12 mb-4 mx-auto opacity-20" />
                             <p class="font-bold uppercase tracking-widest text-xs">No shift reports found for this period.</p>
                         </td>

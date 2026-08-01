@@ -37,7 +37,7 @@
                         </td>
                         <td class="py-4 text-xs font-bold text-[#8D6E63]">
                             {{ $action->actor?->name ?? 'Barista AI (scheduled)' }}
-                            <span class="block text-[10px] text-[#A1887F] font-medium md:hidden">Approved by: {{ $action->approvedBy?->name ?? '—' }}</span>
+                            <span class="block text-[10px] text-[#6D4C41] font-medium md:hidden">Approved by: {{ $action->approvedBy?->name ?? '—' }}</span>
                         </td>
                         <td class="py-4">
                             @php
@@ -48,12 +48,12 @@
                                 };
                             @endphp
                             <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border {{ $badge }}">{{ $action->status }}</span>
-                            <span class="block text-[10px] text-[#A1887F] font-medium md:hidden mt-1">{{ $action->created_at->diffForHumans() }}</span>
+                            <span class="block text-[10px] text-[#6D4C41] font-medium md:hidden mt-1">{{ $action->created_at->diffForHumans() }}</span>
                         </td>
                         <td class="py-4 text-xs font-bold text-[#8D6E63] hidden md:table-cell">
                             {{ $action->approvedBy?->name ?? '—' }}
                         </td>
-                        <td class="py-4 text-[#A1887F] text-xs font-bold hidden md:table-cell">
+                        <td class="py-4 text-[#6D4C41] text-xs font-bold hidden md:table-cell">
                             {{ $action->created_at->diffForHumans() }}
                         </td>
                         <td class="py-4 text-right">
@@ -76,7 +76,7 @@
                         <td colspan="6" class="py-20 text-center opacity-30">
                             <div class="flex flex-col items-center">
                                 <x-lucide-bot class="w-12 h-12 mb-4" />
-                                <p class="text-[#A1887F] text-sm font-bold uppercase tracking-widest">No agent activity yet.</p>
+                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-widest">No agent activity yet.</p>
                             </div>
                         </td>
                     </tr>

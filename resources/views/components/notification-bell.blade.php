@@ -7,7 +7,7 @@
     $initialUnreadCount = auth()->user()->unreadNotifications->count();
 @endphp
 <div x-data="notificationBell({{ $initialUnreadCount }})" x-init="init()" class="relative">
-    <button @click="toggle()" class="p-2 text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-full transition relative focus:outline-none">
+    <button @click="toggle()" aria-label="Notifications" class="p-2 text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-full transition relative focus:outline-none">
         <x-lucide-bell class="w-6 h-6" />
         <template x-if="unreadCount > 0">
             <span class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white" x-text="unreadCount"></span>
@@ -24,7 +24,7 @@
          x-transition:leave="transition ease-in duration-300"
          x-transition:leave-start="opacity-100 scale-100 translate-y-0"
          x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-         class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-[#F0E6D2] overflow-hidden z-50">
+         class="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-[#F0E6D2] overflow-hidden z-50">
         
         <div class="bg-[#FDF8F5] p-4 border-b border-[#F0E6D2] flex justify-between items-center">
             <h3 class="text-xs font-black text-[#3E2723] uppercase tracking-widest">Notifications</h3>
@@ -33,7 +33,8 @@
 
         <div class="max-h-[400px] overflow-y-auto custom-scrollbar">
             <template x-for="notif in notifications" :key="notif.id">
-                <div @click="markAsRead(notif)" 
+                <div @click="markAsRead(notif)"
+                     tabindex="0" role="button" @keydown.enter="markAsRead(notif)" @keydown.space.prevent="markAsRead(notif)"
                      class="p-4 border-b border-[#FAFAFA] hover:bg-[#FDF8F5]/50 transition-colors cursor-pointer group"
                      :class="!notif.read_at ? 'bg-amber-50/30' : ''">
                     <div class="flex gap-3">
@@ -55,7 +56,7 @@
                         <div class="flex-1 min-w-0">
                             <p class="text-xs font-bold text-[#3E2723]" x-text="notif.data.title"></p>
                             <p class="text-[11px] text-[#8D6E63] font-medium leading-relaxed mt-0.5" x-text="notif.data.message"></p>
-                            <p class="text-[9px] text-[#A1887F] font-bold uppercase tracking-tighter mt-2" x-text="formatDate(notif.created_at)"></p>
+                            <p class="text-[9px] text-[#6D4C41] font-bold uppercase tracking-tighter mt-2" x-text="formatDate(notif.created_at)"></p>
                         </div>
                         <template x-if="!notif.read_at">
                             <div class="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1 shrink-0"></div>
@@ -67,7 +68,7 @@
             <template x-if="notifications.length === 0">
                 <div class="py-12 text-center flex flex-col items-center opacity-30">
                     <x-lucide-bell-off class="w-8 h-8 mb-2" />
-                    <p class="text-xs font-bold uppercase tracking-widest text-[#A1887F]">No notifications</p>
+                    <p class="text-xs font-bold uppercase tracking-widest text-[#6D4C41]">No notifications</p>
                 </div>
             </template>
         </div>

@@ -18,17 +18,17 @@
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
         <form action="{{ route('network.vouchers.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="md:col-span-2">
-                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Search Code</label>
+                <label for="search" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Search Code</label>
                 <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#A1887F]">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6D4C41]">
                         <x-lucide-search class="w-4 h-4" />
                     </div>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="LAWA-..." class="w-full pl-10 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="LAWA-..." class="w-full pl-10 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                 </div>
             </div>
             <div>
-                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Status</label>
-                <select name="status" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                <label for="status" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Status</label>
+                <select id="status" name="status" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                     <option value="">All Vouchers</option>
                     <option value="available" {{ request('status') === 'available' ? 'selected' : '' }}>Available</option>
                     <option value="used" {{ request('status') === 'used' ? 'selected' : '' }}>Used</option>
@@ -45,7 +45,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Generated Vouchers</h3>
-                <p class="text-xs text-[#A1887F] mt-1 font-medium">Manage and track the status of all WiFi access codes.</p>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Manage and track the status of all WiFi access codes.</p>
             </div>
             
             <div class="flex items-center gap-3 flex-wrap">
@@ -60,8 +60,9 @@
 
                 @if(auth()->user()->isAdminOrAbove())
                 <!-- Bulk Delete -->
-                <button @click="deleteSelected()" 
+                <button @click="deleteSelected()"
                         x-show="selectedVouchers.length > 0"
+                        aria-label="Delete selected vouchers"
                         class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-red-500/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2"
                         style="display: none;">
                     <x-lucide-trash-2 class="w-3.5 h-3.5" />
@@ -121,7 +122,7 @@
                             @endif
                             <td class="py-4 font-extrabold text-amber-700 text-base tracking-widest font-mono">
                                 {{ $voucher->code }}
-                                <span class="block text-[10px] text-[#A1887F] font-medium tracking-normal md:hidden">{{ $voucher->duration_minutes }} Mins</span>
+                                <span class="block text-[10px] text-[#6D4C41] font-medium tracking-normal md:hidden">{{ $voucher->duration_minutes }} Mins</span>
                             </td>
                             <td class="py-4 text-[#8D6E63] font-bold hidden md:table-cell">
                                 {{ $voucher->duration_minutes }} Mins
@@ -139,19 +140,19 @@
                                 @else
                                     <span class="px-4 py-1.5 bg-[#FFF3E0] text-[#E65100] text-[10px] font-bold uppercase tracking-wider rounded-full">Available</span>
                                 @endif
-                                <span class="block text-[10px] text-[#A1887F] font-medium mt-1 md:hidden">{{ $voucher->created_at->format('M d, Y') }}</span>
+                                <span class="block text-[10px] text-[#6D4C41] font-medium mt-1 md:hidden">{{ $voucher->created_at->format('M d, Y') }}</span>
                             </td>
                             <td class="py-4 text-[#8D6E63] text-xs font-medium hidden md:table-cell">
                                 {{ $voucher->created_at->format('M d, Y') }}
-                                <span class="block text-[10px] text-[#A1887F]">{{ $voucher->created_at->format('h:i A') }}</span>
+                                <span class="block text-[10px] text-[#6D4C41]">{{ $voucher->created_at->format('h:i A') }}</span>
                             </td>
                             <td class="py-4 text-right">
                                 <div class="flex justify-end gap-2">
                                     
-                                    <a href="{{ route('network.vouchers.print', $voucher->id) }}" 
-                                       target="_blank" 
+                                    <a href="{{ route('network.vouchers.print', $voucher->id) }}"
+                                       target="_blank"
                                        class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition"
-                                       title="Print">
+                                       title="Print" aria-label="Print">
                                         <x-lucide-printer class="w-4 h-4" />
                                     </a>
 
@@ -167,7 +168,7 @@
                                                     confirmText: 'Yes, Delete',
                                                     callback: () => document.getElementById('delete-voucher-{{ $voucher->id }}').submit()
                                                 })"
-                                                class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                                class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete" aria-label="Delete">
                                             <x-lucide-trash-2 class="w-4 h-4" />
                                         </button>
                                     </form>
@@ -181,7 +182,7 @@
                             <td colspan="{{ auth()->user()->isAdminOrAbove() ? 7 : 6 }}" class="py-16 text-center">
                                 <div class="flex flex-col items-center opacity-30">
                                     <x-lucide-ticket class="w-10 h-10 mb-3" />
-                                    <p class="text-[#A1887F] text-sm font-medium">No vouchers found.</p>
+                                    <p class="text-[#6D4C41] text-sm font-medium">No vouchers found.</p>
                                 </div>
                             </td>
                         </tr>
@@ -211,25 +212,28 @@
             <form action="{{ route('network.vouchers.generate') }}" method="POST" @submit="submitting = true">
                 @csrf
                 <div class="mb-4">
-                    <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Quantity (Max 100)</label>
-                    <input type="number" name="quantity" required min="1" max="100" value="5" class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all">
+                    <label for="quantity" class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Quantity (Max 100)</label>
+                    <input type="number" id="quantity" name="quantity" required min="1" max="100" value="5" class="w-full p-3 border @error('quantity') border-red-500 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all">
+                    <x-field-error name="quantity" />
                 </div>
 
                 <div class="mb-8">
-                    <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Voucher Duration</label>
-                    <select name="duration_minutes" required class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
+                    <label for="duration_minutes" class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Voucher Duration</label>
+                    <select id="duration_minutes" name="duration_minutes" required class="w-full p-3 border @error('duration_minutes') border-red-500 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
                         @foreach($durations as $price => $mins)
                             <option value="{{ $mins }}">₱{{ $price }} - {{ $mins >= 1440 ? 'Whole Day' : ($mins >= 60 ? ($mins/60) . ' Hour(s)' : $mins . ' Mins') }}</option>
                         @endforeach
                     </select>
+                    <x-field-error name="duration_minutes" />
                 </div>
 
                 <div class="mb-8">
-                    <label class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Bandwidth Tier</label>
-                    <select name="tier" required class="w-full p-3 border border-[#F0E6D2] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
+                    <label for="tier" class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Bandwidth Tier</label>
+                    <select id="tier" name="tier" required class="w-full p-3 border @error('tier') border-red-500 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
                         <option value="free">Free</option>
                         <option value="premium">Premium</option>
                     </select>
+                    <x-field-error name="tier" />
                 </div>
 
                 <div class="flex gap-4">
@@ -244,7 +248,7 @@
 <script>
     function voucherManager() {
         return {
-            isModalOpen: {{ request('action') === 'generate' ? 'true' : 'false' }},
+            isModalOpen: {{ (request('action') === 'generate' || $errors->any()) ? 'true' : 'false' }},
             submitting: false,
             selectedVouchers: [],
             vouchers: {!! json_encode($vouchers->pluck('id')) !!},

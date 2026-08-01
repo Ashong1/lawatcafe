@@ -16,7 +16,7 @@
                     @endif
                 </span>
                 <div class="min-w-0">
-                    <span class="text-sm font-bold block truncate {{ $item->kds_status === 'completed' ? 'text-[#A1887F] line-through opacity-50' : 'text-[#3E2723]' }} transition-all">
+                    <span class="text-sm font-bold block truncate {{ $item->kds_status === 'completed' ? 'text-[#6D4C41] line-through opacity-50' : 'text-[#3E2723]' }} transition-all">
                         {{ $item->product->name ?? $item->item_name }}
                     </span>
                     

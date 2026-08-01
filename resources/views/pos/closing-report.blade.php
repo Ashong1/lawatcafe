@@ -66,8 +66,8 @@
             <form action="{{ route('shift.end', $shift->id) }}" method="POST" class="space-y-6" x-data="{ submitting: false }" @submit="submitting = true">
                 @csrf
                 <div>
-                    <label class="block text-[10px] font-black text-amber-500/80 uppercase tracking-widest mb-2 ml-1">Actual Cash Counted</label>
-                    <input type="number" name="ending_cash" step="0.01" required
+                    <label for="ending_cash" class="block text-[10px] font-black text-amber-500/80 uppercase tracking-widest mb-2 ml-1">Actual Cash Counted</label>
+                    <input type="number" id="ending_cash" name="ending_cash" step="0.01" required
                            class="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-5 py-4 text-2xl font-black text-white focus:outline-none focus:border-amber-500 transition-all text-center placeholder-white/20"
                            placeholder="0.00">
                     <p class="text-[9px] text-white/40 mt-3 italic text-center uppercase tracking-tighter">Please count the physical bills and coins in the drawer.</p>
@@ -100,7 +100,7 @@
                         </div>
                         <div>
                             <p class="text-sm font-bold text-[#3E2723]">{{ $tx->reason }}</p>
-                            <p class="text-[9px] font-black text-[#A1887F] uppercase tracking-widest">{{ $tx->created_at->format('h:i A') }} • {{ strtoupper(str_replace('_', ' ', $tx->type)) }}</p>
+                            <p class="text-[9px] font-black text-[#6D4C41] uppercase tracking-widest">{{ $tx->created_at->format('h:i A') }} • {{ strtoupper(str_replace('_', ' ', $tx->type)) }}</p>
                         </div>
                     </div>
                     <span class="font-black text-sm {{ $tx->type === 'pay_in' ? 'text-green-700' : 'text-red-700' }}">

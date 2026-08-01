@@ -50,7 +50,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-black text-[#3E2723]">{{ $comp->items->count() }} Items</p>
-                                <p class="text-[10px] font-bold text-[#A1887F] uppercase tracking-widest">Done {{ $comp->updated_at->diffForHumans() }}</p>
+                                <p class="text-[10px] font-bold text-[#6D4C41] uppercase tracking-widest">Done {{ $comp->updated_at->diffForHumans() }}</p>
                             </div>
                         </div>
                         <form action="{{ route('kds.update', $comp->id) }}" method="POST" @submit.prevent="recall('{{ route('kds.update', $comp->id) }}', $event)">

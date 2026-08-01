@@ -36,7 +36,7 @@
                         </div>
                         <div>
                             <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">7-Day Revenue Forecast</h3>
-                            <p class="text-[10px] text-[#A1887F] font-bold uppercase tracking-tighter mt-0.5">Projected earnings based on past performance</p>
+                            <p class="text-[10px] text-[#6D4C41] font-bold uppercase tracking-tighter mt-0.5">Projected earnings based on past performance</p>
                         </div>
                     </div>
 
@@ -55,7 +55,7 @@
                                 <div class="grid grid-cols-4 md:grid-cols-7 gap-2">
                                     @foreach($aiForecast['daily_forecast'] ?? [] as $day)
                                         <div class="text-center">
-                                            <p class="text-[8px] font-bold text-[#A1887F] uppercase mb-1">{{ $day['day'] }}</p>
+                                            <p class="text-[8px] font-bold text-[#6D4C41] uppercase mb-1">{{ $day['day'] }}</p>
                                             <p class="text-[10px] font-black text-[#3E2723]">₱{{ number_format($day['amount'], 0) }}</p>
                                         </div>
                                     @endforeach
@@ -66,12 +66,12 @@
                         <div class="w-full md:w-64 bg-[#FAFAFA] rounded-3xl p-6 border border-[#F0E6D2] shadow-inner flex flex-col justify-between">
                             <div class="flex flex-col gap-4">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-[9px] font-black text-[#A1887F] uppercase tracking-widest">Daily Avg (Proj.)</span>
+                                    <span class="text-[9px] font-black text-[#6D4C41] uppercase tracking-widest">Daily Avg (Proj.)</span>
                                     <span class="text-sm font-black text-[#3E2723]">₱{{ number_format(($aiForecast['forecast_total'] ?? 0) / 7, 0) }}</span>
                                 </div>
                                 <div class="h-[1px] w-full bg-[#F0E6D2]"></div>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-[9px] font-black text-[#A1887F] uppercase tracking-widest">Confidence Score</span>
+                                    <span class="text-[9px] font-black text-[#6D4C41] uppercase tracking-widest">Confidence Score</span>
                                     @php
                                         $confScore = $aiForecast['meta']['confidence_score'] ?? 1;
                                         $confStars = ceil(($confScore / 7) * 5);
@@ -181,7 +181,7 @@
                             <div class="p-6 border-2 border-dashed border-[#F0E6D2] rounded-3xl text-center">
                                 <x-lucide-shield-check class="w-8 h-8 text-green-200 mx-auto mb-3" />
                                 <p class="text-[10px] font-bold text-[#8D6E63] uppercase tracking-widest leading-tight">Demand Stable</p>
-                                <p class="text-[9px] text-[#A1887F] font-medium mt-1">No major risks detected in existing data.</p>
+                                <p class="text-[9px] text-[#6D4C41] font-medium mt-1">No major risks detected in existing data.</p>
                             </div>
                         @endforelse
                     </div>
@@ -189,7 +189,7 @@
             </div>
 
             <div class="mt-8 pt-8 border-t border-[#F0E6D2] text-center">
-                <p class="text-[8px] font-black text-[#A1887F] uppercase tracking-[0.3em]">Last Updated: {{ now()->format('h:i A') }}</p>
+                <p class="text-[8px] font-black text-[#6D4C41] uppercase tracking-[0.3em]">Last Updated: {{ now()->format('h:i A') }}</p>
             </div>
         </div>
     </div>
@@ -223,7 +223,7 @@
                             <tr>
                                 <td colspan="3" class="py-10 text-center">
                                     <x-lucide-package-search class="w-7 h-7 text-[#F0E6D2] mx-auto mb-2" />
-                                    <p class="text-[10px] font-black text-[#A1887F] uppercase tracking-widest">No category sales yet</p>
+                                    <p class="text-[10px] font-black text-[#6D4C41] uppercase tracking-widest">No category sales yet</p>
                                     <p class="text-[9px] text-[#D7CCC8] font-medium mt-1">Data appears once completed sales are recorded.</p>
                                 </td>
                             </tr>
@@ -256,7 +256,7 @@
                             <tr>
                                 <td colspan="3" class="py-10 text-center">
                                     <x-lucide-calendar-x class="w-7 h-7 text-[#F0E6D2] mx-auto mb-2" />
-                                    <p class="text-[10px] font-black text-[#A1887F] uppercase tracking-widest">No transactions this week</p>
+                                    <p class="text-[10px] font-black text-[#6D4C41] uppercase tracking-widest">No transactions this week</p>
                                     <p class="text-[9px] text-[#D7CCC8] font-medium mt-1">Daily activity will appear here once sales come in.</p>
                                 </td>
                             </tr>

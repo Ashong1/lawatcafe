@@ -14,7 +14,7 @@
             <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Welcome back! Here is your shift overview.</p>
         </div>
         <div class="flex items-center gap-3">
-            <p class="text-xs font-bold uppercase tracking-widest text-[#A1887F]" x-text="currentTime">{{ now()->format('l, F jS - h:i A') }}</p>
+            <p class="text-xs font-bold uppercase tracking-widest text-[#6D4C41]" x-text="currentTime">{{ now()->format('l, F jS - h:i A') }}</p>
         </div>
     </div>
 
@@ -45,7 +45,7 @@
             <div class="bg-[#FDF8F5] p-4 rounded-full group-hover:scale-110 transition-transform duration-300">
                 <x-lucide-receipt class="w-8 h-8 text-amber-800" />
             </div>
-            <p class="text-[9px] text-[#A1887F] font-bold uppercase tracking-wider mt-4">View past orders</p>
+            <p class="text-[9px] text-[#6D4C41] font-bold uppercase tracking-wider mt-4">View past orders</p>
         </div>
 
         <!-- Live Queue Snapshot -->
@@ -58,7 +58,7 @@
                       :class="pendingOrdersCount > 5 ? 'text-red-500' : (pendingOrdersCount > 0 ? 'text-amber-600' : 'text-green-600')"
                       x-text="pendingOrdersCount" aria-live="polite" aria-atomic="true">{{ $pendingOrdersCount }}</span>
             </div>
-            <p class="text-[9px] text-[#A1887F] font-bold uppercase tracking-wider mt-2">Active Orders</p>
+            <p class="text-[9px] text-[#6D4C41] font-bold uppercase tracking-wider mt-2">Active Orders</p>
             <div x-show="pendingOrdersCount > 5" class="absolute top-4 right-4 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
         </div>
         
@@ -82,7 +82,7 @@
                     <div class="space-y-4">
                         <div>
                             <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em]">Clocked In</p>
-                            <p class="text-sm font-bold text-[#3E2723]"><span x-text="activeShift?.started_at"></span> <span class="text-[#A1887F] text-xs font-medium" x-text="`(${activeShift?.duration})`"></span></p>
+                            <p class="text-sm font-bold text-[#3E2723]"><span x-text="activeShift?.started_at"></span> <span class="text-[#6D4C41] text-xs font-medium" x-text="`(${activeShift?.duration})`"></span></p>
                         </div>
                         <div>
                             <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em]">Starting Drawer</p>
@@ -104,7 +104,7 @@
                 </div>
 
                 <div x-show="!activeShift" class="flex-1 flex flex-col items-center justify-center text-center py-6">
-                    <x-lucide-lock class="w-8 h-8 text-[#A1887F] mb-3 opacity-50" />
+                    <x-lucide-lock class="w-8 h-8 text-[#6D4C41] mb-3 opacity-50" />
                     <p class="text-sm font-bold text-[#3E2723]">No Active Shift</p>
                     <p class="text-xs text-[#8D6E63] mt-1">Open the POS to start your shift drawer.</p>
                 </div>
@@ -190,7 +190,7 @@
                             <span class="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" :class="finding.severity === 'danger' ? 'bg-red-500' : 'bg-amber-500'"></span>
                             <div class="flex-1 min-w-0">
                                 <p class="text-xs font-bold text-[#3E2723] leading-snug" x-text="finding.summary"></p>
-                                <p class="text-[9px] font-black uppercase tracking-widest text-[#A1887F] mt-0.5" x-text="finding.created_at"></p>
+                                <p class="text-[9px] font-black uppercase tracking-widest text-[#6D4C41] mt-0.5" x-text="finding.created_at"></p>
                             </div>
                         </div>
                     </template>

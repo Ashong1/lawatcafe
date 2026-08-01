@@ -90,7 +90,7 @@
         historyEnabled: @js($historyEnabled),
     })"
      class="fixed flex flex-col"
-     :style="`left: ${posX}px; top: ${posY}px; width: 380px; position: fixed !important; z-index: 9999 !important; bottom: auto !important; right: auto !important; transition: ${isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'}; touch-action: none;`"
+     :style="`left: ${posX}px; top: ${posY}px; width: ${chatWidth()}px; position: fixed !important; z-index: 9999 !important; bottom: auto !important; right: auto !important; transition: ${isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'}; touch-action: none;`"
      @pointermove.window="onDrag($event)"
      @pointerup.window="stopDrag()"
      @pointercancel.window="stopDrag()"
@@ -104,7 +104,8 @@
          x-transition:leave="transition ease-in duration-[400ms]"
          x-transition:leave-start="opacity-100 scale-100 translate-y-0"
          x-transition:leave-end="opacity-0 scale-90 translate-y-10"
-         class="relative mb-4 w-full h-[550px] bg-white rounded-[2rem] shadow-2xl border border-[#F0E6D2] overflow-hidden flex flex-col shadow-amber-900/10"
+         class="relative mb-4 w-full bg-white rounded-[2rem] shadow-2xl border border-[#F0E6D2] overflow-hidden flex flex-col shadow-amber-900/10"
+         :style="`height: ${chatHeight()}px`"
          style="display: none;">
 
         <!-- Header (Draggable Handle) -->
@@ -122,14 +123,14 @@
                 </div>
             </div>
             <div class="flex items-center gap-1" x-show="historyEnabled">
-                <button @click.stop="toggleHistory()" title="Past conversations" class="text-amber-200 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
+                <button @click.stop="toggleHistory()" title="Past conversations" aria-label="Past conversations" class="text-amber-200 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
                     <x-lucide-history class="w-5 h-5" />
                 </button>
-                <button @click.stop="newConversation()" title="New conversation" class="text-amber-200 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
+                <button @click.stop="newConversation()" title="New conversation" aria-label="New conversation" class="text-amber-200 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
                     <x-lucide-square-pen class="w-5 h-5" />
                 </button>
             </div>
-            <button @click="open = false; posY += 566" class="text-amber-200 hover:text-white transition shrink-0">
+            <button @click="open = false; posY += (chatHeight() + 16); clampPosition()" aria-label="Close" class="text-amber-200 hover:text-white transition shrink-0">
                 <x-lucide-x class="w-6 h-6" />
             </button>
         </div>
@@ -142,17 +143,18 @@
              @click.outside="showHistory = false"
              class="absolute top-[92px] left-4 right-4 z-20 bg-white rounded-2xl shadow-2xl border border-[#F0E6D2] max-h-72 overflow-y-auto"
              style="display: none;">
-            <div x-show="loadingHistory" class="p-4 text-center text-[10px] font-black uppercase tracking-widest text-[#A1887F]">Loading…</div>
-            <div x-show="!loadingHistory && conversationList.length === 0" class="p-4 text-center text-[10px] font-black uppercase tracking-widest text-[#A1887F]">No past conversations yet.</div>
+            <div x-show="loadingHistory" class="p-4 text-center text-[10px] font-black uppercase tracking-widest text-[#6D4C41]">Loading…</div>
+            <div x-show="!loadingHistory && conversationList.length === 0" class="p-4 text-center text-[10px] font-black uppercase tracking-widest text-[#6D4C41]">No past conversations yet.</div>
             <template x-for="conv in conversationList" :key="conv.id">
                 <div @click="openConversation(conv.id)"
+                     tabindex="0" role="button" @keydown.enter="openConversation(conv.id)" @keydown.space.prevent="openConversation(conv.id)"
                      class="flex items-center justify-between gap-2 px-4 py-3 border-b border-[#F0E6D2] last:border-0 cursor-pointer hover:bg-[#FDF8F5] transition group"
                      :class="conv.id === conversationId ? 'bg-amber-50' : ''">
                     <div class="min-w-0">
                         <p class="text-xs font-bold text-[#3E2723] truncate" x-text="conv.title || 'Conversation'"></p>
-                        <p class="text-[9px] font-black uppercase tracking-widest text-[#A1887F] mt-0.5" x-text="formatRelativeTime(conv.last_message_at)"></p>
+                        <p class="text-[9px] font-black uppercase tracking-widest text-[#6D4C41] mt-0.5" x-text="formatRelativeTime(conv.last_message_at)"></p>
                     </div>
-                    <button @click.stop="deleteConversation(conv.id)" title="Delete" class="shrink-0 opacity-0 group-hover:opacity-100 text-[#D7CCC8] hover:text-red-600 transition p-1">
+                    <button @click.stop="deleteConversation(conv.id)" title="Delete" aria-label="Delete conversation" class="shrink-0 opacity-0 group-hover:opacity-100 text-[#D7CCC8] hover:text-red-600 transition p-1">
                         <x-lucide-trash-2 class="w-3.5 h-3.5" />
                     </button>
                 </div>
@@ -170,7 +172,7 @@
                                  :class="msg.role === 'user' ? 'bg-[#3E2723] text-white rounded-tr-none' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] rounded-tl-none'">
                                 <span x-html="formatMarkdown(msg.content)"></span>
                             </div>
-                            <span class="text-[8px] font-black uppercase tracking-widest text-[#A1887F] mt-1.5 mx-1" x-text="msg.role === 'user' ? 'You' : @js($title)"></span>
+                            <span class="text-[8px] font-black uppercase tracking-widest text-[#6D4C41] mt-1.5 mx-1" x-text="msg.role === 'user' ? 'You' : @js($title)"></span>
                         </div>
                     </template>
 
@@ -332,13 +334,11 @@ document.addEventListener('alpine:init', () => {
             } catch (e) { /* corrupt/unavailable storage — keep the default greeting */ }
 
             if (this.open) {
-                this.posY = window.innerHeight - 646;
+                this.posY = window.innerHeight - (this.chatHeight() + 16 + 80);
             }
+            this.clampPosition();
 
-            window.addEventListener('resize', () => {
-                if (this.posX > window.innerWidth - 412) this.posX = window.innerWidth - 412;
-                if (this.posY > window.innerHeight - 80) this.posY = window.innerHeight - 80;
-            });
+            window.addEventListener('resize', () => this.clampPosition());
 
             this.$watch('history.length', () => this.scrollToBottom());
             this.$watch('thinking', () => this.scrollToBottom());
@@ -350,6 +350,36 @@ document.addEventListener('alpine:init', () => {
             if (this.csrf) {
                 setInterval(() => this.syncPendingActions(), 12000);
             }
+        },
+
+        // The window shrinks to fit small viewports instead of staying a fixed
+        // 380x550 (see the :style bindings above) — position math below always
+        // reads these rather than the raw 380/550 numbers, or the widget would
+        // be positioned as if still full-size and spill off-screen on a phone.
+        chatWidth() {
+            return Math.min(380, window.innerWidth - 32);
+        },
+
+        chatHeight() {
+            // The round toggle button stays visible in the same fixed column
+            // below the window even while open (it becomes the collapse
+            // control) — reserve its ~80px (button + margin) here too, or a
+            // window sized against the full viewport height would push that
+            // button off the bottom of a short screen with nowhere to clamp it.
+            return Math.min(550, window.innerHeight - 32 - 80);
+        },
+
+        // Shared bound, used everywhere position is set WITHOUT being a direct
+        // drag result (initial load, toggle-open/close, window resize) — a
+        // fixed-position widget that only ever clamped its upper bound could
+        // end up off-screen with no way back once already there; this clamps
+        // both directions so it always self-corrects.
+        clampPosition() {
+            const maxX = Math.max(16, window.innerWidth - this.chatWidth() - 16);
+            const openColumnHeight = this.chatHeight() + 16 + 80; // window + its mb-4 + the toggle button's own resting margin
+            const maxY = Math.max(16, window.innerHeight - (this.open ? openColumnHeight : 80));
+            this.posX = Math.min(Math.max(this.posX, 16), maxX);
+            this.posY = Math.min(Math.max(this.posY, 16), maxY);
         },
 
         startDrag(e) {
@@ -386,17 +416,16 @@ document.addEventListener('alpine:init', () => {
             }
 
             this.open = !this.open;
-            if (this.open) {
-                this.posY -= 566;
-            } else {
-                this.posY += 566;
-            }
+            const offset = this.chatHeight() + 16;
+            this.posY += this.open ? -offset : offset;
+            this.clampPosition();
         },
 
         handleExternalOpen(prompt) {
             if (!this.open) {
                 this.open = true;
-                this.posY -= 566;
+                this.posY -= (this.chatHeight() + 16);
+                this.clampPosition();
             }
             this.message = prompt;
             this.$nextTick(() => this.send());

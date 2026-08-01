@@ -70,7 +70,7 @@
                         <td class="py-4 text-[#8D6E63] font-medium max-w-[200px] truncate hidden md:table-cell">{{ $category->description ?: 'No description provided.' }}</td>
                         <td class="py-4 text-right">
                             <div class="flex justify-end gap-2">
-                                <button @click="openEditModal({{ $category }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit">
+                                <button @click="openEditModal({{ $category }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit" aria-label="Edit">
                                     <x-lucide-pencil class="w-4 h-4" />
                                 </button>
                                 
@@ -85,7 +85,7 @@
                                                 confirmText: 'Yes, Delete',
                                                 callback: () => document.getElementById('delete-category-{{ $category->id }}').submit()
                                             })"
-                                            class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                            class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete" aria-label="Delete">
                                         <x-lucide-trash-2 class="w-4 h-4" />
                                     </button>
                                 </form>
@@ -97,7 +97,7 @@
                         <td colspan="5" class="py-16 text-center">
                             <div class="flex flex-col items-center opacity-30">
                                 <x-lucide-layers class="w-10 h-10 mb-3" />
-                                <p class="text-[#A1887F] text-sm font-medium">No categories found. Create one to get started.</p>
+                                <p class="text-[#6D4C41] text-sm font-medium">No categories found. Create one to get started.</p>
                             </div>
                         </td>
                     </tr>
@@ -121,8 +121,8 @@
 
                 <div class="p-8 space-y-6">
                     <div>
-                        <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Category Name</label>
-                        <input type="text" name="name" x-model="formData.name" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm" placeholder="e.g. Cold Brews">
+                        <label for="category-name" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Category Name</label>
+                        <input type="text" id="category-name" name="name" x-model="formData.name" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm" placeholder="e.g. Cold Brews">
                     </div>
 
                     <button type="button" @click="suggestWithAi()" :disabled="!formData.name || suggesting"
@@ -134,9 +134,9 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Icon</label>
+                            <label for="category-icon" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Icon</label>
                             <div class="relative">
-                                <select name="icon" x-model="formData.icon" class="w-full p-3 pl-10 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all appearance-none text-xs font-bold">
+                                <select id="category-icon" name="icon" x-model="formData.icon" class="w-full p-3 pl-10 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all appearance-none text-xs font-bold">
                                     @foreach(\App\Models\Category::AVAILABLE_ICONS as $iconOption)
                                         <option value="{{ $iconOption }}">{{ ucwords(str_replace('-', ' ', $iconOption)) }}</option>
                                     @endforeach
@@ -148,17 +148,17 @@
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Color</label>
+                            <label for="category-color" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Color</label>
                             <div class="flex gap-2">
-                                <input type="color" name="color" x-model="formData.color" class="h-10 w-12 p-1 border-2 border-[#F0E6D2] rounded-xl bg-white cursor-pointer">
+                                <input type="color" id="category-color" name="color" x-model="formData.color" class="h-10 w-12 p-1 border-2 border-[#F0E6D2] rounded-xl bg-white cursor-pointer">
                                 <input type="text" x-model="formData.color" class="flex-1 p-2 border-2 border-[#F0E6D2] rounded-xl text-[10px] font-mono uppercase focus:outline-none bg-[#FAFAFA]" readonly>
                             </div>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Description (Optional)</label>
-                        <textarea name="description" x-model="formData.description" rows="2" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-medium" placeholder="Brief description of this group..."></textarea>
+                        <label for="category-description" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Description (Optional)</label>
+                        <textarea id="category-description" name="description" x-model="formData.description" rows="2" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-medium" placeholder="Brief description of this group..."></textarea>
                     </div>
                 </div>
 
@@ -227,6 +227,9 @@
                 }
             },
 
+            // Matches the branded error-toast styling in layouts/admin.blade.php's
+            // session('error') handler, instead of SweetAlert2's unstyled default
+            // look this used to render with.
             toast(icon, title) {
                 if (typeof Swal === 'undefined') return;
                 Swal.fire({
@@ -237,6 +240,12 @@
                     showConfirmButton: false,
                     timer: 4000,
                     timerProgressBar: true,
+                    background: '#FFEBEE',
+                    color: '#C62828',
+                    iconColor: '#C62828',
+                    customClass: {
+                        popup: 'rounded-2xl border border-red-200 shadow-xl font-bold'
+                    }
                 });
             }
         }))

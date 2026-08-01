@@ -47,7 +47,7 @@
                         <x-lucide-list-checks class="w-5 h-5 text-amber-600" />
                         Active Pricing Tiers
                     </h3>
-                    <p class="text-xs text-[#A1887F] mt-1 font-medium italic">Manage how much customers pay for specific Wi-Fi durations.</p>
+                    <p class="text-xs text-[#6D4C41] mt-1 font-medium italic">Manage how much customers pay for specific Wi-Fi durations.</p>
                 </div>
                 
                 <button type="button" @click="openModalForAdd()" 
@@ -110,7 +110,7 @@
                                           x-text="formatDuration(freeDuration)"></span>
                                 </td>
                                 <td class="py-4 px-6 text-right">
-                                    <button type="button" @click="openModalForComplimentary()" title="Edit Complimentary Rules"
+                                    <button type="button" @click="openModalForComplimentary()" title="Edit Complimentary Rules" aria-label="Edit Complimentary Rules"
                                             class="p-2 text-amber-700 hover:text-amber-900 hover:bg-amber-100/50 rounded-xl transition-all">
                                         <x-lucide-pencil class="w-4 h-4" />
                                     </button>
@@ -143,11 +143,11 @@
                                     </td>
                                     <td class="py-4 px-6 text-right">
                                         <div class="flex items-center justify-end gap-2">
-                                            <button type="button" @click="openModalForEdit(plan, index)" title="Edit Tier"
+                                            <button type="button" @click="openModalForEdit(plan, index)" title="Edit Tier" aria-label="Edit Tier"
                                                     class="p-2 text-amber-700 hover:text-amber-900 hover:bg-amber-100/50 rounded-xl transition-all">
                                                 <x-lucide-pencil class="w-4 h-4" />
                                             </button>
-                                            <button type="button" @click="removePlan(index)" title="Remove Tier"
+                                            <button type="button" @click="removePlan(index)" title="Remove Tier" aria-label="Remove Tier"
                                                     class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
                                                 <x-lucide-trash-2 class="w-4 h-4" />
                                             </button>
@@ -163,7 +163,7 @@
                                             <div class="w-16 h-16 bg-[#FAFAFA] rounded-full flex items-center justify-center border border-[#F0E6D2] mb-4">
                                                 <x-lucide-wifi class="w-8 h-8 text-amber-200" />
                                             </div>
-                                            <p class="text-xs font-black text-[#A1887F] uppercase tracking-widest">No plans defined yet</p>
+                                            <p class="text-xs font-black text-[#6D4C41] uppercase tracking-widest">No plans defined yet</p>
                                             <p class="text-[11px] text-[#D7CCC8] mt-1 font-medium">Click "Add New Tier" to populate pricing structures.</p>
                                         </div>
                                     </td>
@@ -207,30 +207,30 @@
                     <x-lucide-wifi class="w-4 h-4 text-amber-600" />
                     <span x-text="isEditingComplimentary ? 'Modify Complimentary Tier' : (isEditMode ? 'Modify Pricing Tier' : 'Add New Pricing Tier')"></span>
                 </h3>
-                <button type="button" @click="modalOpen = false" aria-label="Close dialog" class="text-[#A1887F] hover:text-[#3E2723] transition-colors">
+                <button type="button" @click="modalOpen = false" aria-label="Close dialog" class="text-[#6D4C41] hover:text-[#3E2723] transition-colors">
                     <x-lucide-x class="w-5 h-5" />
                 </button>
             </div>
 
             <div class="p-6 space-y-5">
                 <div>
-                    <label class="block text-[10px] font-black text-[#A1887F] uppercase tracking-widest ml-1 mb-1.5"
+                    <label for="plan-price" class="block text-[10px] font-black text-[#6D4C41] uppercase tracking-widest ml-1 mb-1.5"
                            x-text="isEditingComplimentary ? 'Minimum Order Amount (₱)' : 'Price (₱)'"></label>
                     <div class="flex items-center bg-[#FAFAFA] border border-gray-200 rounded-xl focus-within:border-[#3E2723] focus-within:ring-1 focus-within:ring-[#3E2723] transition-all group overflow-hidden">
-                        <span class="pl-4 pr-1 text-xl font-black text-[#A1887F] group-focus-within:text-[#3E2723] transition-colors select-none pointer-events-none">₱</span>
-                        <input type="number" x-model="modalData.price" 
-                               class="modal-clean-input flex-1 py-3.5 pr-4 pl-0 bg-transparent text-xl font-black text-[#3E2723] w-full" 
+                        <span class="pl-4 pr-1 text-xl font-black text-[#6D4C41] group-focus-within:text-[#3E2723] transition-colors select-none pointer-events-none">₱</span>
+                        <input type="number" id="plan-price" x-model="modalData.price"
+                               class="modal-clean-input flex-1 py-3.5 pr-4 pl-0 bg-transparent text-xl font-black text-[#3E2723] w-full"
                                placeholder="20">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-black text-[#A1887F] uppercase tracking-widest ml-1 mb-1.5">Duration</label>
+                    <label for="plan-minutes" class="block text-[10px] font-black text-[#6D4C41] uppercase tracking-widest ml-1 mb-1.5">Duration</label>
                     <div class="flex items-center bg-[#FAFAFA] border border-gray-200 rounded-xl focus-within:border-[#3E2723] focus-within:ring-1 focus-within:ring-[#3E2723] transition-all group overflow-hidden">
-                        <input type="number" x-model="modalData.minutes" 
-                               class="modal-clean-input flex-1 py-3.5 pl-5 pr-2 bg-transparent text-xl font-black text-[#3E2723] w-full" 
+                        <input type="number" id="plan-minutes" x-model="modalData.minutes"
+                               class="modal-clean-input flex-1 py-3.5 pl-5 pr-2 bg-transparent text-xl font-black text-[#3E2723] w-full"
                                placeholder="60">
-                        <span class="pr-5 text-[10px] font-black text-[#A1887F] uppercase tracking-widest select-none pointer-events-none">Mins</span>
+                        <span class="pr-5 text-[10px] font-black text-[#6D4C41] uppercase tracking-widest select-none pointer-events-none">Mins</span>
                     </div>
                     <div class="flex justify-end mt-1.5 mr-1">
                         <span class="text-[10px] font-bold text-amber-600 uppercase tracking-tight italic" 

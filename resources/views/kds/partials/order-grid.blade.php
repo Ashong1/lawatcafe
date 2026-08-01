@@ -33,7 +33,7 @@
                             {{ $order->order_type === 'takeaway' ? 'TAKE AWAY' : 'DINE IN' }}
                         </span>
                     </div>
-                    <p class="text-[10px] font-black uppercase tracking-widest {{ $waitMinutes >= 10 ? 'text-red-600' : ($waitMinutes >= 5 ? 'text-amber-700' : 'text-[#A1887F]') }}">
+                    <p class="text-[10px] font-black uppercase tracking-widest {{ $waitMinutes >= 10 ? 'text-red-600' : ($waitMinutes >= 5 ? 'text-amber-700' : 'text-[#6D4C41]') }}">
                         <x-lucide-clock class="w-3 h-3 inline mr-0.5 -mt-0.5" />
                         {{ $order->created_at->diffForHumans() }}
                     </p>

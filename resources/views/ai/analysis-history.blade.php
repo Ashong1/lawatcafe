@@ -23,7 +23,7 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-black uppercase tracking-widest text-[#3E2723]">Analysis Run</h3>
-                        <p class="text-[10px] text-[#A1887F] font-bold uppercase tracking-wider">{{ $run->created_at->diffForHumans() }} &middot; {{ $run->created_at->format('M d, Y h:i A') }}</p>
+                        <p class="text-[10px] text-[#6D4C41] font-bold uppercase tracking-wider">{{ $run->created_at->diffForHumans() }} &middot; {{ $run->created_at->format('M d, Y h:i A') }}</p>
                     </div>
                 </div>
                 <span class="text-[10px] font-black uppercase tracking-widest text-[#8D6E63] bg-[#FDF8F5] border border-[#F0E6D2] px-3 py-1 rounded-full">{{ $run->signal_count }} signal(s)</span>
@@ -49,7 +49,7 @@
         <div class="bg-white p-16 rounded-2xl shadow-sm border border-[#F0E6D2] text-center">
             <div class="flex flex-col items-center opacity-30">
                 <x-lucide-radar class="w-12 h-12 mb-4" />
-                <p class="text-[#A1887F] text-sm font-bold uppercase tracking-widest">No analysis runs yet.</p>
+                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-widest">No analysis runs yet.</p>
             </div>
         </div>
         @endforelse

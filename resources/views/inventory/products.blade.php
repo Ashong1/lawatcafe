@@ -20,7 +20,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Menu Items</h3>
-                <p class="text-xs text-[#A1887F] mt-1 font-medium">Manage and track your kape's offerings.</p>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Manage and track your kape's offerings.</p>
             </div>
             
             <div class="flex items-center gap-3">
@@ -57,7 +57,7 @@
                                     </div>
                                     <div class="flex flex-col">
                                         <span class="font-bold text-[#3E2723] text-sm">{{ $product->name }}</span>
-                                        <span class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest md:hidden">{{ $product->category }}</span>
+                                        <span class="text-[10px] text-[#6D4C41] font-black uppercase tracking-widest md:hidden">{{ $product->category }}</span>
                                     </div>
                                 </div>
                             </td>
@@ -80,7 +80,7 @@
                                                 </span>
                                             @endforeach
                                             @if($ingCount > 2)
-                                                <span class="text-[9px] text-[#A1887F] font-bold italic ml-0.5">+{{ $ingCount - 2 }}</span>
+                                                <span class="text-[9px] text-[#6D4C41] font-bold italic ml-0.5">+{{ $ingCount - 2 }}</span>
                                             @endif
                                         </div>
                                     @else
@@ -105,7 +105,7 @@
                             </td>
                             <td class="py-4 text-right">
                                 <div class="flex justify-end gap-2">
-                                    <button type="button" @click="openEditModal({{ $product->load('ingredients') }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit">
+                                    <button type="button" @click="openEditModal({{ $product->load('ingredients') }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit" aria-label="Edit">
                                         <x-lucide-pencil class="w-4 h-4" />
                                     </button>
                                     
@@ -120,7 +120,7 @@
                                                     confirmText: 'Yes, Delete It',
                                                     callback: () => document.getElementById('delete-product-{{ $product->id }}').submit()
                                                 })"
-                                                class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete">
+                                                class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete" aria-label="Delete">
                                             <x-lucide-trash-2 class="w-4 h-4" />
                                         </button>
                                     </form>
@@ -132,7 +132,7 @@
                             <td colspan="5" class="py-16 text-center">
                                 <div class="flex flex-col items-center opacity-30">
                                     <x-lucide-package class="w-10 h-10 mb-3" />
-                                    <p class="text-[#A1887F] text-sm font-medium uppercase tracking-widest">No products found. Click "New Product" to start.</p>
+                                    <p class="text-[#6D4C41] text-sm font-medium uppercase tracking-widest">No products found. Click "New Product" to start.</p>
                                 </div>
                             </td>
                         </tr>
@@ -168,33 +168,37 @@
                 <div class="p-8 space-y-6">
                     <div x-show="activeTab === 'general'" class="space-y-5">
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Product Name</label>
-                            <input type="text" name="name" x-model="formData.name" required class="w-full bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all" placeholder="e.g. Spanish Latte">
+                            <label for="product-name" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Product Name</label>
+                            <input type="text" id="product-name" name="name" x-model="formData.name" required class="w-full bg-[#FAFAFA] border-2 @error('name') border-red-500 @enderror rounded-xl px-4 py-3 text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all" placeholder="e.g. Spanish Latte">
+                            <x-field-error name="name" />
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Category</label>
-                                <select name="category" x-model="formData.category" required class="w-full bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-3 py-3 text-xs font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
+                                <label for="product-category" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Category</label>
+                                <select id="product-category" name="category" x-model="formData.category" required class="w-full bg-[#FAFAFA] border-2 @error('category') border-red-500 @enderror rounded-xl px-3 py-3 text-xs font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
                                     <option value="">Select...</option>
                                     @foreach($categories as $category)
                                         <option value="{{ $category->name }}">{{ $category->name }}</option>
                                     @endforeach
                                 </select>
+                                <x-field-error name="category" />
                             </div>
 
                             <div>
-                                <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Price (₱)</label>
-                                <input type="number" step="0.01" name="price" x-model="formData.price" required class="w-full bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all" placeholder="0.00">
+                                <label for="product-price" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Price (₱)</label>
+                                <input type="number" step="0.01" id="product-price" name="price" x-model="formData.price" required class="w-full bg-[#FAFAFA] border-2 @error('price') border-red-500 @enderror rounded-xl px-4 py-3 text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all" placeholder="0.00">
+                                <x-field-error name="price" />
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Status</label>
-                            <select name="status" x-model="formData.status" required class="w-full bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-3 py-3 text-xs font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
+                            <label for="product-status" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-1.5 ml-1">Status</label>
+                            <select id="product-status" name="status" x-model="formData.status" required class="w-full bg-[#FAFAFA] border-2 @error('status') border-red-500 @enderror rounded-xl px-3 py-3 text-xs font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
                                 <option value="Active">Active</option>
                                 <option value="Out of Stock">Out of Stock</option>
                             </select>
+                            <x-field-error name="status" />
                         </div>
                     </div>
 
@@ -211,8 +215,8 @@
                             <template x-for="(ing, idx) in currentRecipe" :key="'recipe-ing-'+idx">
                                 <div class="flex gap-3 items-end bg-[#FDF8F5] p-3 rounded-xl border border-[#F0E6D2] group relative">
                                     <div class="flex-[2]">
-                                        <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Ingredient</label>
-                                        <select :name="'ingredients['+idx+'][id]'" x-model="ing.id" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-[10px] bg-white font-bold text-[#3E2723]">
+                                        <label :for="'recipe-item-'+idx+'-ingredient'" class="block text-[9px] text-[#6D4C41] font-black uppercase mb-1">Ingredient</label>
+                                        <select :id="'recipe-item-'+idx+'-ingredient'" :name="'ingredients['+idx+'][id]'" x-model="ing.id" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-[10px] bg-white font-bold text-[#3E2723]">
                                             <option value="">Select...</option>
                                             @foreach($ingredients as $ingredient)
                                                 <option value="{{ $ingredient->id }}">{{ $ingredient->name }} ({{ $ingredient->unit }})</option>
@@ -220,8 +224,8 @@
                                         </select>
                                     </div>
                                     <div class="flex-1">
-                                        <label class="block text-[9px] text-[#A1887F] font-black uppercase mb-1">Qty</label>
-                                        <input type="number" :name="'ingredients['+idx+'][quantity]'" x-model="ing.quantity" step="0.01" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723]">
+                                        <label :for="'recipe-item-'+idx+'-quantity'" class="block text-[9px] text-[#6D4C41] font-black uppercase mb-1">Qty</label>
+                                        <input type="number" :id="'recipe-item-'+idx+'-quantity'" :name="'ingredients['+idx+'][quantity]'" x-model="ing.quantity" step="0.01" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723]">
                                     </div>
                                     <button type="button" @click="removeIngredientRow(idx)" class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0">
                                         <x-lucide-trash-2 class="w-4 h-4" />
@@ -232,7 +236,7 @@
                             <template x-if="currentRecipe.length === 0">
                                 <div class="py-12 text-center border-2 border-dashed border-[#F0E6D2] rounded-2xl bg-[#FAFAFA]">
                                     <x-lucide-utensils-crossed class="w-8 h-8 text-[#D7CCC8] mx-auto mb-2 opacity-50" />
-                                    <p class="text-[10px] text-[#A1887F] font-black uppercase tracking-widest">No ingredients linked.</p>
+                                    <p class="text-[10px] text-[#6D4C41] font-black uppercase tracking-widest">No ingredients linked.</p>
                                 </div>
                             </template>
                         </div>
@@ -250,7 +254,11 @@
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('productManager', () => ({
-            isModalOpen: false,
+            // Reopens itself on a validation-failure redirect so the
+            // per-field errors below are actually visible — without this,
+            // the modal stays closed and the (correctly rendered) error
+            // markup is invisible behind it.
+            isModalOpen: {{ $errors->any() ? 'true' : 'false' }},
             isEditing: false,
             submitting: false,
             activeTab: 'general',
@@ -301,12 +309,37 @@
                     const data = await response.json();
                     if (data.success) {
                         this.statuses[productId] = data.new_status;
+                    } else {
+                        this.toggleStatusFailedToast();
                     }
                 } catch (error) {
                     console.error('Failed to toggle status:', error);
+                    this.toggleStatusFailedToast();
                 } finally {
                     this.togglingStatus[productId] = false;
                 }
+            },
+
+            // Matches the branded error-toast styling in layouts/admin.blade.php's
+            // session('error') handler — a failed toggle used to silently revert
+            // the spinner with zero indication anything went wrong.
+            toggleStatusFailedToast() {
+                if (typeof Swal === 'undefined') return;
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Could not update product status. Please try again.',
+                    showConfirmButton: false,
+                    timer: 4000,
+                    timerProgressBar: true,
+                    background: '#FFEBEE',
+                    color: '#C62828',
+                    iconColor: '#C62828',
+                    customClass: {
+                        popup: 'rounded-2xl border border-red-200 shadow-xl font-bold'
+                    }
+                });
             },
 
             closeModal() { this.isModalOpen = false; },
