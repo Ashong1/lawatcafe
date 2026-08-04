@@ -45,8 +45,6 @@ All four boxes above are Proxmox VE guests on the same `192.168.2.0/24` LAN — 
 - **Scheduler**: `* * * * * www-data cd /var/www/lawatcafe && php artisan schedule:run` via `/etc/cron.d/laravel-lawatcafe-schedule`, driving `agent:analyze` (every 15 min) and `network:enforce-sessions` (every minute) — see `routes/console.php`
 - **Mail**: outbound email goes through Resend's API (`MAIL_MAILER=resend`), not the local Postfix install — Postfix is running (`postfix@-.service`) but is the stock Ubuntu default, not actually used by the app
 
-**Known inconsistency**: the nginx vhost's `server_name` is still `lawatkafe.lab` (the old typo'd domain), while `APP_URL` in `.env` was corrected to `http://lawatkape.lab` in an earlier fix. Since this is the only server block on port 80, nginx still serves it as the default regardless of the `Host` header, so nothing is currently broken by this — but it's a stale leftover from the domain-typo fix that never got applied to the nginx config, and should be cleaned up (this is server config, outside git — see "Where things live" below).
-
 ## OPNsense (.251)
 
 Acts as the LAN's router/firewall/DHCP server and the captive-portal enforcement point. The app talks to it entirely over its REST API (key/secret auth, credentials in `.env`, never in git). What `app/Services/OpnSenseService.php` actually drives on it:
