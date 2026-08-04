@@ -50,6 +50,26 @@ class CaptivePortalController extends Controller
      * question is only answered in one place — they previously would have
      * had to duplicate this query and could drift apart.
      */
+    /**
+     * The device's live session on OPNsense, or null if the firewall has none.
+     *
+     * This is the authoritative answer to "is this device actually online" —
+     * the voucher row only says what the guest *paid for*, which stays true
+     * after the session ends. Anything that reports connectivity has to ask
+     * the firewall, not the database.
+     */
+    private function liveSessionFor(string $ip, ?string $mac, OpnSenseService $opnsense): ?array
+    {
+        $cleanMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac ?? ''));
+
+        return collect($opnsense->listSessions())->first(function ($s) use ($ip, $cleanMac) {
+            $sessionIp = str_replace('/32', '', $s['ipAddress'] ?? '');
+            $sessionMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $s['macAddress'] ?? ''));
+
+            return $sessionIp === $ip || (! empty($cleanMac) && $sessionMac === $cleanMac);
+        });
+    }
+
     private function activeVoucherFor(string $ip, ?string $mac): ?Voucher
     {
         return Voucher::where('is_used', true)
@@ -102,7 +122,17 @@ class CaptivePortalController extends Controller
         [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
 
         $secondsRemaining = $this->secondsRemainingOn($this->activeVoucherFor($ip, $mac));
-        $isCaptive = $secondsRemaining === null || $this->isMacBanned($mac);
+
+        // Paid-for time is not the same as being let through. A voucher keeps
+        // its remaining minutes after the guest hits Disconnect, after
+        // EnforceSessionLimits reaps an idle session, and after OPNsense
+        // restarts — in all three the firewall is blocking traffic. Reporting
+        // captive:false off the voucher alone told the OS "you are online"
+        // while nothing loaded, and because the OS then believes there is no
+        // portal, it never re-opens the sign-in window either.
+        $hasLiveSession = $this->liveSessionFor($ip, $mac, $opnsense) !== null;
+
+        $isCaptive = $secondsRemaining === null || ! $hasLiveSession || $this->isMacBanned($mac);
 
         $payload = [
             'captive' => $isCaptive,
@@ -160,14 +190,7 @@ class CaptivePortalController extends Controller
         [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
 
         // 2. Check if already connected
-        $sessions = $opnsense->listSessions();
-        $activeSession = collect($sessions)->filter(function ($s) use ($ip, $mac) {
-            $sessionIp = str_replace('/32', '', $s['ipAddress'] ?? '');
-            $sessionMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $s['macAddress'] ?? ''));
-            $cleanMac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac ?? ''));
-
-            return $sessionIp === $ip || (! empty($cleanMac) && $sessionMac === $cleanMac);
-        })->first();
+        $activeSession = $this->liveSessionFor($ip, $mac, $opnsense);
 
         if ($activeSession) {
             // VERIFY IF VOUCHER IS STILL VALID

@@ -1497,7 +1497,11 @@ OPERATIONAL GUIDELINES:
             return "☕ Best-sellers: {$list}!";
         }
         if (str_contains($lowerMsg, 'wifi')) {
-            return '📶 Visit http://neverssl.com to force the portal login.';
+            // Point at our own portal, not a third-party page. This used to
+            // send guests to neverssl.com — a captive-portal-triggering trick
+            // that predates the shop having a real portal hostname, and which
+            // reads to a customer as the Wi-Fi being broken.
+            return '📶 Connect at '.route('portal.index').' — enter the code printed on your receipt.';
         }
 
         return '☕ Serving guests! Check Menu or Wi-Fi tabs!';

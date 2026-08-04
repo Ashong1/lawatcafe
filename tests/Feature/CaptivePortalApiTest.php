@@ -19,10 +19,22 @@ class CaptivePortalApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function mockIdentity(?string $mac = 'AA:BB:CC:DD:EE:FF'): void
+    /**
+     * @param  bool  $withLiveSession  whether OPNsense currently has a session
+     *                                 for this device. Defaults to true because
+     *                                 most cases here are about a device that
+     *                                 has genuinely been let through; the false
+     *                                 case is the post-disconnect state.
+     */
+    private function mockIdentity(?string $mac = 'AA:BB:CC:DD:EE:FF', bool $withLiveSession = true, string $ip = '192.168.2.50'): void
     {
-        $this->mock(OpnSenseService::class, function ($mock) use ($mac) {
+        $sessions = $withLiveSession
+            ? [['sessionId' => 'sess-1', 'ipAddress' => $ip, 'macAddress' => $mac, 'startTime' => now()->timestamp]]
+            : [];
+
+        $this->mock(OpnSenseService::class, function ($mock) use ($mac, $sessions) {
             $mock->shouldReceive('resolveMacForIp')->andReturn($mac);
+            $mock->shouldReceive('listSessions')->andReturn($sessions);
         });
     }
 
@@ -138,5 +150,42 @@ class CaptivePortalApiTest extends TestCase
         $this->mockIdentity();
 
         $this->callApi()->assertOk();
+    }
+
+    /**
+     * Regression: a voucher keeps its remaining minutes after the guest hits
+     * Disconnect, but OPNsense has torn the session down and is blocking
+     * traffic. Reporting captive:false off the voucher alone told the OS the
+     * device was online while nothing loaded — and because the OS then
+     * believes there is no portal, it never re-opens the sign-in window.
+     *
+     * Same shape for a session reaped by EnforceSessionLimits, or lost to an
+     * OPNsense restart: paid-for time is not the same as being let through.
+     */
+    public function test_device_with_time_left_but_no_firewall_session_is_captive_again(): void
+    {
+        $this->mockIdentity(withLiveSession: false);
+        $this->makeRedeemedVoucher(180, now()->subMinutes(5));
+
+        $response = $this->callApi();
+
+        $response->assertOk();
+        $response->assertJson(['captive' => true]);
+        $response->assertJsonMissingPath('seconds-remaining');
+    }
+
+    /**
+     * The guard above must not swing too far the other way: a device that has
+     * both time left and a live session is still online.
+     */
+    public function test_device_with_time_left_and_a_live_session_stays_online(): void
+    {
+        $this->mockIdentity(withLiveSession: true);
+        $this->makeRedeemedVoucher(180, now()->subMinutes(5));
+
+        $response = $this->callApi();
+
+        $response->assertJson(['captive' => false]);
+        $this->assertEqualsWithDelta(175 * 60, $response->json('seconds-remaining'), 5);
     }
 }
