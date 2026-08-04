@@ -48,7 +48,7 @@ class CheckMySessionTool implements AgentTool
             ->where(function ($q) use ($ip, $mac) {
                 $q->where('ip_address', $ip);
                 if ($mac) {
-                    $q->orWhere('mac_address', $mac);
+                    $q->orWhere('mac_address_hash', Voucher::hashMac($mac));
                 }
             })
             ->latest('used_at')

@@ -91,7 +91,7 @@ class CaptivePortalController extends Controller
                 ->where(function ($query) use ($ip, $mac) {
                     $query->where('ip_address', $ip);
                     if (! empty($mac)) {
-                        $query->orWhere('mac_address', $mac);
+                        $query->orWhere('mac_address_hash', Voucher::hashMac($mac));
                     }
                 })
                 ->orderBy('used_at', 'desc')

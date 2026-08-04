@@ -287,3 +287,69 @@
         </table>
     </div>
 </div>
+
+{{-- Ghost Devices Table --}}
+<div class="mt-12 pt-8 border-t border-[#F0E6D2]">
+    <div class="flex items-center gap-2 mb-4">
+        <x-lucide-ghost class="w-4 h-4 text-red-500" />
+        <h3 class="text-sm font-bold text-[#8D6E63] uppercase tracking-widest">Ghost Devices</h3>
+    </div>
+    <p class="text-xs text-[#6D4C41] mb-4 -mt-2">On the LAN (seen in the ARP table or a DHCP lease) but the captive portal has no session record for them at all — never authenticated, never even pending.</p>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="text-[#6D4C41] text-[9px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]/50">
+                    <th class="pb-3 font-black">Device Info</th>
+                    <th class="pb-3 font-black">Seen Via</th>
+                    <th class="pb-3 font-black text-right">Status</th>
+                </tr>
+            </thead>
+            <tbody class="text-xs">
+                @forelse($ghostDevices as $ghost)
+                <tr id="ghost-row-{{ $ghost['mac_address'] }}" class="border-b border-[#FAFAFA] {{ $ghost['is_banned'] ? 'bg-red-50/40' : 'bg-gray-50/30' }} group hover:bg-[#FDF8F5]/80 transition-colors">
+                    <td class="py-3">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-[#4A3B32]">{{ $ghost['hostname'] ?: 'Unknown Device' }}</span>
+                            <span class="text-[9px] text-[#6D4C41] font-mono mt-0.5">{{ $ghost['ip_address'] ?: 'N/A' }}</span>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <span class="text-[9px] text-[#6D4C41] font-mono">{{ $ghost['mac_address'] }}</span>
+                                @if($ghost['manufacturer'])
+                                    <span class="text-[8px] px-1 py-0.5 bg-gray-200 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $ghost['manufacturer'] }}</span>
+                                @endif
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3">
+                        <div class="flex items-center gap-1">
+                            @foreach($ghost['seen_via'] as $source)
+                                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full border border-slate-200 font-bold text-[9px] uppercase tracking-wider">
+                                    {{ strtoupper($source) }}
+                                </span>
+                            @endforeach
+                        </div>
+                    </td>
+                    <td class="py-3 text-right">
+                        @if($ghost['is_banned'])
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-100 text-red-700 rounded-full border border-red-200 font-bold text-[9px] uppercase tracking-wider">
+                                <x-lucide-shield-off class="w-3 h-3" />
+                                Banned, still on LAN
+                            </span>
+                        @else
+                            <span class="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100 font-bold text-[9px] uppercase tracking-wider">
+                                Unrecognized
+                            </span>
+                        @endif
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="3" class="py-8 text-center opacity-30">
+                        <p class="text-[#6D4C41] text-[10px] font-bold uppercase tracking-widest">No ghost devices detected.</p>
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>

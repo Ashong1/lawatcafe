@@ -54,6 +54,7 @@ class VoucherSessionsTest extends TestCase
                 ['mac' => '3C:7C:3F:5E:85:4E', 'ip' => '192.168.2.99', 'hostname' => 'staff-laptop', 'manufacturer' => 'Dell'],
             ]);
             $mock->shouldReceive('getDhcpLeases')->andReturn([]);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
         });
 
         $response = $this->actingAs($admin)->get(route('network.sessions'));
@@ -122,6 +123,7 @@ class VoucherSessionsTest extends TestCase
                 ['hwaddr' => 'aa:bb:cc:dd:ee:01', 'hostname' => 'xiaomi-15-pro'],
                 ['hwaddr' => 'aa:bb:cc:dd:ee:02', 'hostname' => ''],
             ]);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
         });
 
         $response = $this->actingAs($admin)->get(route('network.sessions'));
@@ -176,6 +178,7 @@ class VoucherSessionsTest extends TestCase
 
             $mock->shouldReceive('getArpTable')->andReturn([]);
             $mock->shouldReceive('getDhcpLeases')->andReturn([]);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
         });
 
         $response = $this->actingAs($admin)->get(route('network.sessions'));
@@ -185,5 +188,27 @@ class VoucherSessionsTest extends TestCase
             && $sessions->first()->ip_address === '192.168.2.112');
         $response->assertViewHas('infrastructureSessions', fn ($sessions) => $sessions->contains('ip_address', '192.168.2.122')
             && $sessions->contains('mac_address', '782B46CFBB42'));
+    }
+
+    public function test_ghost_devices_panel_lists_a_lan_device_the_portal_never_logged(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getArpTable')->andReturn([
+                ['mac' => 'AA:BB:CC:DD:EE:09', 'ip' => '192.168.2.170', 'hostname' => 'ghost-in-the-lan'],
+            ]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
+        });
+
+        $response = $this->actingAs($admin)->get(route('network.sessions'));
+
+        $response->assertOk();
+        $response->assertSee('Ghost Devices');
+        $response->assertSee('ghost-in-the-lan');
+        $response->assertViewHas('ghostDevices', fn ($ghosts) => $ghosts->count() === 1
+            && $ghosts->first()['mac_address'] === 'AABBCCDDEE09');
     }
 }

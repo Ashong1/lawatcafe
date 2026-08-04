@@ -36,18 +36,25 @@ class EnforceSessionLimits extends Command
      */
     protected const ORPHAN_GRACE_MINUTES = 60;
 
+    /**
+     * Minutes to wait after a voucher's used_at before treating a missing
+     * live OPNsense session as "gone", not just a cache-timing blip
+     * (getArpTable()/listSessions() etc. cache for up to 15s).
+     */
+    protected const STALE_SESSION_GRACE_MINUTES = 5;
+
+    /**
+     * How far back to even look for stale sessions to reap — bounds the
+     * query to realistically-still-relevant vouchers instead of rescanning
+     * the entire historical voucher table on every run (this command runs
+     * every minute).
+     */
+    protected const STALE_SESSION_LOOKBACK_HOURS = 6;
+
     public function handle(OpnSenseService $opnsense, TrafficShapingService $shaping)
     {
         $this->info('Fetching active sessions from OPNsense...');
         $sessions = $opnsense->listSessions();
-
-        if (empty($sessions)) {
-            $this->warn('No active sessions found.');
-
-            return;
-        }
-
-        $this->info('Scanning '.count($sessions).' sessions for expiration...');
 
         // Never touch statically-permitted / infrastructure / VIP devices —
         // these intentionally have no voucher and are not meant to expire.
@@ -56,6 +63,19 @@ class EnforceSessionLimits extends Command
             StaticIpAssignment::pluck('ip_address')->all(),
             Setting::infrastructureIps(),
         );
+
+        // Runs regardless of whether OPNsense reported any sessions at all —
+        // that's the most extreme case of "the app still lists it, OPNsense
+        // doesn't" (every session vanished at once, e.g. a portal restart).
+        $this->reapStaleVoucherSessions($sessions, $opnsense, $shaping, $protectedIps);
+
+        if (empty($sessions)) {
+            $this->warn('No active sessions found.');
+
+            return;
+        }
+
+        $this->info('Scanning '.count($sessions).' sessions for expiration...');
 
         foreach ($sessions as $session) {
             $ip = str_replace('/32', '', $session['ipAddress'] ?? '');
@@ -72,7 +92,7 @@ class EnforceSessionLimits extends Command
                 ->where(function ($query) use ($ip, $mac) {
                     $query->where('ip_address', $ip);
                     if (! empty($mac)) {
-                        $query->orWhere('mac_address', $mac);
+                        $query->orWhere('mac_address_hash', Voucher::hashMac($mac));
                     }
                 })
                 ->orderBy('used_at', 'desc')
@@ -128,6 +148,52 @@ class EnforceSessionLimits extends Command
         }
 
         $this->info('Session enforcement complete.');
+    }
+
+    /**
+     * The mirror image of handleOrphanedSession(): a used voucher the app
+     * still considers an active session, but whose IP/MAC no longer appears
+     * anywhere in OPNsense's live session list at all — the session dropped
+     * out on OPNsense's side (client walked away, DHCP lease expired,
+     * portal restart) without the app ever finding out, since the main loop
+     * above only ever iterates over sessions OPNsense *does* still report.
+     *
+     * Left uncleaned, the IP stays a member of its tier's bandwidth-shaper
+     * alias forever — a real bug if that IP later gets handed to a
+     * different device by DHCP, which would silently inherit a stranger's
+     * bandwidth tier. This only releases the tier alias; it doesn't touch
+     * the voucher itself (it was genuinely used, so it stays used).
+     */
+    protected function reapStaleVoucherSessions(array $liveSessions, OpnSenseService $opnsense, TrafficShapingService $shaping, array $protectedIps): void
+    {
+        $liveIps = collect($liveSessions)->map(fn ($s) => str_replace('/32', '', $s['ipAddress'] ?? ''))->filter()->unique();
+        $liveMacs = collect($liveSessions)->map(fn ($s) => strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $s['macAddress'] ?? '')))->filter()->unique();
+
+        $staleVouchers = Voucher::where('is_used', true)
+            ->whereNotNull('used_at')
+            ->where('used_at', '>=', now()->subHours(self::STALE_SESSION_LOOKBACK_HOURS))
+            ->where('used_at', '<=', now()->subMinutes(self::STALE_SESSION_GRACE_MINUTES))
+            ->get()
+            ->filter(function (Voucher $voucher) use ($liveIps, $liveMacs, $protectedIps) {
+                if (! $voucher->ip_address || in_array($voucher->ip_address, $protectedIps, true)) {
+                    return false;
+                }
+
+                $mac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $voucher->mac_address ?? ''));
+
+                $inLiveIps = $liveIps->contains($voucher->ip_address);
+                $inLiveMacs = $mac !== '' && $liveMacs->contains($mac);
+
+                return ! $inLiveIps && ! $inLiveMacs;
+            });
+
+        foreach ($staleVouchers as $voucher) {
+            $this->warn(" - Voucher {$voucher->code} ({$voucher->ip_address}): app lists this as active but OPNsense no longer reports it. Releasing its tier alias...");
+
+            $shaping->releaseIp($voucher->ip_address, $opnsense);
+
+            Log::info("EnforceSessions: Released stale tier alias for {$voucher->ip_address} (voucher {$voucher->code}) — no longer present in OPNsense's live session list.");
+        }
     }
 
     /**

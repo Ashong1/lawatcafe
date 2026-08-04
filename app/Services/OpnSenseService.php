@@ -836,6 +836,11 @@ class OpnSenseService
      * than a Kea static IP reservation (see addKeaReservation): that only
      * pins the device's IP, it still has to authenticate at the portal.
      *
+     * Cached like getArpTable()/getDhcpLeases()/listSessions() — this is now
+     * also read on every Network > Sessions page load (ghost-device
+     * cross-reference), which polls every 5s, and unlike those it wasn't
+     * previously cached at all (a live zone-config fetch every call).
+     *
      * @return array{ips: string[], macs: string[]}
      */
     public function getAllowedAddresses(): array
@@ -846,29 +851,31 @@ class OpnSenseService
             return $empty;
         }
 
-        $uuid = $this->resolveCaptivePortalZoneUuid();
-        if (! $uuid) {
-            return $empty;
-        }
-
-        try {
-            $response = $this->client()->get("{$this->baseUrl}/api/captiveportal/settings/get_zone/{$uuid}");
-
-            if (! $response->successful()) {
+        return Cache::remember('opnsense_allowed_addresses', 15, function () use ($empty) {
+            $uuid = $this->resolveCaptivePortalZoneUuid();
+            if (! $uuid) {
                 return $empty;
             }
 
-            $zone = $response->json('zone') ?? [];
+            try {
+                $response = $this->client()->get("{$this->baseUrl}/api/captiveportal/settings/get_zone/{$uuid}");
 
-            return [
-                'ips' => $this->splitZoneListField($zone['allowedAddresses'] ?? ''),
-                'macs' => $this->splitZoneListField($zone['allowedMACAddresses'] ?? ''),
-            ];
-        } catch (\Exception $e) {
-            Log::error('OPNsense: Exception fetching captive portal allowed addresses: '.$e->getMessage());
+                if (! $response->successful()) {
+                    return Cache::get('opnsense_allowed_addresses') ?? $empty;
+                }
 
-            return $empty;
-        }
+                $zone = $response->json('zone') ?? [];
+
+                return [
+                    'ips' => $this->splitZoneListField($zone['allowedAddresses'] ?? ''),
+                    'macs' => $this->splitZoneListField($zone['allowedMACAddresses'] ?? ''),
+                ];
+            } catch (\Exception $e) {
+                Log::error('OPNsense: Exception fetching captive portal allowed addresses: '.$e->getMessage());
+
+                return Cache::get('opnsense_allowed_addresses') ?? $empty;
+            }
+        });
     }
 
     public function addAllowedIp(string $address): array
@@ -934,6 +941,7 @@ class OpnSenseService
             if ($response->successful() && ($data['result'] ?? null) === 'saved') {
                 $this->reconfigureCaptivePortal();
                 $this->forgetSessionsCache();
+                Cache::forget('opnsense_allowed_addresses');
 
                 return ['success' => true, 'message' => null];
             }

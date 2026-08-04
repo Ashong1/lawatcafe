@@ -25,6 +25,7 @@ class StaffCanViewAndKickSessionsTest extends TestCase
             $mock->shouldReceive('listSessions')->andReturn([]);
             $mock->shouldReceive('getArpTable')->andReturn([]);
             $mock->shouldReceive('getDhcpLeases')->andReturn([]);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
         });
 
         $response = $this->actingAs($staff)->get(route('network.sessions'));

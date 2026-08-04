@@ -116,4 +116,65 @@ class EnforceSessionLimitsTest extends TestCase
 
         $this->artisan('network:enforce-sessions')->assertExitCode(0);
     }
+
+    /**
+     * The stale-sessions bug this closes: a used, still-valid voucher whose
+     * IP/MAC no longer appears anywhere in OPNsense's live session list at
+     * all (device walked away, DHCP lease expired, portal restart) never
+     * got its bandwidth-tier alias released, because the main loop only
+     * ever iterates over sessions OPNsense *does* still report. Left
+     * uncleaned, a later device handed that same IP by DHCP would silently
+     * inherit the previous customer's tier.
+     */
+    public function test_releases_tier_alias_for_a_voucher_the_app_lists_but_opnsense_no_longer_reports(): void
+    {
+        Voucher::create([
+            'code' => 'LAWA-GONE', 'duration_minutes' => 120, 'is_used' => true,
+            'used_at' => now()->subMinutes(30), 'ip_address' => '192.168.2.60', 'mac_address' => 'AABBCCDDEE60',
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            // OPNsense reports a completely unrelated (but still-recent, non-orphaned) session, not this voucher's.
+            $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession(['last_accessed' => now()->subMinutes(5)->timestamp])]);
+            $mock->shouldNotReceive('disconnectDevice');
+            $mock->shouldReceive('removeIpFromTierAlias')->with('free', '192.168.2.60')->once()->andReturn(true);
+            $mock->shouldReceive('removeIpFromTierAlias')->with('premium', '192.168.2.60')->once()->andReturn(true);
+        });
+
+        $this->artisan('network:enforce-sessions')->assertExitCode(0);
+    }
+
+    /** Just-redeemed vouchers get a grace window so a 15s OPNsense session-cache blip doesn't look like a stale session. */
+    public function test_does_not_reap_a_voucher_used_within_the_grace_period(): void
+    {
+        Voucher::create([
+            'code' => 'LAWA-FRESH', 'duration_minutes' => 120, 'is_used' => true,
+            'used_at' => now()->subMinutes(1), 'ip_address' => '192.168.2.61', 'mac_address' => 'AABBCCDDEE61',
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession(['last_accessed' => now()->subMinutes(5)->timestamp])]);
+            $mock->shouldNotReceive('disconnectDevice');
+            $mock->shouldReceive('removeIpFromTierAlias')->with(\Mockery::any(), '192.168.2.61')->never();
+        });
+
+        $this->artisan('network:enforce-sessions')->assertExitCode(0);
+    }
+
+    /** The reap step must still run even when OPNsense reports zero sessions at all. */
+    public function test_reaps_stale_sessions_even_when_opnsense_reports_no_sessions_at_all(): void
+    {
+        Voucher::create([
+            'code' => 'LAWA-VANISHED', 'duration_minutes' => 120, 'is_used' => true,
+            'used_at' => now()->subMinutes(30), 'ip_address' => '192.168.2.62', 'mac_address' => 'AABBCCDDEE62',
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('listSessions')->once()->andReturn([]);
+            $mock->shouldReceive('removeIpFromTierAlias')->with('free', '192.168.2.62')->once()->andReturn(true);
+            $mock->shouldReceive('removeIpFromTierAlias')->with('premium', '192.168.2.62')->once()->andReturn(true);
+        });
+
+        $this->artisan('network:enforce-sessions')->assertExitCode(0);
+    }
 }

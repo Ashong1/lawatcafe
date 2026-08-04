@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Setting;
 use App\Models\StaticIpAssignment;
 use App\Models\Voucher;
+use App\Services\GhostDeviceDetectionService;
 use App\Services\OpnSenseService;
 use App\Services\TrafficShapingService;
 use App\Services\VoucherService;
@@ -170,7 +171,7 @@ class VoucherController extends Controller
         return view('network.plans', compact('settings'));
     }
 
-    public function sessions(OpnSenseService $opnsense)
+    public function sessions(OpnSenseService $opnsense, GhostDeviceDetectionService $ghostDetector)
     {
         // 1. Get real-time sessions from OPNsense
         $opnSessions = collect($opnsense->listSessions());
@@ -283,11 +284,13 @@ class VoucherController extends Controller
         $ips = $combinedDevices->pluck('ipAddress')->toArray();
         $macs = $combinedDevices->pluck('macAddress')->toArray();
 
+        $macHashes = collect($macs)->map(fn ($m) => Voucher::hashMac($m))->filter()->all();
+
         $voucherList = Voucher::where('is_used', true)
-            ->where(function ($q) use ($ips, $macs) {
+            ->where(function ($q) use ($ips, $macHashes) {
                 $q->whereIn('ip_address', $ips);
-                if (! empty($macs)) {
-                    $q->orWhereIn('mac_address', $macs);
+                if (! empty($macHashes)) {
+                    $q->orWhereIn('mac_address_hash', $macHashes);
                 }
             })
             ->latest('used_at')
@@ -427,11 +430,15 @@ class VoucherController extends Controller
         $activeSessions = $sessions->filter(fn ($s) => ! in_array($s->ip_address, $infraIps) && ! $s->is_system && ! $s->is_unauthorized);
         $pendingSessions = $sessions->filter(fn ($s) => ! in_array($s->ip_address, $infraIps) && ! $s->is_system && $s->is_unauthorized);
 
+        // 10. Devices OPNsense's ARP table / DHCP leases know about that the
+        // portal has zero session record for at all — see GhostDeviceDetectionService.
+        $ghostDevices = $ghostDetector->detect();
+
         if (request()->ajax() || request()->wantsJson()) {
-            return view('network.partials.sessions-tables', compact('activeSessions', 'infrastructureSessions', 'pendingSessions'));
+            return view('network.partials.sessions-tables', compact('activeSessions', 'infrastructureSessions', 'pendingSessions', 'ghostDevices'));
         }
 
-        return view('network.sessions', compact('activeSessions', 'infrastructureSessions', 'pendingSessions'));
+        return view('network.sessions', compact('activeSessions', 'infrastructureSessions', 'pendingSessions', 'ghostDevices'));
     }
 
     /**
