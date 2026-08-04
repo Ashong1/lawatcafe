@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Setting;
 use App\Models\Voucher;
 use App\Services\OpnSenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,5 +53,42 @@ class CaptivePortalStatusPageTest extends TestCase
         $response->assertSee('You\'re Online', false);
         // The live countdown reads its starting point from this timestamp.
         $response->assertSee((string) $voucher->used_at->copy()->addMinutes(180)->getTimestampMs());
+    }
+
+    /**
+     * Regression: the success page used to auto-navigate to neverssl.com after
+     * 5s (a captive-network-assistant dismissal trick), which dumped every
+     * guest on a blank third-party page and threw away the countdown they'd
+     * just been given. The automatic destination is now the portal's own
+     * status page; reaching the open web is a deliberate secondary action.
+     */
+    public function test_success_page_lands_the_guest_on_their_own_session_not_a_third_party_site(): void
+    {
+        $response = $this->get(route('portal.success'));
+
+        $response->assertOk();
+        $response->assertSee(route('portal.index'), false);
+        $this->assertStringNotContainsString(
+            'window.location.href = "http://neverssl.com"',
+            $response->getContent(),
+            'The 5s auto-redirect must not send guests to a third-party site.'
+        );
+    }
+
+    public function test_success_page_shows_the_portal_address_for_reopening_in_a_real_browser(): void
+    {
+        $response = $this->get(route('portal.success'));
+
+        $response->assertSee('open this page in your normal browser', false);
+        $response->assertSee(route('portal.index'), false);
+    }
+
+    public function test_browse_url_is_configurable_rather_than_a_hardcoded_domain(): void
+    {
+        Setting::set('portal_browse_url', 'http://example.test');
+
+        $response = $this->get(route('portal.success'));
+
+        $response->assertSee('http://example.test', false);
     }
 }

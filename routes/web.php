@@ -53,6 +53,14 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::get('/success', [CaptivePortalController::class, 'success'])->name('success');
 });
 
+// RFC 8908 Captive Portal API, advertised to clients via DHCP option 114
+// (RFC 8910). Deliberately top-level rather than under /portal so the URL
+// handed out in the DHCP option stays short and stable. Read-only and
+// unauthenticated by definition — see CaptivePortalController::captivePortalApi().
+Route::get('/captive-portal-api', [CaptivePortalController::class, 'captivePortalApi'])
+    ->name('captive-portal-api')
+    ->middleware('throttle:captive-portal-api');
+
 // ==========================================
 // SHARED ROUTES (Admins & Staff)
 // ==========================================

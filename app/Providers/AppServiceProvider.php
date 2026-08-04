@@ -60,6 +60,14 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(10)->by($request->ip());
         });
 
+        // RFC 8908 API. Deliberately looser than the other portal limiters:
+        // this one is polled by the OS captive-portal agent on its own
+        // schedule (not by a human tapping a button), and throttling it just
+        // makes the native remaining-time display go stale.
+        RateLimiter::for('captive-portal-api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->ip());
+        });
+
         // Authenticated staff/admin AI chat + the confirm/reject/pending-action
         // endpoints (which also execute tools) had no rate limit at all — keyed
         // by user id (falling back to IP) since these are logged-in requests.

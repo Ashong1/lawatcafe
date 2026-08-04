@@ -93,88 +93,46 @@
                 </div>
 
                 <div class="space-y-12">
-                    
-                    <!-- Category: Coffee -->
-                    <div class="space-y-6 dash-card-in">
-                        <div class="flex items-center w-full mb-8">
-                            <h4 class="flex items-center gap-3 text-lg font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap pr-4">
-                                <x-lucide-coffee class="w-5 h-5 text-amber-800" stroke-width="2.5" />
-                                Coffee
-                            </h4>
-                            <div class="flex-1 h-[1px] bg-amber-200/50"></div>
-                        </div>
-                        
-                        <div class="space-y-8">
-                            <div class="group cursor-default">
-                                <div class="flex justify-between items-baseline mb-1">
-                                    <p class="text-sm font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Barista's Special Latte</p>
-                                    <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
-                                    <span class="font-black text-[#3E2723] text-sm tabular-nums tracking-tighter block">₱120</span>
-                                </div>
-                                <p class="text-[8px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest">Signature blend with locally sourced beans</p>
+                    @forelse($menu as $index => $group)
+                        @if(! $loop->first)
+                            <!-- Subtle Divider -->
+                            <div class="flex justify-center py-2">
+                                <div class="w-12 h-1 border-t-2 border-dotted border-amber-200"></div>
                             </div>
-                            <div class="group cursor-default">
-                                <div class="flex justify-between items-baseline mb-1">
-                                    <p class="text-sm font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Classic Cappuccino</p>
-                                    <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
-                                    <span class="font-black text-[#3E2723] text-sm tabular-nums tracking-tighter block">₱110</span>
-                                </div>
-                                <p class="text-[8px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest">Double shot with velvety foam</p>
-                            </div>
-                            <div class="group cursor-default">
-                                <div class="flex justify-between items-baseline mb-1">
-                                    <p class="text-sm font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Iced Americano</p>
-                                    <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
-                                    <span class="font-black text-[#3E2723] text-sm tabular-nums tracking-tighter block">₱95</span>
-                                </div>
-                                <p class="text-[8px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest">Bold and refreshing cold brew</p>
-                            </div>
-                        </div>
-                    </div>
+                        @endif
 
-                    <!-- Subtle Divider -->
-                    <div class="flex justify-center py-2">
-                        <div class="w-12 h-1 border-t-2 border-dotted border-amber-200"></div>
-                    </div>
+                        <div class="space-y-6 dash-card-in" style="animation-delay: {{ $index * 150 }}ms">
+                            <div class="flex items-center w-full {{ $group['description'] ? 'mb-3' : 'mb-8' }}">
+                                <h4 class="flex items-center gap-3 text-lg font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap pr-4">
+                                    <x-dynamic-component :component="$group['icon']" class="w-5 h-5 text-amber-800" stroke-width="2.5" />
+                                    {{ $group['name'] }}
+                                </h4>
+                                <div class="flex-1 h-[1px] bg-amber-200/50"></div>
+                            </div>
 
-                    <!-- Category: Meals -->
-                    <div class="space-y-6 dash-card-in [animation-delay:150ms]">
-                        <div class="flex items-center w-full mb-8">
-                            <h4 class="flex items-center gap-3 text-lg font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap pr-4">
-                                <x-lucide-utensils class="w-5 h-5 text-amber-800" stroke-width="2.5" />
-                                Meals
-                            </h4>
-                            <div class="flex-1 h-[1px] bg-amber-200/50"></div>
-                        </div>
-                        
-                        <div class="space-y-8">
-                            <div class="group cursor-default">
-                                <div class="flex justify-between items-baseline mb-1">
-                                    <p class="text-sm font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Butter Croissant</p>
-                                    <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
-                                    <span class="font-black text-[#3E2723] text-sm tabular-nums tracking-tighter block">₱85</span>
-                                </div>
-                                <p class="text-[8px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest">Flaky and golden-brown</p>
-                            </div>
-                            <div class="group cursor-default">
-                                <div class="flex justify-between items-baseline mb-1">
-                                    <p class="text-sm font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Lawa't Beef Tapa</p>
-                                    <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
-                                    <span class="font-black text-[#3E2723] text-sm tabular-nums tracking-tighter block">₱185</span>
-                                </div>
-                                <p class="text-[8px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest">Served with garlic rice and egg</p>
-                            </div>
-                            <div class="group cursor-default">
-                                <div class="flex justify-between items-baseline mb-1">
-                                    <p class="text-sm font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">Classic Carbonara</p>
-                                    <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
-                                    <span class="font-black text-[#3E2723] text-sm tabular-nums tracking-tighter block">₱165</span>
-                                </div>
-                                <p class="text-[8px] text-[#8D6E63] leading-relaxed uppercase font-black tracking-widest">Creamy pasta with bacon and egg</p>
+                            @if($group['description'])
+                                <p class="text-[9px] text-[#8D6E63] font-medium italic leading-relaxed mb-8 -mt-1">{{ $group['description'] }}</p>
+                            @endif
+
+                            <div class="space-y-8">
+                                @foreach($group['items'] as $item)
+                                    <div class="group cursor-default">
+                                        <div class="flex justify-between items-baseline mb-1">
+                                            <p class="text-sm font-bold text-[#3E2723] group-hover:text-amber-800 transition-colors duration-300">{{ $item->name }}</p>
+                                            <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
+                                            <span class="font-black text-[#3E2723] text-sm tabular-nums tracking-tighter block">₱{{ number_format($item->price, 2) }}</span>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
-                    </div>
-
+                    @empty
+                        <div class="text-center py-12">
+                            <x-lucide-coffee class="w-10 h-10 text-[#D7CCC8] mx-auto mb-4" stroke-width="1.5" />
+                            <p class="text-sm font-bold text-[#3E2723] mb-1">Our menu is being updated</p>
+                            <p class="text-[10px] text-[#8D6E63] font-medium">Please ask our staff for today's selections.</p>
+                        </div>
+                    @endforelse
                 </div>
 
                 <!-- Hungry for Internet CTA (Horizontal Space-Saver) -->

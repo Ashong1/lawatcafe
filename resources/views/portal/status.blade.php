@@ -113,8 +113,21 @@
                         </div>
                     </div>
 
+                    {{-- The sign-in window a phone opens for the portal is dismissed by
+                         the OS the moment the device is authorized, taking this countdown
+                         with it. Devices supporting RFC 8908 (iOS 14+/Android 11+) get the
+                         remaining time natively from /captive-portal-api instead; everyone
+                         else needs the address to reopen it in a real browser. --}}
+                    <div class="max-w-md mx-auto w-full px-2 mb-6">
+                        <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-5 text-center shadow-sm">
+                            <span class="block text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.25em] mb-2">Check Back Any Time</span>
+                            <p class="font-mono text-xs font-black text-[#3E2723] bg-[#FAF7F2] border border-[#F0E6D2] rounded-xl py-2.5 px-3 select-all break-all">{{ route('portal.index') }}</p>
+                            <p class="text-[10px] text-[#8D6E63] font-bold mt-2.5 leading-relaxed">Bookmark this to see your remaining time later.</p>
+                        </div>
+                    </div>
+
                     <div class="max-w-md mx-auto w-full space-y-4 px-2">
-                        <a href="https://google.com" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-[11px] lg:text-sm">
+                        <a href="{{ $browseUrl }}" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-[11px] lg:text-sm">
                             Continue Browsing
                             <x-lucide-external-link class="w-5 h-5" />
                         </a>

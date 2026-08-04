@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\BannedDevice;
+use App\Models\Category;
+use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Voucher;
 use App\Services\Agent\ChatStreamResponder;
@@ -39,6 +41,88 @@ class CaptivePortalController extends Controller
         }
 
         return [$ip, $mac];
+    }
+
+    /**
+     * The most recent redeemed voucher belonging to this device, matched on
+     * IP or (preferably) the MAC blind index. Shared by index() and the
+     * RFC 8908 captive-portal API so the "which session is this device on"
+     * question is only answered in one place — they previously would have
+     * had to duplicate this query and could drift apart.
+     */
+    private function activeVoucherFor(string $ip, ?string $mac): ?Voucher
+    {
+        return Voucher::where('is_used', true)
+            ->where(function ($query) use ($ip, $mac) {
+                $query->where('ip_address', $ip);
+                if (! empty($mac)) {
+                    $query->orWhere('mac_address_hash', Voucher::hashMac($mac));
+                }
+            })
+            ->orderBy('used_at', 'desc')
+            ->first();
+    }
+
+    /**
+     * Seconds left on a redeemed voucher, or null if it has no time left.
+     * Never returns a negative — an expired voucher is "no session", not
+     * "negative session".
+     */
+    private function secondsRemainingOn(?Voucher $voucher): ?int
+    {
+        if (! $voucher || ! $voucher->used_at) {
+            return null;
+        }
+
+        $remaining = (int) round(now()->diffInSeconds(
+            $voucher->used_at->copy()->addMinutes($voucher->duration_minutes),
+            false
+        ));
+
+        return $remaining > 0 ? $remaining : null;
+    }
+
+    /**
+     * RFC 8908 Captive Portal API.
+     *
+     * Advertised to clients via DHCP option 114 (RFC 8910) from Kea on
+     * OPNsense — see docs/CAPTIVE_PORTAL.md. iOS 14+ and Android 11+ poll
+     * this and render the remaining session time natively in Wi-Fi settings,
+     * which is the only way a guest can watch their time tick down WITHOUT
+     * keeping a browser tab open: the Captive Network Assistant that shows
+     * the portal is dismissed by the OS the moment the device is authorized,
+     * taking the portal's own countdown with it.
+     *
+     * Deliberately unauthenticated and side-effect free (a pure read) — it's
+     * reachable pre-auth by definition, so it must not trust anything the
+     * client sends beyond its own network identity, and must not mutate.
+     */
+    public function captivePortalApi(Request $request, OpnSenseService $opnsense)
+    {
+        [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
+
+        $secondsRemaining = $this->secondsRemainingOn($this->activeVoucherFor($ip, $mac));
+        $isCaptive = $secondsRemaining === null || $this->isMacBanned($mac);
+
+        $payload = [
+            'captive' => $isCaptive,
+            'user-portal-url' => route('portal.index'),
+            'venue-info-url' => route('portal.menu'),
+            'can-extend-session' => true,
+        ];
+
+        // RFC 8908 §5: seconds-remaining is only meaningful for a client that
+        // currently has access, and is omitted entirely otherwise.
+        if (! $isCaptive) {
+            $payload['seconds-remaining'] = $secondsRemaining;
+        }
+
+        return response()
+            ->json($payload)
+            // The RFC mandates this exact media type — a plain application/json
+            // response is ignored by the OS captive-portal agents.
+            ->header('Content-Type', 'application/captive+json')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate');
     }
 
     /**
@@ -87,15 +171,7 @@ class CaptivePortalController extends Controller
 
         if ($activeSession) {
             // VERIFY IF VOUCHER IS STILL VALID
-            $voucher = Voucher::where('is_used', true)
-                ->where(function ($query) use ($ip, $mac) {
-                    $query->where('ip_address', $ip);
-                    if (! empty($mac)) {
-                        $query->orWhere('mac_address_hash', Voucher::hashMac($mac));
-                    }
-                })
-                ->orderBy('used_at', 'desc')
-                ->first();
+            $voucher = $this->activeVoucherFor($ip, $mac);
 
             if ($voucher) {
                 $expirationTime = $voucher->used_at->addMinutes($voucher->duration_minutes);
@@ -111,6 +187,7 @@ class CaptivePortalController extends Controller
                     'startTime' => Carbon::createFromTimestamp($activeSession['startTime']),
                     'expirationTime' => $expirationTime,
                     'userName' => $activeSession['userName'] ?? 'Guest',
+                    'browseUrl' => Setting::get('portal_browse_url', 'http://neverssl.com'),
                 ]);
             }
         }
@@ -277,9 +354,60 @@ class CaptivePortalController extends Controller
     }
 
     // Show the digital menu for Walled Garden access
+    /**
+     * Guest-facing digital menu. Reads the real product catalogue — this used
+     * to be a hardcoded mockup in the Blade view (six invented items with
+     * invented prices), so the menu guests saw had no relationship to what the
+     * shop actually sells or charges.
+     *
+     * Only 'Active' products appear, matching every other customer-facing
+     * surface (POS, AI menu context).
+     */
     public function menu()
     {
-        return view('portal.menu');
+        $categories = Category::orderBy('sort_order')->orderBy('name')->get();
+
+        $byCategory = Product::where('status', 'Active')
+            ->orderBy('name')
+            ->get()
+            ->groupBy('category');
+
+        $menu = $categories
+            ->map(fn (Category $c) => [
+                'name' => $c->name,
+                // Same fallback the admin product/category tables use, so an
+                // unset or bad icon can't blow up a guest-facing page.
+                'icon' => 'lucide-'.($c->icon ?: 'coffee'),
+                'description' => $c->description,
+                'items' => $byCategory->get($c->name, collect()),
+            ])
+            // An empty category reads as a broken menu to a customer.
+            ->filter(fn (array $group) => $group['items']->isNotEmpty())
+            ->values();
+
+        // products.category is free text with no FK to categories (see
+        // docs/DATABASE.md), so a product can carry a category name that no
+        // longer has a matching row. Those would silently vanish from the
+        // guest menu otherwise — surface them rather than lose them.
+        // collect() re-wraps as a BASE collection on purpose: groupBy() on an
+        // Eloquent collection returns an Eloquent one, whose except()/reject()
+        // are overridden to match on model primary keys and would call
+        // getKey() on these grouped sub-collections.
+        $knownCategories = $categories->pluck('name')->all();
+        $uncategorised = collect($byCategory)
+            ->reject(fn ($items, $categoryName) => in_array($categoryName, $knownCategories, true))
+            ->flatten();
+
+        if ($uncategorised->isNotEmpty()) {
+            $menu->push([
+                'name' => 'More',
+                'icon' => 'lucide-coffee',
+                'description' => null,
+                'items' => $uncategorised,
+            ]);
+        }
+
+        return view('portal.menu', ['menu' => $menu]);
     }
 
     /**
@@ -299,6 +427,14 @@ class CaptivePortalController extends Controller
      */
     public function success()
     {
-        return view('portal.success');
+        // Plain HTTP on purpose: this link exists to make the phone's
+        // captive-network assistant notice working internet and dismiss
+        // itself. An HTTPS target defeats that (the assistant can't complete
+        // the handshake pre-validation on some stacks), and an HSTS-preloaded
+        // host would silently upgrade and do the same. Configurable so the
+        // shop isn't permanently tied to a third-party domain.
+        return view('portal.success', [
+            'browseUrl' => Setting::get('portal_browse_url', 'http://neverssl.com'),
+        ]);
     }
 }

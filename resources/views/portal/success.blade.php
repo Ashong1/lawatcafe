@@ -70,20 +70,33 @@
                     <p class="text-xs lg:text-lg text-[#8D6E63] font-medium leading-relaxed max-w-sm mx-auto anim-pop-in [animation-delay:350ms]">You are now connected to our premium high-speed network. Enjoy your stay!</p>
                 </div>
 
-                <div class="bg-amber-50 border-2 border-amber-200/50 rounded-[2rem] p-8 mb-10 text-center relative overflow-hidden shadow-sm max-w-md mx-auto w-full">
+                <div class="bg-amber-50 border-2 border-amber-200/50 rounded-[2rem] p-8 mb-8 text-center relative overflow-hidden shadow-sm max-w-md mx-auto w-full">
                     <div class="absolute top-0 left-0 w-full h-1 bg-amber-500/30"></div>
                     <span class="block text-[10px] font-black text-amber-800 uppercase tracking-[0.3em] mb-3">Session Activated</span>
-                    <p class="text-sm lg:text-base text-[#3E2723] font-bold">Refresh this page any time to check your remaining time or to top-up your balance.</p>
+                    <p class="text-sm lg:text-base text-[#3E2723] font-bold mb-4">To watch your remaining time, open this page in your normal browser:</p>
+                    <p class="font-mono text-xs lg:text-sm font-black text-[#3E2723] bg-white/70 border border-amber-200 rounded-xl py-3 px-4 select-all break-all">{{ route('portal.index') }}</p>
+                    <p class="text-[10px] text-[#8D6E63] font-bold mt-3 leading-relaxed">This sign-in window closes on its own once you're online — bookmark the address above to check back.</p>
                 </div>
 
                 <div class="max-w-sm mx-auto w-full space-y-4">
-                    <a href="http://neverssl.com" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-[11px] lg:text-sm">
-                        <span>Start Browsing</span>
-                        <x-lucide-globe class="w-5 h-5 lg:w-6 lg:h-6" />
+                    <a href="{{ route('portal.index') }}" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-[11px] lg:text-sm">
+                        <span>View My Session</span>
+                        <x-lucide-timer class="w-5 h-5 lg:w-6 lg:h-6" />
                     </a>
-                    
+
+                    {{-- Navigating to a plain-HTTP external site is what makes the
+                         phone's captive-network assistant notice it has internet and
+                         close itself, handing the guest to their real browser. Kept
+                         as a deliberate secondary action rather than the automatic
+                         destination — it used to be both, which dumped every guest on
+                         a blank third-party page and threw away the countdown. --}}
+                    <a href="{{ $browseUrl }}" target="_blank" rel="noopener" class="w-full bg-white border-2 border-[#E6D5C3] text-[#6D4C41] py-4 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-[10px] lg:text-xs hover:border-[#8D6E63]">
+                        <span>Start Browsing</span>
+                        <x-lucide-globe class="w-4 h-4 lg:w-5 lg:h-5" />
+                    </a>
+
                     <p id="countdown" class="text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.3em] animate-pulse">
-                        Redirecting in 5s... <button type="button" id="cancel-redirect" class="underline decoration-dotted ml-1 normal-case tracking-normal font-bold">Cancel</button>
+                        Showing your session in 5s... <button type="button" id="cancel-redirect" class="underline decoration-dotted ml-1 normal-case tracking-normal font-bold">Cancel</button>
                     </p>
                 </div>
 
@@ -104,10 +117,10 @@
             let timeLeft = 5;
             const interval = setInterval(() => {
                 timeLeft--;
-                countdownEl.firstChild.textContent = `Redirecting in ${timeLeft}s... `;
+                countdownEl.firstChild.textContent = `Showing your session in ${timeLeft}s... `;
                 if (timeLeft <= 0) {
                     clearInterval(interval);
-                    window.location.href = "http://neverssl.com";
+                    window.location.href = @json(route('portal.index'));
                 }
             }, 1000);
 
