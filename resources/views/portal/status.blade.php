@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="refresh" content="60">
 <title>Active Session - Lawa't Kape</title>
 <!-- Favicons -->
@@ -94,10 +94,17 @@
                     </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 max-w-4xl mx-auto w-full px-2">
-                        <div class="bg-amber-50 border-2 border-amber-200/50 rounded-3xl p-6 shadow-sm col-span-2 flex flex-col items-center justify-center transition-all hover:bg-amber-100/50 group">
-                            <span class="text-[10px] font-black text-amber-800 uppercase tracking-widest mb-2 group-hover:scale-110 transition-transform">Time Remaining</span>
-                            <span class="text-4xl lg:text-5xl font-black text-[#3E2723] tabular-nums tracking-tighter inline-block" x-text="remainingLabel" :class="tickPulse ? 'tick-pulse' : ''"></span>
-                            <span class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mt-1" x-text="remainingUnit"></span>
+                        {{-- role="timer" with aria-live="off" on purpose: the label changes
+                             every second, and a polite live region would make a screen reader
+                             read the clock aloud once a second and talk over everything else.
+                             The label instead exposes the whole value on demand, so it can be
+                             queried whenever the guest actually wants it. --}}
+                        <div class="bg-amber-50 border-2 border-amber-200/50 rounded-3xl p-6 shadow-sm col-span-2 flex flex-col items-center justify-center transition-all hover:bg-amber-100/50 group"
+                             role="timer" aria-live="off"
+                             :aria-label="`Time remaining: ${remainingLabel} ${remainingUnit}`">
+                            <span class="text-[10px] font-black text-amber-800 uppercase tracking-widest mb-2 group-hover:scale-110 transition-transform" aria-hidden="true">Time Remaining</span>
+                            <span class="text-4xl lg:text-5xl font-black text-[#3E2723] tabular-nums tracking-tighter inline-block" aria-hidden="true" x-text="remainingLabel" :class="tickPulse ? 'tick-pulse' : ''"></span>
+                            <span class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mt-1" aria-hidden="true" x-text="remainingUnit"></span>
                         </div>
                         
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Connect to Wi-Fi - Lawa't Kape</title>
 <!-- Favicons -->
 <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
@@ -166,11 +166,20 @@
                         <input type="hidden" name="zone" value="{{ \App\Models\Setting::get('opnsense_zone', '0') }}">
                         <div class="space-y-3">
                             <div class="relative">
+                                {{-- The field only *looks* uppercase (a CSS transform), so without
+                                     these a phone submits whatever autocorrect decided — a
+                                     capitalised word, a trailing space, a "smart" dash. The server
+                                     normalises too; this just stops the keyboard fighting the guest. --}}
                                 <input type="text" name="passcode" required placeholder="XXXX-XXXX" aria-label="Wi-Fi passcode"
+                                        autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"
+                                        aria-describedby="passcode-hint"
                                         class="w-full bg-white border-2 border-[#F0E6D2] rounded-2xl py-4 px-4 text-center text-xl font-mono font-black text-[#3E2723] tracking-[0.3em] uppercase focus:outline-none focus:border-[#3E2723] shadow-sm placeholder-[#D7CCC8]">
                                 <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[#D7CCC8] pointer-events-none">
                                     <x-lucide-ticket class="w-5 h-5" />
                                 </div>
+                                {{-- The placeholder disappears the moment typing starts and is
+                                     never announced anyway, so the format lives here too. --}}
+                                <span id="passcode-hint" class="sr-only">Eight character code printed at the bottom of your receipt, for example LAWA-1234.</span>
                             </div>
                             
                             <!-- Where is my code? Helper -->
@@ -193,7 +202,11 @@
 
                         <div class="flex items-center gap-3 px-1">
                             <div class="relative flex items-center justify-center">
-                                <input type="checkbox" id="terms-voucher" required class="w-5 h-5 text-[#3E2723] border-2 border-[#E6D5C3] rounded-lg focus:ring-[#3E2723] cursor-pointer appearance-none transition-all checked:bg-[#3E2723] checked:border-[#3E2723]">
+                                {{-- "peer" is what makes the tick below work: peer-checked:block
+                                     matches on a later sibling of an element marked peer, and
+                                     without it the icon stayed display:none forever. The box
+                                     filled dark on check but never showed a check mark. --}}
+                                <input type="checkbox" id="terms-voucher" required class="peer w-5 h-5 text-[#3E2723] border-2 border-[#E6D5C3] rounded-lg focus:ring-[#3E2723] cursor-pointer appearance-none transition-all checked:bg-[#3E2723] checked:border-[#3E2723]">
                                 <x-lucide-check class="w-3.5 h-3.5 text-white absolute pointer-events-none hidden peer-checked:block" stroke-width="4" />
                             </div>
                             <label for="terms-voucher" class="text-[9px] text-[#6D4C41] font-bold leading-tight cursor-pointer uppercase tracking-tight">

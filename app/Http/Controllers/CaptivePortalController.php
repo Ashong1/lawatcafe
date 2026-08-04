@@ -245,11 +245,26 @@ class CaptivePortalController extends Controller
         ]);
 
         return DB::transaction(function () use ($request, $opnsense, $shaping) {
-            // 1. Verify the Lawa't Voucher in your Database
-            $code = trim($request->passcode);
+            // 1. Verify the Lawa't Voucher in your Database.
+            // Codes are issued uppercase (VoucherService), the field renders
+            // uppercase, and a phone keyboard will happily add a trailing space
+            // after autocorrect — so collapse whitespace and case before looking
+            // up rather than blaming the guest for their keyboard.
+            $code = strtoupper(preg_replace('/\s+/', '', (string) $request->passcode));
+
             $voucher = Voucher::where('code', $code)
                 ->lockForUpdate()
                 ->first();
+
+            // Guests routinely type the code without the printed dash. Falling
+            // back to a separator-insensitive match beats telling someone their
+            // valid code is wrong. Only runs when the indexed lookup missed, and
+            // this table holds one row per voucher ever sold, not per request.
+            if (! $voucher) {
+                $voucher = Voucher::whereRaw("REPLACE(code, '-', '') = ?", [str_replace('-', '', $code)])
+                    ->lockForUpdate()
+                    ->first();
+            }
 
             // Distinguish "doesn't exist / mistyped" from "already redeemed" —
             // a single generic message for both makes it impossible for a guest
