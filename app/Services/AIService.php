@@ -1404,7 +1404,7 @@ OPERATIONAL GUIDELINES:
 
     private function getTodaysSalesTotal(): float
     {
-        return Cache::remember('ai_ctx_todays_sales', 30, fn () => (float) Sale::where('status', 'completed')->where('created_at', '>=', Carbon::today())->sum('total_amount'));
+        return Cache::remember('ai_ctx_todays_sales', 30, fn () => (float) Sale::revenue()->where('created_at', '>=', Carbon::today())->sum('total_amount'));
     }
 
     private function getActiveVoucherCount(): int
@@ -1451,7 +1451,7 @@ OPERATIONAL GUIDELINES:
     private function getBestSellersContext()
     {
         return Cache::remember('ai_ctx_best_sellers', 300, function () {
-            $bestSellers = SaleItem::whereHas('sale', fn ($q) => $q->where('status', 'completed'))->select('item_name', DB::raw('SUM(quantity) as total_qty'))->where('created_at', '>=', Carbon::now()->subDays(30))->groupBy('item_name')->orderByDesc('total_qty')->take(3)->pluck('item_name')->toArray();
+            $bestSellers = SaleItem::whereHas('sale', fn ($q) => $q->where('status', '!=', 'cancelled'))->select('item_name', DB::raw('SUM(quantity) as total_qty'))->where('created_at', '>=', Carbon::now()->subDays(30))->groupBy('item_name')->orderByDesc('total_qty')->take(3)->pluck('item_name')->toArray();
 
             return ! empty($bestSellers) ? implode(', ', $bestSellers) : null;
         });

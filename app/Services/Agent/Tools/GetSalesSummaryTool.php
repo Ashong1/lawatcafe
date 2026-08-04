@@ -51,12 +51,12 @@ class GetSalesSummaryTool implements AgentTool
 
         [$start, $end, $label] = $this->range($period);
 
-        $query = Sale::where('status', 'completed')->whereBetween('created_at', [$start, $end]);
+        $query = Sale::revenue()->whereBetween('created_at', [$start, $end]);
         $total = (float) (clone $query)->sum('total_amount');
         $count = (clone $query)->count();
 
         return ToolResult::ok(
-            sprintf('%s: PHP %s across %d completed order(s).', $label, number_format($total, 2), $count),
+            sprintf('%s: PHP %s across %d order(s).', $label, number_format($total, 2), $count),
             ['period' => $period, 'total' => $total, 'order_count' => $count]
         );
     }

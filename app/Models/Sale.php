@@ -23,6 +23,18 @@ class Sale extends Model
         'shift_id',
     ];
 
+    /**
+     * Sales that should count toward revenue/cash reconciliation. Payment is
+     * captured in full at POS checkout, so a sale counts the moment it's
+     * created — 'pending'/'preparing' only track kitchen fulfillment on the
+     * KDS board, not whether the money changed hands. Only 'cancelled'
+     * (voided) sales should be excluded.
+     */
+    public function scopeRevenue($query)
+    {
+        return $query->where('status', '!=', 'cancelled');
+    }
+
     // Optional: Setup the relationship so you can get the user who made the sale
     public function user()
     {

@@ -36,7 +36,7 @@ class ShiftAuditService
         $summary = [
             'staff_name' => $shift->user->name,
             'starting_cash' => (float) $shift->starting_cash,
-            'cash_sales' => (float) $shift->sales()->where('status', 'completed')->where('payment_method', 'Cash')->sum('total_amount'),
+            'cash_sales' => (float) $shift->sales()->revenue()->where('payment_method', 'Cash')->sum('total_amount'),
             'pay_ins' => (float) $shift->transactions()->where('type', 'pay_in')->sum('amount'),
             'pay_outs' => (float) $shift->transactions()->where('type', 'pay_out')->sum('amount'),
             'expected_cash' => (float) $shift->expected_cash,

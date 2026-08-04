@@ -29,7 +29,7 @@ class BaristaForecastService
     {
         $thirtyDaysAgo = Carbon::now()->subDays(30);
 
-        $historicalSales = Sale::where('status', 'completed')
+        $historicalSales = Sale::revenue()
             ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
             ->where('created_at', '>=', $thirtyDaysAgo)
             ->groupBy('date')
@@ -39,7 +39,7 @@ class BaristaForecastService
             ->toArray();
 
         $daysOfData = count($historicalSales);
-        $transactionCount = Sale::where('status', 'completed')
+        $transactionCount = Sale::revenue()
             ->where('created_at', '>=', $thirtyDaysAgo)
             ->count();
 
@@ -75,7 +75,7 @@ class BaristaForecastService
         $result = (function () use ($ai, $historicalSales, $daysOfData, $thirtyDaysAgo, $transactionCount) {
             $seventyTwoHoursAgo = Carbon::now()->subHours(72);
 
-            $productPerformance = SaleItem::whereHas('sale', fn ($q) => $q->where('status', 'completed'))
+            $productPerformance = SaleItem::whereHas('sale', fn ($q) => $q->where('status', '!=', 'cancelled'))
                 ->select('item_name', DB::raw('SUM(quantity) as total_qty'))
                 ->where('created_at', '>=', $thirtyDaysAgo)
                 ->groupBy('item_name')
@@ -85,7 +85,7 @@ class BaristaForecastService
                 ->toArray();
 
             // 72-hour window for sharp demand risk detection.
-            $recentPerformance = SaleItem::whereHas('sale', fn ($q) => $q->where('status', 'completed'))
+            $recentPerformance = SaleItem::whereHas('sale', fn ($q) => $q->where('status', '!=', 'cancelled'))
                 ->select('item_name', DB::raw('SUM(quantity) as total_qty'))
                 ->where('created_at', '>=', $seventyTwoHoursAgo)
                 ->groupBy('item_name')

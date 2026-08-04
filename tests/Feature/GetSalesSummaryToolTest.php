@@ -54,7 +54,7 @@ class GetSalesSummaryToolTest extends TestCase
         $this->assertStringContainsString('150.00', $result->message);
     }
 
-    public function test_excludes_non_completed_sales(): void
+    public function test_excludes_cancelled_sales(): void
     {
         $sale = $this->makeSale('TRN-VOID', 999, 'cancelled');
         $sale->created_at = now()->subDay()->setTime(14, 0);
@@ -64,6 +64,26 @@ class GetSalesSummaryToolTest extends TestCase
 
         $this->assertSame(0.0, $result->data['total']);
         $this->assertSame(0, $result->data['order_count']);
+    }
+
+    public function test_counts_sales_still_pending_or_preparing_on_the_kds_board(): void
+    {
+        // Regression: checkout() always creates a sale as 'pending' — it only
+        // becomes 'completed' once the KDS board clears every item. Payment
+        // already happened at checkout, so it must count toward revenue
+        // regardless of kitchen fulfillment status. See Sale::scopeRevenue().
+        $pending = $this->makeSale('TRN-PEND', 89, 'pending');
+        $pending->created_at = now()->subDay()->setTime(14, 0);
+        $pending->save();
+
+        $preparing = $this->makeSale('TRN-PREP', 150, 'preparing');
+        $preparing->created_at = now()->subDay()->setTime(15, 0);
+        $preparing->save();
+
+        $result = app(GetSalesSummaryTool::class)->execute(['period' => 'yesterday'], null);
+
+        $this->assertSame(239.0, $result->data['total']);
+        $this->assertSame(2, $result->data['order_count']);
     }
 
     public function test_this_week_and_this_month_periods_work(): void

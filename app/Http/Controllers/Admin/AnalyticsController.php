@@ -27,7 +27,7 @@ class AnalyticsController extends Controller
                 WHEN 6 THEN 'Saturday' END"
             : 'DAYNAME(created_at)';
 
-        $weeklyStats = Sale::where('status', 'completed')
+        $weeklyStats = Sale::revenue()
             ->selectRaw("{$dayExpr} as day, SUM(total_amount) as revenue, COUNT(*) as count")
             ->where('created_at', '>=', Carbon::now()->subDays(7))
             ->groupBy('day')
@@ -37,7 +37,7 @@ class AnalyticsController extends Controller
         $categoryPerformance = DB::table('products')
             ->join('sale_items', 'products.name', '=', 'sale_items.item_name')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->where('sales.status', 'completed')
+            ->where('sales.status', '!=', 'cancelled')
             ->select('products.category', DB::raw('SUM(sale_items.quantity) as total_qty'), DB::raw('SUM(sale_items.price * sale_items.quantity) as revenue'))
             ->groupBy('products.category')
             ->orderByDesc('revenue')

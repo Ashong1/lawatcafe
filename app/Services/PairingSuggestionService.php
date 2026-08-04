@@ -35,7 +35,7 @@ class PairingSuggestionService
     {
         $topPairingId = Cache::remember("pairing_history_{$productId}", 3600, function () use ($productId) {
             $saleIds = SaleItem::where('product_id', $productId)
-                ->whereHas('sale', fn ($q) => $q->where('status', 'completed'))
+                ->whereHas('sale', fn ($q) => $q->where('status', '!=', 'cancelled'))
                 ->pluck('sale_id');
 
             if ($saleIds->isEmpty()) {
@@ -79,7 +79,7 @@ class PairingSuggestionService
         $best = Product::where('status', 'Active')
             ->where('category', $pairedCategory)
             ->whereNotIn('id', $exclude)
-            ->withSum(['saleItems as total_sold' => fn ($q) => $q->whereHas('sale', fn ($s) => $s->where('status', 'completed'))], 'quantity')
+            ->withSum(['saleItems as total_sold' => fn ($q) => $q->whereHas('sale', fn ($s) => $s->revenue())], 'quantity')
             ->orderByDesc('total_sold')
             ->first();
 

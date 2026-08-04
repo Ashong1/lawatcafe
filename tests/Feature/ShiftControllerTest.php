@@ -118,9 +118,36 @@ class ShiftControllerTest extends TestCase
         $response->assertViewHas('summary', function ($summary) {
             return $summary['cash_sales'] === 100.0
                 && $summary['void_total'] === 999.0
-                && $summary['total_sales'] === 300.0; // completed only — void excluded
+                && $summary['total_sales'] === 300.0; // any non-cancelled sale counts — only the void is excluded
         });
         $response->assertViewHas('expectedCash', 600.0); // 500 starting + 100 cash sales
+    }
+
+    public function test_end_counts_cash_from_sales_still_pending_or_preparing_on_the_kds_board(): void
+    {
+        // Regression: payment is captured in full at POS checkout, before the
+        // barista ever touches the KDS board. A sale sitting in the kitchen
+        // queue (status 'pending'/'preparing') is still real cash in the
+        // drawer and must count toward expected cash — only a voided
+        // ('cancelled') sale should be excluded. See Sale::scopeRevenue().
+        $staff = User::factory()->create(['role' => 'staff']);
+        $shift = Shift::create(['user_id' => $staff->id, 'starting_cash' => 500, 'status' => 'open', 'opened_at' => now()]);
+
+        Sale::create([
+            'transaction_number' => 'TRN-KDS01', 'total_amount' => 89, 'status' => 'pending',
+            'payment_method' => 'Cash', 'order_type' => 'dine_in', 'user_id' => $staff->id, 'shift_id' => $shift->id,
+        ]);
+        Sale::create([
+            'transaction_number' => 'TRN-KDS02', 'total_amount' => 150, 'status' => 'preparing',
+            'payment_method' => 'Cash', 'order_type' => 'dine_in', 'user_id' => $staff->id, 'shift_id' => $shift->id,
+        ]);
+
+        // Expected: 500 (starting) + 89 + 150 (still-queued cash sales) = 739
+        $response = $this->actingAs($staff)->post(route('shift.end', $shift), ['ending_cash' => 739]);
+
+        $response->assertSessionHas('success');
+        $shift->refresh();
+        $this->assertEquals(739, $shift->expected_cash);
     }
 
     public function test_closing_report_rejects_an_already_closed_shift(): void
