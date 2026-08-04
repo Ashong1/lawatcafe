@@ -208,6 +208,31 @@ html {
     }
 }
 
+/* Decorative background textures for the guest portal screens. These used to
+   be PNGs pulled from transparenttextures.com, but every portal page is shown
+   to a guest who has NOT been let onto the internet yet — the captive portal
+   is the thing standing between them and it. So each of those requests hung
+   until the browser gave up, and on a captive-network assistant the stalled
+   external fetch reads as "still no connectivity". Pure-CSS gradients keep the
+   same effect with nothing to fetch. All three are used at 1.5-5% opacity, so
+   they only need to read as faint tooth, not as an exact pattern match. */
+.texture-pinstripe {
+    background-image: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.6) 0 1px, transparent 1px 4px);
+}
+
+.texture-squares {
+    background-image:
+        repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0 1px, transparent 1px 6px),
+        repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.6) 0 1px, transparent 1px 6px);
+}
+
+.texture-cubes {
+    background-image:
+        repeating-linear-gradient(60deg, rgba(0, 0, 0, 0.6) 0 1px, transparent 1px 14px),
+        repeating-linear-gradient(-60deg, rgba(0, 0, 0, 0.6) 0 1px, transparent 1px 14px),
+        repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0 1px, transparent 1px 14px);
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

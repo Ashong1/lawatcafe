@@ -82,7 +82,7 @@
         <!-- Body (Scrollable Menu Content) -->
         <div class="flex-1 overflow-y-auto px-6 py-8 no-scrollbar relative z-10 flex flex-col">
             <!-- Subtle background pattern -->
-            <div class="absolute inset-0 opacity-[0.015] pointer-events-none z-0 bg-[url('https://www.transparenttextures.com/patterns/pinstripe-dark.png')]"></div>
+            <div class="absolute inset-0 opacity-[0.015] pointer-events-none z-0 texture-pinstripe"></div>
             
             <div class="relative z-10 w-full">
                 <div class="text-center mb-10">
@@ -137,7 +137,7 @@
 
                 <!-- Hungry for Internet CTA (Horizontal Space-Saver) -->
                 <div class="mt-12 mb-6 p-4 bg-[#3E2723] rounded-3xl text-white shadow-2xl relative overflow-hidden border border-[#4A3B32] group flex flex-col items-center text-center gap-4">
-                    <div class="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                    <div class="absolute inset-0 opacity-[0.05] pointer-events-none texture-cubes"></div>
                     <div class="absolute top-0 left-0 w-full h-1 bg-amber-500/30"></div>
                     
                     <div class="relative z-10">

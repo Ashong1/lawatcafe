@@ -79,7 +79,7 @@
 
         <div class="flex-1 flex flex-col relative h-full bg-white/80 lg:bg-transparent overflow-hidden">
             <!-- Subtle background pattern for the content side -->
-            <div class="absolute inset-0 opacity-[0.015] pointer-events-none z-0 bg-[url('https://www.transparenttextures.com/patterns/pinstripe-dark.png')]"></div>
+            <div class="absolute inset-0 opacity-[0.015] pointer-events-none z-0 texture-pinstripe"></div>
             
             <div class="flex-1 overflow-y-auto px-6 py-8 lg:px-16 lg:py-10 no-scrollbar relative z-10 flex flex-col">
 
@@ -155,7 +155,7 @@
 
                     <div class="flex-1 bg-white border-2 border-[#F0E6D2] rounded-[2.5rem] lg:rounded-[3.5rem] p-6 lg:p-8 mb-6 flex flex-col min-h-[300px] shadow-2xl relative overflow-hidden w-full" id="chat-container">
                         <!-- Chat texture overlay -->
-                        <div class="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')]"></div>
+                        <div class="absolute inset-0 opacity-[0.02] pointer-events-none texture-squares"></div>
                         
                         <div class="absolute top-5 left-8 flex items-center gap-2.5 z-10 bg-[#FAF7F2] px-4 py-1.5 rounded-full border border-[#F0E6D2] shadow-sm" :class="aiCue ? 'animate-bounce' : ''">
                             <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>

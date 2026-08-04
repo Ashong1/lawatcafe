@@ -140,7 +140,7 @@
 
         <!-- 2. Body (Scrollable Tab Content) -->
         <div class="flex-1 overflow-y-auto no-scrollbar p-5 relative flex flex-col">
-            <div class="absolute inset-0 opacity-[0.015] pointer-events-none z-0 bg-[url('https://www.transparenttextures.com/patterns/pinstripe-dark.png')]"></div>
+            <div class="absolute inset-0 opacity-[0.015] pointer-events-none z-0 texture-pinstripe"></div>
             
             <div class="relative z-10 flex-1 flex flex-col">
 
