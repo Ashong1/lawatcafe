@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Setting;
 use App\Services\AIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -128,6 +129,42 @@ class AIServiceStreamingCascadeTest extends TestCase
             ->values();
 
         $this->assertSame(['a', 'b'], $requestedModels->all(), 'model-a-first must always be tried before model-b-second, not randomly ordered.');
+    }
+
+    /**
+     * healthyModelsFirst() keeps the admin's configured order as the primary
+     * sort key (see the test above) but deprioritizes a model that failed
+     * within the last few minutes — otherwise fast_path_model_limit's
+     * truncation could waste its one or two slots retrying a model that's
+     * currently broken instead of a healthy one further down the list.
+     */
+    public function test_tool_calling_streaming_skips_a_recently_failed_model_within_the_fast_path_limit(): void
+    {
+        Setting::set('ai_models_gemini', json_encode(['model-a-first', 'model-b-second']));
+        Setting::set('fast_path_model_limit', 1);
+
+        Cache::put('ai_model_status_gemini_model_a_first', [
+            'status' => 'failed',
+            'reason' => 'http_500',
+            'at' => now()->timestamp,
+        ], now()->addMinutes(5));
+
+        Http::fake([
+            '*model-a-first*' => Http::response([], 500),
+            '*model-b-second*' => Http::response(
+                $this->sse([['candidates' => [['content' => ['parts' => [['text' => 'From healthy model B.']]]]]]]),
+                200
+            ),
+        ]);
+
+        $result = app(AIService::class)->chatWithToolsStreaming(
+            [['role' => 'user', 'content' => 'hi']],
+            [],
+            function () {}
+        );
+
+        $this->assertSame('From healthy model B.', $result['choices'][0]['message']['content']);
+        $this->assertCount(1, Http::recorded(), 'Only one model should have been tried given fast_path_model_limit=1 — it should be the healthy one, not the recently-failed one.');
     }
 
     public function test_returns_null_when_every_provider_fails_so_the_caller_can_send_a_graceful_fallback(): void

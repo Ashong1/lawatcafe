@@ -4,6 +4,7 @@ namespace Tests\Feature\Agent;
 
 use App\Models\AiActionAudit;
 use App\Models\Ingredient;
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\Agent\ToolCallOrchestrator;
 use App\Services\Agent\ToolRegistry;
@@ -381,5 +382,29 @@ class ToolCallOrchestratorTest extends TestCase
         ]);
         $adminResult = $orchestrator->confirmPending($anotherOwnedAudit, $admin);
         $this->assertTrue($adminResult->success, 'An admin must be able to confirm any staff member\'s proposal.');
+    }
+
+    /**
+     * Each round trip's provider cascade already has its own ~18s deadline
+     * (AIService::chatWithToolsStreaming), but that used to reset fresh on
+     * every one of up to MAX_ROUND_TRIPS calls here — no ceiling on the
+     * conversation as a whole. RunAgentAnalysis calls run() directly from a
+     * cron job with no client-side timeout to save it, unlike interactive
+     * chat's 20s fetch() abort. agent_conversation_budget_seconds=0 forces
+     * the very first budget check to already be exhausted, so this proves
+     * the abort actually happens before a round trip is attempted at all —
+     * zero requests recorded.
+     */
+    public function test_aborts_without_calling_the_provider_when_the_conversation_budget_is_already_exhausted(): void
+    {
+        Setting::set('agent_conversation_budget_seconds', 0);
+        Http::fake();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $orchestrator = app(ToolCallOrchestrator::class);
+        $result = $orchestrator->run([['role' => 'user', 'content' => 'any low stock?']], ToolRegistry::AUDIENCE_ADMIN, $admin);
+
+        $this->assertSame('I was unable to finish this after several tool calls — please try rephrasing.', $result['reply']);
+        $this->assertCount(0, Http::recorded());
     }
 }

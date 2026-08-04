@@ -284,9 +284,9 @@ class AIService
 
     /**
      * Records the outcome of a single model attempt, independent of the
-     * provider-level circuit breaker above. Purely additive/observational —
-     * read by AIService::getProviderStatuses() for the admin status page,
-     * never consulted by the cascade itself.
+     * provider-level circuit breaker above. Read by AIService::getProviderStatuses()
+     * for the admin status page, and by healthyModelsFirst() below to keep the
+     * cascade from wasting a fast-path slot retrying a model that just failed.
      */
     private function recordModelResult(string $provider, string $model, bool $success, ?string $reason = null): void
     {
@@ -295,6 +295,45 @@ class AIService
             'reason' => $reason,
             'at' => now()->timestamp,
         ], now()->addDays(7));
+    }
+
+    /**
+     * Seconds a model's failure stays "recent" for healthyModelsFirst() — long
+     * enough to skip past a live outage/rate-limit window, short enough that a
+     * model recovers its normal priority quickly once the provider's healthy
+     * again rather than staying deprioritized on stale data.
+     */
+    private const RECENT_FAILURE_WINDOW_SECONDS = 300;
+
+    /**
+     * Stable-partitions $models into [not-recently-failed..., recently-failed...],
+     * preserving each group's original relative order (admin-configured order,
+     * or post-shuffle order — whatever the caller passed in). A model isn't
+     * penalized for being untested or for a failure outside the recent window,
+     * only for having failed within the last few minutes — exactly the
+     * situation where fast_path_model_limit's array_slice() would otherwise
+     * waste one of only 1-2 precious cascade slots retrying a model that's
+     * currently broken instead of a healthy or never-tried one.
+     */
+    private function healthyModelsFirst(string $provider, array $models): array
+    {
+        $now = now()->timestamp;
+        $healthy = [];
+        $recentlyFailed = [];
+
+        foreach ($models as $model) {
+            $cached = Cache::get($this->modelStatusCacheKey($provider, $model));
+            $failedRecently = ($cached['status'] ?? null) === 'failed'
+                && ($now - ($cached['at'] ?? 0)) < self::RECENT_FAILURE_WINDOW_SECONDS;
+
+            if ($failedRecently) {
+                $recentlyFailed[] = $model;
+            } else {
+                $healthy[] = $model;
+            }
+        }
+
+        return array_merge($healthy, $recentlyFailed);
     }
 
     /**
@@ -570,8 +609,11 @@ class AIService
         // order (see activeModels()) should be tried deterministically so a
         // stronger/more tool-reliable model an admin lists first actually
         // gets tried first, rather than being equally likely to lose a coin
-        // flip to a weaker free-tier model on a hard multi-tool turn.
-        $models = $this->activeModels('gemini');
+        // flip to a weaker free-tier model on a hard multi-tool turn. Still
+        // health-aware, though — see healthyModelsFirst() — a model that
+        // just failed shouldn't eat one of the few fast-path slots ahead of
+        // an admin-ranked-lower but currently-healthy one.
+        $models = $this->healthyModelsFirst('gemini', $this->activeModels('gemini'));
         $budget = $this->fastPathBudget();
         $models = array_slice($models, 0, max(1, $budget['modelLimit']));
 
@@ -646,7 +688,9 @@ class AIService
      */
     private function streamOpenAiCompatibleLoop(array $models, string $url, array $headers, array $messages, array $tools, callable $onTextDelta, string $provider, float $deadline): ?array
     {
-        $modelsList = $models;
+        // See the matching comment on streamGeminiLoop() — deterministic
+        // admin order, but health-aware within it.
+        $modelsList = $this->healthyModelsFirst($provider, $models);
         $budget = $this->fastPathBudget();
         $modelsList = array_slice($modelsList, 0, max(1, $budget['modelLimit']));
 
@@ -770,6 +814,7 @@ class AIService
     {
         $models = $this->activeModels('gemini');
         shuffle($models);
+        $models = $this->healthyModelsFirst('gemini', $models);
         $timeout = 15;
         if ($fast) {
             $budget = $this->fastPathBudget();
@@ -814,6 +859,7 @@ class AIService
     {
         $models = $this->activeModels('groq');
         shuffle($models);
+        $models = $this->healthyModelsFirst('groq', $models);
         $timeout = 10;
         if ($fast) {
             $budget = $this->fastPathBudget();
@@ -850,6 +896,7 @@ class AIService
         $models = $this->activeModels('openrouter');
         $first = array_shift($models);
         shuffle($models);
+        $models = $this->healthyModelsFirst('openrouter', $models);
         array_unshift($models, $first);
         $timeout = 15;
         if ($fast) {
@@ -1046,10 +1093,9 @@ class AIService
     /** Shared by adminChat() and ToolCallOrchestrator (admin audience). */
     public function buildAdminSystemPrompt(): string
     {
-        $lowStockThreshold = (int) Setting::get('low_stock_threshold', 500);
-        $lowStockIngredients = Ingredient::where('current_stock', '<', $lowStockThreshold)->get(['name', 'current_stock', 'unit'])->map(fn ($i) => "{$i->name} ({$i->current_stock}{$i->unit})")->toArray();
-        $todaysSales = Sale::where('status', 'completed')->where('created_at', '>=', Carbon::today())->sum('total_amount');
-        $activeVouchers = Voucher::where('is_used', false)->count();
+        $lowStockIngredients = $this->getLowStockIngredients()->map(fn ($i) => "{$i->name} ({$i->current_stock}{$i->unit})")->toArray();
+        $todaysSales = $this->getTodaysSalesTotal();
+        $activeVouchers = $this->getActiveVoucherCount();
 
         return "CORE IDENTITY:
 You are Barista AI, a powerful executive assistant and business analyst for the owner of Lawa't Kape.
@@ -1087,8 +1133,7 @@ OPERATIONAL GUIDELINES:
      */
     public function buildStaffSystemPrompt(?User $actor = null): string
     {
-        $lowStockThreshold = (int) Setting::get('low_stock_threshold', 500);
-        $lowStockIngredients = Ingredient::where('current_stock', '<', $lowStockThreshold)->pluck('name')->toArray();
+        $lowStockIngredients = $this->getLowStockIngredients()->pluck('name')->toArray();
 
         $shiftStatus = 'No shift currently open — open one before starting service.';
         if ($actor) {
@@ -1339,6 +1384,34 @@ OPERATIONAL GUIDELINES:
     }
 
     /** Short-TTL cache: these were previously re-queried on every single chat call. */
+    /**
+     * Shared by both buildAdminSystemPrompt() and buildStaffSystemPrompt()
+     * (which format it differently — full detail vs. names only), so one
+     * cached query serves both instead of each running its own. A much
+     * shorter TTL than the menu/pricing/best-sellers contexts above (those
+     * change rarely; this is operational data an admin would notice going
+     * stale) but still collapses the common case of several chat messages
+     * arriving seconds apart in the same conversation.
+     */
+    private function getLowStockIngredients()
+    {
+        return Cache::remember('ai_ctx_low_stock', 30, function () {
+            $threshold = (int) Setting::get('low_stock_threshold', 500);
+
+            return Ingredient::where('current_stock', '<', $threshold)->get(['name', 'current_stock', 'unit']);
+        });
+    }
+
+    private function getTodaysSalesTotal(): float
+    {
+        return Cache::remember('ai_ctx_todays_sales', 30, fn () => (float) Sale::where('status', 'completed')->where('created_at', '>=', Carbon::today())->sum('total_amount'));
+    }
+
+    private function getActiveVoucherCount(): int
+    {
+        return Cache::remember('ai_ctx_active_vouchers', 30, fn () => Voucher::where('is_used', false)->count());
+    }
+
     private function getPricingContext()
     {
         return Cache::remember('ai_ctx_pricing', 300, function () {

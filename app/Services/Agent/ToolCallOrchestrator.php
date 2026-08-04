@@ -3,6 +3,7 @@
 namespace App\Services\Agent;
 
 use App\Models\AiActionAudit;
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\AIService;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +16,9 @@ use Illuminate\Support\Facades\Log;
 class ToolCallOrchestrator
 {
     private const MAX_ROUND_TRIPS = 5;
+
+    /** Default wall-clock budget across the *whole* conversation — see conversationBudgetSeconds(). */
+    private const DEFAULT_MAX_TOTAL_SECONDS = 60.0;
 
     /** Per-array-value cap applied by truncateForHistory() below. */
     private const MAX_ARRAY_ITEMS_IN_HISTORY = 20;
@@ -42,6 +46,22 @@ class ToolCallOrchestrator
      *                                  Defaults to a no-op for callers that don't stream live status.
      * @return array{reply: ?string, pending: array, executed: array}
      */
+    /**
+     * AIService::chatWithToolsStreaming() already bounds a single round
+     * trip's provider cascade to its own deadline (~18s), but that resets
+     * fresh on every one of up to MAX_ROUND_TRIPS calls in run() — worst
+     * case ~90s total, which interactive chat mostly survives on because
+     * the client aborts its fetch() at 20s regardless. RunAgentAnalysis
+     * calls run() directly from a cron job with no client-side timeout at
+     * all, so a degraded provider run there had nothing bounding total
+     * time — this does. Setting-driven, matching fast_path_timeout_seconds/
+     * fast_path_model_limit's existing convention for AI timing knobs.
+     */
+    private function conversationBudgetSeconds(): float
+    {
+        return (float) Setting::get('agent_conversation_budget_seconds', self::DEFAULT_MAX_TOTAL_SECONDS);
+    }
+
     public function run(array $messages, string $audience, ?User $actor, array $context = [], ?callable $onTextDelta = null, ?callable $onToolStart = null): array
     {
         $onTextDelta ??= function (string $delta) {};
@@ -56,8 +76,16 @@ class ToolCallOrchestrator
 
         $executed = [];
         $pending = [];
+        $budgetSeconds = $this->conversationBudgetSeconds();
+        $deadline = microtime(true) + $budgetSeconds;
 
         for ($roundTrip = 0; $roundTrip < self::MAX_ROUND_TRIPS; $roundTrip++) {
+            if (microtime(true) >= $deadline) {
+                Log::warning("ToolCallOrchestrator: aborting after {$roundTrip} round trip(s) — total conversation budget of {$budgetSeconds}s exceeded.");
+
+                break;
+            }
+
             $response = $this->ai->chatWithToolsStreaming($messages, $canonicalTools, $onTextDelta);
 
             if (! $response) {
