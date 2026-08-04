@@ -22,7 +22,7 @@ class BlocklistServiceTest extends TestCase
 
         $this->assertDatabaseHas('banned_devices', [
             'id' => $device->id,
-            'mac_address' => 'AA:BB:CC:DD:EE:FF',
+            'mac_address_hash' => BannedDevice::hashMac('AA:BB:CC:DD:EE:FF'),
             'reason' => 'Abuse',
             'hostname' => 'phone-1',
         ]);
@@ -52,7 +52,7 @@ class BlocklistServiceTest extends TestCase
 
         $this->assertTrue($result['banned']);
         $this->assertTrue($result['kicked']);
-        $this->assertDatabaseHas('banned_devices', ['mac_address' => 'AA:BB:CC:DD:EE:FF']);
+        $this->assertDatabaseHas('banned_devices', ['mac_address_hash' => BannedDevice::hashMac('AA:BB:CC:DD:EE:FF')]);
     }
 
     public function test_block_and_kick_reports_already_banned_without_creating_a_duplicate(): void

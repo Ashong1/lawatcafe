@@ -46,7 +46,7 @@ class UnblockDeviceTool implements AgentTool
             return ToolResult::fail("'{$mac}' is not a valid MAC address.");
         }
 
-        $device = BannedDevice::where('mac_address', $mac)->first();
+        $device = BannedDevice::findByMac($mac);
         if (! $device) {
             return ToolResult::fail("No banned device found with MAC {$mac}.");
         }

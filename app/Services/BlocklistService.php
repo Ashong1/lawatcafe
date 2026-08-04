@@ -40,7 +40,7 @@ class BlocklistService
         OpnSenseService $opnsense,
         ?string $hostname = null,
     ): array {
-        $existing = BannedDevice::where('mac_address', $macAddress)->first();
+        $existing = BannedDevice::findByMac($macAddress);
         $banned = false;
 
         if (! $existing) {

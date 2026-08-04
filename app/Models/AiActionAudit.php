@@ -17,8 +17,8 @@ class AiActionAudit extends Model
     ];
 
     protected $casts = [
-        'input_params' => 'array',
-        'result' => 'array',
+        'input_params' => 'encrypted:array',
+        'result' => 'encrypted:array',
     ];
 
     public function actor()

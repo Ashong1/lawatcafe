@@ -30,7 +30,7 @@ class StaticIpControllerTest extends TestCase
         ])->assertRedirect();
 
         $this->assertDatabaseHas('static_ip_assignments', [
-            'mac_address' => 'AA:BB:CC:DD:EE:FF',
+            'mac_address_hash' => StaticIpAssignment::hashMac('AA:BB:CC:DD:EE:FF'),
             'ip_address' => '192.168.2.100',
             'kea_reservation_uuid' => 'resv-uuid-1',
         ]);

@@ -14,7 +14,14 @@ class StaticIpController extends Controller
     public function store(Request $request, OpnSenseService $opnsense)
     {
         $validated = $request->validate([
-            'mac_address' => 'required|string|unique:static_ip_assignments,mac_address|regex:/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/',
+            'mac_address' => [
+                'required', 'string', 'regex:/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/',
+                function ($attribute, $value, $fail) {
+                    if (StaticIpAssignment::findByMac($value)) {
+                        $fail('This device already has a static IP reservation.');
+                    }
+                },
+            ],
             'ip_address' => 'required|ipv4|unique:static_ip_assignments,ip_address',
             'hostname' => ['nullable', 'string', 'max:255', 'regex:/^\S+$/'],
         ], [

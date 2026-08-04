@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasHashedMacAddress;
 use Illuminate\Database\Eloquent\Model;
 
 class Voucher extends Model
 {
+    use HasHashedMacAddress;
+
     // Allow mass assignment for these fields
     protected $fillable = [
         'code',
@@ -21,6 +24,7 @@ class Voucher extends Model
     protected $casts = [
         'used_at' => 'datetime',
         'is_used' => 'boolean',
+        'mac_address' => 'encrypted',
     ];
 
     public function sale()

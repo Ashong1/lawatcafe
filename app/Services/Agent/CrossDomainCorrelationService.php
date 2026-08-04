@@ -79,19 +79,27 @@ class CrossDomainCorrelationService
         $windowHours = (int) Setting::get('correlation_repeat_mac_window_hours', 24);
         $minCount = (int) Setting::get('correlation_repeat_mac_threshold', 5);
 
+        // mac_address is encrypted (random IV per row), so grouping/matching
+        // happens on mac_address_hash — a deterministic HMAC of the MAC —
+        // and one representative row per hash is fetched to display the
+        // actual (decrypted) address.
         $offenders = Voucher::where('used_at', '>=', now()->subHours($windowHours))
-            ->whereNotNull('mac_address')
-            ->select('mac_address', DB::raw('count(*) as redemption_count'))
-            ->groupBy('mac_address')
+            ->whereNotNull('mac_address_hash')
+            ->select('mac_address_hash', DB::raw('count(*) as redemption_count'))
+            ->groupBy('mac_address_hash')
             ->having('redemption_count', '>=', $minCount)
             ->get();
 
-        return $offenders->map(fn ($row) => [
-            'type' => 'repeat_mac_abuse',
-            'severity' => 'danger',
-            'summary' => "Device {$row->mac_address} redeemed {$row->redemption_count} vouchers in the last {$windowHours}h.",
-            'data' => ['mac_address' => $row->mac_address, 'redemption_count' => $row->redemption_count],
-        ])->all();
+        return $offenders->map(function ($row) use ($windowHours) {
+            $sample = Voucher::where('mac_address_hash', $row->mac_address_hash)->latest('used_at')->first();
+
+            return [
+                'type' => 'repeat_mac_abuse',
+                'severity' => 'danger',
+                'summary' => "Device {$sample->mac_address} redeemed {$row->redemption_count} vouchers in the last {$windowHours}h.",
+                'data' => ['mac_address' => $sample->mac_address, 'redemption_count' => $row->redemption_count],
+            ];
+        })->all();
     }
 
     /** A banned device still showing an active session — the block isn't holding at the firewall. */

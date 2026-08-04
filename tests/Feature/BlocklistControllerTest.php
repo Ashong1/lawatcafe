@@ -37,7 +37,7 @@ class BlocklistControllerTest extends TestCase
         ])->assertRedirect();
 
         $this->assertDatabaseHas('banned_devices', [
-            'mac_address' => 'AA:BB:CC:DD:EE:FF',
+            'mac_address_hash' => BannedDevice::hashMac('AA:BB:CC:DD:EE:FF'),
             'reason' => 'Repeated abuse',
         ]);
     }

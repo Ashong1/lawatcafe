@@ -21,7 +21,14 @@ class BlocklistController extends Controller
     public function store(Request $request, OpnSenseService $opnsense)
     {
         $validated = $request->validate([
-            'mac_address' => 'required|string|unique:banned_devices,mac_address|regex:/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/',
+            'mac_address' => [
+                'required', 'string', 'regex:/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/',
+                function ($attribute, $value, $fail) {
+                    if (BannedDevice::findByMac($value)) {
+                        $fail('This device is already banned.');
+                    }
+                },
+            ],
             'reason' => 'nullable|string|max:255',
             'hostname' => 'nullable|string|max:255',
         ]);
