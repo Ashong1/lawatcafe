@@ -209,9 +209,6 @@ class SettingController extends Controller
     }
 
     /**
-     * Update API Integrations (AI model + key) — super_admin only, enforced at the route level.
-     */
-    /**
      * Update Network Configuration — super_admin only, enforced at the route level.
      */
     public function updateNetwork(Request $request)

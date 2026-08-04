@@ -36,12 +36,6 @@ class AppServiceProvider extends ServiceProvider
         // OpnSenseService's (an already-literal IP skips resolution entirely).
         Http::globalOptions(['force_ip_resolve' => 'v4']);
 
-        // Force HTTPS only if we're on a domain (like capstone.lab)
-        // This allows the portal to work over HTTP when accessed via IP (192.168.2.5)
-        // if (str_starts_with(config('app.url'), 'https://') && !filter_var(request()->getHost(), FILTER_VALIDATE_IP)) {
-        //     \Illuminate\Support\Facades\URL::forceScheme('https');
-        // }
-
         // Guest captive-portal endpoints have no Laravel auth and (by design,
         // since guests land here via a cross-origin redirect) are CSRF-exempt,
         // so these limiters are the only thing standing between them and
