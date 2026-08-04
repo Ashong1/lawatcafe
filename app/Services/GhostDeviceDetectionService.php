@@ -46,11 +46,11 @@ class GhostDeviceDetectionService
 
         $staticAssignments = StaticIpAssignment::all();
 
-        $trustedMacs = collect($allowed['macs'] ?? [])->map($normalizeMac)
+        $trustedMacs = collect($allowed['macs'])->map($normalizeMac)
             ->merge($staticAssignments->pluck('mac_address')->map($normalizeMac))
             ->filter()->unique();
 
-        $trustedIps = collect($allowed['ips'] ?? [])
+        $trustedIps = collect($allowed['ips'])
             ->merge(explode(',', Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.1')))
             ->merge(Setting::infrastructureIps())
             ->merge($staticAssignments->pluck('ip_address'))

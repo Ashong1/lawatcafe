@@ -43,18 +43,6 @@ parameters:
 			path: app/Http/Controllers/Auth/VerifyEmailController.php
 
 		-
-			message: '#^Offset ''executed'' on array\{reply\: string\|null, pending\: array, executed\: array\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Http/Controllers/CaptivePortalController.php
-
-		-
-			message: '#^Offset ''pending'' on array\{reply\: string\|null, pending\: array, executed\: array\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Http/Controllers/CaptivePortalController.php
-
-		-
 			message: '#^Binary operation "/" between string and 1000 results in an error\.$#'
 			identifier: binaryOp.invalid
 			count: 2
@@ -64,18 +52,6 @@ parameters:
 			message: '#^Binary operation "/" between string and string results in an error\.$#'
 			identifier: binaryOp.invalid
 			count: 2
-			path: app/Http/Controllers/DashboardController.php
-
-		-
-			message: '#^Offset ''executed'' on array\{reply\: string\|null, pending\: array, executed\: array\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Http/Controllers/DashboardController.php
-
-		-
-			message: '#^Offset ''pending'' on array\{reply\: string\|null, pending\: array, executed\: array\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
 			path: app/Http/Controllers/DashboardController.php
 
 		-
@@ -223,18 +199,6 @@ parameters:
 			path: app/Http/Controllers/StaffController.php
 
 		-
-			message: '#^Offset ''executed'' on array\{reply\: string\|null, pending\: array, executed\: array\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Http/Controllers/StaffController.php
-
-		-
-			message: '#^Offset ''pending'' on array\{reply\: string\|null, pending\: array, executed\: array\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Http/Controllers/StaffController.php
-
-		-
 			message: '#^Relation ''ingredient'' is not found in App\\Models\\PurchaseOrderDraft model\.$#'
 			identifier: larastan.relationExistence
 			count: 1
@@ -301,6 +265,12 @@ parameters:
 			path: app/Services/AIService.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\Voucher\:\:\$mac_address_hash\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Agent/CrossDomainCorrelationService.php
+
+		-
 			message: '#^Access to an undefined property App\\Models\\Voucher\:\:\$redemption_count\.$#'
 			identifier: property.notFound
 			count: 2
@@ -317,6 +287,36 @@ parameters:
 			identifier: larastan.relationExistence
 			count: 1
 			path: app/Services/Agent/CrossDomainCorrelationService.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: string$#'
+			identifier: match.unhandled
+			count: 1
+			path: app/Services/Agent/Tools/GetSalesSummaryTool.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\PurchaseOrderDraft\:\:\$ingredient\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Agent/Tools/ListSupplierPoDraftsTool.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\PurchaseOrderDraft\:\:\$supplier\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Agent/Tools/ListSupplierPoDraftsTool.php
+
+		-
+			message: '#^Relation ''ingredient'' is not found in App\\Models\\PurchaseOrderDraft model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Agent/Tools/ListSupplierPoDraftsTool.php
+
+		-
+			message: '#^Relation ''supplier'' is not found in App\\Models\\PurchaseOrderDraft model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Agent/Tools/ListSupplierPoDraftsTool.php
 
 		-
 			message: '#^Offset int\<1, 7\> on array\{''None'', ''Insecure'', ''Low'', ''Emerging'', ''Moderate'', ''Good'', ''High'', ''Excellent''\} on left side of \?\? always exists and is not nullable\.$#'
@@ -347,6 +347,12 @@ parameters:
 			identifier: property.notFound
 			count: 1
 			path: app/Services/DeliveryReceivingService.php
+
+		-
+			message: '#^Method App\\Services\\GhostDeviceDetectionService\:\:detect\(\) should return Illuminate\\Support\\Collection\<int, array\{mac_address\: string, ip_address\: string\|null, hostname\: string\|null, manufacturer\: string\|null, seen_via\: array\<string\>, is_banned\: bool\}\> but returns Illuminate\\Support\\Collection\<int, non\-empty\-array\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/GhostDeviceDetectionService.php
 
 		-
 			message: '#^Relation ''sale'' is not found in App\\Models\\SaleItem model\.$#'
