@@ -52,6 +52,7 @@
         }
     }
 </style>
+@include('portal.partials.captive-assistant')
 </head>
 <body class="bg-[#FAF7F2] text-[#4A3B32] min-h-screen font-sans antialiased flex items-center justify-center p-4"
       style="font-family: 'Montserrat', sans-serif; box-sizing: border-box;"
@@ -305,8 +306,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         isCNA() {
-            const ua = navigator.userAgent;
-            return (ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1 || ua.indexOf('Android') > -1) && (ua.indexOf('Safari') === -1 && ua.indexOf('Chrome') === -1);
+            return window.isCaptiveAssistant();
         },
 
         async submitForm(e) {

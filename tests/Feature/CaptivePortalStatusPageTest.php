@@ -79,8 +79,43 @@ class CaptivePortalStatusPageTest extends TestCase
     {
         $response = $this->get(route('portal.success'));
 
-        $response->assertSee('open this page in your normal browser', false);
+        $response->assertSee('open this address in your normal browser', false);
         $response->assertSee(route('portal.index'), false);
+    }
+
+    /**
+     * The success page serves two audiences from one response: an ordinary
+     * browser, where the tab survives and the 5s hand-off to the status page is
+     * right; and the phone's captive-network assistant, where the OS destroys
+     * the window the moment its connectivity probe succeeds, so auto-navigating
+     * only flashes a page the guest can never get back to. Both variants must
+     * ship in the markup — which one shows is decided client-side by the
+     * html.is-cna class, since the user agent is the only signal available.
+     */
+    public function test_success_page_ships_both_the_browser_and_assistant_variants(): void
+    {
+        $response = $this->get(route('portal.success'));
+
+        $response->assertOk();
+        $response->assertSee('browser-only', false);
+        $response->assertSee('cna-only', false);
+        $response->assertSee('isCaptiveAssistant', false);
+    }
+
+    /**
+     * The auto-redirect must stay gated on the assistant check. Without the
+     * gate the assistant navigates mid-teardown, which is the failure this
+     * whole split exists to prevent.
+     */
+    public function test_success_page_auto_redirect_is_gated_on_the_assistant_check(): void
+    {
+        $content = $this->get(route('portal.success'))->getContent();
+
+        $this->assertStringContainsString(
+            'reducedMotion || window.isCaptiveAssistant()',
+            $content,
+            'The countdown redirect must be skipped inside a captive-network assistant.'
+        );
     }
 
     public function test_browse_url_is_configurable_rather_than_a_hardcoded_domain(): void

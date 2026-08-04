@@ -13,6 +13,7 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
+@include('portal.partials.captive-assistant')
 </head>
 <body class="bg-[#FAF7F2] text-[#4A3B32] min-h-screen font-sans antialiased flex items-center justify-center p-2 lg:p-8" style="font-family: 'Montserrat', sans-serif;">
 
@@ -73,9 +74,17 @@
                 <div class="bg-amber-50 border-2 border-amber-200/50 rounded-[2rem] p-8 mb-8 text-center relative overflow-hidden shadow-sm max-w-md mx-auto w-full">
                     <div class="absolute top-0 left-0 w-full h-1 bg-amber-500/30"></div>
                     <span class="block text-[10px] font-black text-amber-800 uppercase tracking-[0.3em] mb-3">Session Activated</span>
-                    <p class="text-sm lg:text-base text-[#3E2723] font-bold mb-4">To watch your remaining time, open this page in your normal browser:</p>
-                    <p class="font-mono text-xs lg:text-sm font-black text-[#3E2723] bg-white/70 border border-amber-200 rounded-xl py-3 px-4 select-all break-all">{{ route('portal.index') }}</p>
-                    <p class="text-[10px] text-[#8D6E63] font-bold mt-3 leading-relaxed">This sign-in window closes on its own once you're online — bookmark the address above to check back.</p>
+
+                    {{-- Two audiences, one page. In an ordinary browser this tab
+                         survives, so we say where we're about to take them. In the
+                         phone's sign-in assistant the tab is disposable — the OS
+                         destroys it the moment its connectivity probe succeeds — so
+                         the only durable thing we can hand over is the address. --}}
+                    <p class="browser-only text-sm lg:text-base text-[#3E2723] font-bold">Your session is live. We'll show you the details in a moment.</p>
+
+                    <p class="cna-only text-sm lg:text-base text-[#3E2723] font-bold mb-4">To watch your remaining time, open this address in your normal browser:</p>
+                    <p class="cna-only font-mono text-xs lg:text-sm font-black text-[#3E2723] bg-white/70 border border-amber-200 rounded-xl py-3 px-4 select-all break-all">{{ route('portal.index') }}</p>
+                    <p class="cna-only text-[10px] text-[#8D6E63] font-bold mt-3 leading-relaxed">This sign-in window closes on its own once you're online — bookmark the address above to check back.</p>
                 </div>
 
                 <div class="max-w-sm mx-auto w-full space-y-4">
@@ -95,8 +104,12 @@
                         <x-lucide-globe class="w-4 h-4 lg:w-5 lg:h-5" />
                     </a>
 
-                    <p id="countdown" class="text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.3em] animate-pulse">
+                    <p id="countdown" class="browser-only text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.3em] animate-pulse">
                         Showing your session in 5s... <button type="button" id="cancel-redirect" class="underline decoration-dotted ml-1 normal-case tracking-normal font-bold">Cancel</button>
+                    </p>
+
+                    <p class="cna-only text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.2em] leading-relaxed">
+                        Tap <span class="text-[#3E2723]">Start Browsing</span> to finish signing in
                     </p>
                 </div>
 
@@ -109,7 +122,12 @@
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const countdownEl = document.getElementById('countdown');
 
-        if (reducedMotion) {
+        // Inside the phone's sign-in assistant, auto-navigating is pointless and
+        // actively misleading: the OS tears this window down as soon as its own
+        // connectivity probe succeeds, so whatever we navigate to is destroyed
+        // mid-load and the guest sees a flash of a page they can never return to.
+        // Let the assistant close itself and leave them the address instead.
+        if (reducedMotion || window.isCaptiveAssistant()) {
             // Auto-navigation is a motion/vestibular concern too, not just animated visuals —
             // skip it entirely and rely on the "Start Browsing" button as the only way forward.
             countdownEl.style.display = 'none';
