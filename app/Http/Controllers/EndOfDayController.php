@@ -40,8 +40,6 @@ class EndOfDayController extends Controller
         $summary = [
             'starting_cash' => (float) $shift->starting_cash,
             'cash_sales' => (float) $shift->sales()->where('status', 'completed')->where('payment_method', 'Cash')->sum('total_amount'),
-            'gcash_sales' => (float) $shift->sales()->where('status', 'completed')->where('payment_method', 'GCash')->sum('total_amount'),
-            'card_sales' => (float) $shift->sales()->where('status', 'completed')->where('payment_method', 'Card')->sum('total_amount'),
             'total_sales' => (float) $shift->sales()->where('status', 'completed')->sum('total_amount'),
             'pay_ins' => (float) $shift->transactions()->where('type', 'pay_in')->sum('amount'),
             'pay_outs' => (float) $shift->transactions()->where('type', 'pay_out')->sum('amount'),

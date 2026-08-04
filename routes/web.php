@@ -17,7 +17,6 @@ use App\Http\Controllers\IngredientDeliveryController;
 use App\Http\Controllers\KdsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderHistoryController;
-use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -185,7 +184,6 @@ Route::middleware(['auth'])->group(function () {
             // GET sessions and kick are shared with staff — see the "Shared
             // Network Info" group above. Tier changes stay admin-only.
             Route::post('/sessions/set-tier', [VoucherController::class, 'setTier'])->name('sessions.set-tier');
-            Route::get('/verifications', [PaymentController::class, 'logs'])->name('verifications');
 
             Route::post('/vouchers/generate', [VoucherController::class, 'generateBatch'])->name('vouchers.generate');
             Route::post('/vouchers/bulk-delete', [VoucherController::class, 'bulkDestroy'])->name('vouchers.bulk-delete');

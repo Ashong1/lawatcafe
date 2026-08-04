@@ -55,14 +55,6 @@
                         <span class="text-sm font-medium text-[#8D6E63]">Cash</span>
                         <span class="font-bold text-[#3E2723]">₱{{ number_format($summary['cash_sales'], 2) }}</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-[#8D6E63]">GCash</span>
-                        <span class="font-bold text-[#3E2723]">₱{{ number_format($summary['gcash_sales'], 2) }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium text-[#8D6E63]">Card</span>
-                        <span class="font-bold text-[#3E2723]">₱{{ number_format($summary['card_sales'], 2) }}</span>
-                    </div>
                 </div>
             </div>
 

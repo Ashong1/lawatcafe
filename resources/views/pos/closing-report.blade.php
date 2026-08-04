@@ -24,14 +24,6 @@
                     <span class="text-sm font-bold text-[#4A3B32]">Cash Sales</span>
                     <span class="font-black text-[#3E2723]">₱{{ number_format($summary['cash_sales'], 2) }}</span>
                 </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm font-bold text-[#4A3B32]">GCash Sales</span>
-                    <span class="font-black text-[#3E2723]">₱{{ number_format($summary['gcash_sales'], 2) }}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-sm font-bold text-[#4A3B32]">Card Sales</span>
-                    <span class="font-black text-[#3E2723]">₱{{ number_format($summary['card_sales'], 2) }}</span>
-                </div>
                 <div class="pt-4 border-t border-[#FDF8F5] flex justify-between items-center">
                     <span class="text-[10px] font-black text-amber-800 uppercase tracking-widest">Total Sales</span>
                     <span class="text-xl font-black text-[#3E2723]">₱{{ number_format($summary['total_sales'], 2) }}</span>

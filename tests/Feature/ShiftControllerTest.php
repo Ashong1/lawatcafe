@@ -117,7 +117,6 @@ class ShiftControllerTest extends TestCase
         $response->assertOk();
         $response->assertViewHas('summary', function ($summary) {
             return $summary['cash_sales'] === 100.0
-                && $summary['gcash_sales'] === 200.0
                 && $summary['void_total'] === 999.0
                 && $summary['total_sales'] === 300.0; // completed only — void excluded
         });

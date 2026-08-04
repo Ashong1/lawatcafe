@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\AiAnalysisRun;
 use App\Models\AiFinding;
 use App\Models\Category;
-use App\Models\EwalletPayment;
 use App\Models\Ingredient;
 use App\Models\Product;
 use App\Models\Sale;
@@ -164,19 +163,6 @@ class DashboardController extends Controller
                     'icon' => 'package-x',
                     'message' => $lowStockItems->count().' items reaching low stock threshold.',
                     'action' => route('inventory.ingredients.index'),
-                ];
-            }
-
-            // Failed Payments Alert (Unclaimed for > 24 hours)
-            $unclaimedPayments = EwalletPayment::where('is_used', false)
-                ->where('created_at', '<', now()->subHours(24))
-                ->count();
-            if ($unclaimedPayments > 0) {
-                $alerts[] = [
-                    'type' => 'danger',
-                    'icon' => 'receipt',
-                    'message' => $unclaimedPayments.' payment verifications pending > 24h.',
-                    'action' => route('network.verifications'),
                 ];
             }
 

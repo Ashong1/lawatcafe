@@ -48,13 +48,6 @@
         <span class="text-[10px] font-black uppercase tracking-widest text-[#3E2723]">Receive Supplies</span>
     </a>
 
-    <a href="{{ route('network.verifications') }}" class="bg-white px-5 py-3 rounded-2xl shadow-sm border border-[#F0E6D2] hover:border-green-500 transition-all group flex items-center gap-3 active:scale-95">
-        <div class="p-2 bg-green-50 rounded-lg text-green-700 group-hover:bg-green-500 group-hover:text-white transition-colors">
-            <x-lucide-refresh-cw class="w-4 h-4" />
-        </div>
-        <span class="text-[10px] font-black uppercase tracking-widest text-[#3E2723]">Sync E-Wallet</span>
-    </a>
-
     <a href="{{ route('sales.export') }}" class="bg-white px-5 py-3 rounded-2xl shadow-sm border border-[#F0E6D2] hover:border-slate-500 transition-all group flex items-center gap-3 active:scale-95">
         <div class="p-2 bg-slate-50 rounded-lg text-slate-700 group-hover:bg-slate-500 group-hover:text-white transition-colors">
             <x-lucide-file-text class="w-4 h-4" />
