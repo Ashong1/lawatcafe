@@ -557,10 +557,24 @@ document.addEventListener('alpine:init', () => {
                                 this.conversationId = event.conversation_id;
                             }
 
-                            // Only push meta.reply as a fresh bubble if nothing streamed —
-                            // when it did, meta.reply is the same text already rendered live.
-                            if (!assistantEntry && event.reply) {
-                                this.history.push({ kind: 'text', role: 'assistant', content: event.reply });
+                            // meta.reply is authoritative: it's the orchestrator's final
+                            // answer and exactly what gets persisted to conversation
+                            // history. The streamed deltas are NOT guaranteed to equal
+                            // it — AIService passes the same onTextDelta into every
+                            // model attempt in the gemini->groq->openrouter cascade, so
+                            // a provider that emits some text and then fails mid-stream
+                            // leaves that partial text in the bubble and the retry's
+                            // text lands on top of it. That produced replies that were
+                            // visibly truncated or duplicated, and made the bubble
+                            // disagree with what a history reload would show.
+                            if (event.reply) {
+                                if (assistantEntry) {
+                                    if (assistantEntry.content !== event.reply) {
+                                        assistantEntry.content = event.reply;
+                                    }
+                                } else {
+                                    this.history.push({ kind: 'text', role: 'assistant', content: event.reply });
+                                }
                             }
 
                             (event.executed || []).forEach(e => {
@@ -718,12 +732,48 @@ document.addEventListener('alpine:init', () => {
 
             const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-            return escaped
+            const inline = (s) => s
+                // Bold before italic, so the ** in **bold** is never consumed
+                // as two single-asterisk italic markers.
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                .replace(/`([^`]+?)`/g, '<code class="px-1 py-0.5 rounded bg-black/5 font-mono text-[0.9em]">$1</code>')
-                .split('\n')
-                .map(line => /^\s*[-*]\s+/.test(line) ? line.replace(/^\s*[-*]\s+/, '• ') : line)
-                .join('<br>');
+                .replace(/(^|[^*])\*(?!\s)([^*]+?)\*(?!\*)/g, '$1<em>$2</em>')
+                .replace(/`([^`]+?)`/g, '<code class="px-1 py-0.5 rounded bg-black/5 font-mono text-[0.9em]">$1</code>');
+
+            // Collapse runs of blank lines: models frequently emit \n\n between
+            // every sentence, which as raw <br><br> left the replies looking
+            // sparse and "messy" in a narrow chat bubble.
+            const lines = escaped.replace(/\n{3,}/g, '\n\n').split('\n');
+
+            return lines
+                .map(line => {
+                    // Headings would otherwise render as literal "### Text".
+                    const heading = line.match(/^\s*#{1,6}\s+(.*)$/);
+                    if (heading) {
+                        return '<strong class="block mt-2 first:mt-0">' + inline(heading[1]) + '</strong>';
+                    }
+
+                    const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+                    if (bullet) {
+                        return '<span class="block pl-3 -indent-3">• ' + inline(bullet[1]) + '</span>';
+                    }
+
+                    // Numbered lists: keep the model's own numbering, just
+                    // align the wrap the same way bullets are aligned.
+                    const numbered = line.match(/^\s*(\d+)[.)]\s+(.*)$/);
+                    if (numbered) {
+                        return '<span class="block pl-4 -indent-4">' + numbered[1] + '. ' + inline(numbered[2]) + '</span>';
+                    }
+
+                    return inline(line);
+                })
+                // Block-level lines bring their own layout; only genuine
+                // inline runs still need an explicit line break between them.
+                .reduce((html, line, i, all) => {
+                    if (i === 0) return line;
+                    const prevIsBlock = /^<(strong class|span class)/.test(all[i - 1]);
+                    const thisIsBlock = /^<(strong class|span class)/.test(line);
+                    return html + (prevIsBlock || thisIsBlock ? '' : '<br>') + line;
+                }, '');
         },
 
         toast(icon, title) {
