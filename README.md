@@ -112,6 +112,16 @@ php artisan test
 
 Business logic lives in `app/Services/` (controllers stay thin). AI agent tools live in `app/Services/Agent/Tools/`, one class per tool, each declaring its own permission tier. `app/Http/Controllers/` is grouped roughly by feature (POS, Inventory, Network, Admin). `resources/views/layouts/` has separate layouts for `admin`, `staff`, and `guest`/`portal` contexts, since each role sees a materially different app.
 
+Further reading, grouped by concern:
+
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — the capstone's actual thesis: how POS, network/captive-portal, and the AI agent are genuinely merged into one system, not three bolted together.
+- **[docs/AI_AGENT.md](docs/AI_AGENT.md)** — the tool registry/permission-tier system, the orchestrator's confirm/reject audit flow, and the multi-provider cascade/circuit-breaker.
+- **[docs/DATABASE.md](docs/DATABASE.md)** — schema overview grouped by domain (sales, inventory, network/vouchers, AI/agent, accounts).
+- **[docs/POS_FLOW.md](docs/POS_FLOW.md)** — checkout, the KDS board, void/approval, shifts, and end-of-day.
+- **[docs/CAPTIVE_PORTAL.md](docs/CAPTIVE_PORTAL.md)** — the guest voucher/session/disconnect flow and how guest identity works with no `users` row at all.
+- **[docs/TESTING.md](docs/TESTING.md)** — this project's actual testing conventions (PHPUnit not Pest, `sudo -u www-data`, curl-over-PHPUnit-cookie-helpers, the version-bump-per-commit ritual).
+- **[docs/AUDIT_FINDINGS.md](docs/AUDIT_FINDINGS.md)** — the full deep-audit pass: tooling added, every bug found and fixed, known risks left alone, and the backlog.
+
 ## Infrastructure
 
 This app doesn't run standalone — it sits behind a real network stack (OPNsense for routing/firewall/captive-portal/DHCP, Nginx Proxy Manager as the reverse proxy, Pi-hole for guest DNS, all on Proxmox). See **[docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md)** for the full topology, what each box does, and what the app's `OpnSenseService` actually manages via API.
