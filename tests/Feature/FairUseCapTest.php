@@ -32,6 +32,10 @@ class FairUseCapTest extends TestCase
         Http::fake([
             '*/api/trafficshaper/settings/searchPipes*' => Http::response(['rows' => []], 200),
             '*/api/trafficshaper/settings/searchRules*' => Http::response(['rows' => []], 200),
+            '*/api/firewall/alias/search_item*' => Http::response(['rows' => [
+                ['name' => 'lawatcafe_free_tier'], ['name' => 'lawatcafe_premium_tier'],
+            ]], 200),
+            '*/api/firewall/filter/get' => Http::response(['filter' => ['rules' => ['rule' => []]]], 200),
             '*' => Http::response(['result' => 'saved', 'uuid' => 'obj-1'], 200),
         ]);
     }
@@ -158,10 +162,12 @@ class FairUseCapTest extends TestCase
             ->assertRedirect()
             ->assertSessionHas('success');
 
-        // Nothing may be addressed at a tier alias — that is the rule this
-        // build rejects, and attempting it is what broke Save.
-        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'addRule')
+        // The Shaper rules stay any/any — that is the only form they accept.
+        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'trafficshaper/settings/addRule')
             || ($request['rule']['source'] ?? null) === 'any');
+
+        // And the per-tier caps are applied too, as filter rules.
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'firewall/filter/add_rule'));
 
         Cache::forget('setting.bw_fair_use_mbps');
         $this->assertSame('20', Setting::get('bw_fair_use_mbps'));
@@ -183,14 +189,20 @@ class FairUseCapTest extends TestCase
         $this->assertSame('3', Setting::get('bw_free_down'));
     }
 
-    public function test_the_page_says_plainly_that_per_tier_is_not_enforced(): void
+    /**
+     * The page said per-tier caps were "recorded, not enforced" — true only
+     * while that was impossible here. Filter rules made it work, so the notice
+     * had to stop saying otherwise.
+     */
+    public function test_the_page_states_that_both_layers_are_enforced(): void
     {
         $response = $this->actingAs(User::factory()->create(['role' => 'admin']))
             ->get(route('network.traffic'));
 
         $response->assertOk();
         $response->assertSee('Fair-Use Ceiling', false);
-        $response->assertSee('recorded, not enforced', false);
+        $response->assertSee('Per-tier caps are enforced', false);
+        $response->assertDontSee('recorded, not enforced', false);
     }
 
     /**

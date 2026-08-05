@@ -52,7 +52,7 @@ Acts as the LAN's router/firewall/DHCP server and the captive-portal enforcement
 - **Captive portal**: authorizing a device's session (`authorizeDevice`), disconnecting a session (`disconnectDevice`), listing active sessions (`listSessions`), reconfiguring the captive portal zone (`reconfigureCaptivePortal`)
 - **DHCP (Kea)**: adding/updating/deleting static reservations (`addKeaReservation`, `updateKeaReservation`, `deleteKeaReservation`), reading leases (`getDhcpLeases`) — device hostnames are read from Kea leases specifically, not ARP, because ARP's hostname field is almost always empty
 - **Firewall aliases**: a MAC block alias for banned devices (`addMacToBlockAlias`/`removeMacFromBlockAlias`), per-tier IP aliases for voucher speed tiers (`addIpToTierAlias`/`removeIpFromTierAlias`), and an "allowed addresses" allow-list (infrastructure/staff devices that should never be treated as guests)
-- **Traffic shaping**: per-tier dummynet-style pipes (`upsertShaperPipe`, `reconfigureShaper`), driving the voucher speed tiers
+- **Traffic shaping**: dummynet pipes plus firewall filter rules (`upsertShaperPipe`, `upsertTierFilterRule`, `reconfigureShaper`) — a per-device fair-use ceiling and enforced free/premium voucher tiers. See *Bandwidth shaping* below
 - **Monitoring**: gateway status and interface stats (`getGatewayStatus`, `getInterfaceStats`) surfaced on the admin network dashboard
 
 ## Nginx Proxy Manager (.5)
@@ -95,13 +95,82 @@ Note: the `PIHOLE_API_KEY` in `.env` is a stale Pi-hole v5 token. Pi-hole is now
 2. It serves the **`Lawat_Redirect` template** (zone `f57052d4-…`, template `8df7dd38-…`), a one-page `<meta http-equiv="refresh">` to `http://wifi.lawatkape.lab/portal` plus a manual link for clients that ignore meta-refresh. Template content is stored base64-encoded **ZIP** in the API — decode, edit, re-zip, re-encode to change it (`/api/captiveportal/service/search_templates` to read, `save_template` to write, then `reconfigure`).
 3. `wifi.lawatkape.lab` resolves via Unbound to 192.168.2.100, where nginx's `server_name` accepts it and serves the Laravel app over plain HTTP.
 
-**Shaping in force — a single per-client ceiling.** Because per-tier rules cannot be provisioned (see below), what runs instead is one ceiling for every device on the guest interface: `shaper:fair-use 20 --apply` builds `lawatcafe_fairuse_down`/`_up` at 20 Mbit each with a `dst-ip`/`src-ip` mask, plus a rule per direction matching `any`/`any` on `lan`. The mask is what makes it a ceiling **per device** rather than a total shared between them, so one guest cannot saturate the line. The figure sits far above what the shop's own equipment uses, and that is deliberate: the captive portal zone is bound to `lan`, which also carries the POS, the application server, Pi-hole and OPNsense itself, so the rule applies to them too — at the free tier's 2 Mbit it would have throttled the register and every AI call this app makes. Re-run the command to change the number. Applied 2026-08-05.
+### Bandwidth shaping
 
-**Per-tier shaping — solved via firewall rules, not the Shaper.** The Shaper's own rules cannot target a group of devices here (see the gap note below), but `GET /api/firewall/filter/get_rule` shows that Automation filter rules can: their `source_net`/`destination_net` are free text and accept an alias name, and `shaper1` takes a pipe UUID. `shaper:tiers --apply` provisions a pipe per tier per direction plus four filter rules steering `lawatcafe_free_tier` / `lawatcafe_premium_tier` members into them, sequenced after the fair-use catch-all so they override it. Applied 2026-08-05.
+Two layers, both live as of 2026-08-05. Provision or change either with its
+command; both are idempotent and report by default, writing only with `--apply`.
 
-Two constraints worth knowing before touching this. The rule action can only be `pass` — the API exposes no `match`, the pf action that shapes without deciding access — so a stale alias member would keep working internet after their session ended; `shaper:reconcile-tiers` (every 5 min) is what bounds that, and it must keep running. And `POST /api/firewall/filter/search_rule` answers `200` with `total=0` on this build **even when rules exist**; read `GET /api/firewall/filter/get` and walk `filter.rules.rule` instead, or provisioning will believe the rules are absent and create a duplicate set on every run.
+| Layer | Applies to | Command | Objects |
+|---|---|---|---|
+| Fair-use ceiling | every device on `lan` | `shaper:fair-use {mbps} --apply` | `lawatcafe_fairuse_down`/`_up` pipes + 2 **Shaper** rules |
+| Per-tier caps | members of a tier alias | `shaper:tiers --apply` | `lawatcafe_{free,premium}_{down,up}` pipes + 4 **filter** rules |
 
-**Known gap — per-tier traffic shaping via the Shaper page.** The app builds a Dummynet pipe and a firewall alias per tier, then tries to bind them with a shaper rule. That last step cannot succeed on this build: `GET /api/trafficshaper/settings/getRule` reports `source` and `destination` as option fields whose only value is `any` — no alias appears among the options, so a rule that matches `lawatcafe_free_tier` is rejected outright (verified 2026-08-05). Consequences: the pipes and aliases provision fine, but nothing steers a guest's packets into a pipe, so no cap is enforced and `shaper:provision` stops at the first rule. A single shop-wide per-client cap IS achievable here (one pipe with a `dst-ip`/`src-ip` mask plus a rule with `source=any, destination=any`); distinguishing free from premium is not, and would need either a hand-made rule under Firewall > Rules with a dnpipe target, or a newer OPNsense whose shaper accepts aliases.
+The tier rules are sequenced after the fair-use rules and do not short-circuit,
+so a guest in a tier gets their tier's cap while everything in no tier — the
+POS, the application server, Pi-hole, staff devices — keeps the ceiling.
+
+**Why the ceiling is 20 Mbit and not the free tier's value.** The captive portal
+zone is bound to `lan`, and so is everything else the shop runs; there is no
+separate guest interface. A `source=any` rule therefore applies to the register
+and this server too. At 2 Mbit that throttled both. The pipes carry a
+`dst-ip`/`src-ip` mask, so the figure is a ceiling **per device** rather than a
+total shared between them — one guest cannot saturate the line, and the shop's
+own equipment never comes near it.
+
+**Per-tier shaping works through firewall rules, not the Shaper.** The Shaper's
+own rules cannot target a group of devices on this build: `GET
+/api/trafficshaper/settings/getRule` reports `source` and `destination` as option
+fields whose only value is `any`, so a rule matching `lawatcafe_free_tier` is
+rejected outright. Automation **filter** rules can — `GET
+/api/firewall/filter/get_rule` shows `source_net`/`destination_net` are free text
+and accept an alias name, and `shaper1` takes a pipe UUID. That is what
+`shaper:tiers` uses, and it needs no VLAN or separate interface.
+
+Three things to know before touching any of this:
+
+1. **The filter rule action can only be `pass`.** The API exposes no `match`, the
+   pf action that shapes without deciding access. So a stale tier-alias member is
+   a guest with working internet after their session ended.
+   `shaper:reconcile-tiers` (scheduled every 5 minutes) removes members OPNsense
+   no longer reports as connected, and **must keep running** — the `pass` rules
+   are only safe because of it. `quick` is deliberately `0` so the rules apply
+   their pipe without short-circuiting the rest of the ruleset.
+2. **`POST /api/firewall/filter/search_rule` lies.** It answers `200` with
+   `total=0` on this build even when rules demonstrably exist — verified by
+   creating one, fetching it back by UUID, and finding it in the config tree
+   while search still reported nothing. Read `GET /api/firewall/filter/get` and
+   walk `filter.rules.rule` instead. Trusting search made provisioning believe
+   the rules were absent and create a duplicate set on every run.
+3. **Not yet verified on real hardware.** The caps are provisioned and the API
+   confirms them, but nobody has speed-tested a free and a premium voucher, nor
+   confirmed that access stops on disconnect. That last one is the important
+   check, for the reason in (1). `shaper:tiers` prints the steps after applying.
+
+### Network interfaces
+
+| Device | Identifier | State |
+|---|---|---|
+| vtnet0 | wan | up, DHCP |
+| vtnet1 | lan | up, static — **everything is on this one** |
+| vtnet2 | opt1 | down, no link |
+| vtnet3 | opt2 | down, no link |
+
+Guests, the POS, the application server (192.168.2.100), Pi-hole (192.168.2.4)
+and OPNsense itself all share `lan` (192.168.2.0/24). Nothing separates guest
+traffic from shop traffic at layer 2 — which is why the fair-use ceiling has to
+be generous, and why the captive portal zone can only bind to `lan`.
+
+A `vlan02` interface (tag 20, "Guest_VLAN", assigned as `opt3`) existed as
+leftover scaffolding from an abandoned attempt at guest separation. It was never
+given an address, never served DHCP, and nothing referenced it; removed
+2026-08-05. Note there is **no interface-assignment API** on this build
+(`/api/interfaces/assign_settings/*` returns 404), so un-assigning an interface
+is a web-UI operation — only the VLAN itself can be deleted through
+`/api/interfaces/vlan_settings/delItem`, and only once it is unassigned.
+
+If real guest separation is ever wanted (for isolation rather than shaping),
+`opt1` and `opt2` are free, but they would need NICs attached on the Proxmox host
+and an access point capable of tagging.
 
 **Known gap — DHCP option 114.** RFC 8908 lets a client learn the portal URL from DHCP option 114 (`v4-captive-portal`) instead of relying on the interception above, and the app already serves the matching `/captive-portal-api` endpoint. This OPNsense build's Kea model only exposes a fixed option list (`domain_name_servers`, `routers`, `ntp_servers`, `domain_search`, …) with no way to set an arbitrary option, via API or UI. The redirect works without it; option 114 would just make it faster and more reliable on modern clients.
 

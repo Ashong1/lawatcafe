@@ -79,14 +79,17 @@
                         </div>
                     </div>
 
-                    {{-- Per-tier values: recorded, not enforced. --}}
-                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
-                        <x-lucide-triangle-alert class="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-                        <p class="text-[10px] text-amber-900 font-medium leading-relaxed">
-                            <span class="font-black uppercase tracking-widest">Per-tier caps are recorded, not enforced.</span><br>
-                            This OPNsense build's shaper cannot target a group of devices, so free and premium cannot be
-                            told apart at the firewall. The values below are saved for when the guest network is separated
-                            onto its own interface. Until then the fair-use ceiling above is what applies.
+                    {{-- Per-tier caps are enforced again as of v1.0.0.106, through
+                         firewall filter rules rather than shaper rules — see
+                         TrafficShapingService::applyTierRules(). This notice used to
+                         say they were recorded but not enforced, which was true only
+                         while that was impossible. --}}
+                    <div class="p-4 bg-green-50 border border-green-200 rounded-2xl flex items-start gap-3">
+                        <x-lucide-circle-check class="w-4 h-4 text-green-700 shrink-0 mt-0.5" />
+                        <p class="text-[10px] text-green-900 font-medium leading-relaxed">
+                            <span class="font-black uppercase tracking-widest">Per-tier caps are enforced.</span><br>
+                            A guest's voucher tier decides their speed; the ceiling above applies to everything
+                            else on the network, including the POS and this server. Saving updates both.
                         </p>
                     </div>
 
