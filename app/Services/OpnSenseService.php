@@ -601,6 +601,40 @@ class OpnSenseService
         return $this->alterAlias($this->tierAliasName($tier), 'delete', $ip);
     }
 
+    /**
+     * The addresses currently inside a firewall alias, as OPNsense sees them.
+     *
+     * Reads the running table via alias_util rather than the stored config, so
+     * this reflects what pf is actually matching on right now — which is the
+     * only version that matters when the question is "who still has access".
+     *
+     * @return string[]
+     */
+    public function listAliasMembers(string $alias): array
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return [];
+        }
+
+        try {
+            $response = $this->client()->get("{$this->baseUrl}/api/firewall/alias_util/list/{$alias}");
+
+            if (! $response->successful()) {
+                return [];
+            }
+
+            return collect($response->json('rows') ?? [])
+                ->pluck('ip')
+                ->filter()
+                ->values()
+                ->all();
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception listing members of alias '{$alias}': ".$e->getMessage());
+
+            return [];
+        }
+    }
+
     public function tierAliasName(string $tier): string
     {
         return config("services.opnsense.tier_alias_{$tier}", "lawatcafe_{$tier}_tier");

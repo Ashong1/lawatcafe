@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Voucher;
+use Illuminate\Support\Facades\Log;
 
 class TrafficShapingService
 {
@@ -179,10 +180,82 @@ class TrafficShapingService
      * Remove an IP from both tier aliases. Idempotent and safe to call even
      * if the IP was never added (e.g. a static/VIP session).
      */
-    public function releaseIp(string $ip, OpnSenseService $opnsense): void
+    /**
+     * Drop an address from every tier alias.
+     *
+     * Returns whether every removal that mattered actually succeeded, rather
+     * than swallowing the result as it used to. Once a filter rule PASSES
+     * traffic for alias members, a silent failure here stops being cosmetic:
+     * the address keeps its access after the portal has dropped the session.
+     * reconcileTierMembership() is the backstop, but the caller should know.
+     */
+    public function releaseIp(string $ip, OpnSenseService $opnsense): bool
     {
+        $ok = true;
+
         foreach (self::TIERS as $tier) {
-            $opnsense->removeIpFromTierAlias($tier, $ip);
+            // Always attempt the removal — never gate it on first reading the
+            // alias. A read that fails returns an empty list, which would look
+            // exactly like "not a member" and skip the removal silently. That
+            // is precisely the state this whole mechanism exists to prevent, so
+            // it must not be reachable through an unrelated API hiccup.
+            if (! $opnsense->removeIpFromTierAlias($tier, $ip)) {
+                Log::error("Traffic shaping: could not remove {$ip} from the {$tier} tier alias — it keeps that tier's treatment until the next reconcile.");
+                $ok = false;
+            }
         }
+
+        return $ok;
+    }
+
+    /**
+     * Remove tier-alias members that no longer have a live session.
+     *
+     * The guarantee the filter rules rest on. Membership is written when a
+     * guest activates and cleared when they disconnect or expire, but a failed
+     * removal, an OPNsense restart mid-release, or a session reaped outside the
+     * app all leave an address behind. While the alias only drove a shaper
+     * pipe that was harmless; once a PASS rule matches on it, a stale member is
+     * a guest who keeps working internet after their time is up.
+     *
+     * Authoritative source is the firewall's own session list, not the voucher
+     * table — a voucher says what somebody paid for, only OPNsense knows who is
+     * actually connected right now.
+     *
+     * @return array{checked:int, removed:int, failed:int}
+     */
+    public function reconcileTierMembership(OpnSenseService $opnsense): array
+    {
+        $liveIps = collect($opnsense->listSessions())
+            ->map(fn ($s) => str_replace('/32', '', $s['ipAddress'] ?? ''))
+            ->filter()
+            ->unique()
+            ->all();
+
+        $checked = 0;
+        $removed = 0;
+        $failed = 0;
+
+        foreach (self::TIERS as $tier) {
+            $alias = $opnsense->tierAliasName($tier);
+
+            foreach ($opnsense->listAliasMembers($alias) as $ip) {
+                $checked++;
+
+                if (in_array($ip, $liveIps, true)) {
+                    continue;
+                }
+
+                if ($opnsense->removeIpFromTierAlias($tier, $ip)) {
+                    Log::info("Traffic shaping: reconciled {$ip} out of the {$tier} tier alias — no live session.");
+                    $removed++;
+                } else {
+                    Log::error("Traffic shaping: {$ip} has no live session but could not be removed from the {$tier} tier alias.");
+                    $failed++;
+                }
+            }
+        }
+
+        return ['checked' => $checked, 'removed' => $removed, 'failed' => $failed];
     }
 }

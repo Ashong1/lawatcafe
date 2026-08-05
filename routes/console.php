@@ -15,3 +15,10 @@ Schedule::command('ai:warm-forecast')->everyThirtyMinutes()->withoutOverlapping(
 // produces noise. It also self-limits — the command exits early when there is
 // not enough new evidence, so a quiet shop costs one cheap query per hour.
 Schedule::command('ai:learn')->hourly()->withoutOverlapping();
+
+// Backstop for bandwidth-tier alias membership. Every five minutes rather than
+// every minute: EnforceSessionLimits already clears members on the normal path,
+// so this only catches what that missed, and each run costs one alias read per
+// tier. See ReconcileTierMembership for why it must exist before any firewall
+// rule passes traffic based on those aliases.
+Schedule::command('shaper:reconcile-tiers')->everyFiveMinutes()->withoutOverlapping();
