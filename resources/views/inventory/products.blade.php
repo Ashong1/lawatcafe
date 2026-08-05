@@ -100,7 +100,11 @@
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                     </svg>
-                                    <span x-text="statuses['{{ $product->id }}'] || '{{ $product->status }}'"></span>
+                                    {{-- Server value as the element's own content rather than a
+                                         `||` fallback inside the expression: it still renders
+                                         before Alpine boots, but the colour and the text now
+                                         read the one seeded source, so they cannot disagree. --}}
+                                    <span x-text="statuses['{{ $product->id }}']">{{ $product->status }}</span>
                                 </button>
                             </td>
                             <td class="py-4 text-right">
@@ -266,7 +270,13 @@
             formAction: '{{ route('inventory.products.store') }}',
             formData: { id: null, name: '', category: '', price: '', status: 'Active' },
             currentRecipe: [],
-            statuses: {},
+            // Seeded from the server, not left empty. The badge's TEXT had a
+            // fallback to the server value but its COLOUR did not: against an
+            // empty map, `statuses[id] === 'Active'` compared undefined and
+            // lost, so every product rendered a RED badge reading "Active"
+            // until someone toggled it. Both now read this one seeded source,
+            // so they cannot disagree.
+            statuses: @js($products->pluck('status', 'id')),
             togglingStatus: {},
 
             openAddModal() {
