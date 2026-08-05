@@ -11,6 +11,23 @@ class TrafficShapingService
     public const DIRECTIONS = ['down', 'up'];
 
     /**
+     * Why the last applyLimits() failed, in words a person can act on.
+     *
+     * applyLimits() still returns a bool so no caller changes, but "false" on
+     * its own produced the least useful message this app has shipped:
+     * "OPNsense could not be reached. Check the connection." OPNsense was
+     * reachable the entire time — it was answering, and rejecting what we sent.
+     * Telling someone to check a working connection sends them to look at the
+     * one thing that is fine.
+     */
+    protected ?string $lastError = null;
+
+    public function lastError(): ?string
+    {
+        return $this->lastError;
+    }
+
+    /**
      * Provision the complete shaping chain on OPNsense and apply it.
      *
      * A working setup needs all three of these, and the app previously built
@@ -29,12 +46,16 @@ class TrafficShapingService
      */
     public function applyLimits(array $settings, OpnSenseService $opnsense): bool
     {
+        $this->lastError = null;
+
         $existing = $opnsense->readShaperConfig();
         $sequence = 0;
         $aliasesChanged = false;
 
         foreach (self::TIERS as $tier) {
             if (! $opnsense->ensureTierAlias($tier)) {
+                $this->lastError = "OPNsense rejected the firewall alias for the {$tier} tier (".$opnsense->tierAliasName($tier).').';
+
                 return false;
             }
             $aliasesChanged = true;
@@ -45,11 +66,15 @@ class TrafficShapingService
                 $mbps = (float) ($settings["bw_{$tier}_{$direction}"] ?? 0);
 
                 if ($mbps <= 0) {
+                    $this->lastError = "No bandwidth is set for the {$tier} tier's {$direction} direction.";
+
                     return false;
                 }
 
                 $pipeUuid = $opnsense->upsertShaperPipe($tier, $direction, $mbps, $existing['pipes'][$name] ?? null);
                 if (! $pipeUuid) {
+                    $this->lastError = "OPNsense rejected the bandwidth pipe '{$name}'.";
+
                     return false;
                 }
 
@@ -63,6 +88,17 @@ class TrafficShapingService
                 );
 
                 if (! $ruleUuid) {
+                    // By far the most likely failure, and the one that produced
+                    // the misleading "could not be reached" report. On this
+                    // OPNsense build the shaper rule's source and destination
+                    // fields accept only the literal value 'any' — verified
+                    // against /api/trafficshaper/settings/getRule, which offers
+                    // no alias among their options — so a rule that matches a
+                    // tier's alias cannot be created through the API at all.
+                    $this->lastError = "OPNsense rejected the shaper rule '{$name}'. "
+                        .'This build\'s shaper rules only accept "any" for source and destination, so they cannot match a tier alias. '
+                        .'See docs/INFRASTRUCTURE.md — per-tier shaping needs either a manual rule in Firewall > Rules or a newer OPNsense.';
+
                     return false;
                 }
             }

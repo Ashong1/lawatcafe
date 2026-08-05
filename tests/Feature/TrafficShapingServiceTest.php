@@ -254,4 +254,56 @@ class TrafficShapingServiceTest extends TestCase
         Http::assertSent(fn ($request) => str_contains($request->url(), '/alias_util/delete/lawatcafe_free_tier'));
         Http::assertSent(fn ($request) => str_contains($request->url(), '/alias_util/delete/lawatcafe_premium_tier'));
     }
+
+    /**
+     * A failure has to say what failed. The old message blamed the connection
+     * ("OPNsense could not be reached. Check the connection") when OPNsense was
+     * answering every request and rejecting the payload — which sent whoever
+     * read it to check the one thing that was working.
+     */
+    public function test_a_failure_explains_what_opnsense_rejected(): void
+    {
+        Http::fake([
+            '*/api/trafficshaper/settings/searchPipes*' => Http::response(['rows' => []], 200),
+            '*/api/trafficshaper/settings/searchRules*' => Http::response(['rows' => []], 200),
+            '*/api/firewall/alias/search_item*' => Http::response(['rows' => [
+                ['name' => 'lawatcafe_free_tier'], ['name' => 'lawatcafe_premium_tier'],
+            ]], 200),
+            '*/api/trafficshaper/settings/addPipe' => Http::response(['result' => 'saved', 'uuid' => 'pipe-1'], 200),
+            // The real-world case: this build's shaper rules accept only "any"
+            // for source/destination, so a rule matching a tier alias is
+            // refused outright.
+            '*/api/trafficshaper/settings/addRule' => Http::response(['result' => 'failed'], 200),
+            '*' => Http::response(['result' => 'saved'], 200),
+        ]);
+
+        $service = app(TrafficShapingService::class);
+
+        $this->assertFalse($service->applyLimits($this->limits, app(OpnSenseService::class)));
+
+        $error = $service->lastError();
+        $this->assertNotNull($error);
+        $this->assertStringContainsString('shaper rule', $error);
+        $this->assertStringContainsString('source and destination', $error);
+        // And crucially, it must not send anyone to check a healthy connection.
+        $this->assertStringNotContainsString('could not be reached', $error);
+        $this->assertStringNotContainsString('Check the connection', $error);
+    }
+
+    public function test_there_is_no_error_recorded_after_a_successful_apply(): void
+    {
+        Http::fake([
+            '*/api/trafficshaper/settings/searchPipes*' => Http::response(['rows' => []], 200),
+            '*/api/trafficshaper/settings/searchRules*' => Http::response(['rows' => []], 200),
+            '*/api/firewall/alias/search_item*' => Http::response(['rows' => [
+                ['name' => 'lawatcafe_free_tier'], ['name' => 'lawatcafe_premium_tier'],
+            ]], 200),
+            '*' => Http::response(['result' => 'saved', 'uuid' => 'obj-1'], 200),
+        ]);
+
+        $service = app(TrafficShapingService::class);
+
+        $this->assertTrue($service->applyLimits($this->limits, app(OpnSenseService::class)));
+        $this->assertNull($service->lastError());
+    }
 }

@@ -39,7 +39,13 @@ class TrafficController extends Controller
         $applied = $shaping->applyLimits($validated, $opnsense);
 
         if (! $applied) {
-            return redirect()->back()->with('error', 'Bandwidth settings saved, but OPNsense could not be reached to apply the shaper pipes. Check the connection and try again.');
+            // Report what actually failed. The old wording blamed the
+            // connection, which sent people to check the one thing that was
+            // working — OPNsense answers every request here and is rejecting
+            // the payload, not refusing to talk.
+            $reason = $shaping->lastError() ?? 'OPNsense rejected the shaper configuration.';
+
+            return redirect()->back()->with('error', 'Bandwidth settings saved, but they could not be applied. '.$reason);
         }
 
         return redirect()->back()->with('success', 'Bandwidth shaping rules updated and applied to OPNsense.');
