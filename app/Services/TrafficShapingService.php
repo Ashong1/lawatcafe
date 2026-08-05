@@ -8,18 +8,68 @@ class TrafficShapingService
 {
     public const TIERS = ['free', 'premium'];
 
+    public const DIRECTIONS = ['down', 'up'];
+
     /**
-     * Push the admin-configured bandwidth caps to OPNsense as the free/premium
-     * Dummynet pipes, then apply the change. $settings is the validated array
-     * from TrafficController::update (bw_free_up/down, bw_premium_up/down).
+     * Provision the complete shaping chain on OPNsense and apply it.
+     *
+     * A working setup needs all three of these, and the app previously built
+     * only the first — which is why a "2 Mbps" free tier measured 8 Mbps:
+     *
+     *   1. a Dummynet pipe per tier per direction (the bandwidth cap itself),
+     *   2. a firewall alias per tier (who the cap applies to), and
+     *   3. a shaper rule binding alias -> pipe per direction (what steers a
+     *      guest's packets into the pipe at all).
+     *
+     * Idempotent: existing pipes/rules are matched by description and updated
+     * in place, so repeated saves never accumulate duplicates.
+     *
+     * $settings is the validated array from TrafficController::update
+     * (bw_free_up/down, bw_premium_up/down).
      */
     public function applyLimits(array $settings, OpnSenseService $opnsense): bool
     {
-        $free = $opnsense->upsertShaperPipe('free', (float) $settings['bw_free_down'], (float) $settings['bw_free_up']);
-        $premium = $opnsense->upsertShaperPipe('premium', (float) $settings['bw_premium_down'], (float) $settings['bw_premium_up']);
+        $existing = $opnsense->readShaperConfig();
+        $sequence = 0;
+        $aliasesChanged = false;
 
-        if (! $free || ! $premium) {
-            return false;
+        foreach (self::TIERS as $tier) {
+            if (! $opnsense->ensureTierAlias($tier)) {
+                return false;
+            }
+            $aliasesChanged = true;
+
+            foreach (self::DIRECTIONS as $direction) {
+                $sequence++;
+                $name = $opnsense->shaperObjectName($tier, $direction);
+                $mbps = (float) ($settings["bw_{$tier}_{$direction}"] ?? 0);
+
+                if ($mbps <= 0) {
+                    return false;
+                }
+
+                $pipeUuid = $opnsense->upsertShaperPipe($tier, $direction, $mbps, $existing['pipes'][$name] ?? null);
+                if (! $pipeUuid) {
+                    return false;
+                }
+
+                $ruleUuid = $opnsense->upsertShaperRule(
+                    $tier,
+                    $direction,
+                    $pipeUuid,
+                    $opnsense->tierAliasName($tier),
+                    $sequence,
+                    $existing['rules'][$name] ?? null
+                );
+
+                if (! $ruleUuid) {
+                    return false;
+                }
+            }
+        }
+
+        if ($aliasesChanged) {
+            $opnsense->reconfigureAliases();
         }
 
         return $opnsense->reconfigureShaper();

@@ -558,7 +558,14 @@ class OpnSenseService
 
             $response = $this->client()->post($url, ['address' => $value]);
 
-            if ($response->successful()) {
+            // alias_util answers HTTP 200 even when it did nothing — a missing
+            // alias comes back as {"status":"failed"}. Trusting the status code
+            // alone made the app log "added 192.168.2.116 to lawatcafe_free_tier"
+            // every time a guest connected, for an alias that did not exist,
+            // which is why nobody noticed traffic shaping had never worked.
+            $status = strtolower((string) ($response->json('status') ?? ''));
+
+            if ($response->successful() && $status !== 'failed') {
                 Log::info("OPNsense: {$action} {$value} on alias '{$alias}'.");
 
                 return true;
@@ -594,33 +601,110 @@ class OpnSenseService
         return $this->alterAlias($this->tierAliasName($tier), 'delete', $ip);
     }
 
-    protected function tierAliasName(string $tier): string
+    public function tierAliasName(string $tier): string
     {
         return config("services.opnsense.tier_alias_{$tier}", "lawatcafe_{$tier}_tier");
     }
 
     /**
-     * Create or update the Dummynet pipe for a bandwidth tier ('free' or
-     * 'premium'). The pipe's OPNsense UUID is cached in Setting so repeat
-     * calls update the same pipe instead of creating duplicates. Does NOT
-     * apply the change by itself — call reconfigureShaper() after.
+     * The object name shared by a tier+direction's pipe and its rule, e.g.
+     * "lawatcafe_free_down". Descriptions are the only stable identity these
+     * objects have from the app's side — see readShaperConfig().
      */
-    public function upsertShaperPipe(string $tier, float $downMbps, float $upMbps): bool
+    public function shaperObjectName(string $tier, string $direction): string
+    {
+        return "lawatcafe_{$tier}_{$direction}";
+    }
+
+    /**
+     * The traffic shaper's whole configuration, indexed by description:
+     * ['pipes' => [description => uuid], 'rules' => [description => uuid]].
+     *
+     * Identity comes from OPNsense itself on every call rather than from a
+     * UUID the app stored earlier. The previous version cached each pipe's
+     * UUID in a Setting, and a test run that shared this deployment's cache
+     * store wrote its fixture strings ("existing-uuid") into it — after which
+     * every write targeted setPipe/existing-uuid, got a 500, and no pipe was
+     * ever created. Looking the objects up by description cannot desync.
+     *
+     * @return array{pipes: array<string, string>, rules: array<string, string>}
+     */
+    public function readShaperConfig(): array
+    {
+        $empty = ['pipes' => [], 'rules' => []];
+
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return $empty;
+        }
+
+        try {
+            $response = $this->client()->get("{$this->baseUrl}/api/trafficshaper/settings/get");
+
+            if (! $response->successful()) {
+                return $empty;
+            }
+
+            $ts = $response->json('ts') ?? [];
+
+            $index = function (array $items): array {
+                $map = [];
+                foreach ($items as $uuid => $item) {
+                    $description = $item['description'] ?? '';
+                    if ($description !== '') {
+                        $map[$description] = $uuid;
+                    }
+                }
+
+                return $map;
+            };
+
+            return [
+                'pipes' => $index($ts['pipes']['pipe'] ?? []),
+                'rules' => $index($ts['rules']['rule'] ?? []),
+            ];
+        } catch (\Exception $e) {
+            Log::error('OPNsense: Exception reading traffic shaper config: '.$e->getMessage());
+
+            return $empty;
+        }
+    }
+
+    /**
+     * Create or update one direction's Dummynet pipe for a bandwidth tier.
+     *
+     * One pipe per direction, not one per tier: a tier is asymmetric (free is
+     * 2 Mbit down / 1 Mbit up) and a single pipe can only express one number.
+     * The old code collapsed both into max(down, up), so even a working setup
+     * would have handed every free guest 2 Mbit in both directions.
+     *
+     * mask src-ip/dst-ip makes the cap PER CLIENT. Without it the pipe is one
+     * shared bucket and ten guests would split a single 2 Mbit link between
+     * them, which is not what "2 Mbps per guest" means.
+     *
+     * Does NOT apply the change by itself — call reconfigureShaper() after.
+     *
+     * @return string|null the pipe's UUID, or null on failure
+     */
+    public function upsertShaperPipe(string $tier, string $direction, float $mbps, ?string $uuid = null): ?string
     {
         if (empty($this->apiKey) || empty($this->apiSecret)) {
             Log::warning("OPNsense: API credentials not configured, cannot upsert shaper pipe for tier {$tier}.");
 
-            return false;
+            return null;
         }
 
-        $settingKey = "opnsense_pipe_uuid_{$tier}";
-        $uuid = Setting::get($settingKey);
+        $name = $this->shaperObjectName($tier, $direction);
 
         $payload = [
             'pipe' => [
-                'bandwidth' => (string) max($downMbps, $upMbps),
-                'bandwidthMetric' => 'Mbit/s',
-                'description' => "lawatcafe_{$tier}",
+                'enabled' => '1',
+                'bandwidth' => (string) $mbps,
+                // 'Mbit', never 'Mbit/s' — bandwidthMetric is an OptionField
+                // whose only valid values are bit/Kbit/Mbit/Gbit. The old
+                // 'Mbit/s' was not one of them.
+                'bandwidthMetric' => 'Mbit',
+                'mask' => $direction === 'down' ? 'dst-ip' : 'src-ip',
+                'description' => $name,
             ],
         ];
 
@@ -630,27 +714,180 @@ class OpnSenseService
                 : "{$this->baseUrl}/api/trafficshaper/settings/addPipe";
 
             $response = $this->client()->post($url, $payload);
+            $data = $response->json();
 
-            if ($response->successful()) {
-                $data = $response->json();
-                $newUuid = $data['uuid'] ?? $uuid;
-                if ($newUuid && $newUuid !== $uuid) {
-                    Setting::set($settingKey, $newUuid);
+            if ($response->successful() && ($data['result'] ?? null) !== 'failed') {
+                $resolved = $data['uuid'] ?? $uuid;
+
+                Log::info("OPNsense: upserted shaper pipe {$name} at {$mbps} Mbit.", ['uuid' => $resolved]);
+
+                return $resolved;
+            }
+
+            Log::error("OPNsense: Failed to upsert shaper pipe {$name}.", [
+                'status' => $response->status(),
+                'response' => $data,
+            ]);
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception upserting shaper pipe {$name}: ".$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * Create or update the shaper rule that actually binds a tier's alias to
+     * its pipe. Without this rule the pipe exists but nothing is ever steered
+     * into it — which is precisely why guests measured full line speed while
+     * the admin page showed a 2 Mbit cap. This step used to be documented as
+     * "a one-time manual OPNsense setup step, not managed by this app", and
+     * it had never been performed.
+     *
+     * Direction is from the LAN interface's point of view: a guest's download
+     * leaves that interface ('out', matched on destination), their upload
+     * enters it ('in', matched on source).
+     *
+     * @return string|null the rule's UUID, or null on failure
+     */
+    public function upsertShaperRule(string $tier, string $direction, string $pipeUuid, string $aliasName, int $sequence, ?string $uuid = null): ?string
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return null;
+        }
+
+        $name = $this->shaperObjectName($tier, $direction);
+        $isDownload = $direction === 'down';
+
+        $payload = [
+            'rule' => [
+                'enabled' => '1',
+                'sequence' => (string) $sequence,
+                'interface' => config('services.opnsense.shaper_interface', 'lan'),
+                'proto' => 'ip',
+                'source' => $isDownload ? 'any' : $aliasName,
+                'destination' => $isDownload ? $aliasName : 'any',
+                'direction' => $isDownload ? 'out' : 'in',
+                'target' => $pipeUuid,
+                'description' => $name,
+            ],
+        ];
+
+        try {
+            $url = $uuid
+                ? "{$this->baseUrl}/api/trafficshaper/settings/setRule/{$uuid}"
+                : "{$this->baseUrl}/api/trafficshaper/settings/addRule";
+
+            $response = $this->client()->post($url, $payload);
+            $data = $response->json();
+
+            if ($response->successful() && ($data['result'] ?? null) !== 'failed') {
+                $resolved = $data['uuid'] ?? $uuid;
+
+                Log::info("OPNsense: upserted shaper rule {$name}.", ['uuid' => $resolved]);
+
+                return $resolved;
+            }
+
+            Log::error("OPNsense: Failed to upsert shaper rule {$name}.", [
+                'status' => $response->status(),
+                'response' => $data,
+            ]);
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception upserting shaper rule {$name}: ".$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * Every firewall alias defined on OPNsense, as returned by search_item.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function listAliases(): array
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return [];
+        }
+
+        try {
+            return $this->client()->get("{$this->baseUrl}/api/firewall/alias/search_item")->json('rows') ?? [];
+        } catch (\Exception $e) {
+            Log::error('OPNsense: Exception listing firewall aliases: '.$e->getMessage());
+
+            return [];
+        }
+    }
+
+    /**
+     * Make sure a tier's firewall alias exists, creating an empty host alias
+     * if it does not. Guest IPs are added to it on authorization
+     * (addIpToTierAlias) and the shaper rule matches on it — but alias_util
+     * cannot create the alias itself, so an absent alias silently swallowed
+     * every membership change.
+     */
+    public function ensureTierAlias(string $tier): bool
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return false;
+        }
+
+        $name = $this->tierAliasName($tier);
+
+        try {
+            foreach ($this->listAliases() as $alias) {
+                if (($alias['name'] ?? null) === $name) {
+                    return true;
                 }
+            }
 
-                Log::info("OPNsense: upserted shaper pipe for tier {$tier}.", ['uuid' => $newUuid]);
+            $response = $this->client()->post("{$this->baseUrl}/api/firewall/alias/addItem", [
+                'alias' => [
+                    'enabled' => '1',
+                    'name' => $name,
+                    'type' => 'host',
+                    'content' => '',
+                    'description' => "Lawa't Kape {$tier} tier members",
+                ],
+            ]);
+
+            if ($response->successful() && ($response->json('result') ?? null) !== 'failed') {
+                Log::info("OPNsense: created tier alias '{$name}'.");
 
                 return true;
             }
 
-            Log::error("OPNsense: Failed to upsert shaper pipe for tier {$tier}.", [
+            Log::error("OPNsense: Failed to create tier alias '{$name}'.", [
                 'status' => $response->status(),
                 'response' => $response->json(),
             ]);
 
             return false;
         } catch (\Exception $e) {
-            Log::error("OPNsense: Exception upserting shaper pipe for tier {$tier}: ".$e->getMessage());
+            Log::error("OPNsense: Exception creating tier alias '{$name}': ".$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Apply pending firewall alias changes. Creating an alias through the API
+     * stages it; without this it is not live for rules to match on.
+     */
+    public function reconfigureAliases(): bool
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return false;
+        }
+
+        try {
+            return $this->client()->post("{$this->baseUrl}/api/firewall/alias/reconfigure")->successful();
+        } catch (\Exception $e) {
+            Log::error('OPNsense: Exception reconfiguring aliases: '.$e->getMessage());
 
             return false;
         }
