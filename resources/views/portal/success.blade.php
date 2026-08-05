@@ -98,18 +98,24 @@
                          close itself, handing the guest to their real browser. Kept
                          as a deliberate secondary action rather than the automatic
                          destination — it used to be both, which dumped every guest on
-                         a blank third-party page and threw away the countdown. --}}
-                    <a href="{{ $browseUrl }}" target="_blank" rel="noopener" class="w-full bg-white border-2 border-[#E6D5C3] text-[#6D4C41] py-4 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-[10px] lg:text-xs hover:border-[#8D6E63]">
-                        <span>Start Browsing</span>
-                        <x-lucide-globe class="w-4 h-4 lg:w-5 lg:h-5" />
-                    </a>
+                         a blank third-party page and threw away the countdown.
+
+                         Suppressed entirely when portal_browse_url is unset, since it
+                         then resolves to the portal and would duplicate the primary
+                         button directly above it. --}}
+                    @if($browseUrl !== route('portal.index'))
+                        <a href="{{ $browseUrl }}" target="_blank" rel="noopener" class="w-full bg-white border-2 border-[#E6D5C3] text-[#6D4C41] py-4 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-[10px] lg:text-xs hover:border-[#8D6E63]">
+                            <span>Start Browsing</span>
+                            <x-lucide-globe class="w-4 h-4 lg:w-5 lg:h-5" />
+                        </a>
+                    @endif
 
                     <p id="countdown" class="browser-only text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.3em] animate-pulse">
                         Showing your session in 5s... <button type="button" id="cancel-redirect" class="underline decoration-dotted ml-1 normal-case tracking-normal font-bold">Cancel</button>
                     </p>
 
                     <p class="cna-only text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.2em] leading-relaxed">
-                        Tap <span class="text-[#3E2723]">Start Browsing</span> to finish signing in
+                        You're online — this window closes on its own
                     </p>
                 </div>
 
@@ -128,8 +134,8 @@
         // mid-load and the guest sees a flash of a page they can never return to.
         // Let the assistant close itself and leave them the address instead.
         if (reducedMotion || window.isCaptiveAssistant()) {
-            // Auto-navigation is a motion/vestibular concern too, not just animated visuals —
-            // skip it entirely and rely on the "Start Browsing" button as the only way forward.
+            // Auto-navigation is a motion/vestibular concern too, not just animated
+            // visuals — skip it and leave the buttons above as the way forward.
             countdownEl.style.display = 'none';
         } else {
             let timeLeft = 5;

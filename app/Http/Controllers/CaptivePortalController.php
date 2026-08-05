@@ -44,12 +44,20 @@ class CaptivePortalController extends Controller
     }
 
     /**
-     * The most recent redeemed voucher belonging to this device, matched on
-     * IP or (preferably) the MAC blind index. Shared by index() and the
-     * RFC 8908 captive-portal API so the "which session is this device on"
-     * question is only answered in one place — they previously would have
-     * had to duplicate this query and could drift apart.
+     * Where the "browse the web" buttons point.
+     *
+     * Falls back to the portal itself rather than a third-party page. The old
+     * default was neverssl.com — a plain-HTTP page used as a trick to make a
+     * phone's sign-in assistant notice it has internet. It predates the shop
+     * having a real portal hostname, and to a paying customer, being dumped on
+     * an unbranded stranger's page reads as the Wi-Fi being broken. Set the
+     * portal_browse_url setting to bring back a genuine outbound destination.
      */
+    private function browseUrl(): string
+    {
+        return Setting::get('portal_browse_url') ?: route('portal.index');
+    }
+
     /**
      * The device's live session on OPNsense, or null if the firewall has none.
      *
@@ -70,6 +78,13 @@ class CaptivePortalController extends Controller
         });
     }
 
+    /**
+     * The most recent redeemed voucher belonging to this device, matched on
+     * IP or (preferably) the MAC blind index. Shared by index() and the
+     * RFC 8908 captive-portal API so the "which session is this device on"
+     * question is only answered in one place — they previously would have
+     * had to duplicate this query and could drift apart.
+     */
     private function activeVoucherFor(string $ip, ?string $mac): ?Voucher
     {
         return Voucher::where('is_used', true)
@@ -210,7 +225,7 @@ class CaptivePortalController extends Controller
                     'startTime' => Carbon::createFromTimestamp($activeSession['startTime']),
                     'expirationTime' => $expirationTime,
                     'userName' => $activeSession['userName'] ?? 'Guest',
-                    'browseUrl' => Setting::get('portal_browse_url', 'http://neverssl.com'),
+                    'browseUrl' => $this->browseUrl(),
                 ]);
             }
         }
@@ -472,7 +487,7 @@ class CaptivePortalController extends Controller
         // host would silently upgrade and do the same. Configurable so the
         // shop isn't permanently tied to a third-party domain.
         return view('portal.success', [
-            'browseUrl' => Setting::get('portal_browse_url', 'http://neverssl.com'),
+            'browseUrl' => $this->browseUrl(),
         ]);
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Models\Voucher;
 use App\Services\OpnSenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class CaptivePortalStatusPageTest extends TestCase
@@ -125,5 +126,44 @@ class CaptivePortalStatusPageTest extends TestCase
         $response = $this->get(route('portal.success'));
 
         $response->assertSee('http://example.test', false);
+    }
+
+    /**
+     * Regression: with portal_browse_url unset, the "browse the web" buttons
+     * fell back to neverssl.com — a captive-portal-triggering trick from
+     * before the shop had a real portal hostname. A paying customer tapping a
+     * button and landing on an unbranded stranger's page reads as the Wi-Fi
+     * being broken, which is exactly how it was reported.
+     */
+    public function test_no_third_party_fallback_when_browse_url_is_unset(): void
+    {
+        $content = $this->get(route('portal.success'))->getContent();
+
+        $this->assertStringNotContainsString('neverssl', $content);
+    }
+
+    /**
+     * With no outbound destination configured the fallback is the portal
+     * itself, so the secondary button would point at the same place as the
+     * primary one directly above it. Suppress it rather than render a
+     * duplicate.
+     */
+    public function test_duplicate_browse_button_is_suppressed_when_it_targets_the_portal(): void
+    {
+        // Setting::get caches rememberForever, and the cache outlives
+        // RefreshDatabase — without this the value another test wrote is still
+        // sitting there and the "unset" half of this test is meaningless.
+        Cache::forget('setting.portal_browse_url');
+
+        $content = $this->get(route('portal.success'))->getContent();
+
+        // Assert on the rendered anchor, not the words — the surrounding
+        // script carries explanatory comments that mention the button by name.
+        $this->assertStringNotContainsString('<span>Start Browsing</span>', $content);
+
+        Setting::set('portal_browse_url', 'http://example.test');
+        $configured = $this->get(route('portal.success'))->getContent();
+
+        $this->assertStringContainsString('<span>Start Browsing</span>', $configured);
     }
 }

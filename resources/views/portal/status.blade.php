@@ -134,10 +134,16 @@
                     </div>
 
                     <div class="max-w-md mx-auto w-full space-y-4 px-2">
-                        <a href="{{ $browseUrl }}" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-[11px] lg:text-sm">
-                            Continue Browsing
-                            <x-lucide-external-link class="w-5 h-5" />
-                        </a>
+                        {{-- Only worth showing when it actually leads somewhere else.
+                             With portal_browse_url unset this resolves to the portal,
+                             and a "Continue Browsing" button that reloads the page the
+                             guest is already looking at is worse than no button. --}}
+                        @if($browseUrl !== route('portal.index'))
+                            <a href="{{ $browseUrl }}" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-[11px] lg:text-sm">
+                                Continue Browsing
+                                <x-lucide-external-link class="w-5 h-5" />
+                            </a>
+                        @endif
                         <form action="{{ route('portal.disconnect') }}" method="POST" x-data="{ disconnecting: false }" @submit="disconnecting = true">
                             @csrf
                             <input type="hidden" name="session_id" value="{{ $session['sessionId'] }}">

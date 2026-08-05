@@ -10,15 +10,35 @@ class Setting extends Model
     protected $fillable = ['key', 'value'];
 
     /**
+     * Marks "there is no row for this key" in the cache.
+     *
+     * rememberForever cannot cache a null — Cache::get returns null for both
+     * "absent" and "stored null", so the closure would re-run on every call.
+     * A sentinel lets a missing setting stay cached without freezing any one
+     * caller's fallback value.
+     */
+    private const MISSING = '__setting_missing__';
+
+    /**
      * Get a setting value by key.
+     *
+     * The default is applied *after* the cache, never inside it. Caching the
+     * default meant the first caller to ask for an unset key froze its own
+     * fallback in place forever: every later caller got that value regardless
+     * of the default it passed, and editing the default in code had no effect
+     * because the cache still held the old one. That is exactly how
+     * portal_browse_url kept resolving to neverssl.com long after the code
+     * stopped saying so — only an explicit Setting::set(), which forgets the
+     * key, could ever clear it.
      */
     public static function get($key, $default = null)
     {
-        return Cache::rememberForever("setting.{$key}", function () use ($key, $default) {
-            $setting = self::where('key', $key)->first();
+        $value = Cache::rememberForever(
+            "setting.{$key}",
+            fn () => self::where('key', $key)->value('value') ?? self::MISSING
+        );
 
-            return $setting ? $setting->value : $default;
-        });
+        return $value === self::MISSING ? $default : $value;
     }
 
     /**
