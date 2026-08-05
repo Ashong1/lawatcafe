@@ -165,7 +165,15 @@
                 </div>
 
                 <!-- Tab: AI Assistant -->
-                <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-8" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col h-full py-6 lg:py-0 max-w-4xl mx-auto w-full" x-cloak>
+                {{-- min-h-0 is load-bearing on this element and on #chat-container
+                     below. A flex item defaults to min-height:auto, which refuses
+                     to shrink below its content — so the chat history's
+                     overflow-y-auto box was never given a height smaller than the
+                     conversation, and therefore never had anything to scroll. The
+                     messages simply pushed the whole column taller instead. Every
+                     ancestor between the fixed-height card and the scroll area
+                     needs this, not just the nearest one. --}}
+                <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-8" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col h-full min-h-0 py-6 lg:py-0 max-w-4xl mx-auto w-full" x-cloak>
                     <div class="text-center mb-6 shrink-0">
                         <div class="inline-block p-4 rounded-full bg-amber-50 border border-amber-100 mb-6 shadow-sm">
                             <x-lucide-message-circle class="w-8 h-8 text-amber-800" stroke-width="2.5" />
@@ -174,7 +182,12 @@
                         <p class="text-[11px] text-[#8D6E63] font-bold uppercase tracking-[0.3em]">Your Digital Concierge</p>
                     </div>
 
-                    <div class="flex-1 bg-white border-2 border-[#F0E6D2] rounded-[2.5rem] lg:rounded-[3.5rem] p-6 lg:p-8 mb-6 flex flex-col min-h-[300px] shadow-2xl relative overflow-hidden w-full" id="chat-container">
+                    {{-- min-h-0, not min-h-[300px]: a 300px floor is the same bug
+                         in another form — on a short viewport it forced this box
+                         taller than the space available, so its child scroll area
+                         again had nothing to scroll and the overflow-hidden here
+                         just clipped the conversation out of reach. --}}
+                    <div class="flex-1 min-h-0 bg-white border-2 border-[#F0E6D2] rounded-[2.5rem] lg:rounded-[3.5rem] p-6 lg:p-8 mb-6 flex flex-col shadow-2xl relative overflow-hidden w-full" id="chat-container">
                         <!-- Chat texture overlay -->
                         <div class="absolute inset-0 opacity-[0.02] pointer-events-none texture-squares"></div>
                         

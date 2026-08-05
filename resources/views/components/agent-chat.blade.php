@@ -31,7 +31,17 @@
         @open-agent-chat.window="handleExternalOpen($event.detail.prompt)"
         @portal-tab-changed.window="scrollToBottom()">
 
-        <div class="overflow-y-auto space-y-3 pr-1 w-full flex flex-col justify-start z-10 max-h-full no-scrollbar flex-1 min-h-0" id="{{ $anchorId }}-chat-history">
+        {{-- flex-1 min-h-0 is what gives this box a height smaller than its
+             content; max-h-full was removed because a percentage max-height
+             against a flex-sized parent is unreliable and it added nothing.
+
+             The scrollbar is deliberately visible (no `no-scrollbar` here):
+             hiding it on a conversation that grows past the box leaves a guest
+             with no cue that there is anything above, which is exactly how this
+             was reported — "the chat is not scrollable". overscroll-contain
+             stops a flick at the top of the history from dragging the whole
+             portal panel instead. --}}
+        <div class="overflow-y-auto overscroll-contain space-y-3 pr-1 w-full flex flex-col justify-start z-10 flex-1 min-h-0" id="{{ $anchorId }}-chat-history">
             <template x-for="(msg, index) in history" :key="index">
                 <div class="anim-pop-in">
                     <template x-if="msg.kind === 'text'">
@@ -173,7 +183,11 @@
         </div>
 
         <!-- Messages Area -->
-        <div class="flex-1 overflow-y-auto p-6 space-y-4 bg-[#FDF8F5]" id="{{ $anchorId }}-chat-history">
+        {{-- Same min-h-0 / overscroll-contain reasoning as the embedded variant
+             above: without min-h-0 a flex item will not shrink below its content,
+             and without overscroll-contain a flick at the top of the history
+             scrolls the page behind the widget instead. --}}
+        <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-6 space-y-4 bg-[#FDF8F5]" id="{{ $anchorId }}-chat-history">
             <template x-for="(msg, index) in history" :key="index">
                 <div class="anim-pop-in">
                     <!-- Plain text turn -->

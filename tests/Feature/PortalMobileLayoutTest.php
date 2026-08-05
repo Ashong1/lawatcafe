@@ -106,6 +106,39 @@ class PortalMobileLayoutTest extends TestCase
     }
 
     /**
+     * The chat history would not scroll at all.
+     *
+     * A flex item defaults to min-height:auto and refuses to shrink below its
+     * content, so every ancestor between the fixed-height portal card and the
+     * overflow-y-auto history has to carry min-h-0 — otherwise the scroll box is
+     * never given a height smaller than the conversation and has nothing to
+     * scroll; the messages just push the column taller. The nearest ancestor
+     * already had it, which is why this looked correct in review.
+     */
+    public function test_every_ancestor_of_the_chat_scroll_area_can_shrink(): void
+    {
+        $this->liveVoucher();
+        $this->mockLiveSession();
+
+        $content = $this->withServerVariables(['REMOTE_ADDR' => self::IP])
+            ->get(route('portal.index'))
+            ->getContent();
+
+        // The AI tab itself.
+        $this->assertStringContainsString('flex flex-col h-full min-h-0 py-6', $content);
+        // The chat card. A fixed 300px floor was the same bug in another form.
+        $this->assertStringContainsString('flex-1 min-h-0 bg-white border-2', $content);
+        $this->assertStringNotContainsString('min-h-[300px]', $content);
+        // The scroll area, with a visible scrollbar — hiding it left no cue that
+        // there was anything above, which is how this was reported.
+        $this->assertStringContainsString('overflow-y-auto overscroll-contain', $content);
+        $this->assertDoesNotMatchRegularExpression(
+            '/id="portal-chat-history"[^>]*no-scrollbar/',
+            $content
+        );
+    }
+
+    /**
      * The "AI Agent Active" badge was absolutely positioned inside the chat
      * container and reserved no space, so the oldest message in the scroll area
      * sat underneath it — and it got worse as the conversation grew, because
