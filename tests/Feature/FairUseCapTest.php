@@ -36,7 +36,9 @@ class FairUseCapTest extends TestCase
             '*/api/firewall/alias/search_item*' => Http::response(['rows' => [
                 ['name' => 'lawatcafe_free_tier'], ['name' => 'lawatcafe_premium_tier'],
             ]], 200),
-            '*/api/firewall/filter/get' => Http::response(['filter' => ['rules' => ['rule' => []]]], 200),
+            '*/api/trafficshaper/settings/get' => Http::response(['ts' => [
+                'pipes' => ['pipe' => []], 'rules' => ['rule' => []],
+            ]], 200),
             '*' => Http::response(['result' => 'saved', 'uuid' => 'obj-1'], 200),
         ]);
     }
@@ -70,14 +72,16 @@ class FairUseCapTest extends TestCase
         $this->artisan('shaper:fair-use', ['mbps' => 20, '--apply' => true])->assertSuccessful();
 
         Http::assertSent(function ($request) {
-            if (! str_contains($request->url(), 'firewall/filter/add_rule')) {
+            if (! str_contains($request->url(), 'trafficshaper/settings/addRule')) {
                 return true;
             }
 
-            // The catch-all matches everything; the per-tier rules that sit
-            // above it in sequence are what narrow it down.
-            return ($request['rule']['source_net'] ?? null) === 'any'
-                && ($request['rule']['destination_net'] ?? null) === 'any';
+            // any/any is not a simplification, it is the only thing the field
+            // accepts here: getRule offers exactly one option for source and
+            // for destination, and it is "any". That is what makes per-tier
+            // shaping impossible on this build.
+            return ($request['rule']['source'] ?? null) === 'any'
+                && ($request['rule']['destination'] ?? null) === 'any';
         });
     }
 
@@ -116,7 +120,7 @@ class FairUseCapTest extends TestCase
         $this->artisan('shaper:fair-use', ['mbps' => 20])->assertSuccessful();
 
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'addPipe')
-            || str_contains($request->url(), 'add_rule'));
+            || str_contains($request->url(), 'addRule'));
     }
 
     public function test_a_zero_ceiling_is_refused(): void
@@ -137,11 +141,10 @@ class FairUseCapTest extends TestCase
         Http::fake([
             '*/api/trafficshaper/settings/searchPipes*' => Http::response(['rows' => []], 200),
             '*/api/trafficshaper/settings/searchRules*' => Http::response(['rows' => []], 200),
-            // The fair-use cap is a FILTER rule now, not a Shaper rule — the two
-            // are separate tables, and while it lived in the Shaper's it
-            // silently overrode every per-tier rule.
-            '*/api/firewall/filter/get' => Http::response(['filter' => ['rules' => ['rule' => []]]], 200),
-            '*/api/firewall/filter/add_rule' => Http::response(['result' => 'failed'], 200),
+            '*/api/trafficshaper/settings/get' => Http::response(['ts' => [
+                'pipes' => ['pipe' => []], 'rules' => ['rule' => []],
+            ]], 200),
+            '*/api/trafficshaper/settings/addRule' => Http::response(['result' => 'failed'], 200),
             '*' => Http::response(['result' => 'saved', 'uuid' => 'obj-1'], 200),
         ]);
 
@@ -171,8 +174,10 @@ class FairUseCapTest extends TestCase
         Http::assertSent(fn ($request) => ! str_contains($request->url(), 'trafficshaper/settings/addRule')
             || ($request['rule']['source'] ?? null) === 'any');
 
-        // And the per-tier caps are applied too, as filter rules.
-        Http::assertSent(fn ($request) => str_contains($request->url(), 'firewall/filter/add_rule'));
+        // And nothing is written to the filter table. Rules there carrying a
+        // pipe UUID save and apply cleanly and then shape nothing, so writing
+        // them only leaves inert pass rules on a live firewall.
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'firewall/filter'));
 
         Cache::forget('setting.bw_fair_use_mbps');
         $this->assertSame('20', Setting::get('bw_fair_use_mbps'));
@@ -195,19 +200,18 @@ class FairUseCapTest extends TestCase
     }
 
     /**
-     * The page said per-tier caps were "recorded, not enforced" — true only
-     * while that was impossible here. Filter rules made it work, so the notice
-     * had to stop saying otherwise.
+     * The page must not promise enforcement it cannot deliver. It briefly said
+     * per-tier caps were enforced, on the strength of filter rules that saved
+     * and applied and did nothing.
      */
-    public function test_the_page_states_that_both_layers_are_enforced(): void
+    public function test_the_page_states_that_per_tier_caps_are_not_enforced(): void
     {
         $response = $this->actingAs(User::factory()->create(['role' => 'admin']))
             ->get(route('network.traffic'));
 
         $response->assertOk();
         $response->assertSee('Fair-Use Ceiling', false);
-        $response->assertSee('Per-tier caps are enforced', false);
-        $response->assertDontSee('recorded, not enforced', false);
+        $response->assertSee('recorded, not enforced', false);
     }
 
     /**
@@ -325,52 +329,19 @@ class FairUseCapTest extends TestCase
     }
 
     /**
-     * The bug this move fixes: a free guest measured the 20 Mbit ceiling
-     * instead of their tier. The fair-use cap was a Shaper rule while the tier
-     * caps were filter rules — separate tables, so pf sequence never applied
-     * between them and the any/any Shaper rule simply won.
+     * The regression this pins. The ceiling was moved to the filter table to
+     * let per-tier rules override it by sequence; the move was accepted by
+     * OPNsense and left the network completely unshaped — 60 down / 56 up on a
+     * connection that had been capped at 20. Shaper rules are the only ones
+     * that take effect on this gateway.
      */
-    public function test_the_fair_use_cap_is_a_filter_rule_not_a_shaper_rule(): void
+    public function test_the_fair_use_cap_is_a_shaper_rule(): void
     {
         $this->fakeOpnsense();
 
         $this->artisan('shaper:fair-use', ['mbps' => 20, '--apply' => true])->assertSuccessful();
 
-        Http::assertSent(fn ($request) => str_contains($request->url(), 'firewall/filter/add_rule'));
-        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'trafficshaper/settings/addRule'));
-    }
-
-    /** And it must sit below the tier rules so they win. */
-    public function test_the_fair_use_rule_is_sequenced_below_the_tier_rules(): void
-    {
-        $this->fakeOpnsense();
-
-        $this->artisan('shaper:fair-use', ['mbps' => 20, '--apply' => true])->assertSuccessful();
-
-        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'firewall/filter/add_rule')
-            || (int) $request['rule']['sequence'] < 100);
-    }
-
-    /**
-     * A leftover Shaper rule is not inert — it matches independently of pf
-     * sequence and overrides the tier rules, which is precisely the fault. So
-     * provisioning retires any it finds rather than just no longer writing them.
-     */
-    public function test_legacy_shaper_rules_are_retired(): void
-    {
-        Http::fake([
-            // readShaperConfig() reads settings/get and indexes ts.rules.rule
-            // by description — not searchRules.
-            '*/api/trafficshaper/settings/get' => Http::response(['ts' => [
-                'pipes' => ['pipe' => []],
-                'rules' => ['rule' => ['legacy-1' => ['description' => 'lawatcafe_fairuse_down']]],
-            ]], 200),
-            '*/api/firewall/filter/get' => Http::response(['filter' => ['rules' => ['rule' => []]]], 200),
-            '*' => Http::response(['result' => 'saved', 'uuid' => 'obj-1'], 200),
-        ]);
-
-        $this->artisan('shaper:fair-use', ['mbps' => 20, '--apply' => true])->assertSuccessful();
-
-        Http::assertSent(fn ($request) => str_contains($request->url(), 'trafficshaper/settings/delRule/legacy-1'));
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'trafficshaper/settings/addRule'));
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'firewall/filter'));
     }
 }

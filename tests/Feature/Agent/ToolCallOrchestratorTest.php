@@ -109,7 +109,9 @@ class ToolCallOrchestratorTest extends TestCase
             $admin,
             [],
             null,
-            function (string $toolName) use (&$started) { $started[] = $toolName; }
+            function (string $toolName) use (&$started) {
+                $started[] = $toolName;
+            }
         );
 
         $this->assertSame(['checkStockLevels'], $started);
@@ -132,7 +134,9 @@ class ToolCallOrchestratorTest extends TestCase
             $staff,
             [],
             null,
-            function (string $toolName) use (&$started) { $started[] = $toolName; }
+            function (string $toolName) use (&$started) {
+                $started[] = $toolName;
+            }
         );
 
         $this->assertSame(['restockIngredient'], $started);

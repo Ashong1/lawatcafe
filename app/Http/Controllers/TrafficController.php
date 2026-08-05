@@ -55,11 +55,13 @@ class TrafficController extends Controller
         // single time while the setting had in fact been stored.
         $mbps = (float) ($validated['bw_fair_use_mbps'] ?? Setting::get('bw_fair_use_mbps', 20));
 
-        // Both layers, in order. The ceiling is the catch-all for every device
-        // on the interface; the tier rules sit after it and override it for
-        // guests who are in a tier. Saving used to apply only the ceiling —
-        // correct while per-tier shaping was impossible here, wrong now that
-        // filter rules make it work (see TrafficShapingService::applyTierRules).
+        // The ceiling only. Per-tier shaping was attempted through firewall
+        // filter rules, whose source_net/destination_net do take an alias name
+        // and whose shaper1 does take a pipe UUID — the rules save, apply, and
+        // report OK, and then shape nothing at all. Measured on a member of the
+        // free tier with its rules live: 18 Mbit, the ceiling's value, not the
+        // tier's. quick=1 changes nothing. The captive portal decides guest
+        // traffic in its own anchor before these rules are ever reached.
         $applied = $shaping->applyFairUseCap($mbps, $opnsense);
 
         if (! $applied) {
@@ -72,18 +74,11 @@ class TrafficController extends Controller
             return redirect()->back()->with('error', 'Settings saved, but the fair-use ceiling could not be applied. '.$reason);
         }
 
-        if (! $shaping->applyTierRules($validated, $opnsense)) {
-            $reason = $shaping->lastError() ?? 'OPNsense rejected the per-tier rules.';
-
-            // The ceiling did apply, so say so — otherwise this reads as though
-            // nothing took effect and the shop is unprotected.
-            return redirect()->back()->with('error', "The {$mbps} Mbps ceiling is live, but the per-tier caps could not be applied. ".$reason);
-        }
-
         return redirect()->back()->with('success', sprintf(
-            'Settings saved. Free %s/%s Mbps and Premium %s/%s Mbps are live, with a %s Mbps per-device ceiling for everything else.',
-            $validated['bw_free_down'], $validated['bw_free_up'],
-            $validated['bw_premium_down'], $validated['bw_premium_up'],
+            'Settings saved. A %s Mbps per-device ceiling is live on the guest network. '
+            .'The free and premium figures are recorded against vouchers but are not '
+            .'enforced — this gateway can only shape by interface, so separating the '
+            .'tiers needs each one on its own interface.',
             $mbps
         ));
     }

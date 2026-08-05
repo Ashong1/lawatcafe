@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Sale;
 use App\Models\User;
 use App\Services\AIService;
 use App\Services\BaristaForecastService;
@@ -47,7 +48,7 @@ class BaristaForecastServiceTest extends TestCase
     /** One sale is enough to clear the "less than 1 day of data" gate. */
     private function seedOneSale(): void
     {
-        \App\Models\Sale::create([
+        Sale::create([
             'transaction_number' => 'TRN-FORECAST-1',
             'total_amount' => 250,
             'status' => 'completed',

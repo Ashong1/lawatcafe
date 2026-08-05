@@ -4,8 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Sale;
 use App\Models\User;
-use App\Services\Agent\Tools\GetSalesSummaryTool;
+use App\Services\Agent\PermissionResolver;
 use App\Services\Agent\ToolRegistry;
+use App\Services\Agent\Tools\GetSalesSummaryTool;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -144,11 +145,11 @@ class GetSalesSummaryToolTest extends TestCase
         // Same role-floor architecture every other read-only staff tool
         // already goes through (checkStockLevels, getActiveSessions, etc.) —
         // not a new inconsistency introduced by widening this tool's audience.
-        $resolver = app(\App\Services\Agent\PermissionResolver::class);
+        $resolver = app(PermissionResolver::class);
         $registry = app(ToolRegistry::class);
         $tool = $registry->forAudience(ToolRegistry::AUDIENCE_STAFF)['getSalesSummary'];
         $staff = User::factory()->create(['role' => 'staff']);
 
-        $this->assertSame(\App\Services\Agent\PermissionResolver::TIER_CONFIRM, $resolver->tierFor($tool, $staff));
+        $this->assertSame(PermissionResolver::TIER_CONFIRM, $resolver->tierFor($tool, $staff));
     }
 }

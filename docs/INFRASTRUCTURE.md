@@ -52,7 +52,7 @@ Acts as the LAN's router/firewall/DHCP server and the captive-portal enforcement
 - **Captive portal**: authorizing a device's session (`authorizeDevice`), disconnecting a session (`disconnectDevice`), listing active sessions (`listSessions`), reconfiguring the captive portal zone (`reconfigureCaptivePortal`)
 - **DHCP (Kea)**: adding/updating/deleting static reservations (`addKeaReservation`, `updateKeaReservation`, `deleteKeaReservation`), reading leases (`getDhcpLeases`) — device hostnames are read from Kea leases specifically, not ARP, because ARP's hostname field is almost always empty
 - **Firewall aliases**: a MAC block alias for banned devices (`addMacToBlockAlias`/`removeMacFromBlockAlias`), per-tier IP aliases for voucher speed tiers (`addIpToTierAlias`/`removeIpFromTierAlias`), and an "allowed addresses" allow-list (infrastructure/staff devices that should never be treated as guests)
-- **Traffic shaping**: dummynet pipes plus firewall filter rules (`upsertShaperPipe`, `upsertTierFilterRule`, `reconfigureShaper`) — a per-device fair-use ceiling and enforced free/premium voucher tiers. See *Bandwidth shaping* below
+- **Traffic shaping**: dummynet pipes plus Shaper rules (`upsertShaperPipe`, `upsertShaperRule`, `reconfigureShaper`) — a per-device fair-use ceiling. Free/premium tiers are recorded but cannot be enforced on this build. See *Bandwidth shaping* below
 - **Monitoring**: gateway status and interface stats (`getGatewayStatus`, `getInterfaceStats`) surfaced on the admin network dashboard
 
 ## Nginx Proxy Manager (.5)
@@ -97,23 +97,23 @@ Note: the `PIHOLE_API_KEY` in `.env` is a stale Pi-hole v5 token. Pi-hole is now
 
 ### Bandwidth shaping
 
-Two layers, both live as of 2026-08-05. Provision or change either with its
-command; both are idempotent and report by default, writing only with `--apply`.
+One layer, live and measured as of 2026-08-05: a per-device fair-use ceiling.
+Provision or change it with `shaper:fair-use {mbps} --apply` — idempotent, and
+it reports without writing unless `--apply` is given.
 
-| Layer | Applies to | Command | Objects |
-|---|---|---|---|
-| Fair-use ceiling | every device on `lan` | `shaper:fair-use {mbps} --apply` | `lawatcafe_fairuse_down`/`_up` pipes + 2 filter rules (seq 11-12) |
-| Per-tier caps | members of a tier alias | `shaper:tiers --apply` | `lawatcafe_{free,premium}_{down,up}` pipes + 4 filter rules (seq 101-104) |
+| Layer | Applies to | Objects |
+|---|---|---|
+| Fair-use ceiling | every device on `lan` | `lawatcafe_fairuse_down`/`_up` pipes + 2 **Shaper** rules (seq 11-12) |
 
-**Both layers live in the pf filter table**, and that is load-bearing. The
-Shaper's own rule table is evaluated independently of pf sequence, so while the
-fair-use cap lived there its `any`/`any` rule silently beat every per-tier rule
-and a free guest measured the 20 Mbit ceiling. With all six rules in one table
-and `quick` disabled, sequence decides: the catch-all sits at 11-12, the tier
-rules at 101-104, and a tier member's higher-sequence rule is the one whose pipe
-applies. Everything in no tier — the POS, this server, Pi-hole, staff — falls to
-the ceiling. `shaper:fair-use` deletes any rule it finds still in the Shaper
-table, since leaving one there reintroduces exactly that fault.
+Verified by download from the app server, which sits on `lan` and is subject to
+the same rules: 2.34 MB/s ≈ 18.7 Mbit against a 20 Mbit cap.
+
+**The rules must live in the Shaper's own table.** They were moved to the pf
+filter table so that per-tier rules could override the catch-all by sequence.
+OPNsense accepted every write, `POST /api/firewall/filter/apply` returned `OK`,
+and the network came back **completely unshaped** — 60 down / 56 up on a
+connection that had been holding 20. Moving them back restored the cap
+immediately. Nothing in the filter table shapes traffic on this gateway.
 
 **Why the ceiling is 20 Mbit and not the free tier's value.** The captive portal
 zone is bound to `lan`, and so is everything else the shop runs; there is no
@@ -123,40 +123,40 @@ and this server too. At 2 Mbit that throttled both. The pipes carry a
 total shared between them — one guest cannot saturate the line, and the shop's
 own equipment never comes near it.
 
-**Per-tier shaping works through firewall rules, not the Shaper.** The Shaper's
-own rules cannot target a group of devices on this build: `GET
-/api/trafficshaper/settings/getRule` reports `source` and `destination` as option
-fields whose only value is `any`, so a rule matching `lawatcafe_free_tier` is
-rejected outright. Automation **filter** rules can — `GET
-/api/firewall/filter/get_rule` shows `source_net`/`destination_net` are free text
-and accept an alias name, and `shaper1` takes a pipe UUID. That is what
-`shaper:tiers` uses, and it needs no VLAN or separate interface.
-
 Bandwidth values are written as whole numbers because OPNsense's pipe
 `bandwidth` field is an integer — `1.5` Mbit is rejected outright with
 "Bandwidth out of range". A fractional Mbps is therefore written in the next
 unit down (1.5 Mbit → `1500 Kbit`, the same cap) rather than rounded, so the
 figure an admin typed is the figure that is enforced.
 
-Three things to know before touching any of this:
+#### Per-tier caps are recorded but not enforced
 
-1. **The filter rule action can only be `pass`.** The API exposes no `match`, the
-   pf action that shapes without deciding access. So a stale tier-alias member is
-   a guest with working internet after their session ended.
-   `shaper:reconcile-tiers` (scheduled every 5 minutes) removes members OPNsense
-   no longer reports as connected, and **must keep running** — the `pass` rules
-   are only safe because of it. `quick` is deliberately `0` so the rules apply
-   their pipe without short-circuiting the rest of the ruleset.
-2. **`POST /api/firewall/filter/search_rule` lies.** It answers `200` with
-   `total=0` on this build even when rules demonstrably exist — verified by
-   creating one, fetching it back by UUID, and finding it in the config tree
-   while search still reported nothing. Read `GET /api/firewall/filter/get` and
-   walk `filter.rules.rule` instead. Trusting search made provisioning believe
-   the rules were absent and create a duplicate set on every run.
-3. **Not yet verified on real hardware.** The caps are provisioned and the API
-   confirms them, but nobody has speed-tested a free and a premium voucher, nor
-   confirmed that access stops on disconnect. That last one is the important
-   check, for the reason in (1). `shaper:tiers` prints the steps after applying.
+Free and premium figures are stored and vouchers carry a tier, but no rule
+enforces them. Both routes were tried and both are closed on this build:
+
+1. **Shaper rules cannot target a group of devices.** `GET
+   /api/trafficshaper/settings/getRule` reports `source` and `destination` as
+   option fields whose only value is `any`. Creating a `network`-type alias and
+   re-reading the schema does not add it — the option list stays `[any]`. A rule
+   matching `lawatcafe_free_tier` is rejected outright.
+2. **Filter rules can target an alias, and do not shape.** `source_net` and
+   `destination_net` are free text and accept an alias name, `shaper1` takes a
+   pipe UUID, and the rule saves and applies cleanly. It does nothing. Measured
+   directly: an address placed in `lawatcafe_free_tier`, with that tier's rules
+   live and the free cap at 3 Mbit, downloaded at 18 Mbit — the ceiling's rate,
+   not the tier's. Setting `quick=1` changed nothing. The captive portal decides
+   guest traffic in its own anchor before these rules are reached.
+
+What is left is what the Shaper *can* match: interface, direction, protocol,
+port, DSCP. **Separating the tiers therefore requires each tier on its own
+interface** — a second SSID mapped to a VLAN, which in turn needs an AP that
+can do multiple SSIDs. The tier aliases and `shaper:reconcile-tiers` (scheduled
+every 5 minutes) are kept because they are what that would be built on, and
+keeping membership honest costs one alias read per tier.
+
+No filter rules belonging to this app remain on the gateway; the six the
+experiment created were deleted, since an inert `pass` rule on a live firewall
+is worse than no rule.
 
 ### Network interfaces
 

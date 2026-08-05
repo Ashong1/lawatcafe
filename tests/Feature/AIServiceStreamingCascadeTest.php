@@ -45,7 +45,9 @@ class AIServiceStreamingCascadeTest extends TestCase
         $result = app(AIService::class)->chatWithToolsStreaming(
             [['role' => 'user', 'content' => 'What are total sales today?']],
             [],
-            function (string $delta) use (&$deltas) { $deltas[] = $delta; }
+            function (string $delta) use (&$deltas) {
+                $deltas[] = $delta;
+            }
         );
 
         $this->assertSame("Today's sales are PHP 500.", $result['choices'][0]['message']['content']);

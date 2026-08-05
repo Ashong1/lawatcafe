@@ -79,17 +79,20 @@
                         </div>
                     </div>
 
-                    {{-- Per-tier caps are enforced again as of v1.0.0.106, through
-                         firewall filter rules rather than shaper rules — see
-                         TrafficShapingService::applyTierRules(). This notice used to
-                         say they were recorded but not enforced, which was true only
-                         while that was impossible. --}}
-                    <div class="p-4 bg-green-50 border border-green-200 rounded-2xl flex items-start gap-3">
-                        <x-lucide-circle-check class="w-4 h-4 text-green-700 shrink-0 mt-0.5" />
-                        <p class="text-[10px] text-green-900 font-medium leading-relaxed">
-                            <span class="font-black uppercase tracking-widest">Per-tier caps are enforced.</span><br>
-                            A guest's voucher tier decides their speed; the ceiling above applies to everything
-                            else on the network, including the POS and this server. Saving updates both.
+                    {{-- Enforcement was attempted through firewall filter rules,
+                         whose source_net does take an alias and whose shaper1 does
+                         take a pipe UUID. They save, apply, and report OK, and shape
+                         nothing: a member of the free tier measured the ceiling's
+                         rate, not the tier's, with quick set either way. The captive
+                         portal decides guest traffic in its own anchor first. See
+                         docs/INFRASTRUCTURE.md. --}}
+                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
+                        <x-lucide-triangle-alert class="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                        <p class="text-[10px] text-amber-900 font-medium leading-relaxed">
+                            <span class="font-black uppercase tracking-widest">Per-tier caps are recorded, not enforced.</span><br>
+                            Vouchers carry a tier and these figures are stored against them, but this gateway
+                            can only shape by interface &mdash; separating free from premium needs each tier on
+                            its own interface. Every guest gets the ceiling above.
                         </p>
                     </div>
 
