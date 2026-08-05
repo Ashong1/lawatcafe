@@ -1285,7 +1285,17 @@ class OpnSenseService
             // entry. Comparing them raw would re-add one that is already
             // allow-listed, and would fail to remove one the caller named
             // without its mask.
-            $canonical = fn (string $v) => preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $v) ? "{$v}/32" : $v;
+            //
+            // Case matters too: OPNsense normalises a stored MAC to lower case,
+            // but addAllowedMac()/removeAllowedMac() hand this method the upper
+            // case form. Under a case-sensitive compare the Remove button could
+            // never match the stored entry — it filtered nothing, wrote the
+            // list back unchanged, and still reported success.
+            $canonical = function (string $v) {
+                $v = strtolower(trim($v));
+
+                return preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $v) ? "{$v}/32" : $v;
+            };
             $target = $canonical($value);
 
             if ($add) {
@@ -1294,7 +1304,16 @@ class OpnSenseService
                 }
                 $current[] = $value;
             } else {
-                $current = array_values(array_filter($current, fn ($v) => $canonical($v) !== $target));
+                $filtered = array_values(array_filter($current, fn ($v) => $canonical($v) !== $target));
+
+                // Nothing matched: say so instead of reporting a successful
+                // removal that never happened — silent success is what hid the
+                // case-sensitivity bug above in the first place.
+                if (count($filtered) === count($current)) {
+                    return ['success' => false, 'message' => "{$value} is not on the captive portal allow-list."];
+                }
+
+                $current = $filtered;
             }
 
             // Comma, never a newline. OPNsense reads an AsList field back with

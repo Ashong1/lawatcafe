@@ -290,6 +290,12 @@ class OpnSenseServiceTest extends TestCase
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'set_zone'));
     }
 
+    /**
+     * The stored MACs here are lower case on purpose: that is the only form a
+     * real zone ever reports back, however the entry was written. An uppercase
+     * fixture used to make this test pass while the Remove button did nothing
+     * on the live gateway.
+     */
     public function test_remove_allowed_mac_drops_only_the_matching_entry(): void
     {
         Http::fake([
@@ -297,7 +303,7 @@ class OpnSenseServiceTest extends TestCase
                 'rows' => [['uuid' => 'zone-uuid-1', 'zoneid' => '0']],
             ], 200),
             'opnsense.test/api/captiveportal/settings/get_zone/zone-uuid-1' => Http::response([
-                'zone' => ['allowedMACAddresses' => 'AA:BB:CC:DD:EE:FF,11:22:33:44:55:66'],
+                'zone' => ['allowedMACAddresses' => 'aa:bb:cc:dd:ee:ff,11:22:33:44:55:66'],
             ], 200),
             'opnsense.test/api/captiveportal/settings/set_zone/zone-uuid-1' => Http::response(['result' => 'saved'], 200),
             'opnsense.test/api/captiveportal/service/reconfigure' => Http::response(['status' => 'ok'], 200),
@@ -310,6 +316,65 @@ class OpnSenseServiceTest extends TestCase
             return $request->url() === 'https://opnsense.test/api/captiveportal/settings/set_zone/zone-uuid-1'
                 && $request['zone']['allowedMACAddresses'] === '11:22:33:44:55:66';
         });
+    }
+
+    /**
+     * The exact live shape: the page lists the MAC as OPNsense stores it (lower
+     * case) and posts that string straight back, so removal has to match it.
+     */
+    public function test_remove_allowed_mac_matches_the_lower_case_form_the_page_posts_back(): void
+    {
+        Http::fake([
+            'opnsense.test/api/captiveportal/settings/search_zones' => Http::response([
+                'rows' => [['uuid' => 'zone-uuid-1', 'zoneid' => '0']],
+            ], 200),
+            'opnsense.test/api/captiveportal/settings/get_zone/zone-uuid-1' => Http::response([
+                'zone' => ['allowedMACAddresses' => '78:2b:46:cf:bb:42'],
+            ], 200),
+            'opnsense.test/api/captiveportal/settings/set_zone/zone-uuid-1' => Http::response(['result' => 'saved'], 200),
+            'opnsense.test/api/captiveportal/service/reconfigure' => Http::response(['status' => 'ok'], 200),
+        ]);
+
+        $result = app(OpnSenseService::class)->removeAllowedMac('78:2b:46:cf:bb:42');
+
+        $this->assertTrue($result['success']);
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), 'set_zone')
+                && $request['zone']['allowedMACAddresses'] === '';
+        });
+    }
+
+    public function test_adding_a_mac_that_is_already_stored_lower_case_is_idempotent(): void
+    {
+        Http::fake([
+            'opnsense.test/api/captiveportal/settings/search_zones' => Http::response([
+                'rows' => [['uuid' => 'zone-uuid-1', 'zoneid' => '0']],
+            ], 200),
+            'opnsense.test/api/captiveportal/settings/get_zone/zone-uuid-1' => Http::response([
+                'zone' => ['allowedMACAddresses' => '78:2b:46:cf:bb:42'],
+            ], 200),
+        ]);
+
+        $this->assertTrue(app(OpnSenseService::class)->addAllowedMac('78:2B:46:CF:BB:42')['success']);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'set_zone'));
+    }
+
+    public function test_removing_an_entry_that_is_not_listed_reports_failure_rather_than_a_silent_no_op(): void
+    {
+        Http::fake([
+            'opnsense.test/api/captiveportal/settings/search_zones' => Http::response([
+                'rows' => [['uuid' => 'zone-uuid-1', 'zoneid' => '0']],
+            ], 200),
+            'opnsense.test/api/captiveportal/settings/get_zone/zone-uuid-1' => Http::response([
+                'zone' => ['allowedMACAddresses' => '11:22:33:44:55:66'],
+            ], 200),
+        ]);
+
+        $result = app(OpnSenseService::class)->removeAllowedMac('AA:BB:CC:DD:EE:FF');
+
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('not on the captive portal allow-list', $result['message']);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'set_zone'));
     }
 
     /**
