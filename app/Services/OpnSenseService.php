@@ -751,7 +751,18 @@ class OpnSenseService
      *
      * @return string|null the rule's UUID, or null on failure
      */
-    public function upsertShaperRule(string $tier, string $direction, string $pipeUuid, string $aliasName, int $sequence, ?string $uuid = null): ?string
+    /**
+     * @param  string|null  $aliasName  The alias whose members the rule applies to,
+     *                                  or null for every host on the interface.
+     *                                  Null is not a fallback — it is the only
+     *                                  thing this OPNsense build's shaper will
+     *                                  accept: source and destination are option
+     *                                  fields offering nothing but "any" (see
+     *                                  docs/INFRASTRUCTURE.md), so an alias-based
+     *                                  rule is rejected outright and a
+     *                                  shop-wide rule is the only one that lands.
+     */
+    public function upsertShaperRule(string $tier, string $direction, string $pipeUuid, ?string $aliasName, int $sequence, ?string $uuid = null): ?string
     {
         if (empty($this->apiKey) || empty($this->apiSecret)) {
             return null;
@@ -759,6 +770,7 @@ class OpnSenseService
 
         $name = $this->shaperObjectName($tier, $direction);
         $isDownload = $direction === 'down';
+        $match = $aliasName ?? 'any';
 
         $payload = [
             'rule' => [
@@ -766,8 +778,8 @@ class OpnSenseService
                 'sequence' => (string) $sequence,
                 'interface' => config('services.opnsense.shaper_interface', 'lan'),
                 'proto' => 'ip',
-                'source' => $isDownload ? 'any' : $aliasName,
-                'destination' => $isDownload ? $aliasName : 'any',
+                'source' => $isDownload ? 'any' : $match,
+                'destination' => $isDownload ? $match : 'any',
                 'direction' => $isDownload ? 'out' : 'in',
                 'target' => $pipeUuid,
                 'description' => $name,

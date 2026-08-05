@@ -50,6 +50,46 @@
                 <form action="{{ route('network.traffic.update') }}" method="POST" class="space-y-8">
                     @csrf
                     
+                    {{-- The control that is actually enforced. Per-tier caps below
+                         are kept because vouchers still carry a tier and the values
+                         are the intent to restore once the network supports it, but
+                         they cannot be provisioned on this OPNsense build: the
+                         shaper's rule model offers nothing but "any" for source and
+                         destination, so a rule matching a tier alias is rejected.
+                         See docs/INFRASTRUCTURE.md. --}}
+                    <div class="p-5 bg-green-50/40 rounded-2xl border-2 border-green-200">
+                        <h4 class="text-xs font-black text-green-800 uppercase tracking-widest mb-2 flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                            Fair-Use Ceiling &mdash; In Force
+                        </h4>
+                        <p class="text-[10px] text-[#6D4C41] font-medium leading-relaxed mb-4">
+                            One ceiling per device on the guest network, so no single guest can saturate the line.
+                            It applies to every device on the interface, including the POS and this server &mdash; keep it
+                            well above what they need.
+                        </p>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label for="bw-fair-use" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Per Device (Mbps)</label>
+                                <input type="number" id="bw-fair-use" step="1" min="1" name="bw_fair_use_mbps" value="{{ $settings['bw_fair_use_mbps'] }}" class="w-full bg-white border border-green-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-green-600">
+                                <x-field-error name="bw_fair_use_mbps" />
+                            </div>
+                            <div class="flex items-end">
+                                <p class="text-[9px] text-[#6D4C41] font-medium italic pb-3">Applied to both download and upload.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Per-tier values: recorded, not enforced. --}}
+                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
+                        <x-lucide-triangle-alert class="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                        <p class="text-[10px] text-amber-900 font-medium leading-relaxed">
+                            <span class="font-black uppercase tracking-widest">Per-tier caps are recorded, not enforced.</span><br>
+                            This OPNsense build's shaper cannot target a group of devices, so free and premium cannot be
+                            told apart at the firewall. The values below are saved for when the guest network is separated
+                            onto its own interface. Until then the fair-use ceiling above is what applies.
+                        </p>
+                    </div>
+
                     {{-- Free Tier --}}
                     <div class="p-5 bg-[#FDF8F5] rounded-2xl border border-[#F0E6D2]/50">
                         <h4 class="text-xs font-black text-[#8D6E63] uppercase tracking-widest mb-4 flex items-center gap-2">

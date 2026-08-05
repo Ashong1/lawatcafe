@@ -10,6 +10,9 @@ class TrafficShapingService
 
     public const DIRECTIONS = ['down', 'up'];
 
+    /** Named so it is never confused with the per-tier objects beside it. */
+    public const FAIR_USE_TIER = 'fairuse';
+
     /**
      * Why the last applyLimits() failed, in words a person can act on.
      *
@@ -25,6 +28,58 @@ class TrafficShapingService
     public function lastError(): ?string
     {
         return $this->lastError;
+    }
+
+    /**
+     * Provision the one cap this OPNsense build can actually enforce: a single
+     * ceiling per device across the whole guest interface.
+     *
+     * The same objects `shaper:fair-use` builds, so the page and the command
+     * cannot drift — see ProvisionFairUseCap for why a shop-wide rule is safe
+     * here and why the figure must sit well above what the shop's own equipment
+     * uses.
+     */
+    public function applyFairUseCap(float $mbps, OpnSenseService $opnsense): bool
+    {
+        $this->lastError = null;
+
+        if ($mbps <= 0) {
+            $this->lastError = 'The fair-use ceiling must be greater than zero.';
+
+            return false;
+        }
+
+        $existing = $opnsense->readShaperConfig();
+        $sequence = 0;
+
+        foreach (self::DIRECTIONS as $direction) {
+            $sequence++;
+            $name = $opnsense->shaperObjectName(self::FAIR_USE_TIER, $direction);
+
+            $pipeUuid = $opnsense->upsertShaperPipe(self::FAIR_USE_TIER, $direction, $mbps, $existing['pipes'][$name] ?? null);
+            if (! $pipeUuid) {
+                $this->lastError = "OPNsense rejected the bandwidth pipe '{$name}'.";
+
+                return false;
+            }
+
+            // null alias = source/destination "any". The per-IP mask on the pipe
+            // is what keeps this a ceiling per device rather than a shared total.
+            $ruleUuid = $opnsense->upsertShaperRule(self::FAIR_USE_TIER, $direction, $pipeUuid, null, $sequence, $existing['rules'][$name] ?? null);
+            if (! $ruleUuid) {
+                $this->lastError = "OPNsense rejected the shaper rule '{$name}'.";
+
+                return false;
+            }
+        }
+
+        if (! $opnsense->reconfigureShaper()) {
+            $this->lastError = 'The pipes and rules were written, but the shaper would not reload — they are staged, not live.';
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
