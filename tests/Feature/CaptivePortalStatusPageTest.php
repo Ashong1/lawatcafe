@@ -109,22 +109,44 @@ class CaptivePortalStatusPageTest extends TestCase
     }
 
     /**
-     * Nothing on this page may connect or navigate on its own. The old 5s
-     * auto-redirect fired after the firewall was already open, which is the
-     * exact race that destroyed the window before the guest could read it.
+     * The page advances on its own, but it must never do so instantly, and it
+     * must never navigate itself anywhere.
+     *
+     * The original 5s auto-redirect fired *after* the firewall was already
+     * open, sending this page to a third-party site — the exact race that
+     * destroyed the window before the guest could read it. What replaces it
+     * delays opening the firewall at all, so the page is guaranteed to be on
+     * screen for the countdown; the handoff afterwards is a server-side
+     * redirect from portal.activate, not a client-side jump.
      */
-    public function test_success_page_never_navigates_or_connects_by_itself(): void
+    public function test_success_page_delays_connecting_and_never_navigates_itself(): void
     {
         $this->redeemPendingVoucher();
         $this->mockIdentityOnly();
 
         $content = $this->getSuccessPage()->getContent();
 
+        // No client-side navigation of any kind.
         $this->assertStringNotContainsString('window.location.href', $content);
-        $this->assertStringNotContainsString('setInterval', $content);
         $this->assertStringNotContainsString('neverssl', $content);
-        // Going online is a form the guest submits, never something automatic.
+
+        // Going online always goes through the activate form...
         $this->assertStringContainsString(route('portal.activate'), $content);
+        // ...and never at once: there is a visible, non-zero countdown first.
+        $this->assertMatchesRegularExpression('/secondsLeft:\s*[1-9]/', $content);
+        $this->assertStringContainsString('Connecting in', $content);
+    }
+
+    /** A guest who wants to read on can stop the countdown. */
+    public function test_the_countdown_can_be_cancelled(): void
+    {
+        $this->redeemPendingVoucher();
+        $this->mockIdentityOnly();
+
+        $content = $this->getSuccessPage()->getContent();
+
+        $this->assertStringContainsString('cancelled = true', $content);
+        $this->assertStringContainsString("Tap above when you're ready.", $content);
     }
 
     /**

@@ -102,21 +102,59 @@
                     </div>
                 @endif
 
-                <div class="max-w-sm mx-auto w-full space-y-4">
-                    {{-- The moment of truth. Until this is tapped the guest has no
-                         internet, which is exactly why this page is still on screen
-                         at all: the phone's captive assistant only tears its window
-                         down once its connectivity probe succeeds. Activating on a
-                         tap hands that timing to the guest instead of the OS. --}}
-                    <form method="POST" action="{{ route('portal.activate') }}" x-data="{ submitting: false }" @submit="submitting = true">
+                {{-- Connecting is automatic, but not instant.
+                     Opening the firewall the moment the code was accepted is what
+                     used to destroy this page mid-render: the OS tears the
+                     sign-in window down as soon as its connectivity probe
+                     succeeds. Waiting a few seconds first is the whole fix — it
+                     buys exactly enough time for the guest to read how long they
+                     bought and where to check it — and then it proceeds on its
+                     own, so nobody has to know a button was the next step. --}}
+                <div class="max-w-sm mx-auto w-full space-y-4"
+                     x-data="{
+                        submitting: false,
+                        secondsLeft: 6,
+                        cancelled: {{ $alreadyActive ? 'true' : 'false' }},
+                        init() {
+                            if (this.cancelled) return;
+                            const timer = setInterval(() => {
+                                if (this.cancelled) { clearInterval(timer); return; }
+                                this.secondsLeft--;
+                                if (this.secondsLeft <= 0) {
+                                    clearInterval(timer);
+                                    this.go();
+                                }
+                            }, 1000);
+                        },
+                        go() {
+                            if (this.submitting) return;
+                            this.submitting = true;
+                            this.$refs.activateForm.submit();
+                        }
+                     }">
+                    <form method="POST" action="{{ route('portal.activate') }}" x-ref="activateForm">
                         @csrf
-                        <button type="submit" x-bind:disabled="submitting"
+                        {{-- type=button with an explicit go(): a plain submit would
+                             race the timer and could fire the form twice. --}}
+                        <button type="button" x-on:click="go()" x-bind:disabled="submitting"
                                 class="w-full bg-[#3E2723] hover:bg-[#271815] disabled:opacity-70 text-white py-5 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-[11px] lg:text-sm">
                             <span x-show="!submitting">{{ $alreadyActive ? 'Continue Browsing' : 'Start Browsing' }}</span>
                             <span x-show="submitting" style="display: none;">Connecting&hellip;</span>
                             <x-lucide-globe class="w-5 h-5 lg:w-6 lg:h-6" x-show="!submitting" />
                         </button>
                     </form>
+
+                    @unless($alreadyActive)
+                        {{-- No x-cloak: this must be readable before Alpine boots,
+                             because it explains why the page is about to change by
+                             itself. It only ever swaps text, never appears. --}}
+                        <p class="text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.2em] leading-relaxed" x-show="!submitting">
+                            <span x-show="!cancelled">Connecting in <span x-text="secondsLeft">6</span>s&hellip;
+                                <button type="button" x-on:click="cancelled = true" class="underline decoration-dotted ml-1 normal-case tracking-normal font-bold">Wait</button>
+                            </span>
+                            <span x-show="cancelled" style="display: none;">Tap above when you're ready.</span>
+                        </p>
+                    @endunless
 
                     <a href="{{ route('portal.index') }}" class="w-full bg-white border-2 border-[#E6D5C3] text-[#6D4C41] py-4 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-[10px] lg:text-xs hover:border-[#8D6E63]">
                         <span>View My Session</span>
@@ -126,9 +164,6 @@
                     <p class="cna-only text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.2em] leading-relaxed">
                         This window closes once you're online
                     </p>
-                    <p class="browser-only text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.2em] leading-relaxed">
-                        Take your time &mdash; you're connected when you tap above
-                    </p>
                 </div>
 
             </div>
@@ -136,10 +171,12 @@
 
     </div>
 
-    {{-- The 5s auto-redirect that used to live here is gone on purpose. It only
-         existed to move the guest along after the firewall had already opened,
-         which is precisely the race this page now avoids: nothing on this page
-         navigates or connects until the guest taps Start Browsing. --}}
+    {{-- No script here. The old version navigated this page to a third-party
+         site after the firewall was already open, which is the race that
+         destroyed it mid-render. The countdown above instead delays *opening the
+         firewall at all*, and the handoff to the guest's real browser is a
+         server-side redirect from portal.activate — see
+         CaptivePortalController::captiveHandoffUrl(). --}}
 
 </body>
 </html>

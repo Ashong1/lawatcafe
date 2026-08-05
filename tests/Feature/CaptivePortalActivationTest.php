@@ -6,6 +6,7 @@ use App\Models\Voucher;
 use App\Services\OpnSenseService;
 use App\Services\TrafficShapingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -182,6 +183,68 @@ class CaptivePortalActivationTest extends TestCase
         $this->fromGuestDevice()->post(route('portal.activate'))
             ->assertRedirect(route('portal.index'))
             ->assertSessionHas('error', 'Your session has expired. Please enter a new voucher.');
+    }
+
+    /**
+     * The handoff is the whole reason a guest ends up in their own browser.
+     *
+     * A sign-in window only closes when the OS's connectivity probe succeeds,
+     * and the OS will not accept a page served by the portal itself as proof of
+     * internet. browseUrl()'s default IS the portal, so activate() used to
+     * redirect the captive window to a local address and leave it sitting there
+     * — "it never opens my browser".
+     */
+    public static function handoffProvider(): array
+    {
+        return [
+            'android' => [
+                'Mozilla/5.0 (Linux; Android 13; Pixel 7 Build/TQ3A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/117 Mobile Safari/537.36',
+                'http://connectivitycheck.gstatic.com/generate_204',
+            ],
+            'ios' => [
+                'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+                'http://captive.apple.com/hotspot-detect.html',
+            ],
+            'anything else' => [
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36',
+                'http://connectivitycheck.gstatic.com/generate_204',
+            ],
+        ];
+    }
+
+    #[DataProvider('handoffProvider')]
+    public function test_activation_hands_the_device_off_to_the_open_internet(string $userAgent, string $expected): void
+    {
+        Voucher::create([
+            'code' => 'LAWA-HAND',
+            'duration_minutes' => 60,
+            'tier' => 'free',
+            'is_used' => true,
+            'used_at' => now(),
+            'activated_at' => null,
+            'ip_address' => self::IP,
+            'mac_address' => self::MAC,
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
+            $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('authorizeDevice')->andReturn(true);
+        });
+        $this->mock(TrafficShapingService::class, fn ($mock) => $mock->shouldReceive('assignTier'));
+
+        $this->fromGuestDevice()
+            ->withHeaders(['User-Agent' => $userAgent])
+            ->post(route('portal.activate'))
+            ->assertRedirect($expected);
+    }
+
+    /** Plain HTTP is not incidental — these probes are defined as HTTP. */
+    public function test_the_handoff_target_is_never_https(): void
+    {
+        foreach (self::handoffProvider() as [$userAgent, $expected]) {
+            $this->assertStringStartsWith('http://', $expected);
+        }
     }
 
     /**

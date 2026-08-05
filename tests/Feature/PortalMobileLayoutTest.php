@@ -83,6 +83,29 @@ class PortalMobileLayoutTest extends TestCase
     }
 
     /**
+     * The countdown read "5:30" under a label saying "Minutes Left", so guests
+     * took it for five and a half minutes, or for a clock time. The number and
+     * its unit have to agree.
+     */
+    public function test_the_countdown_shows_whole_minutes_not_a_clock_reading(): void
+    {
+        $this->liveVoucher();
+        $this->mockLiveSession();
+
+        $content = $this->withServerVariables(['REMOTE_ADDR' => self::IP])
+            ->get(route('portal.index'))
+            ->getContent();
+
+        // The m:ss template is what produced "5:30".
+        $this->assertStringNotContainsString("String(seconds).padStart(2, '0')", $content);
+        $this->assertStringContainsString('this.remainingLabel = `${minutes}`;', $content);
+        // Singular/plural must track the value, or it reads "1 Minutes Left".
+        $this->assertStringContainsString("minutes === 1 ? 'Minute Left' : 'Minutes Left'", $content);
+        // The last minute still counts in seconds, so the display keeps moving.
+        $this->assertStringContainsString('this.remainingLabel = `${seconds}`;', $content);
+    }
+
+    /**
      * The "AI Agent Active" badge was absolutely positioned inside the chat
      * container and reserved no space, so the oldest message in the scroll area
      * sat underneath it — and it got worse as the conversation grew, because

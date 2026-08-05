@@ -59,6 +59,45 @@ class CaptivePortalController extends Controller
     }
 
     /**
+     * Where to send a device the instant its session goes live.
+     *
+     * This is what actually hands a guest over to their real browser. A phone's
+     * sign-in window only closes when the OS's own connectivity probe succeeds,
+     * and the OS will not treat a page served by the portal itself as proof of
+     * internet — so redirecting to browseUrl()'s default (the portal) left the
+     * window sitting open on a local address forever, which is exactly the
+     * "it never opens my browser" report.
+     *
+     * The target is each platform's own captive-portal probe endpoint rather
+     * than some third-party site: it is the address the OS is already asking
+     * for, it answers with no content worth looking at, and it avoids dumping a
+     * paying customer on an unrelated stranger's page — which is why the old
+     * hardcoded neverssl.com default was removed in the first place.
+     *
+     * Plain HTTP is mandatory. These probes are defined as HTTP, and an HTTPS
+     * target cannot complete its handshake through a portal that is still
+     * mid-transition on some stacks.
+     */
+    private function captiveHandoffUrl(Request $request): string
+    {
+        // An explicitly configured destination always wins — a shop may prefer
+        // to land guests on its own site.
+        if ($configured = Setting::get('portal_browse_url')) {
+            return $configured;
+        }
+
+        $ua = (string) $request->userAgent();
+
+        if (preg_match('/iPhone|iPad|iPod|Macintosh/i', $ua)) {
+            return 'http://captive.apple.com/hotspot-detect.html';
+        }
+
+        // Android's probe, and a reasonable default for anything else: it is the
+        // most widely mirrored of the two and returns 204 No Content.
+        return 'http://connectivitycheck.gstatic.com/generate_204';
+    }
+
+    /**
      * The device's live session on OPNsense, or null if the firewall has none.
      *
      * This is the authoritative answer to "is this device actually online" —
@@ -448,7 +487,7 @@ class CaptivePortalController extends Controller
             return redirect()->route('portal.success')->with('error', 'Failed to communicate with the firewall. Please try again.');
         }
 
-        return redirect()->away($this->browseUrl());
+        return redirect()->away($this->captiveHandoffUrl($request));
     }
 
     /**

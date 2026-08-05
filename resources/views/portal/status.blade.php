@@ -284,9 +284,19 @@ document.addEventListener('alpine:init', () => {
             } else if (hours > 0) {
                 this.remainingLabel = `${hours}h ${minutes}m`;
                 this.remainingUnit = 'Hours Left';
+            } else if (minutes > 0) {
+                // Whole minutes, not m:ss. Under a label reading "Minutes Left",
+                // "5:30" reads as five-point-thirty — guests took it for five and
+                // a half minutes, or for a clock time. The number and its unit
+                // now agree.
+                this.remainingLabel = `${minutes}`;
+                this.remainingUnit = minutes === 1 ? 'Minute Left' : 'Minutes Left';
             } else {
-                this.remainingLabel = `${minutes}:${String(seconds).padStart(2, '0')}`;
-                this.remainingUnit = 'Minutes Left';
+                // The final minute counts in seconds, so the display keeps moving
+                // instead of sitting on a motionless "1" — a countdown that never
+                // changes is indistinguishable from one that has frozen.
+                this.remainingLabel = `${seconds}`;
+                this.remainingUnit = seconds === 1 ? 'Second Left' : 'Seconds Left';
             }
 
             // Pulse the digits whenever the displayed value actually changes
