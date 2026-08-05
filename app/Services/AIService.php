@@ -1438,10 +1438,42 @@ Return ONLY a JSON array, at most 5 items:
     {
         $icons = implode(', ', Category::AVAILABLE_ICONS);
 
+        // What this category actually holds, and what the OTHER categories are.
+        //
+        // Given only a name, the model writes a textbook definition of the term
+        // rather than a description of this shop's menu — and the two are not
+        // the same thing. "Milk Based" came back as "Creamy espresso and
+        // non-coffee drinks…" when the category contains one matcha latte and
+        // no espresso at all, while every espresso drink lives in the separate
+        // "Coffee Based" category it had no idea existed. Naming the siblings is
+        // what stops the descriptions overlapping; naming the items is what
+        // stops them describing things the shop does not sell.
+        $items = Product::where('category', $categoryName)
+            ->orderBy('name')
+            ->limit(15)
+            ->pluck('name')
+            ->all();
+
+        $siblings = Category::where('name', '!=', $categoryName)
+            ->orderBy('name')
+            ->pluck('name')
+            ->all();
+
+        $itemLine = empty($items)
+            ? 'This category has no products yet, so describe what it is clearly meant to hold, and claim nothing more specific than its name supports.'
+            : 'Products actually in this category: '.implode(', ', $items).'.';
+
+        $siblingLine = empty($siblings)
+            ? ''
+            : ' The menu\'s OTHER categories are: '.implode(', ', $siblings).'. Do not describe anything that belongs to those — the descriptions must not overlap.';
+
         $messages = [[
             'role' => 'user',
             'content' => "You write short category descriptions and pick icons for a Filipino coffee shop's POS menu (Lawa't Kape). "
                 ."Category name: \"{$categoryName}\". "
+                .$itemLine
+                .$siblingLine
+                .' Describe THIS shop\'s category as it actually is. Never mention a drink type or ingredient that none of the listed products contain. '
                 ."Return ONLY JSON: {\"description\": \"string, one plain sentence under 120 characters, no emoji or marketing fluff\", \"icon\": \"string, must be EXACTLY one of: {$icons}\"}",
         ]];
 
