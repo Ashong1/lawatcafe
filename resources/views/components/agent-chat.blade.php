@@ -96,15 +96,26 @@
      @pointercancel.window="stopDrag()"
      @open-agent-chat.window="handleExternalOpen($event.detail.prompt)">
 
-    <!-- Chat Window -->
+    {{-- Chat Window.
+
+         Absolutely positioned above the toggle button rather than stacked in
+         flow above it, which is what made closing look broken. In flow, the
+         panel's ~500px of height sat between the widget's fixed `top` and the
+         button, so the button's screen position depended on whether the panel
+         was open — and toggle() compensated by shifting posY by exactly that
+         amount. But posY animates (the root carries transition: all 0.3s) while
+         display:none lands instantly at the end of the leave transition, so on
+         close the button swooped a full panel-height down over 300ms and then
+         snapped back up. Out of flow, the button simply never moves and the
+         compensation is gone entirely. --}}
     <div x-show="open"
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0 scale-90 translate-y-10"
          x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-[400ms]"
+         x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="opacity-100 scale-100 translate-y-0"
          x-transition:leave-end="opacity-0 scale-90 translate-y-10"
-         class="relative mb-4 w-full bg-white rounded-[2rem] shadow-2xl border border-[#F0E6D2] overflow-hidden flex flex-col shadow-amber-900/10"
+         class="absolute bottom-full left-0 mb-4 w-full origin-bottom bg-white rounded-[2rem] shadow-2xl border border-[#F0E6D2] overflow-hidden flex flex-col shadow-amber-900/10"
          :style="`height: ${chatHeight()}px`"
          style="display: none;">
 
@@ -130,7 +141,7 @@
                     <x-lucide-square-pen class="w-5 h-5" />
                 </button>
             </div>
-            <button @click="open = false; posY += (chatHeight() + 16); clampPosition()" aria-label="Close" class="text-amber-200 hover:text-white transition shrink-0">
+            <button @click="open = false; clampPosition()" aria-label="Close" class="text-amber-200 hover:text-white transition shrink-0">
                 <x-lucide-x class="w-6 h-6" />
             </button>
         </div>
@@ -250,24 +261,32 @@
                 @pointerdown="if(!open) startDrag($event)"
                 class="w-16 h-16 bg-[#3E2723] hover:bg-[#271815] text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group relative"
                 :class="!open ? 'cursor-move' : ''">
+            {{-- Both icons are absolutely positioned so they occupy the same
+                 spot and neither contributes to layout. As in-flow siblings the
+                 two transitions overlap — one leaving, one entering — so for
+                 ~200ms the button held BOTH icons side by side in its flex row,
+                 squeezing them apart and then snapping back once the leaving one
+                 was removed. Stacked, the rotate/scale cross-fade reads as one
+                 icon turning into the other, which is what it was always meant
+                 to look like. --}}
             <div x-show="!open"
-                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 -rotate-45 scale-75"
                  x-transition:enter-end="opacity-100 rotate-0 scale-100"
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 rotate-0 scale-100"
                  x-transition:leave-end="opacity-0 rotate-45 scale-75"
-                 class="flex items-center justify-center">
+                 class="absolute inset-0 flex items-center justify-center">
                 <x-lucide-bot class="w-8 h-8 group-hover:rotate-12 transition-transform" />
             </div>
             <div x-show="open"
-                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 rotate-45 scale-75"
                  x-transition:enter-end="opacity-100 rotate-0 scale-100"
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 rotate-0 scale-100"
                  x-transition:leave-end="opacity-0 -rotate-45 scale-75"
-                 class="flex items-center justify-center">
+                 class="absolute inset-0 flex items-center justify-center">
                 <x-lucide-chevron-down class="w-8 h-8" />
             </div>
 
@@ -333,9 +352,8 @@ document.addEventListener('alpine:init', () => {
                 }
             } catch (e) { /* corrupt/unavailable storage — keep the default greeting */ }
 
-            if (this.open) {
-                this.posY = window.innerHeight - (this.chatHeight() + 16 + 80);
-            }
+            // posY is the toggle button's own top, regardless of open state —
+            // clampPosition() is the only thing that ever adjusts it now.
             this.clampPosition();
 
             window.addEventListener('resize', () => this.clampPosition());
@@ -376,10 +394,17 @@ document.addEventListener('alpine:init', () => {
         // both directions so it always self-corrects.
         clampPosition() {
             const maxX = Math.max(16, window.innerWidth - this.chatWidth() - 16);
-            const openColumnHeight = this.chatHeight() + 16 + 80; // window + its mb-4 + the toggle button's own resting margin
-            const maxY = Math.max(16, window.innerHeight - (this.open ? openColumnHeight : 80));
+
+            // posY is the toggle button's top. The panel now hangs ABOVE it
+            // (absolute bottom-full + mb-4), so when open the button needs that
+            // much clear space overhead or the panel runs off the top of the
+            // screen — hence a lower bound that depends on open state, where the
+            // upper bound used to.
+            const minY = this.open ? this.chatHeight() + 16 + 16 : 16;
+            const maxY = Math.max(minY, window.innerHeight - 80);
+
             this.posX = Math.min(Math.max(this.posX, 16), maxX);
-            this.posY = Math.min(Math.max(this.posY, 16), maxY);
+            this.posY = Math.min(Math.max(this.posY, minY), maxY);
         },
 
         startDrag(e) {
@@ -406,7 +431,17 @@ document.addEventListener('alpine:init', () => {
         },
 
         stopDrag() {
-            setTimeout(() => { this.isDragging = false; }, 50);
+            if (!this.isDragging) return;
+
+            // onDrag deliberately doesn't clamp — clamping mid-drag fights the
+            // pointer. Clamping on release instead is what keeps the widget
+            // reachable, and it matters more now that the panel hangs above the
+            // button: dragging the header toward the top of the screen would
+            // otherwise push the panel off it with no way back.
+            setTimeout(() => {
+                this.isDragging = false;
+                this.clampPosition();
+            }, 50);
         },
 
         toggle() {
@@ -416,15 +451,15 @@ document.addEventListener('alpine:init', () => {
             }
 
             this.open = !this.open;
-            const offset = this.chatHeight() + 16;
-            this.posY += this.open ? -offset : offset;
+            // No posY compensation any more: the panel is out of flow, so the
+            // button holds its position and only clamping can move it (and only
+            // when a short viewport genuinely has no room for the panel above).
             this.clampPosition();
         },
 
         handleExternalOpen(prompt) {
             if (!this.open) {
                 this.open = true;
-                this.posY -= (this.chatHeight() + 16);
                 this.clampPosition();
             }
             this.message = prompt;
