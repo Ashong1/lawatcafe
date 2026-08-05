@@ -58,6 +58,10 @@ Route::prefix('portal')->name('portal.')->group(function () {
     // see CaptivePortalController::activate(). Shares voucher-auth's limiter:
     // it is the same redemption flow and needs the same brute-force ceiling.
     Route::post('/activate', [CaptivePortalController::class, 'activate'])->name('activate')->middleware('throttle:voucher-auth');
+    // Android-only last step of activation: asks the OS to open the status page
+    // in the guest's own browser, falling back to the connectivity probe when
+    // it will not. See CaptivePortalController::handoff().
+    Route::get('/handoff', [CaptivePortalController::class, 'handoff'])->name('handoff');
 });
 
 // RFC 8908 Captive Portal API, advertised to clients via DHCP option 114

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="refresh" content="60">
 <title>Active Session - Lawa't Kape</title>
 <!-- Favicons -->
@@ -14,8 +14,17 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
+{{-- Supplies the html.is-cna detection and the .cna-only rule used by the
+     "Open in Browser" button below. The other two portal pages already include
+     this; the status page did not, so .cna-only had no styling here and would
+     have shown the button to everyone, including guests already in a browser. --}}
+@include('portal.partials.captive-assistant')
 </head>
-<body class="bg-[#FAF7F2] text-[#4A3B32] min-h-screen font-sans antialiased flex items-center justify-center p-4 lg:p-8"
+{{-- h-[100dvh], not min-h-screen: 100vh on Android Chromium is the tall
+     viewport, so the collapsing URL bar left the layout overflowing by the
+     bar's height. dvh tracks the visible area, which is also what keeps the
+     composer on screen when the keyboard opens without position:fixed. --}}
+<body class="bg-[#FAF7F2] text-[#4A3B32] h-[100dvh] overflow-hidden font-sans antialiased flex sm:items-center sm:justify-center p-0 sm:p-4 lg:p-8"
       style="font-family: 'Montserrat', sans-serif;"
       x-data="portalSystem({{ $expirationTime->getTimestampMs() }})"
       x-init="
@@ -38,7 +47,7 @@
          reasoning there. Short version: the three portal pages each had their
          own numbers, so a phone jumped wider and ~180px taller the moment a
          code was accepted. --}}
-    <div class="relative z-10 w-[92%] max-w-[420px] h-[88dvh] max-h-[640px] rounded-[2rem] md:rounded-[2.5rem] md:max-w-[42rem] md:h-[85dvh] md:max-h-[720px] lg:w-full lg:max-w-[calc(64rem+1mm)] lg:h-[750px] lg:max-h-[800px] shadow-2xl border border-[#E6D5C3] overflow-hidden bg-[#FAF7F2] flex flex-col lg:flex-row transition-all duration-500 my-auto">
+    <div class="relative z-10 w-full h-full rounded-none border-0 shadow-none sm:w-[92%] sm:max-w-[420px] sm:h-[88dvh] sm:max-h-[640px] sm:rounded-[2rem] sm:border sm:border-[#E6D5C3] sm:shadow-2xl md:rounded-[2.5rem] md:max-w-[42rem] md:h-[85dvh] md:max-h-[720px] lg:w-full lg:max-w-[calc(64rem+1mm)] lg:h-[750px] lg:max-h-[800px] overflow-hidden bg-[#FAF7F2] flex flex-col lg:flex-row transition-all duration-500 sm:my-auto">
 
         <!-- Sidebar Branding (Desktop) -->
         <div class="hidden lg:flex lg:w-[calc(42%+2mm)] bg-[#3E2723] relative flex-col justify-center items-center p-12 overflow-hidden text-center shrink-0 border-r border-[#271815]">
@@ -85,7 +94,7 @@
             <!-- Subtle background pattern for the content side -->
             <div class="absolute inset-0 opacity-[0.015] pointer-events-none z-0 texture-pinstripe"></div>
             
-            <div class="flex-1 overflow-y-auto px-6 py-8 lg:px-16 lg:py-10 no-scrollbar relative z-10 flex flex-col">
+            <div class="flex-1 min-h-0 overflow-hidden sm:overflow-y-auto px-4 py-4 sm:px-6 sm:py-8 lg:px-16 lg:py-10 no-scrollbar relative z-10 flex flex-col">
 
                 <!-- Tab: Status -->
                 <div x-show="activeTab === 'status'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-8" x-transition:enter-end="opacity-100 translate-y-0" class="flex flex-col h-full flex-1 justify-center" x-cloak>
@@ -173,13 +182,18 @@
                      messages simply pushed the whole column taller instead. Every
                      ancestor between the fixed-height card and the scroll area
                      needs this, not just the nearest one. --}}
-                <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-8" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col h-full min-h-0 py-6 lg:py-0 max-w-4xl mx-auto w-full" x-cloak>
-                    <div class="text-center mb-6 shrink-0">
-                        <div class="inline-block p-4 rounded-full bg-amber-50 border border-amber-100 mb-6 shadow-sm">
-                            <x-lucide-message-circle class="w-8 h-8 text-amber-800" stroke-width="2.5" />
+                <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-8" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col h-full min-h-0 py-0 sm:py-6 lg:py-0 max-w-4xl mx-auto w-full" x-cloak>
+                    {{-- Collapsed on phones: this block was taking about a third
+                         of a 915px screen and never shrank, which is the height the
+                         conversation needed. Same elements and same styling from sm
+                         up; only the scale changes below it, and the subtitle is
+                         dropped rather than restyled. --}}
+                    <div class="text-center mb-3 sm:mb-6 shrink-0">
+                        <div class="inline-block p-2 sm:p-4 rounded-full bg-amber-50 border border-amber-100 mb-2 sm:mb-6 shadow-sm">
+                            <x-lucide-message-circle class="w-5 h-5 sm:w-8 sm:h-8 text-amber-800" stroke-width="2.5" />
                         </div>
-                        <h2 class="text-3xl lg:text-5xl font-black text-[#3E2723] mb-2 tracking-tight">Barista AI</h2>
-                        <p class="text-[11px] text-[#8D6E63] font-bold uppercase tracking-[0.3em]">Your Digital Concierge</p>
+                        <h2 class="text-xl sm:text-3xl lg:text-5xl font-black text-[#3E2723] mb-0 sm:mb-2 tracking-tight">Barista AI</h2>
+                        <p class="hidden sm:block text-[11px] text-[#8D6E63] font-bold uppercase tracking-[0.3em]">Your Digital Concierge</p>
                     </div>
 
                     {{-- min-h-0, not min-h-[300px]: a 300px floor is the same bug
@@ -187,7 +201,7 @@
                          taller than the space available, so its child scroll area
                          again had nothing to scroll and the overflow-hidden here
                          just clipped the conversation out of reach. --}}
-                    <div class="flex-1 min-h-0 bg-white border-2 border-[#F0E6D2] rounded-[2.5rem] lg:rounded-[3.5rem] p-6 lg:p-8 mb-6 flex flex-col shadow-2xl relative overflow-hidden w-full" id="chat-container">
+                    <div class="flex-1 min-h-0 bg-white border-0 sm:border-2 border-[#F0E6D2] rounded-none sm:rounded-[2.5rem] lg:rounded-[3.5rem] p-0 sm:p-6 lg:p-8 mb-0 sm:mb-6 flex flex-col shadow-none sm:shadow-2xl relative overflow-hidden w-full" id="chat-container">
                         <!-- Chat texture overlay -->
                         <div class="absolute inset-0 opacity-[0.02] pointer-events-none texture-squares"></div>
                         
@@ -198,11 +212,29 @@
                              conversation grew, because the history scrolls under
                              a fixed overlay. A shrink-0 row costs the same
                              vertical space and simply cannot collide. --}}
-                        <div class="shrink-0 relative z-10 mb-4 flex">
+                        <div class="shrink-0 relative z-10 mb-4 flex items-center gap-2">
                             <div class="flex items-center gap-2.5 bg-[#FAF7F2] px-4 py-1.5 rounded-full border border-[#F0E6D2] shadow-sm" x-bind:class="aiCue ? 'animate-bounce' : ''">
                                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                                 <span class="text-[9px] font-black uppercase tracking-[0.2em] text-[#3E2723]">AI Agent Active</span>
                             </div>
+
+                            {{-- Only inside the phone's sign-in window, which is the
+                                 only place this page is about to be destroyed. In a
+                                 real browser the guest is already where the button
+                                 would send them.
+
+                                 A button rather than an automatic attempt because
+                                 many WebViews only allow a navigation to an external
+                                 scheme when it comes from a user gesture — a tap is
+                                 the single thing most likely to make the OS honour
+                                 it. See CaptivePortalController::handoff(). --}}
+                            <span class="cna-only ml-auto shrink-0">
+                                <a href="{{ route('portal.handoff') }}"
+                                   class="inline-flex items-center gap-1.5 bg-[#3E2723] text-white px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] active:scale-95 transition">
+                                    <x-lucide-external-link class="w-3 h-3" />
+                                    Open in Browser
+                                </a>
+                            </span>
                         </div>
 
                         <x-agent-chat
@@ -219,7 +251,10 @@
             </div>
 
             <!-- Unified Bottom Nav -->
-            <div class="bg-white lg:bg-transparent pt-4 pb-8 lg:pb-12 px-8 lg:px-20 flex justify-center gap-4 lg:gap-6 shrink-0 border-t border-[#F0E6D2]/50 lg:border-none relative z-20">
+            {{-- pb carries the safe-area inset so the bar clears the home
+                 indicator; viewport-fit=cover above is what makes env() resolve
+                 to anything other than zero. --}}
+            <div class="bg-white lg:bg-transparent pt-3 sm:pt-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-8 lg:pb-12 px-4 sm:px-8 lg:px-20 flex justify-center gap-4 lg:gap-6 shrink-0 border-t border-[#F0E6D2]/50 lg:border-none relative z-20">
                 <button x-on:click="activeTab = 'status'" 
                         class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex flex-col items-center gap-2.5 group"
                         :class="activeTab === 'status' ? 'text-white bg-[#3E2723] shadow-2xl shadow-amber-900/30 -translate-y-1' : 'text-[#6D4C41] hover:bg-white hover:shadow-md hover:border-[#F0E6D2] border border-transparent'">

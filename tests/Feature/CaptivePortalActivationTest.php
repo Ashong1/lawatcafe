@@ -197,8 +197,11 @@ class CaptivePortalActivationTest extends TestCase
     public static function handoffProvider(): array
     {
         return [
-            'android' => [
-                'Mozilla/5.0 (Linux; Android 13; Pixel 7 Build/TQ3A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/117 Mobile Safari/537.36',
+            // An Android sign-in window now takes the handoff route first — see
+            // test_android_activation_goes_through_the_browser_handoff. An
+            // ordinary Android browser still goes straight to the probe.
+            'android browser' => [
+                'Mozilla/5.0 (Linux; Android 13; Pixel 7 Build/TQ3A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117 Mobile Safari/537.36',
                 'http://connectivitycheck.gstatic.com/generate_204',
             ],
             'ios' => [
@@ -414,5 +417,85 @@ class CaptivePortalActivationTest extends TestCase
             ->assertSessionHas('error');
 
         $this->assertNull($voucher->fresh()->activated_at);
+    }
+
+    /**
+     * There is no supported way for a captive portal to drive the device's
+     * browser — the sign-in window is sandboxed precisely so it cannot. Android
+     * exposes one lever, the intent: scheme, and whether its WebView honours it
+     * varies by build. So the handoff is written as an attempt with a
+     * guaranteed fallback: worst case it behaves exactly as it did before the
+     * page existed.
+     */
+    public function test_android_activation_goes_through_the_browser_handoff(): void
+    {
+        $this->readyToActivate();
+
+        $this->fromGuestDevice()
+            ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Linux; Android 13; Pixel 7; wv) AppleWebKit/537.36 Chrome/117 Mobile Safari/537.36'])
+            ->post(route('portal.activate'))
+            ->assertRedirect(route('portal.handoff'));
+    }
+
+    /** iOS has no intent: equivalent, so offering it would only break a working window. */
+    public function test_ios_activation_still_goes_straight_to_the_probe(): void
+    {
+        $this->readyToActivate();
+
+        $this->fromGuestDevice()
+            ->withHeaders(['User-Agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148'])
+            ->post(route('portal.activate'))
+            ->assertRedirect('http://captive.apple.com/hotspot-detect.html');
+    }
+
+    /** An ordinary browser is not a sign-in window and needs no handoff at all. */
+    public function test_a_normal_android_browser_is_not_sent_through_the_handoff(): void
+    {
+        $this->readyToActivate();
+
+        $this->fromGuestDevice()
+            // Same platform, but no "; wv)" — a real Chrome tab, not the CNA.
+            ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 Chrome/117 Mobile Safari/537.36'])
+            ->post(route('portal.activate'))
+            ->assertRedirect('http://connectivitycheck.gstatic.com/generate_204');
+    }
+
+    public function test_the_handoff_page_attempts_the_intent_and_keeps_a_fallback(): void
+    {
+        $response = $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (Linux; Android 13; Pixel 7; wv) Chrome/117 Mobile Safari/537.36'])
+            ->get(route('portal.handoff'));
+
+        $response->assertOk();
+        $content = $response->getContent();
+
+        $this->assertStringContainsString('intent://', $content);
+        $this->assertStringContainsString('browser_fallback_url', $content);
+        // The fallback is what stops a guest stranding on a dead screen when the
+        // WebView ignores the scheme outright.
+        $this->assertStringContainsString('generate_204', $content);
+        $this->assertStringContainsString('window.location.replace(fallback)', $content);
+        // And a no-JS route out, so the page is never a dead end.
+        $this->assertStringContainsString('<noscript>', $content);
+    }
+
+    private function readyToActivate(): void
+    {
+        Voucher::create([
+            'code' => 'LAWA-HANDOFF',
+            'duration_minutes' => 60,
+            'tier' => 'free',
+            'is_used' => true,
+            'used_at' => now(),
+            'activated_at' => null,
+            'ip_address' => self::IP,
+            'mac_address' => self::MAC,
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
+            $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('authorizeDevice')->andReturn(true);
+        });
+        $this->mock(TrafficShapingService::class, fn ($mock) => $mock->shouldReceive('assignTier'));
     }
 }

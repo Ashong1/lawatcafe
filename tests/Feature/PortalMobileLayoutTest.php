@@ -72,14 +72,28 @@ class PortalMobileLayoutTest extends TestCase
             ->assertSee(self::PHONE_SIZING, false);
     }
 
-    public function test_the_status_page_uses_the_shared_phone_sizing(): void
+    /**
+     * The status page is the exception, and deliberately so: it is a working
+     * screen a guest sits on, not a hand-off card, so on a phone it fills the
+     * viewport instead of floating in the middle of one. It adopts the shared
+     * card sizing from sm up, which is where the other two pages start.
+     */
+    public function test_the_status_page_is_full_bleed_on_phones_and_a_card_above_sm(): void
     {
         $this->liveVoucher();
         $this->mockLiveSession();
 
-        $this->withServerVariables(['REMOTE_ADDR' => self::IP])
+        $content = $this->withServerVariables(['REMOTE_ADDR' => self::IP])
             ->get(route('portal.index'))
-            ->assertSee(self::PHONE_SIZING, false);
+            ->getContent();
+
+        // Full-bleed base, no card chrome.
+        $this->assertStringContainsString('w-full h-full rounded-none border-0 shadow-none', $content);
+        // The same numbers the other two pages use, gated to sm and up.
+        $this->assertStringContainsString('sm:w-[92%] sm:max-w-[420px] sm:h-[88dvh] sm:max-h-[640px]', $content);
+        // 100dvh, so the collapsing Android URL bar cannot overflow the layout.
+        $this->assertStringContainsString('h-[100dvh]', $content);
+        $this->assertStringContainsString('viewport-fit=cover', $content);
     }
 
     /**
@@ -124,10 +138,11 @@ class PortalMobileLayoutTest extends TestCase
             ->get(route('portal.index'))
             ->getContent();
 
-        // The AI tab itself.
-        $this->assertStringContainsString('flex flex-col h-full min-h-0 py-6', $content);
+        // The AI tab itself. Asserted without the padding that sits beside it,
+        // which is breakpoint-specific and not what this test is about.
+        $this->assertStringContainsString('flex flex-col h-full min-h-0', $content);
         // The chat card. A fixed 300px floor was the same bug in another form.
-        $this->assertStringContainsString('flex-1 min-h-0 bg-white border-2', $content);
+        $this->assertStringContainsString('flex-1 min-h-0 bg-white border-0 sm:border-2', $content);
         $this->assertStringNotContainsString('min-h-[300px]', $content);
         // The scroll area, with a visible scrollbar — hiding it left no cue that
         // there was anything above, which is how this was reported.
@@ -157,5 +172,30 @@ class PortalMobileLayoutTest extends TestCase
         $this->assertStringNotContainsString('absolute top-5 left-8', $content);
         // In flow, and not allowed to be squashed by the chat area beside it.
         $this->assertStringContainsString('shrink-0 relative z-10 mb-4 flex', $content);
+    }
+
+    /**
+     * The escape hatch for a guest who never copied the address: a tap that
+     * asks the OS to open the status page in their own browser.
+     *
+     * Shown only inside the sign-in window — in a real browser the guest is
+     * already where it would send them — and gated on a wrapper rather than the
+     * anchor, because the partial's .cna-only rule is display:block and would
+     * otherwise flatten the button's inline-flex.
+     */
+    public function test_the_status_page_offers_an_open_in_browser_button_inside_the_sign_in_window(): void
+    {
+        $this->liveVoucher();
+        $this->mockLiveSession();
+
+        $content = $this->withServerVariables(['REMOTE_ADDR' => self::IP])
+            ->get(route('portal.index'))
+            ->getContent();
+
+        $this->assertStringContainsString('Open in Browser', $content);
+        $this->assertStringContainsString(route('portal.handoff'), $content);
+        // The detection + .cna-only rule the button depends on.
+        $this->assertStringContainsString('isCaptiveAssistant', $content);
+        $this->assertStringContainsString('cna-only ml-auto shrink-0', $content);
     }
 }

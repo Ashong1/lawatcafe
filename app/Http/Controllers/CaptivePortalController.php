@@ -100,6 +100,43 @@ class CaptivePortalController extends Controller
     }
 
     /**
+     * Whether this request is Android's sign-in window specifically.
+     *
+     * Narrower than the general captive-assistant check on purpose: the intent:
+     * scheme handoff below is Android-only, and offering it to an iOS device
+     * would just produce a failed navigation inside a window that was working.
+     * Every Android WebView tags itself "; wv)" — see
+     * portal/partials/captive-assistant.blade.php for the same detection
+     * client-side, and why the old Chrome/Safari test never matched.
+     */
+    private function isAndroidAssistant(Request $request): bool
+    {
+        $ua = (string) $request->userAgent();
+
+        return preg_match('/Android/i', $ua) === 1 && preg_match('/;\s*wv\)/i', $ua) === 1;
+    }
+
+    /**
+     * Last step of the Android handoff: ask the OS to open the status page in
+     * the guest's own browser, and fall back to the connectivity probe if it
+     * will not.
+     *
+     * This exists because there is no supported way for a captive portal to
+     * drive the device's browser — the sign-in window is sandboxed precisely so
+     * portals cannot. intent: is the one lever Android exposes, and it is not
+     * guaranteed: CaptivePortalLogin's WebView may decline to resolve it. The
+     * page therefore treats success as a bonus and failure as the normal case,
+     * landing on exactly the behaviour that shipped before either way.
+     */
+    public function handoff(Request $request)
+    {
+        return view('portal.handoff', [
+            'statusUrl' => route('portal.index'),
+            'fallbackUrl' => $this->captiveHandoffUrl($request),
+        ]);
+    }
+
+    /**
      * The device's live session on OPNsense, or null if the firewall has none.
      *
      * This is the authoritative answer to "is this device actually online" —
@@ -490,6 +527,15 @@ class CaptivePortalController extends Controller
 
         if (! $this->grantAccess($voucher, $ip, $opnsense, $shaping)) {
             return redirect()->route('portal.success')->with('error', 'Failed to communicate with the firewall. Please try again.');
+        }
+
+        // Android is the one platform where the sign-in window can ask the OS
+        // to hand a URL to the real browser, via the intent: scheme. It is
+        // best-effort — whether the WebView honours it depends on the build —
+        // so the attempt lives on a tiny page that falls back to the ordinary
+        // probe redirect if nothing happens. See handoff().
+        if ($this->isAndroidAssistant($request)) {
+            return redirect()->route('portal.handoff');
         }
 
         return redirect()->away($this->captiveHandoffUrl($request));
