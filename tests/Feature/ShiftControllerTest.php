@@ -150,6 +150,54 @@ class ShiftControllerTest extends TestCase
         $this->assertEquals(739, $shift->expected_cash);
     }
 
+    /**
+     * The "Use Expected Amount" button fills the drawer count client-side, so
+     * the figure it writes has to be the raw, un-formatted expected cash — a
+     * thousands separator would produce "1,239.50", which a number input
+     * silently refuses, leaving the field empty after a click that looked like
+     * it worked. Assert the rendered value, not just that the button exists.
+     */
+    public function test_closing_report_exposes_the_expected_amount_in_a_form_safe_format(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $shift = Shift::create(['user_id' => $staff->id, 'starting_cash' => 1000, 'status' => 'open', 'opened_at' => now()]);
+
+        Sale::create([
+            'transaction_number' => 'TRN-FMT', 'total_amount' => 239.50, 'status' => 'completed',
+            'payment_method' => 'Cash', 'order_type' => 'dine_in', 'user_id' => $staff->id, 'shift_id' => $shift->id,
+        ]);
+
+        $response = $this->actingAs($staff)->get(route('shift.closing-report', $shift));
+
+        $response->assertOk();
+        $response->assertViewHas('expectedCash', 1239.5);
+        $response->assertSee("expected: '1239.50'", false);
+        $response->assertDontSee("expected: '1,239.50'", false);
+        $response->assertSee('Use Expected Amount', false);
+    }
+
+    /**
+     * Pay-ins and pay-outs move expected cash, so the drawer panel has to show
+     * them — otherwise the figure the button fills in cannot be reconciled
+     * against what is on screen.
+     */
+    public function test_closing_report_shows_pay_ins_and_pay_outs_behind_the_expected_figure(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        $shift = Shift::create(['user_id' => $staff->id, 'starting_cash' => 500, 'status' => 'open', 'opened_at' => now()]);
+
+        ShiftTransaction::create(['shift_id' => $shift->id, 'type' => 'pay_in', 'amount' => 300, 'reason' => 'Top-up', 'user_id' => $staff->id]);
+        ShiftTransaction::create(['shift_id' => $shift->id, 'type' => 'pay_out', 'amount' => 120, 'reason' => 'Supplies', 'user_id' => $staff->id]);
+
+        $response = $this->actingAs($staff)->get(route('shift.closing-report', $shift));
+
+        $response->assertOk();
+        $response->assertViewHas('expectedCash', 680.0); // 500 + 300 - 120
+        $response->assertSee('Pay-Ins (+)', false);
+        $response->assertSee('Pay-Outs (−)', false);
+        $response->assertSee("expected: '680.00'", false);
+    }
+
     public function test_closing_report_rejects_an_already_closed_shift(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);

@@ -49,20 +49,62 @@
                     <span>Cash Sales (+)</span>
                     <span>₱{{ number_format($summary['cash_sales'], 2) }}</span>
                 </div>
+                {{-- Pay-ins/outs are part of the expected-cash formula but used
+                     to be invisible here, so the total could look like it did
+                     not add up — which matters more now that a button fills
+                     that exact figure into the count. --}}
+                @if($summary['pay_ins'] > 0)
+                <div class="flex justify-between items-center opacity-70 text-xs font-medium">
+                    <span>Pay-Ins (+)</span>
+                    <span>₱{{ number_format($summary['pay_ins'], 2) }}</span>
+                </div>
+                @endif
+                @if($summary['pay_outs'] > 0)
+                <div class="flex justify-between items-center opacity-70 text-xs font-medium">
+                    <span>Pay-Outs (−)</span>
+                    <span>₱{{ number_format($summary['pay_outs'], 2) }}</span>
+                </div>
+                @endif
                 <div class="pt-4 border-t border-white/10 flex justify-between items-center">
                     <span class="text-[10px] font-black text-amber-500 uppercase tracking-widest">Expected Cash</span>
                     <span class="text-2xl font-black">₱{{ number_format($expectedCash, 2) }}</span>
                 </div>
             </div>
 
-            <form action="{{ route('shift.end', $shift->id) }}" method="POST" class="space-y-6" x-data="{ submitting: false }" @submit="submitting = true">
+            <form action="{{ route('shift.end', $shift->id) }}" method="POST" class="space-y-6"
+                  x-data="{
+                      submitting: false,
+                      expected: '{{ number_format($expectedCash, 2, '.', '') }}',
+                      filled: false,
+                      useExpected() {
+                          this.$refs.endingCash.value = this.expected;
+                          this.filled = true;
+                          this.$refs.endingCash.focus();
+                      },
+                  }"
+                  @submit="submitting = true">
                 @csrf
                 <div>
                     <label for="ending_cash" class="block text-[10px] font-black text-amber-500/80 uppercase tracking-widest mb-2 ml-1">Actual Cash Counted</label>
                     <input type="number" id="ending_cash" name="ending_cash" step="0.01" required
+                           x-ref="endingCash" @input="filled = false"
                            class="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-5 py-4 text-2xl font-black text-white focus:outline-none focus:border-amber-500 transition-all text-center placeholder-white/20"
                            placeholder="0.00">
-                    <p class="text-[9px] text-white/40 mt-3 italic text-center uppercase tracking-tighter">Please count the physical bills and coins in the drawer.</p>
+
+                    {{-- Fills the drawer count with the expected figure shown
+                         above, for the common case where the count matches to
+                         the peso and retyping it is just friction. --}}
+                    <button type="button" @click="useExpected()"
+                            aria-describedby="use-expected-hint"
+                            class="w-full mt-3 py-3 px-4 rounded-2xl border-2 border-white/10 hover:border-amber-500/60 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <x-lucide-calculator class="w-3.5 h-3.5" />
+                        <span x-text="filled ? 'Filled — ₱' + expected : 'Use Expected Amount (₱' + expected + ')'"></span>
+                    </button>
+
+                    <p id="use-expected-hint" class="text-[9px] text-white/40 mt-3 italic text-center uppercase tracking-tighter"
+                       x-text="filled
+                           ? 'Confirm the drawer really holds this before finalizing.'
+                           : 'Please count the physical bills and coins in the drawer.'"></p>
                 </div>
 
                 <button type="submit" :disabled="submitting" class="w-full py-4 bg-amber-500 hover:bg-amber-600 text-[#3E2723] rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all active:scale-95 shadow-xl shadow-amber-500/20 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2">
