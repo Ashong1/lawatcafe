@@ -1,3 +1,10 @@
+@php
+    // Which panel is open on first paint, decided on the server so the sign-in
+    // form is present in the raw HTML rather than waiting on Alpine to reveal
+    // it. Mirrors the x-data initialiser below; anything but 'help' is 'code',
+    // so a junk ?tab= value still lands the guest on the form.
+    $initialTab = request('tab') === 'help' ? 'help' : 'code';
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -145,8 +152,24 @@
             
             <div class="relative z-10 flex-1 flex flex-col">
 
-                <!-- Tab: Voucher Code -->
-                <div x-show="activeTab === 'code'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="flex flex-col flex-1 justify-center relative" x-cloak>
+                {{-- Tab: Voucher Code
+
+                     Hidden by a server-rendered inline style, never x-cloak. The
+                     sign-in form lives in here, and x-cloak is
+                     `display:none !important` until Alpine boots — so on a phone
+                     whose browser cannot run the bundle, the guest got the portal
+                     shell with no code field at all and nothing to tap. That is
+                     the "older phones hang at sign-in" report: not slowness, an
+                     invisible form. Old WebViews fail two ways here — no ES
+                     module support at all, or a SyntaxError on the `?.` in the
+                     bundle, and either kills Alpine outright.
+
+                     Rendering the initial state on the server means the form is
+                     visible in raw HTML. The form posts normally to
+                     portal.authenticate, which redirects like any Laravel form,
+                     so sign-in works with no JavaScript whatsoever. Alpine's
+                     x-show takes over for tab switching once it boots. --}}
+                <div x-show="activeTab === 'code'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="flex flex-col flex-1 justify-center relative" @if($initialTab !== 'code') style="display: none;" @endif>
                     <!-- Subtle Background Watermark -->
                     <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center opacity-[0.03] pointer-events-none -rotate-12">
                         <x-lucide-coffee class="w-64 h-64 text-[#3E2723]" />
@@ -233,7 +256,10 @@
                 </div>
 
                 <!-- Tab: AI Help -->
-                <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="flex flex-col flex-1" x-cloak>
+                {{-- Same server-rendered initial state as the code tab, and for the
+                     same reason: x-cloak here would mean a guest who followed a
+                     ?tab=help link on an old phone sees an empty panel. --}}
+                <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" @if($initialTab !== 'help') style="display: none;" @endif class="flex flex-col flex-1">
                     <div class="text-center mb-4 shrink-0 flex flex-col items-center">
                         <h2 class="text-xl font-black text-[#3E2723] mb-1 tracking-tight">Barista AI</h2>
                         <p class="text-[10px] text-[#8D6E63] font-bold uppercase tracking-widest mb-2">Digital Concierge</p>
@@ -297,7 +323,10 @@
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('portalSystem', () => ({
-        activeTab: new URLSearchParams(window.location.search).get('tab') || 'code',
+        // Must agree with $initialTab in the Blade above, junk values included —
+        // if the two disagree the server paints one panel and Alpine immediately
+        // hides it, leaving the guest staring at nothing.
+        activeTab: @js($initialTab),
         isSubmitting: false,
         showTOS: false,
         connectionStatus: 'disconnected',
