@@ -231,7 +231,13 @@ class OpnSenseServiceTest extends TestCase
             ], 200),
             'opnsense.test/api/captiveportal/settings/get_zone/zone-uuid-1' => Http::response([
                 'zone' => [
-                    'allowedAddresses' => "192.168.2.50\n192.168.2.0/24",
+                    // Real production shape: get_zone returns list fields as a
+                    // {value: {value, selected}} map, not a delimited string.
+                    'allowedAddresses' => [
+                        '192.168.2.50/32' => ['value' => '192.168.2.50/32', 'selected' => 1],
+                        '192.168.2.0/24' => ['value' => '192.168.2.0/24', 'selected' => 1],
+                        '10.0.0.1/32' => ['value' => '10.0.0.1/32', 'selected' => 0],
+                    ],
                     'allowedMACAddresses' => 'AA:BB:CC:DD:EE:FF',
                 ],
             ], 200),
@@ -239,7 +245,7 @@ class OpnSenseServiceTest extends TestCase
 
         $result = app(OpnSenseService::class)->getAllowedAddresses();
 
-        $this->assertSame(['192.168.2.50', '192.168.2.0/24'], $result['ips']);
+        $this->assertSame(['192.168.2.50/32', '192.168.2.0/24'], $result['ips']);
         $this->assertSame(['AA:BB:CC:DD:EE:FF'], $result['macs']);
     }
 
@@ -261,7 +267,7 @@ class OpnSenseServiceTest extends TestCase
         $this->assertTrue($result['success']);
         Http::assertSent(function ($request) {
             return $request->url() === 'https://opnsense.test/api/captiveportal/settings/set_zone/zone-uuid-1'
-                && $request['zone']['allowedAddresses'] === "192.168.2.50\n192.168.2.60";
+                && $request['zone']['allowedAddresses'] === '192.168.2.50,192.168.2.60';
         });
         Http::assertSentCount(4);
     }
@@ -291,7 +297,7 @@ class OpnSenseServiceTest extends TestCase
                 'rows' => [['uuid' => 'zone-uuid-1', 'zoneid' => '0']],
             ], 200),
             'opnsense.test/api/captiveportal/settings/get_zone/zone-uuid-1' => Http::response([
-                'zone' => ['allowedMACAddresses' => "AA:BB:CC:DD:EE:FF\n11:22:33:44:55:66"],
+                'zone' => ['allowedMACAddresses' => 'AA:BB:CC:DD:EE:FF,11:22:33:44:55:66'],
             ], 200),
             'opnsense.test/api/captiveportal/settings/set_zone/zone-uuid-1' => Http::response(['result' => 'saved'], 200),
             'opnsense.test/api/captiveportal/service/reconfigure' => Http::response(['status' => 'ok'], 200),
@@ -304,6 +310,100 @@ class OpnSenseServiceTest extends TestCase
             return $request->url() === 'https://opnsense.test/api/captiveportal/settings/set_zone/zone-uuid-1'
                 && $request['zone']['allowedMACAddresses'] === '11:22:33:44:55:66';
         });
+    }
+
+    /**
+     * Regression (v1.0.0.79): removing one IP from a multi-entry allow-list
+     * posted the remainder joined by newlines. OPNsense reads an AsList field
+     * by splitting on commas only, so the whole thing arrived as a single
+     * value and was rejected with
+     * {"zone.allowedAddresses":"Please specify a valid network segment or IP
+     * address."} — every write of two or more entries was impossible.
+     */
+    public function test_removing_one_ip_posts_the_remainder_comma_separated(): void
+    {
+        Http::fake([
+            'opnsense.test/api/captiveportal/settings/search_zones' => Http::response([
+                'rows' => [['uuid' => 'zone-uuid-1', 'zoneid' => '0']],
+            ], 200),
+            'opnsense.test/api/captiveportal/settings/get_zone/zone-uuid-1' => Http::response([
+                'zone' => ['allowedAddresses' => [
+                    '192.168.2.4/32' => ['value' => '192.168.2.4/32', 'selected' => 1],
+                    '192.168.2.5/32' => ['value' => '192.168.2.5/32', 'selected' => 1],
+                    '192.168.2.122/32' => ['value' => '192.168.2.122/32', 'selected' => 1],
+                ]],
+            ], 200),
+            'opnsense.test/api/captiveportal/settings/set_zone/zone-uuid-1' => Http::response(['result' => 'saved'], 200),
+            'opnsense.test/api/captiveportal/service/reconfigure' => Http::response(['status' => 'ok'], 200),
+        ]);
+
+        $result = app(OpnSenseService::class)->removeAllowedIp('192.168.2.5/32');
+
+        $this->assertTrue($result['success']);
+        Http::assertSent(function ($request) {
+            if (! str_contains($request->url(), 'set_zone')) {
+                return false;
+            }
+
+            $posted = $request['zone']['allowedAddresses'];
+
+            $this->assertStringNotContainsString("\n", $posted, 'A newline-joined list is what OPNsense rejects.');
+
+            return $posted === '192.168.2.4/32,192.168.2.122/32';
+        });
+    }
+
+    public function test_removing_the_only_entry_posts_an_empty_list(): void
+    {
+        Http::fake([
+            'opnsense.test/api/captiveportal/settings/search_zones' => Http::response([
+                'rows' => [['uuid' => 'zone-uuid-1', 'zoneid' => '0']],
+            ], 200),
+            'opnsense.test/api/captiveportal/settings/get_zone/zone-uuid-1' => Http::response([
+                'zone' => ['allowedAddresses' => [
+                    '192.168.2.4/32' => ['value' => '192.168.2.4/32', 'selected' => 1],
+                ]],
+            ], 200),
+            'opnsense.test/api/captiveportal/settings/set_zone/zone-uuid-1' => Http::response(['result' => 'saved'], 200),
+            'opnsense.test/api/captiveportal/service/reconfigure' => Http::response(['status' => 'ok'], 200),
+        ]);
+
+        $result = app(OpnSenseService::class)->removeAllowedIp('192.168.2.4/32');
+
+        $this->assertTrue($result['success']);
+        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'set_zone')
+            || $request['zone']['allowedAddresses'] === '');
+    }
+
+    /**
+     * OPNsense stores a bare host address as /32, so the two spellings are the
+     * same entry — re-adding one would otherwise duplicate it in a
+     * security-relevant list, and removing by the bare form would miss it.
+     */
+    public function test_a_bare_host_address_matches_its_stored_slash_32_form(): void
+    {
+        $fake = [
+            'opnsense.test/api/captiveportal/settings/search_zones' => Http::response([
+                'rows' => [['uuid' => 'zone-uuid-1', 'zoneid' => '0']],
+            ], 200),
+            'opnsense.test/api/captiveportal/settings/get_zone/zone-uuid-1' => Http::response([
+                'zone' => ['allowedAddresses' => [
+                    '192.168.2.50/32' => ['value' => '192.168.2.50/32', 'selected' => 1],
+                    '192.168.2.99/32' => ['value' => '192.168.2.99/32', 'selected' => 1],
+                ]],
+            ], 200),
+            'opnsense.test/api/captiveportal/settings/set_zone/zone-uuid-1' => Http::response(['result' => 'saved'], 200),
+            'opnsense.test/api/captiveportal/service/reconfigure' => Http::response(['status' => 'ok'], 200),
+        ];
+
+        Http::fake($fake);
+        $this->assertTrue(app(OpnSenseService::class)->addAllowedIp('192.168.2.50')['success']);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'set_zone'));
+
+        Http::fake($fake);
+        $this->assertTrue(app(OpnSenseService::class)->removeAllowedIp('192.168.2.50')['success']);
+        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'set_zone')
+            || $request['zone']['allowedAddresses'] === '192.168.2.99/32');
     }
 
     public function test_add_allowed_ip_fails_gracefully_when_the_zone_cannot_be_resolved(): void

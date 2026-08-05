@@ -927,20 +927,25 @@ class OpnSenseService
     }
 
     /**
-     * Split an OPNsense "AsList" field's raw value (newline-separated
-     * entries) into a clean array. Defensive against the field coming back
-     * as an already-decoded array, since option-style fields sometimes
-     * serialize as a {value: {selected: 0|1}} map instead of a plain string.
+     * Split an OPNsense "AsList" field's raw value into a clean array.
+     *
+     * get_zone returns these fields as a {value: {value, selected: 0|1}} map,
+     * which is the shape actually seen in production — only entries with
+     * selected=1 are part of the list. A plain string is still handled, and is
+     * split on commas as well as newlines: comma is the separator OPNsense
+     * itself uses for list fields (see modifyZoneListField), so treating a
+     * comma-joined string as a single entry would silently produce a one-item
+     * list and drop every other allow-listed address on the next write.
      */
     protected function splitZoneListField($raw): array
     {
         if (is_array($raw)) {
-            $raw = implode("\n", array_keys(array_filter($raw, function ($v) {
+            $raw = implode(',', array_keys(array_filter($raw, function ($v) {
                 return is_array($v) ? (($v['selected'] ?? 0) == 1) : (bool) $v;
             })));
         }
 
-        return array_values(array_filter(array_map('trim', preg_split('/\r?\n/', (string) $raw))));
+        return array_values(array_filter(array_map('trim', preg_split('/[,\r\n]+/', (string) $raw))));
     }
 
     /**
@@ -1038,17 +1043,33 @@ class OpnSenseService
             $zone = $getResponse->json('zone') ?? [];
             $current = $this->splitZoneListField($zone[$field] ?? '');
 
+            // OPNsense stores a bare host address as /32, so a plain
+            // "192.168.2.50" and the stored "192.168.2.50/32" are the same
+            // entry. Comparing them raw would re-add one that is already
+            // allow-listed, and would fail to remove one the caller named
+            // without its mask.
+            $canonical = fn (string $v) => preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $v) ? "{$v}/32" : $v;
+            $target = $canonical($value);
+
             if ($add) {
-                if (in_array($value, $current, true)) {
+                if (in_array($target, array_map($canonical, $current), true)) {
                     return ['success' => true, 'message' => null];
                 }
                 $current[] = $value;
             } else {
-                $current = array_values(array_filter($current, fn ($v) => $v !== $value));
+                $current = array_values(array_filter($current, fn ($v) => $canonical($v) !== $target));
             }
 
+            // Comma, never a newline. OPNsense reads an AsList field back with
+            // BaseField::setValue(), which splits the posted string on commas
+            // only — a newline-joined list arrives as ONE value containing
+            // newlines and fails the field's own validator with
+            // {"zone.allowedAddresses":"Please specify a valid network segment
+            // or IP address."}. That made every write of two-or-more entries
+            // impossible: the only writes that ever succeeded were an add to
+            // an empty list, which has no separator in it.
             $response = $this->client()->post("{$this->baseUrl}/api/captiveportal/settings/set_zone/{$uuid}", [
-                'zone' => [$field => implode("\n", $current)],
+                'zone' => [$field => implode(',', $current)],
             ]);
             $data = $response->json();
 
