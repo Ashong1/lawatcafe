@@ -1441,25 +1441,50 @@ OPERATIONAL GUIDELINES:
         return Cache::remember('ai_ctx_active_vouchers', 30, fn () => Voucher::where('is_used', false)->count());
     }
 
+    /**
+     * Deliberately uncached. This only reads one setting and formats a handful
+     * of lines, and Setting::get is itself cached forever and cleared by
+     * Setting::set — so a second 300s cache on top bought no query saving and
+     * only added a window where the bot quoted voucher prices an admin had
+     * already changed. Quoting a stale price to a paying customer is worse
+     * than the microseconds this saves.
+     */
     private function getPricingContext()
     {
-        return Cache::remember('ai_ctx_pricing', 300, function () {
-            $durations = json_decode(Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
-            $pricing = '';
-            if ($durations) {
-                ksort($durations);
-                foreach ($durations as $p => $m) {
-                    $pricing .= "- PHP {$p} for ".($m >= 60 ? round($m / 60).'h' : "{$m}m")."\n";
-                }
+        $durations = json_decode(Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
+        $pricing = '';
+        if ($durations) {
+            ksort($durations);
+            foreach ($durations as $p => $m) {
+                $pricing .= "- PHP {$p} for ".($m >= 60 ? round($m / 60).'h' : "{$m}m")."\n";
             }
+        }
 
-            return $pricing;
-        });
+        return $pricing;
+    }
+
+    /**
+     * The product catalogue as the assistant sees it.
+     *
+     * Cached because this is a real query with an eager-loaded relation, but
+     * the cache is now cleared whenever a product or category changes rather
+     * than just ageing out. It used to rely on its 300s TTL alone, on the
+     * assumption that the menu "changes rarely" — which is true of the menu
+     * and completely untrue of the moment an admin is editing it. Add a drink
+     * and the bot kept telling guests it did not exist, for five minutes,
+     * which is exactly when someone is standing there testing it.
+     */
+    public const MENU_CONTEXT_CACHE_KEY = 'ai_ctx_menu';
+
+    /** Called from Product/Category model events — see their booted(). */
+    public static function forgetMenuContext(): void
+    {
+        Cache::forget(self::MENU_CONTEXT_CACHE_KEY);
     }
 
     private function getMenuContext()
     {
-        return Cache::remember('ai_ctx_menu', 300, function () {
+        return Cache::remember(self::MENU_CONTEXT_CACHE_KEY, 300, function () {
             $products = Product::where('status', 'Active')->with('ingredients')->get();
             $ctx = '';
             foreach ($products->groupBy('category') as $cat => $items) {

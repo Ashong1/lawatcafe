@@ -2,12 +2,24 @@
 
 namespace App\Models;
 
+use App\Services\AIService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class Category extends Model
 {
     protected $fillable = ['name', 'slug', 'description', 'icon', 'color', 'sort_order'];
+
+    /**
+     * The menu context groups products by category name, so renaming or
+     * removing a category changes it just as much as touching a product does.
+     * See Product::booted() for why this is a model event.
+     */
+    protected static function booted(): void
+    {
+        static::saved(fn () => AIService::forgetMenuContext());
+        static::deleted(fn () => AIService::forgetMenuContext());
+    }
 
     /**
      * Curated subset of the ~1950 Lucide icons this app ships (see

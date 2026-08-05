@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Ingredient;
 use App\Models\Product;
+use App\Services\AIService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -50,6 +51,12 @@ class ProductController extends Controller
             }
         }
 
+        // Product::saved already cleared this, but that fired before the
+        // ingredients existed — a chat arriving in between would have cached
+        // the new drink with an empty recipe and kept it for the full TTL.
+        // Pivot writes raise no model event of their own, so clear it here.
+        AIService::forgetMenuContext();
+
         // Refresh the page
         return redirect()->route('inventory.products.index')->with('success', 'Product and Recipe added successfully!');
     }
@@ -81,6 +88,9 @@ class ProductController extends Controller
             }
         }
         $product->ingredients()->sync($syncData);
+
+        // See store(): the pivot write lands after Product::saved fired.
+        AIService::forgetMenuContext();
 
         // Refresh the page
         return redirect()->route('inventory.products.index')->with('success', 'Product and Recipe updated successfully!');
