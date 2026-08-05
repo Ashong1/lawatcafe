@@ -35,7 +35,7 @@ class ToolCallOrchestrator
 
     /**
      * @param  array  $messages  Canonical chat history: [['role'=>'user'|'assistant'|'system','content'=>string], ...]
-     * @param  string  $audience  'guest'|'staff'|'admin' — determines which tools the model is even offered.
+     * @param  string  $audience  'guest'|'staff'|'admin'|'super_admin' — determines which tools the model is even offered.
      * @param  array  $context  Request-scoped data tools may need (e.g. guest's own IP/MAC). Never model-supplied.
      * @param  ?callable  $onTextDelta  Invoked with each text chunk as it streams in from the model.
      *                                  Defaults to a no-op for non-interactive callers (e.g. the scheduled
@@ -214,7 +214,11 @@ class ToolCallOrchestrator
             return ToolResult::fail('You can only confirm your own proposed actions.');
         }
 
-        $tool = $this->registry->forAudience(ToolRegistry::AUDIENCE_ADMIN)[$audit->tool_name] ?? null;
+        // The superset, so a confirm-tier tool that only exists at system level
+        // still resolves here. Today every system tool is read-only and 'auto',
+        // so none can reach this path — but a lookup that silently fails to find
+        // a tool would report "no longer exists" for one that plainly does.
+        $tool = $this->registry->forAudience(ToolRegistry::AUDIENCE_SUPER_ADMIN)[$audit->tool_name] ?? null;
         if (! $tool) {
             return ToolResult::fail("Tool '{$audit->tool_name}' no longer exists.");
         }

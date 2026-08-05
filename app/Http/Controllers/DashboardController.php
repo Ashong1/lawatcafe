@@ -491,7 +491,21 @@ class DashboardController extends Controller
         // on what was just asked — see LessonLibrary::exemplarsFor(). Appended
         // to the system turn so it keeps the same trust level as the rest of the
         // approved guidance, rather than arriving as user-role text.
-        $messages = [['role' => 'system', 'content' => $ai->buildAdminSystemPrompt().app(LessonLibrary::class)->exemplarBlockFor('admin', $request->message)]];
+        // super_admin gets the estate-level tool set and a prompt that knows it
+        // is talking to the system's owner, not the shop's. Everything an admin
+        // can do is still available — this is a superset, not a swap.
+        $isSuperAdmin = $request->user()->isSuperAdmin();
+        $audience = $isSuperAdmin ? ToolRegistry::AUDIENCE_SUPER_ADMIN : ToolRegistry::AUDIENCE_ADMIN;
+
+        $systemPrompt = $isSuperAdmin
+            ? $ai->buildSuperAdminSystemPrompt()
+            : $ai->buildAdminSystemPrompt();
+
+        // Learned lessons stay on the 'admin' bucket for both roles: they are
+        // conclusions about how to answer this shop's questions, and a lesson
+        // worth following is not less true because the person asking also owns
+        // the server.
+        $messages = [['role' => 'system', 'content' => $systemPrompt.app(LessonLibrary::class)->exemplarBlockFor('admin', $request->message)]];
         foreach ($conversations->slidingWindow($request->history ?? []) as $msg) {
             if (! empty($msg['content'])) {
                 $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
@@ -501,7 +515,7 @@ class DashboardController extends Controller
 
         return $responder->stream(
             $messages,
-            ToolRegistry::AUDIENCE_ADMIN,
+            $audience,
             $request->user(),
             [],
             $request->message,
