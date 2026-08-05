@@ -32,6 +32,95 @@ class TrafficShapingService
     }
 
     /**
+     * Restore free-vs-premium differentiation, via firewall rules rather than
+     * shaper rules.
+     *
+     * The Shaper's own rules cannot target a group of devices on this build —
+     * their source and destination accept nothing but "any". A filter rule can:
+     * its source_net/destination_net take an alias name and its shaper1 takes a
+     * pipe UUID. So each tier gets its own pipes, and a rule per direction
+     * steers that tier's alias members into them.
+     *
+     * The fair-use ceiling stays in place underneath as the catch-all for every
+     * device that is in no tier at all — infrastructure, staff, the POS.
+     *
+     * Safe only because membership is reconciled against live sessions every
+     * five minutes: these are `pass` rules, since the API offers no `match`, so
+     * a stale alias member would otherwise keep working internet after their
+     * session ended. See ReconcileTierMembership.
+     */
+    public function applyTierRules(array $settings, OpnSenseService $opnsense): bool
+    {
+        $this->lastError = null;
+
+        $existingPipes = $opnsense->readShaperConfig()['pipes'] ?? [];
+        $existingRules = $opnsense->readFilterRules();
+
+        // Well above the fair-use rules' sequence so these are evaluated after
+        // it. With quick disabled the last matching rule's pipe is the one that
+        // applies, which is what lets a tier override the catch-all.
+        $sequence = 100;
+
+        foreach (self::TIERS as $tier) {
+            if (! $opnsense->ensureTierAlias($tier)) {
+                $this->lastError = "OPNsense rejected the firewall alias for the {$tier} tier.";
+
+                return false;
+            }
+
+            foreach (self::DIRECTIONS as $direction) {
+                $sequence++;
+                $name = $opnsense->shaperObjectName($tier, $direction);
+                $mbps = (float) ($settings["bw_{$tier}_{$direction}"] ?? 0);
+
+                if ($mbps <= 0) {
+                    $this->lastError = "No bandwidth is set for the {$tier} tier's {$direction} direction.";
+
+                    return false;
+                }
+
+                $pipeUuid = $opnsense->upsertShaperPipe($tier, $direction, $mbps, $existingPipes[$name] ?? null);
+                if (! $pipeUuid) {
+                    $this->lastError = "OPNsense rejected the bandwidth pipe '{$name}'.";
+
+                    return false;
+                }
+
+                $ruleUuid = $opnsense->upsertTierFilterRule(
+                    $tier,
+                    $direction,
+                    $pipeUuid,
+                    $opnsense->tierAliasName($tier),
+                    $sequence,
+                    $existingRules[$name] ?? null
+                );
+
+                if (! $ruleUuid) {
+                    $this->lastError = "OPNsense rejected the firewall rule '{$name}'.";
+
+                    return false;
+                }
+            }
+        }
+
+        $opnsense->reconfigureAliases();
+
+        if (! $opnsense->reconfigureShaper()) {
+            $this->lastError = 'The pipes were written but the shaper would not reload.';
+
+            return false;
+        }
+
+        if (! $opnsense->applyFilterRules()) {
+            $this->lastError = 'The firewall rules were written but would not apply — they are staged, not live.';
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Provision the one cap this OPNsense build can actually enforce: a single
      * ceiling per device across the whole guest interface.
      *

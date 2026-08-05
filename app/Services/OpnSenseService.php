@@ -870,6 +870,141 @@ class OpnSenseService
     }
 
     /**
+     * Automation filter rules this app owns, indexed by description.
+     *
+     * Identity comes from OPNsense on every call, exactly as readShaperConfig()
+     * does and for the same reason — a UUID cached on this side desynchronises
+     * the first time anything is changed on the firewall directly.
+     *
+     * @return array<string, string> description => uuid
+     */
+    public function readFilterRules(): array
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return [];
+        }
+
+        try {
+            // Read the config tree, not search_rule. That endpoint answers 200
+            // with total=0 on this build even when rules demonstrably exist —
+            // verified by creating one, fetching it back by UUID, and finding
+            // it here while search still reported nothing. Trusting search
+            // meant every provisioning run believed the rules were absent and
+            // created another set.
+            $rules = $this->client()->get("{$this->baseUrl}/api/firewall/filter/get")->json('filter.rules.rule') ?? [];
+
+            $owned = [];
+            foreach ($rules as $uuid => $rule) {
+                $description = $rule['description'] ?? '';
+                if ($description !== '' && str_starts_with($description, 'lawatcafe_')) {
+                    $owned[$description] = $uuid;
+                }
+            }
+
+            return $owned;
+        } catch (\Exception $e) {
+            Log::error('OPNsense: Exception listing filter rules: '.$e->getMessage());
+
+            return [];
+        }
+    }
+
+    /**
+     * Create or update the firewall rule that steers a tier's members into that
+     * tier's pipe.
+     *
+     * This is the only mechanism on this build that can shape a *group* of
+     * devices. The Shaper's own rules cannot: their source and destination
+     * accept nothing but "any" (see docs/INFRASTRUCTURE.md). A filter rule's
+     * source_net/destination_net are free text and take an alias name, and
+     * shaper1 takes a pipe UUID — together that is per-tier shaping.
+     *
+     * Two deliberate choices:
+     *
+     *  - action is `pass` because the API offers no `match`, which is the pf
+     *    action that shapes without deciding access. A pass rule for alias
+     *    members is only safe because membership is reconciled against live
+     *    sessions every five minutes (shaper:reconcile-tiers) — without that a
+     *    stale member would keep working internet after their time expired.
+     *
+     *  - quick is '0' so the rule does not short-circuit evaluation. It applies
+     *    its pipe and lets the rest of the ruleset, including the captive
+     *    portal's own decisions, still be consulted.
+     *
+     * @return string|null the rule's UUID, or null on failure
+     */
+    public function upsertTierFilterRule(string $tier, string $direction, string $pipeUuid, string $aliasName, int $sequence, ?string $uuid = null): ?string
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return null;
+        }
+
+        $name = $this->shaperObjectName($tier, $direction);
+        $isDownload = $direction === 'down';
+
+        $payload = [
+            'rule' => [
+                'enabled' => '1',
+                'sequence' => (string) $sequence,
+                'action' => 'pass',
+                'quick' => '0',
+                'interface' => config('services.opnsense.shaper_interface', 'lan'),
+                // From the interface's point of view: a guest's download leaves
+                // it (matched on destination), their upload enters it (matched
+                // on source).
+                'direction' => $isDownload ? 'out' : 'in',
+                'ipprotocol' => 'inet',
+                'source_net' => $isDownload ? 'any' : $aliasName,
+                'destination_net' => $isDownload ? $aliasName : 'any',
+                'shaper1' => $pipeUuid,
+                'description' => $name,
+            ],
+        ];
+
+        try {
+            $url = $uuid
+                ? "{$this->baseUrl}/api/firewall/filter/set_rule/{$uuid}"
+                : "{$this->baseUrl}/api/firewall/filter/add_rule";
+
+            $response = $this->client()->post($url, $payload);
+            $data = $response->json();
+
+            if ($response->successful() && ($data['result'] ?? null) !== 'failed') {
+                Log::info("OPNsense: upserted tier filter rule {$name}.", ['uuid' => $data['uuid'] ?? $uuid]);
+
+                return $data['uuid'] ?? $uuid;
+            }
+
+            Log::error("OPNsense: Failed to upsert tier filter rule {$name}.", [
+                'status' => $response->status(),
+                'response' => $data,
+            ]);
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception upserting tier filter rule {$name}: ".$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /** Filter rules are staged until applied; without this they never take effect. */
+    public function applyFilterRules(): bool
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return false;
+        }
+
+        try {
+            return $this->client(4, 20)->post("{$this->baseUrl}/api/firewall/filter/apply")->successful();
+        } catch (\Exception $e) {
+            Log::error('OPNsense: Exception applying filter rules: '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
      * Make sure a tier's firewall alias exists, creating an empty host alias
      * if it does not. Guest IPs are added to it on authorization
      * (addIpToTierAlias) and the shaper rule matches on it — but alias_util
