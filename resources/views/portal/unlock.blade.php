@@ -41,8 +41,8 @@
       }">
 
     <div class="fixed inset-0 z-0">
-        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat ambient-pan" style="background-image: url('/images/lawat-bg.jpg');"></div>
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-[4px]"></div>
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat portal-bg-photo" style="background-image: url('/images/lawat-bg.jpg');"></div>
+        <div class="absolute inset-0 bg-black/50"></div>
     </div>
 
     <div class="relative z-10 w-full max-w-2xl rounded-[2.5rem] shadow-2xl border border-[#E6D5C3] overflow-hidden bg-[#FAF7F2] flex flex-col p-10 lg:p-16 transition-all duration-500 text-center my-4">

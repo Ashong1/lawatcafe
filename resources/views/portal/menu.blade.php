@@ -52,8 +52,8 @@
       x-data="portalSystem()">
 
     <div class="fixed inset-0 z-0">
-        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat ambient-pan" style="background-image: url('/images/lawat-bg.jpg');"></div>
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-[4px]"></div>
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat portal-bg-photo" style="background-image: url('/images/lawat-bg.jpg');"></div>
+        <div class="absolute inset-0 bg-black/50"></div>
     </div>
 
     <div class="portal-card relative z-10">
@@ -159,7 +159,7 @@
         </div>
 
         <!-- Integrated Bottom Nav (Fixed) -->
-        <div class="shrink-0 bg-white/90 backdrop-blur-lg border-t border-[#F0E6D2] px-3 py-3 flex flex-row justify-evenly items-center gap-1.5">
+        <div class="shrink-0 bg-white border-t border-[#F0E6D2] px-3 py-3 flex flex-row justify-evenly items-center gap-1.5">
             <a href="{{ route('portal.index') }}" 
                class="flex-1 py-3 px-1 rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-1.5 text-[#6D4C41] hover:bg-[#FAF7F2] hover:text-[#3E2723] group">
                 <x-lucide-keyboard class="w-5 h-5 text-[#D7CCC8] group-hover:text-amber-600 transition-colors" stroke-width="2.5" />

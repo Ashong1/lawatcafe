@@ -167,6 +167,42 @@ html {
     }
 }
 
+/* The guest portal's background photo.
+
+   Same pan as .ambient-pan, but the blur lives here — on the photo layer —
+   instead of in a `backdrop-blur` overlay stacked above it, which is how every
+   portal page used to do it. That pairing is pathological: a backdrop-filter
+   has to re-sample and re-blur everything beneath it on every frame, and
+   beneath it was a full-screen image animating a transform, forever. The
+   compositor re-blurred the whole viewport 60 times a second for as long as
+   the page was open. Older phones rendered fine and then locked up and ran
+   hot, worst on the menu and chat screens where content also scrolls.
+
+   As a plain filter it is rasterised into the layer once and the pan just
+   transforms that cached texture, which is what the GPU is for. Identical
+   result, and .ambient-pan is left alone for the login page, which uses it
+   with no blur at all.
+
+   Scale never drops to 1, so the blur's soft edge cannot expose the page
+   behind it — that floor is also the resting state when motion is reduced
+   and the animation never runs. */
+.portal-bg-photo {
+    filter: blur(4px);
+    transform: scale(1.06);
+    animation: portal-bg-pan 26s ease-in-out infinite;
+}
+
+@keyframes portal-bg-pan {
+    0%, 100% { transform: scale(1.06); }
+    50% { transform: scale(1.14); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .portal-bg-photo {
+        animation: none;
+    }
+}
+
 /* One-shot highlight for the captive-portal countdown digits each time the
    displayed value changes — same flashKey() one-shot idea dashboard.blade.php
    uses for its live-poll numbers, applied as a scale/color flash instead of

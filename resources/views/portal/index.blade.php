@@ -99,8 +99,8 @@
 
     <!-- Background -->
     <div class="fixed inset-0 z-0">
-        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat ambient-pan" style="background-image: url('/images/lawat-bg.jpg');"></div>
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-[4px]"></div>
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat portal-bg-photo" style="background-image: url('/images/lawat-bg.jpg');"></div>
+        <div class="absolute inset-0 bg-black/60"></div>
     </div>
 
     <!-- CNA Escape Hatch Banner -->
@@ -122,7 +122,11 @@
     <div x-show="isSubmitting" x-cloak
          x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
          x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center gap-4 text-white text-center px-6">
+         {{-- No backdrop-blur: this is full-screen and it covers the exact moment
+              the guest is waiting on OPNsense, so on an older phone it would put
+              a per-frame viewport-wide blur on the critical path. At bg-black/70
+              the blur was barely visible anyway. --}}
+         class="fixed inset-0 z-[90] bg-black/70 flex flex-col items-center justify-center gap-4 text-white text-center px-6">
         <x-lucide-loader-2 class="w-10 h-10 animate-spin text-amber-500" />
         <p class="text-sm font-black uppercase tracking-widest">Redeeming your voucher…</p>
         <p class="text-[10px] text-white/60 font-medium max-w-xs">Please don't close this window.</p>
@@ -285,7 +289,7 @@
         </div>
 
         <!-- 3. Footer (Fixed Navigation) -->
-        <div class="shrink-0 bg-white/90 backdrop-blur-lg border-t border-[#F0E6D2] px-3 py-3 flex flex-row justify-evenly items-center gap-1.5">
+        <div class="shrink-0 bg-white border-t border-[#F0E6D2] px-3 py-3 flex flex-row justify-evenly items-center gap-1.5">
             <button x-on:click="activeTab = 'code'" 
                     class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
                     :class="activeTab === 'code' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#6D4C41] hover:bg-gray-50/50 border border-transparent'">
