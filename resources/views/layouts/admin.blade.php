@@ -176,6 +176,17 @@
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Agent Activity</span>
             </a>
+            <a href="{{ route('admin.ai.lessons.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('admin.ai.lessons.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Learning">
+                <x-lucide-graduation-cap class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.ai.lessons.*') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
+                <span x-show="sidebarOpen"
+                      x-transition:enter="transition ease-in-out duration-300"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in-out duration-300"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">AI Learning</span>
+            </a>
             <a href="{{ route('ai.analysis.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('ai.analysis.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Findings History">
                 <x-lucide-radar class="w-5 h-5 shrink-0 {{ request()->routeIs('ai.analysis.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen"
@@ -400,7 +411,7 @@
         </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.92</span>
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.93</span>
             <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>

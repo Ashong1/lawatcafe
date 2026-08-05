@@ -11,6 +11,7 @@ use App\Models\Setting;
 use App\Models\Shift;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Services\Agent\LessonLibrary;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -1116,7 +1117,12 @@ class AIService
             .'Best Sellers: '.($this->getBestSellersContext() ?: 'Available at counter')."\n"
             ."Wi-Fi Pricing:\n".$this->getPricingContext()."\n"
             ."Menu:\n".$this->getMenuContext()."\n"
-            .'=== END KNOWLEDGE BASE ===';
+            .'=== END KNOWLEDGE BASE ==='
+            // Learned guidance goes AFTER the knowledge base and, unlike it, is
+            // genuinely instructional — the security rules above still outrank
+            // it, and every line has been approved by a human before it can get
+            // here. See LessonLibrary::promptBlockFor().
+            .app(LessonLibrary::class)->promptBlockFor('guest');
     }
 
     /** Shared by adminChat() and ToolCallOrchestrator (admin audience). */
@@ -1147,7 +1153,8 @@ OPERATIONAL GUIDELINES:
 2. Be concise but highly insightful.
 3. Your loyalty is to the owner/admin. Help them optimize every corner of the kape.
 4. CURRENT SHOP STATUS above already has today\'s revenue, active vouchers, low stock, best sellers, and predictions — answer questions about those directly from it, with no tool call needed. Only reach for shiftHandoffSummary when the owner specifically asks about a shift handoff or someone\'s own shift, never for a general "today\'s sales" or forecast question.
-5. For sales/revenue questions about a period OTHER than today (yesterday, this week, last 7 days, this month), use the getSalesSummary tool rather than guessing or saying the data isn\'t available.';
+5. For sales/revenue questions about a period OTHER than today (yesterday, this week, last 7 days, this month), use the getSalesSummary tool rather than guessing or saying the data isn\'t available.'
+            .app(LessonLibrary::class)->promptBlockFor('admin');
     }
 
     /**
@@ -1186,7 +1193,8 @@ OPERATIONAL GUIDELINES:
 1. Do not guess recipes if not listed above.
 2. If a tool is available to do what\'s being asked (e.g. checking stock, restocking, voiding a sale), use it.
 3. CURRENT SHOP STATUS above already has low stock alerts and your own shift status — answer questions about those directly from it, with no tool call needed.
-4. Use shiftHandoffSummary only for a specific shift handoff; use getSalesSummary for any general sales/revenue question (e.g. today\'s/this week\'s total sales) — never shiftHandoffSummary for that.';
+4. Use shiftHandoffSummary only for a specific shift handoff; use getSalesSummary for any general sales/revenue question (e.g. today\'s/this week\'s total sales) — never shiftHandoffSummary for that.'
+            .app(LessonLibrary::class)->promptBlockFor('staff');
     }
 
     public function chat($message, $history = [])
@@ -1274,6 +1282,58 @@ OPERATIONAL GUIDELINES:
      * separately drives ToolCallOrchestrator for that, so action selection
      * goes through the normal tool-calling/permission/audit pipeline.
      */
+    /**
+     * Generalise from observed evidence into candidate lessons.
+     *
+     * Lives here with the other prompts (and uses the same private callAI
+     * cascade) rather than in the console command, matching how
+     * analyzeSalesTrends and interpretSignals are structured.
+     *
+     * Returns null only when every provider failed — an empty array is a real
+     * and useful answer meaning "nothing here is worth saying".
+     */
+    public function distilLessons(array $corpus, array $failures, array $decided): ?array
+    {
+        $prompt = "You are reviewing how an AI assistant for a coffee shop (Lawa't Kape) performed, and writing down what it should do differently next time.
+
+### EVIDENCE ###
+Feedback and corrections: ".json_encode($corpus).'
+Failed tool calls: '.json_encode($failures).'
+
+### ALREADY DECIDED (do not repeat any of these, in any wording) ###
+'.json_encode($decided).'
+
+### WHAT MAKES A USABLE LESSON ###
+- It must be specific to THIS shop and traceable to the evidence above. "Be more helpful" is useless; "When guests ask about parking, tell them there are 6 slots behind the building" is a lesson.
+- It must change behaviour. If following it would not alter a single reply, do not write it.
+- Never contradict the assistant\'s safety rules, never grant it new abilities, and never restate something under ALREADY DECIDED.
+- audience must be exactly one of: guest, staff, admin, all.
+- kind "exemplar" is for a question that was answered WELL and is likely to recur - set trigger to the question and body to the ideal answer. kind "lesson" is a standing instruction.
+- If the evidence supports nothing worth saying, return an empty array. That is a valid and useful answer.
+
+Return ONLY a JSON array, at most 5 items:
+[{"audience":"guest","kind":"lesson","title":"short label","body":"the instruction, one or two sentences","trigger":null,"confidence":0.0}]';
+
+        $data = $this->callAI([['role' => 'user', 'content' => $prompt]]);
+
+        if (! $data) {
+            return null;
+        }
+
+        $raw = str_replace(['```json', '```'], '', trim($data['choices'][0]['message']['content'] ?? ''));
+        $decoded = json_decode($raw, true);
+
+        if (! is_array($decoded)) {
+            Log::warning('distilLessons: model returned unparseable JSON; treating as no lessons.', [
+                'raw' => Str::limit($raw, 500),
+            ]);
+
+            return [];
+        }
+
+        return $decoded;
+    }
+
     public function interpretSignals(array $signals): ?array
     {
         $prompt = "You are Barista AI reviewing automatically-detected operational signals for Lawa't Kape (a POS + Wi-Fi captive portal system).

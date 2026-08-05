@@ -31,6 +31,13 @@ return Application::configure(basePath: dirname(__DIR__))
             // taken on trust from the request body either — activate() acts on
             // the device identity it resolves from OPNsense's own ARP table.
             'portal/activate',
+            // Feedback is reachable from the guest portal, where a session
+            // cookie cannot be relied on (see portal/authenticate above) and a
+            // 419 would silently discard the signal — biasing the satisfaction
+            // figure toward whoever happened to have a valid token. The endpoint
+            // writes only to its own table and stores no identity beyond an
+            // optional user_id taken from the session, never from the body.
+            'ai/feedback',
             'portal/verify-payment',
             'portal/upload',
             'portal/chat',

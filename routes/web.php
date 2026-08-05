@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\AiActionController;
 use App\Http\Controllers\AiAnalysisController;
 use App\Http\Controllers\AiConversationController;
+use App\Http\Controllers\AiFeedbackController;
 use App\Http\Controllers\AllowedAddressController;
 use App\Http\Controllers\BlocklistController;
 use App\Http\Controllers\CaptivePortalController;
@@ -66,6 +67,14 @@ Route::prefix('portal')->name('portal.')->group(function () {
 Route::get('/captive-portal-api', [CaptivePortalController::class, 'captivePortalApi'])
     ->name('captive-portal-api')
     ->middleware('throttle:captive-portal-api');
+
+// AI feedback capture. Deliberately outside the auth group: the guest portal
+// chat is the surface with the most to learn from, and requiring a login to say
+// "that answer was wrong" would collect nothing. Writes only to its own table
+// and stores no identity beyond an optional user_id.
+Route::post('/ai/feedback', [AiFeedbackController::class, 'store'])
+    ->name('ai.feedback.store')
+    ->middleware('throttle:ai-feedback');
 
 // ==========================================
 // SHARED ROUTES (Admins & Staff)
@@ -168,6 +177,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin/ai/insights', [DashboardController::class, 'getAIInsights'])->name('admin.ai.insights');
         Route::get('/admin/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics');
         Route::get('/admin/ai/actions', [AiActionController::class, 'index'])->name('admin.ai.actions.index');
+
+        // What the agent has concluded from experience, awaiting a decision.
+        // Sits with the AI actions queue because it is the same shape of job:
+        // a human deciding whether the agent may act on its own reasoning.
+        Route::get('/admin/ai/lessons', [AiFeedbackController::class, 'index'])->name('admin.ai.lessons.index');
+        Route::post('/admin/ai/lessons/{lesson}/approve', [AiFeedbackController::class, 'approve'])->name('admin.ai.lessons.approve');
+        Route::post('/admin/ai/lessons/{lesson}/reject', [AiFeedbackController::class, 'reject'])->name('admin.ai.lessons.reject');
 
         // Void Requests (staff-submitted, admin-reviewed)
         Route::post('/pos/history/void-requests/{void_request}/approve', [OrderHistoryController::class, 'approveVoidRequest'])->name('pos.history.void-requests.approve');

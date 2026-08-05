@@ -10,6 +10,7 @@ use App\Models\Shift;
 use App\Models\Voucher;
 use App\Services\Agent\ChatStreamResponder;
 use App\Services\Agent\ConversationHistoryService;
+use App\Services\Agent\LessonLibrary;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
 use Carbon\Carbon;
@@ -126,7 +127,12 @@ class StaffController extends Controller
 
         $conversation = $conversations->resolve($request->integer('conversation_id') ?: null, $request->user()->id, 'staff');
 
-        $messages = [['role' => 'system', 'content' => $ai->buildStaffSystemPrompt($request->user())]];
+        // Worked examples are retrieved per message rather than baked into the
+        // system prompt, because which past answer is relevant depends entirely
+        // on what was just asked — see LessonLibrary::exemplarsFor(). Appended
+        // to the system turn so it keeps the same trust level as the rest of the
+        // approved guidance, rather than arriving as user-role text.
+        $messages = [['role' => 'system', 'content' => $ai->buildStaffSystemPrompt($request->user()).app(LessonLibrary::class)->exemplarBlockFor('staff', $request->message)]];
         foreach ($conversations->slidingWindow($request->history ?? []) as $msg) {
             if (! empty($msg['content'])) {
                 $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];

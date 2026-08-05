@@ -60,6 +60,15 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(10)->by($request->ip());
         });
 
+        // Rating a reply. Generous on purpose — a guest may rate every turn of a
+        // long conversation, and a throttled thumb is silently lost feedback,
+        // which is worse than useless: it biases the satisfaction figure toward
+        // whoever rated least. Still bounded, since this is an unauthenticated
+        // write endpoint.
+        RateLimiter::for('ai-feedback', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip());
+        });
+
         // RFC 8908 API. Deliberately looser than the other portal limiters:
         // this one is polled by the OS captive-portal agent on its own
         // schedule (not by a human tapping a button), and throttling it just

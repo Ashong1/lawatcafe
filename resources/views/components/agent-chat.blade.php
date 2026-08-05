@@ -16,6 +16,17 @@
     'historyEnabled' => false,
 ])
 
+@php
+    // Which chat surface this is, in the learning loop's vocabulary. Derived
+    // from anchorId ('portal' is the guest one) so no existing call site has to
+    // pass anything new.
+    $audience = match ($anchorId) {
+        'portal' => 'guest',
+        'staff' => 'staff',
+        default => 'admin',
+    };
+@endphp
+
 @if($mode === 'embedded')
     {{-- Embedded mode: no header/toggle/drag chrome — fills its parent's existing container. --}}
     <div x-data="agentChat({
@@ -26,6 +37,8 @@
             rateLimitMessage: @js($rateLimitMessage),
             anchorId: @js($anchorId),
             historyEnabled: @js($historyEnabled),
+            audience: @js($audience),
+            feedbackEndpoint: @js(route('ai.feedback.store')),
         })"
         class="flex-1 min-h-0 flex flex-col"
         @open-agent-chat.window="handleExternalOpen($event.detail.prompt)"
@@ -50,6 +63,8 @@
                             <span x-html="formatMarkdown(msg.content)" class="leading-relaxed"></span>
                         </div>
                     </template>
+
+                    @include('components.partials.agent-chat-rating')
 
                     <template x-if="msg.kind === 'executed'">
                         <div class="flex items-start gap-2 max-w-[90%] p-3 rounded-xl text-[11px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 mx-1">
@@ -98,6 +113,8 @@
         rateLimitMessage: @js($rateLimitMessage),
         anchorId: @js($anchorId),
         historyEnabled: @js($historyEnabled),
+        audience: @js($audience),
+        feedbackEndpoint: @js(route('ai.feedback.store')),
     })"
      class="fixed flex flex-col"
      :style="`left: ${posX}px; top: ${posY}px; width: ${chatWidth()}px; position: fixed !important; z-index: 9999 !important; bottom: auto !important; right: auto !important; transition: ${isDragging ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'}; touch-action: none;`"
@@ -200,6 +217,8 @@
                             <span class="text-[8px] font-black uppercase tracking-widest text-[#6D4C41] mt-1.5 mx-1" x-text="msg.role === 'user' ? 'You' : @js($title)"></span>
                         </div>
                     </template>
+
+                    @include('components.partials.agent-chat-rating')
 
                     <!-- Executed tool action -->
                     <template x-if="msg.kind === 'executed'">
@@ -319,6 +338,74 @@ document.addEventListener('alpine:init', () => {
         csrfToken: config.csrfToken,
         rateLimitMessage: config.rateLimitMessage,
         historyEnabled: config.historyEnabled,
+
+        // --- Learning loop: rating and correcting replies ---
+        audience: config.audience,
+        feedbackEndpoint: config.feedbackEndpoint,
+        // Keyed by message index. Deliberately per-page-load rather than
+        // persisted: re-rating the same reply after a refresh is harmless, and
+        // storing this would mean another thing to keep in sync with history.
+        rated: {},
+        corrected: {},
+        correcting: null,
+        correctionText: '',
+
+        /** The question this reply was answering — walk back to the last user turn. */
+        askedBefore(index) {
+            for (let i = index - 1; i >= 0; i--) {
+                if (this.history[i] && this.history[i].role === 'user') {
+                    return this.history[i].content;
+                }
+            }
+            return '';
+        },
+
+        async rate(index, sentiment) {
+            if (this.rated[index] !== undefined) return;
+            // Optimistic: the thumb acknowledges immediately. A rating that
+            // fails to reach the server must never interrupt a conversation,
+            // which is the whole reason nothing here surfaces an error.
+            this.rated[index] = sentiment;
+
+            await this.sendFeedback({
+                sentiment,
+                user_message: this.askedBefore(index),
+                assistant_reply: (this.history[index] && this.history[index].content) || '',
+            });
+        },
+
+        async submitCorrection(index) {
+            const note = this.correctionText.trim();
+            if (!note) return;
+
+            this.corrected[index] = true;
+            this.correcting = null;
+            this.correctionText = '';
+
+            // sentiment 0: a correction is not "bad", it is "here is better".
+            await this.sendFeedback({
+                sentiment: 0,
+                user_message: this.askedBefore(index),
+                assistant_reply: (this.history[index] && this.history[index].content) || '',
+                note,
+            });
+        },
+
+        async sendFeedback(payload) {
+            try {
+                await fetch(this.feedbackEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        audience: this.audience,
+                        conversation_id: this.conversationId,
+                        ...payload,
+                    }),
+                });
+            } catch (e) {
+                // Swallowed on purpose — see rate() above.
+            }
+        },
         context: config.anchorId,
         storageKey: 'agentChatHistory:' + config.anchorId,
         conversationIdStorageKey: 'agentChatConversationId:' + config.anchorId,
