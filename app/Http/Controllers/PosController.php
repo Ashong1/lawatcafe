@@ -111,6 +111,7 @@ class PosController extends Controller
             'activeShift' => $activeShift,
             'freeWifiMinAmount' => $freeWifiMinAmount,
             'freeWifiDuration' => $freeWifiDuration,
+            'receiptPrintingEnabled' => Setting::receiptPrintingEnabled(),
         ]);
     }
 
@@ -364,6 +365,17 @@ class PosController extends Controller
 
     public function receipt(Sale $sale)
     {
+        // Enforced here, not only by hiding the buttons. The receipt view
+        // auto-prints on load, so anyone reaching this URL directly — a
+        // bookmark, a browser-history entry, a link from before the switch was
+        // turned off — would produce exactly the printed customer receipt that
+        // BIR accreditation governs. See Setting::receiptPrintingEnabled().
+        if (! Setting::receiptPrintingEnabled()) {
+            return redirect()
+                ->route('pos.history')
+                ->with('error', 'Receipt printing is switched off until the POS is BIR-registered. Ask the system administrator to enable it once registration is complete.');
+        }
+
         $sale->load(['items', 'user', 'vouchers']);
 
         return view('pos.receipt', compact('sale'));

@@ -291,6 +291,11 @@ Route::middleware(['auth'])->group(function () {
                     ->name('ai-providers.models.reset');
                 Route::get('/network', [SettingController::class, 'network'])->name('network');
                 Route::post('/network', [SettingController::class, 'updateNetwork'])->name('network.update');
+                // BIR receipt printing. super_admin only, and separate from
+                // updateStore(): an admin can edit store preferences, but
+                // whether this POS may issue printed customer receipts is a
+                // compliance decision, not a shop-floor one.
+                Route::post('/receipt-printing', [SettingController::class, 'updateReceiptPrinting'])->name('receipt-printing.update');
                 Route::get('/agent', [SettingController::class, 'agent'])->name('agent');
                 Route::post('/agent', [SettingController::class, 'updateAgentPermissions'])->name('agent.update');
             });

@@ -11,6 +11,7 @@ use App\Services\AIService;
 use App\Services\OpnSenseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class SettingController extends Controller
 {
@@ -26,7 +27,37 @@ class SettingController extends Controller
             'receipt_header' => Setting::get('receipt_header', 'Thank you for visiting Lawa\'t Kape!'),
         ];
 
-        return view('admin.settings.store', compact('settings'));
+        return view('admin.settings.store', [
+            'settings' => $settings,
+            'receiptPrintingEnabled' => Setting::receiptPrintingEnabled(),
+        ]);
+    }
+
+    /**
+     * Turn printed customer receipts on or off.
+     *
+     * super_admin only, enforced at the route. Kept out of updateStore() on
+     * purpose: an admin runs the shop and edits its preferences, but whether
+     * this POS may issue printed receipts is a tax-compliance decision that
+     * follows the BIR registration, not a shop-floor setting.
+     */
+    public function updateReceiptPrinting(Request $request)
+    {
+        $request->validate(['enabled' => 'required|in:0,1']);
+
+        $enabled = $request->input('enabled') === '1';
+        Setting::set('pos_receipt_printing_enabled', $enabled ? '1' : '0');
+
+        // Setting::get memoises through the cache, and the POS reads this on
+        // every page load — without this the change would appear to do nothing
+        // until the cache aged out.
+        Cache::forget('setting.pos_receipt_printing_enabled');
+
+        Log::info('POS receipt printing '.($enabled ? 'ENABLED' : 'DISABLED').' by '.$request->user()->name.'.');
+
+        return back()->with('success', $enabled
+            ? 'Receipt printing is now ON. The Print buttons are back on the POS and Order History.'
+            : 'Receipt printing is now OFF. The POS will not print customer receipts.');
     }
 
     /**

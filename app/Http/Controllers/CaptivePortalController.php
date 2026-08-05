@@ -307,7 +307,10 @@ class CaptivePortalController extends Controller
             }
         }
 
-        return view('portal.index');
+        // Drives the "where is my code" wording — see portal/index.blade.php.
+        return view('portal.index', [
+            'receiptPrintingEnabled' => Setting::receiptPrintingEnabled(),
+        ]);
     }
 
     // Handle session termination

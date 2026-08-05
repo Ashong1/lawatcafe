@@ -203,13 +203,18 @@
                                 </div>
                                 {{-- The placeholder disappears the moment typing starts and is
                                      never announced anyway, so the format lives here too. --}}
-                                <span id="passcode-hint" class="sr-only">Eight character code printed at the bottom of your receipt, for example LAWA-1234.</span>
+                                {{-- Wording follows whether the POS actually prints
+                                     receipts: while printing is withheld pending BIR
+                                     registration, telling a guest to look at the bottom
+                                     of a receipt sends them hunting for a piece of paper
+                                     that was never produced. --}}
+                                <span id="passcode-hint" class="sr-only">Eight character code {{ $receiptPrintingEnabled ? 'printed at the bottom of your receipt' : 'given to you at the counter' }}, for example LAWA-1234.</span>
                             </div>
                             
                             <!-- Where is my code? Helper -->
                             <button type="button" @click="Swal.fire({
                                 title: 'Find Your Code',
-                                text: 'Your 8-digit Wi-Fi passcode is printed at the very bottom of your Lawa\'t Kape receipt.',
+                                text: '{{ $receiptPrintingEnabled ? "Your 8-digit Wi-Fi passcode is printed at the very bottom of your Lawa\'t Kape receipt." : "Your 8-digit Wi-Fi passcode is on the voucher slip handed to you at the counter. Ask our staff if you cannot find it." }}',
                                 icon: 'info',
                                 confirmButtonText: 'Got it!',
                                 confirmButtonColor: '#3E2723',

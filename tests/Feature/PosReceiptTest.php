@@ -3,14 +3,30 @@
 namespace Tests\Feature;
 
 use App\Models\Sale;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class PosReceiptTest extends TestCase
 {
     use RefreshDatabase;
+
+    /**
+     * Printing is off by default now, pending BIR registration — so these
+     * tests, which are about what the receipt CONTAINS, have to switch it on
+     * first. Whether it may be reached at all is PosReceiptBirGateTest's
+     * subject.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Setting::set('pos_receipt_printing_enabled', '1');
+        Cache::forget('setting.pos_receipt_printing_enabled');
+    }
 
     public function test_receipt_prints_the_voucher_code_when_the_sale_generated_one(): void
     {

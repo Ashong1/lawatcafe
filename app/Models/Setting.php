@@ -87,4 +87,22 @@ class Setting extends Model
 
         return array_values(array_unique($ips));
     }
+
+    /**
+     * Whether the POS may print customer receipts.
+     *
+     * Off by default, and that default is the point. Under BIR rules a
+     * point-of-sale machine that issues printed receipts or invoices to
+     * customers has to be registered and accredited before it may do so.
+     * Lawa't Kape's POS is not registered yet, so it must not print — printing
+     * first and registering later is the order that creates a problem.
+     *
+     * Deliberately a single switch rather than something inferred from other
+     * settings: the day the registration comes through, one person flips one
+     * toggle and the feature returns exactly as it was.
+     */
+    public static function receiptPrintingEnabled(): bool
+    {
+        return static::get('pos_receipt_printing_enabled', '0') === '1';
+    }
 }

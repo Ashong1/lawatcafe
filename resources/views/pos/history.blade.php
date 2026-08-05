@@ -11,7 +11,7 @@
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Order History</span>
             </h2>
-            <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">View past transactions, reprint receipts, and manage voids.</p>
+            <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">View past transactions{{ $receiptPrintingEnabled ? ', reprint receipts,' : '' }} and manage voids.</p>
         </div>
     </div>
 
@@ -135,9 +135,14 @@
                         </td>
                         <td class="py-4 text-right">
                             <div class="flex justify-end gap-2">
-                                <a href="{{ route('pos.receipt', $sale->id) }}" target="_blank" class="p-2 text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-lg transition" title="Reprint Receipt" aria-label="Reprint Receipt">
-                                    <x-lucide-printer class="w-4 h-4" />
-                                </a>
+                                {{-- Withheld until the POS is BIR-registered.
+                                     PosController::receipt() refuses too — this
+                                     only removes the affordance. --}}
+                                @if($receiptPrintingEnabled)
+                                    <a href="{{ route('pos.receipt', $sale->id) }}" target="_blank" class="p-2 text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-lg transition" title="Reprint Receipt" aria-label="Reprint Receipt">
+                                        <x-lucide-printer class="w-4 h-4" />
+                                    </a>
+                                @endif
 
                                 @if($sale->status !== 'cancelled')
                                     <x-ask-ai-button :prompt="'Review sale with ID ' . $sale->id . ' (transaction #' . substr($sale->transaction_number, -8) . ') for anything unusual, and void it if warranted.'" label="Review" />

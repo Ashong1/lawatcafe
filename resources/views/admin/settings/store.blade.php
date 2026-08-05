@@ -86,6 +86,58 @@
 
             </div>
         </form>
+
+        {{-- Outside the Store Preferences form on purpose: it posts to its own
+             super_admin-only route, so an admin cannot flip it by editing the
+             form they DO have access to. --}}
+        @if(auth()->user()->isSuperAdmin())
+            <div class="mt-8 bg-white rounded-3xl shadow-sm border-2 {{ $receiptPrintingEnabled ? 'border-[#F0E6D2]' : 'border-amber-300' }} p-6 md:p-8">
+                <div class="flex items-start gap-4 mb-6">
+                    <div class="p-2 rounded-xl shrink-0 {{ $receiptPrintingEnabled ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700' }}">
+                        <x-lucide-printer class="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em]">Receipt Printing &mdash; BIR Compliance</h3>
+                        <p class="text-xs text-[#6D4C41] font-medium mt-2 leading-relaxed max-w-2xl">
+                            A point-of-sale machine that issues printed receipts or invoices to customers must be
+                            registered and accredited with the BIR before it may do so. While this is off, the POS
+                            records every sale exactly as normal &mdash; it simply does not print, and the Print
+                            buttons are hidden on the POS and Order History.
+                        </p>
+                        <p class="text-xs text-[#6D4C41] font-medium mt-2 leading-relaxed max-w-2xl">
+                            Turn it on once Lawa't Kape's registration is complete.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-4 p-4 rounded-2xl {{ $receiptPrintingEnabled ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200' }}">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full {{ $receiptPrintingEnabled ? 'bg-green-500' : 'bg-amber-500' }}"></div>
+                        <span class="text-[10px] font-black uppercase tracking-widest {{ $receiptPrintingEnabled ? 'text-green-800' : 'text-amber-800' }}">
+                            Currently {{ $receiptPrintingEnabled ? 'Enabled' : 'Disabled' }}
+                        </span>
+                    </div>
+
+                    <form method="POST" action="{{ route('admin.settings.receipt-printing.update') }}" class="ml-auto" x-data="{ submitting: false }" @submit="submitting = true">
+                        @csrf
+                        <input type="hidden" name="enabled" value="{{ $receiptPrintingEnabled ? '0' : '1' }}">
+                        <button type="button" x-bind:disabled="submitting"
+                                @click="window.confirmAction({
+                                    title: {{ $receiptPrintingEnabled ? "'Turn Receipt Printing Off?'" : "'Turn Receipt Printing On?'" }},
+                                    text: {{ $receiptPrintingEnabled
+                                        ? "'The POS will stop printing customer receipts and the Print buttons will disappear.'"
+                                        : "'Only do this once the POS is registered and accredited with the BIR. Print buttons will reappear immediately.'" }},
+                                    icon: 'warning',
+                                    confirmText: {{ $receiptPrintingEnabled ? "'Yes, Turn Off'" : "'Yes, Turn On'" }},
+                                    callback: () => $el.closest('form').submit()
+                                })"
+                                class="px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-60 {{ $receiptPrintingEnabled ? 'bg-white border-2 border-[#E6D5C3] text-[#6D4C41] hover:border-red-300 hover:text-red-700' : 'bg-[#2E7D32] hover:bg-[#1B5E20] text-white shadow-md' }}">
+                            {{ $receiptPrintingEnabled ? 'Turn Printing Off' : 'Enable Receipt Printing' }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @endif
     </div>
 </div>
 @endsection

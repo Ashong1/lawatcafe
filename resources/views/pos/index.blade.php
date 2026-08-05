@@ -288,16 +288,32 @@
                 </div>
             </template>
 
+            {{-- Printing is withheld until the POS is BIR-registered — a machine
+                 that issues printed customer receipts has to be accredited
+                 first. With no Print button, New Order becomes the only action
+                 and takes the full width rather than sitting in a half-empty
+                 row. Setting::receiptPrintingEnabled() brings it back. --}}
             <div class="flex gap-4">
                 <button type="button" @click="resetCart()" class="flex-1 py-4 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#8D6E63] hover:bg-[#FDF8F5] font-bold transition flex items-center justify-center gap-2">
                     <x-lucide-plus-circle class="w-4 h-4" />
                     <span>New Order</span>
                 </button>
-                <a :href="'/pos/receipt/' + saleId" target="_blank" class="flex-1 py-4 bg-[#3E2723] text-white rounded-full hover:bg-[#271815] font-bold transition shadow-md flex items-center justify-center gap-2">
-                    <x-lucide-printer class="w-4 h-4" />
-                    <span>Print</span>
-                </a>
+                @if($receiptPrintingEnabled)
+                    <a :href="'/pos/receipt/' + saleId" target="_blank" class="flex-1 py-4 bg-[#3E2723] text-white rounded-full hover:bg-[#271815] font-bold transition shadow-md flex items-center justify-center gap-2">
+                        <x-lucide-printer class="w-4 h-4" />
+                        <span>Print</span>
+                    </a>
+                @endif
             </div>
+
+            @unless($receiptPrintingEnabled)
+                {{-- Said out loud so a cashier does not go hunting for a button
+                     that used to be here, and knows the sale itself recorded
+                     fine — only the printing is withheld. --}}
+                <p class="mt-4 text-center text-[10px] font-bold uppercase tracking-widest text-[#8D6E63] leading-relaxed">
+                    Sale recorded. Receipt printing is off pending BIR registration.
+                </p>
+            @endunless
     </x-modal-shell>
 
     @if(!$activeShift)

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Sale;
 use App\Models\SaleVoidRequest;
+use App\Models\Setting;
 use App\Services\SaleService;
 use Illuminate\Http\Request;
 
@@ -38,7 +39,11 @@ class OrderHistoryController extends Controller
             ? SaleVoidRequest::with(['sale', 'requestedBy'])->where('status', 'pending')->latest()->get()
             : collect();
 
-        return view('pos.history', compact('sales', 'pendingVoidRequests'));
+        return view('pos.history', [
+            'sales' => $sales,
+            'pendingVoidRequests' => $pendingVoidRequests,
+            'receiptPrintingEnabled' => Setting::receiptPrintingEnabled(),
+        ]);
     }
 
     public function void(Sale $sale, Request $request)
