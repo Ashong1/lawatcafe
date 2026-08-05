@@ -23,6 +23,13 @@ class DashboardLiveDataTest extends TestCase
      * connected" (2026-07-30). Setting::infrastructureIps() now always
      * excludes the configured OPNsense IP regardless of the setting's
      * content.
+     *
+     * The same complaint returned on 2026-08-05 ("6 active guests, 2 real
+     * customers"), because excluding infrastructure only ever treated the
+     * symptom — the count came from the ARP table, so anything merely
+     * associated to the network counted. It now comes from authorized
+     * sessions (GuestSessionService); this test keeps the original intent
+     * under that definition. See ActiveGuestCountAgreementTest.
      */
     public function test_active_guests_excludes_the_opnsense_ip_even_when_not_in_the_setting(): void
     {
@@ -30,12 +37,20 @@ class DashboardLiveDataTest extends TestCase
         config(['services.opnsense.ip' => '192.168.2.251']);
         Setting::set('network_infrastructure_ips', '192.168.2.4');
 
+        Voucher::create([
+            'code' => 'LAWA-LIVE1', 'duration_minutes' => 60, 'tier' => 'free',
+            'is_used' => true, 'used_at' => now()->subMinutes(5), 'ip_address' => '192.168.2.111',
+        ]);
+
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('getInterfaceStats')->andReturn([]);
-            $mock->shouldReceive('getArpTable')->andReturn([
-                ['ip' => '192.168.2.251', 'mac' => 'aa:aa:aa:aa:aa:aa'], // OPNsense itself — must not count
-                ['ip' => '192.168.2.4', 'mac' => 'bb:bb:bb:bb:bb:bb'],   // in the setting — must not count
-                ['ip' => '192.168.2.111', 'mac' => 'cc:cc:cc:cc:cc:cc'], // real guest — must count
+            $mock->shouldReceive('listSessions')->andReturn([
+                // OPNsense itself — must not count, even holding a session.
+                ['sessionId' => 'a', 'authenticated_via' => 'API', 'ipAddress' => '192.168.2.251', 'macAddress' => 'aa:aa:aa:aa:aa:aa'],
+                // In the setting — must not count.
+                ['sessionId' => 'b', 'authenticated_via' => 'API', 'ipAddress' => '192.168.2.4', 'macAddress' => 'bb:bb:bb:bb:bb:bb'],
+                // Real authorized guest — must count.
+                ['sessionId' => 'c', 'authenticated_via' => 'API', 'ipAddress' => '192.168.2.111', 'macAddress' => 'cc:cc:cc:cc:cc:cc'],
             ]);
         });
 

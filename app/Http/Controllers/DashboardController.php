@@ -16,6 +16,7 @@ use App\Services\Agent\ConversationHistoryService;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
 use App\Services\BaristaForecastService;
+use App\Services\GuestSessionService;
 use App\Services\OpnSenseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -42,8 +43,9 @@ class DashboardController extends Controller
                 $systemNodes = $allConnected->filter(fn ($s) => in_array($s['ip'] ?? '', $infraIps))
                     ->unique('mac')->count();
 
-                $activeGuests = $allConnected->filter(fn ($s) => ! in_array($s['ip'] ?? '', $infraIps))
-                    ->unique('mac')->count();
+                // Authorized customers, not "every MAC in the ARP table that
+                // isn't infrastructure" — see GuestSessionService.
+                $activeGuests = app(GuestSessionService::class)->activeGuestCount();
 
                 $stats = $opnsense->getInterfaceStats();
                 $iface = $stats['wan'] ?? $stats['lan'] ?? null;
@@ -401,17 +403,13 @@ class DashboardController extends Controller
             }
         }
 
-        // 3. Active Guests (Real-time from ARP)
-        $activeGuests = Cache::remember('active_guests_count', 15, function () use ($opnsense) {
-            $arpTable = collect($opnsense->getArpTable());
-            $infraIps = Setting::infrastructureIps();
-
-            return $arpTable->filter(function ($entry) use ($infraIps) {
-                $ip = $entry['ip'] ?? '';
-
-                return ! empty($ip) && ! in_array($ip, $infraIps) && ! empty($entry['mac']) && $entry['mac'] !== '(incomplete)';
-            })->unique('mac')->count();
-        });
+        // 3. Active Guests — authorized customers, same definition the
+        // sessions page's Active table uses.
+        $activeGuests = Cache::remember(
+            'active_guests_count',
+            15,
+            fn () => app(GuestSessionService::class)->activeGuestCount()
+        );
 
         return response()->json([
             'rawIn' => (int) ($iface['inbytes'] ?? 0),
