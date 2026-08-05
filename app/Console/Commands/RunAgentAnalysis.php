@@ -11,6 +11,7 @@ use App\Services\Agent\ToolCallOrchestrator;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 
 class RunAgentAnalysis extends Command
@@ -21,6 +22,14 @@ class RunAgentAnalysis extends Command
 
     public function handle(CrossDomainCorrelationService $correlation, AIService $ai, ToolCallOrchestrator $orchestrator): int
     {
+        // Heartbeat for the super_admin dashboard's scheduled-job panel. It
+        // cannot use AiAnalysisRun for this: a run row is only written when
+        // signals are actually found, so a healthy command on a quiet day looks
+        // identical to one that has been crashing for a week. Judging health by
+        // the last run row reported this command dead after five ordinary,
+        // signal-free days.
+        Cache::put('agent_analyze_last_run', now()->timestamp, 3600);
+
         $signals = $correlation->run()['signals'];
 
         if (empty($signals)) {

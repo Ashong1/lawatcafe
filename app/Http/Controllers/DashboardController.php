@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AiActionAudit;
 use App\Models\AiAnalysisRun;
 use App\Models\AiFinding;
+use App\Models\BannedDevice;
 use App\Models\Category;
 use App\Models\Ingredient;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Setting;
+use App\Models\User;
 use App\Models\Voucher;
 use App\Services\Agent\ChatStreamResponder;
 use App\Services\Agent\ConversationHistoryService;
@@ -27,13 +30,44 @@ class DashboardController extends Controller
 {
     public function index(Request $request, OpnSenseService $opnsense)
     {
+        // Two audiences, two jobs. super_admin is the developer/system account
+        // (User::isSuperAdmin()) and no longer touches the register or the
+        // kitchen at all, so a dashboard led by today's revenue and top-selling
+        // drinks is answering questions it does not have. It gets the estate
+        // instead: hosts, gateways, the AI stack, the captive portal's posture.
+        if ($request->user()->isSuperAdmin()) {
+            return $this->systemDashboard($opnsense);
+        }
+
         $range = $request->get('range', 'today');
 
         // 1. Basic Stats for the Top Cards
         $stats = $this->getStats($range);
 
         // 2. Network & Sessions ( Mbps speed calculation removed from server, raw counters sent)
-        $networkPulse = Cache::flexible('network_pulse_initial', [15, 60], function () use ($opnsense) {
+        $networkPulse = $this->getNetworkPulse($opnsense);
+
+        // 3. Chart Data
+        $charts = $this->getCharts();
+
+        // 4. System Health
+        $systemHealth = $this->getSystemHealth();
+
+        // 5-6. AI Brief + proactive findings feed
+        $ai = $this->getAiData();
+
+        return view('dashboard', array_merge($stats, $networkPulse, $charts, $systemHealth, $ai));
+    }
+
+    /**
+     * Live network/session snapshot. Shared by both dashboards — the network
+     * is the one half of the picture BOTH audiences need, so it must not drift
+     * into two near-identical copies (see BaristaForecastService's docblock for
+     * what that cost last time).
+     */
+    private function getNetworkPulse(OpnSenseService $opnsense): array
+    {
+        return Cache::flexible('network_pulse_initial', [15, 60], function () use ($opnsense) {
             try {
                 $arpTable = collect($opnsense->getArpTable());
                 $allConnected = $arpTable->filter(fn ($entry) => ! empty($entry['mac']) && $entry['mac'] !== '(incomplete)');
@@ -74,12 +108,12 @@ class DashboardController extends Controller
                 return ['activeGuests' => 0, 'systemNodes' => 0, 'bandwidthDown' => 0, 'bandwidthUp' => 0, 'totalDevices' => 0, 'gateways' => [], 'rawIn' => 0, 'rawOut' => 0];
             }
         });
+    }
 
-        // 3. Chart Data
-        $charts = $this->getCharts();
-
-        // 4. System Health
-        $systemHealth = Cache::remember('system_health', 30, function () {
+    /** Host metrics for the machine this app runs on. Shared by both dashboards. */
+    private function getSystemHealth(): array
+    {
+        return Cache::remember('system_health', 30, function () {
             $cpuLoad = function_exists('sys_getloadavg') ? sys_getloadavg()[0] * 10 : 12;
             $memoryUsage = 0;
             $cpuTemp = 0;
@@ -122,11 +156,113 @@ class DashboardController extends Controller
                 'diskUsage' => $diskUsage ?: 18,
             ];
         });
+    }
 
-        // 5-6. AI Brief + proactive findings feed
-        $ai = $this->getAiData();
+    /**
+     * The super_admin dashboard: the estate rather than the shop.
+     *
+     * Everything here answers "is the system healthy and is anything about to
+     * bite me", which is the only question this account exists to ask. Nothing
+     * on it is a sales figure — those live on the admin dashboard and the
+     * analytics page, both still reachable.
+     */
+    private function systemDashboard(OpnSenseService $opnsense)
+    {
+        $ai = app(AIService::class);
 
-        return view('dashboard', array_merge($stats, $networkPulse, $charts, $systemHealth, $ai));
+        return view('dashboard.system', array_merge(
+            $this->getSystemHealth(),
+            $this->getNetworkPulse($opnsense),
+            [
+                'aiProviders' => $ai->getProviderStatuses(),
+                'scheduledJobs' => $this->getScheduledJobHealth(),
+                'portalPosture' => $this->getPortalPosture($opnsense),
+                'usersByRole' => User::selectRaw('role, COUNT(*) as total')
+                    ->groupBy('role')
+                    ->pluck('total', 'role')
+                    ->toArray(),
+                'aiFindings' => AiFinding::latest()->take(6)->get(),
+                // scopePending(), not a literal — "pending" is stored as
+                // 'proposed', so a hand-written where() here would silently
+                // always report zero.
+                'pendingAiActions' => AiActionAudit::pending()->count(),
+                'latestAiRun' => AiAnalysisRun::latest()->first(),
+            ]
+        ));
+    }
+
+    /**
+     * Freshness of the things the scheduler is supposed to keep warm.
+     *
+     * There is no queue worker on this deployment, so the scheduler is the only
+     * background mechanism — if its cron entry stops firing, nothing announces
+     * it and the symptoms surface much later as stale data. Reporting the age
+     * of each job's own output is what makes that visible on day one rather
+     * than on the day someone notices the forecast is a week old.
+     */
+    private function getScheduledJobHealth(): array
+    {
+        $latestRun = AiAnalysisRun::latest()->first();
+
+        return [
+            [
+                'name' => 'Barista forecast warm-up',
+                'command' => 'ai:warm-forecast',
+                'every' => 'Every 30 minutes',
+                // The fresh key expires after an hour; if it is gone the warmer
+                // has missed at least two runs.
+                'healthy' => Cache::has('barista_forecast_deep'),
+                'detail' => Cache::has('barista_forecast_deep')
+                    ? 'Forecast cache is warm.'
+                    : 'Forecast cache expired — the dashboard is serving a stale copy.',
+            ],
+            [
+                'name' => 'Cross-domain AI analysis',
+                'command' => 'agent:analyze',
+                'every' => 'Every 15 minutes',
+                // Health comes from the command's own heartbeat, NOT from the
+                // last AiAnalysisRun: a run row is only written when signals are
+                // actually found, so five ordinary signal-free days look exactly
+                // like five days of crashing. The run row is still worth showing
+                // — it just answers "when did it last find something", which is
+                // a different question.
+                'healthy' => Cache::has('agent_analyze_last_run'),
+                'detail' => Cache::has('agent_analyze_last_run')
+                    ? 'Ran '.Carbon::createFromTimestamp(Cache::get('agent_analyze_last_run'))->diffForHumans().
+                      ($latestRun ? '. Last findings '.$latestRun->created_at->diffForHumans().'.' : '. No findings yet.')
+                    : 'No run recorded in the last hour.',
+            ],
+            [
+                'name' => 'Session limit enforcement',
+                'command' => 'network:enforce-sessions',
+                'every' => 'Every minute',
+                // This one leaves no artefact when it finds nothing to do, so
+                // its own last-run marker is the only honest signal available.
+                'healthy' => Cache::has('enforce_sessions_last_run'),
+                'detail' => Cache::has('enforce_sessions_last_run')
+                    ? 'Ran '.Carbon::createFromTimestamp(Cache::get('enforce_sessions_last_run'))->diffForHumans().'.'
+                    : 'No run recorded in the last hour.',
+            ],
+        ];
+    }
+
+    /** Captive-portal posture: what is currently allowed past it, and what is banned. */
+    private function getPortalPosture(OpnSenseService $opnsense): array
+    {
+        $allowed = $opnsense->getAllowedAddresses();
+
+        return [
+            'allowedIps' => count($allowed['ips'] ?? []),
+            'allowedMacs' => count($allowed['macs'] ?? []),
+            'bannedDevices' => BannedDevice::count(),
+            'unusedVouchers' => Voucher::where('is_used', false)->count(),
+            // Redeemed but never let through the firewall — see
+            // CaptivePortalController::activate(). A non-zero figure that stays
+            // non-zero means guests are being stranded.
+            'awaitingActivation' => Voucher::where('is_used', true)
+                ->whereNull('activated_at')
+                ->count(),
+        ];
     }
 
     /**
@@ -172,6 +308,12 @@ class DashboardController extends Controller
                 'availableVouchers' => Voucher::where('is_used', false)->count(),
                 'todaysSales' => Sale::whereBetween('created_at', [$startDate, $endDate])->sum('total_amount'),
                 'todaysOrders' => Sale::whereBetween('created_at', [$startDate, $endDate])->count(),
+                // Wi-Fi take-up for the selected range — the network half of
+                // the admin's "how is trade going" question, which the host's
+                // CPU temperature never answered.
+                'vouchersRedeemed' => Voucher::where('is_used', true)
+                    ->whereBetween('used_at', [$startDate, $endDate])
+                    ->count(),
                 'lowStockCount' => $lowStockItems->count(),
                 'systemAlerts' => $alerts,
                 'recentVouchers' => Voucher::orderBy('created_at', 'desc')->take(5)->get(),

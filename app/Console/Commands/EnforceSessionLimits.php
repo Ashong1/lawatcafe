@@ -9,6 +9,7 @@ use App\Services\OpnSenseService;
 use App\Services\TrafficShapingService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class EnforceSessionLimits extends Command
@@ -53,6 +54,15 @@ class EnforceSessionLimits extends Command
 
     public function handle(OpnSenseService $opnsense, TrafficShapingService $shaping)
     {
+        // Heartbeat for the super_admin dashboard's scheduled-job panel. This
+        // command leaves no artefact behind on a quiet minute — nothing to
+        // disconnect means nothing written anywhere — so without an explicit
+        // marker there is no way to tell "healthy and idle" from "the cron
+        // entry stopped firing a week ago". TTL is deliberately longer than the
+        // every-minute schedule so a single missed tick isn't reported as an
+        // outage.
+        Cache::put('enforce_sessions_last_run', now()->timestamp, 3600);
+
         $this->info('Fetching active sessions from OPNsense...');
         $sessions = $opnsense->listSessions();
 

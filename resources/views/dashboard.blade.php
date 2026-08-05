@@ -219,69 +219,43 @@
     </div>
 </div>
 
-{{-- Row 3: System Health & Network --}}
+{{-- Row 3: Trade & Network --}}
+{{-- The host-metrics card that used to sit here (CPU load, memory, disk, CPU
+     temperature) has moved to the super_admin System Control dashboard. It was
+     never an admin's question: nothing on it changes how the shop is run, and
+     it pushed genuinely operational figures further down the page. What
+     replaces it is the network's business side — how much Wi-Fi is actually
+     selling — sitting next to the network's technical side on the right. --}}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    {{-- System Health --}}
+    {{-- Service Pulse --}}
     <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col h-full justify-center">
         <div class="flex justify-between items-center w-full mb-6">
-            <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap">System Pulse</h3>
-            <div class="flex items-center gap-2">
-                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Operational</span>
-            </div>
+            <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap">Service Pulse</h3>
+            <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">{{ ucfirst(request('range', 'today')) }}</span>
         </div>
-        
-        <div class="flex flex-row justify-center items-center w-full gap-4 md:gap-6 flex-1">
-            <div class="group flex flex-row items-center gap-2">
-                <div class="relative w-10 h-10 md:w-12 md:h-12">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="text-amber-600" :class="ringsReady ? 'transition-[stroke-dasharray] duration-700 ease-out' : ''" :stroke-dasharray="liveData.cpuLoad + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="text-[9px] font-black text-amber-700" x-text="Math.round(liveData.cpuLoad) + '%'">{{ number_format($cpuLoad, 0) }}%</span>
-                    </div>
-                </div>
-                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Load</span>
-            </div>
-            
-            <div class="group flex flex-row items-center gap-2">
-                <div class="relative w-10 h-10 md:w-12 md:h-12">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="text-blue-500" :class="ringsReady ? 'transition-[stroke-dasharray] duration-700 ease-out' : ''" :stroke-dasharray="liveData.memoryUsage + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="text-[9px] font-black text-blue-700" x-text="Math.round(liveData.memoryUsage) + '%'">{{ number_format($memoryUsage, 0) }}%</span>
-                    </div>
-                </div>
-                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">Mem<br>Usage</span>
+
+        <div class="flex flex-row justify-around items-center w-full gap-4 flex-1">
+            <div class="flex flex-col items-center text-center">
+                <span class="text-2xl font-black text-[#3E2723] tracking-tighter"
+                      x-text="live.todaysOrders > 0 ? '\u20b1' + (live.todaysSales / live.todaysOrders).toLocaleString(undefined, {maximumFractionDigits: 0}) : '\u20b10'">
+                    &#8369;{{ $todaysOrders > 0 ? number_format($todaysSales / $todaysOrders, 0) : 0 }}
+                </span>
+                <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63] mt-1 leading-tight">Average<br>Ticket</span>
             </div>
 
-            <div class="group flex flex-row items-center gap-2">
-                <div class="relative w-10 h-10 md:w-12 md:h-12">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="{{ $diskUsage > 90 ? 'text-red-500' : 'text-slate-500' }} transition-[stroke-dasharray] duration-700 ease-out" stroke-dasharray="{{ $diskUsage }}, 100" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="text-[9px] font-black {{ $diskUsage > 90 ? 'text-red-700' : 'text-slate-700' }}">{{ number_format($diskUsage, 0) }}%</span>
-                    </div>
-                </div>
-                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">Disk<br>Usage</span>
+            <div class="flex flex-col items-center text-center">
+                <span class="text-2xl font-black text-[#3E2723] tracking-tighter" x-text="live.todaysOrders">{{ $todaysOrders }}</span>
+                <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63] mt-1 leading-tight">Orders<br>Placed</span>
             </div>
 
-            <div class="group flex flex-row items-center gap-2">
-                <div class="relative w-10 h-10 md:w-12 md:h-12">
-                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                        <path class="text-[#FDF8F5]" stroke="currentColor" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="text-red-500" :class="ringsReady ? 'transition-[stroke-dasharray] duration-700 ease-out' : ''" :stroke-dasharray="Math.min(liveData.cpuTemp, 100) + ', 100'" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="text-[9px] font-black text-red-600" x-text="liveData.cpuTemp + '°'">{{ $cpuTemp ?? 0 }}°</span>
-                    </div>
-                </div>
-                <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">CPU<br>Temp</span>
+            <div class="flex flex-col items-center text-center">
+                <span class="text-2xl font-black text-[#1565C0] tracking-tighter">{{ $vouchersRedeemed ?? 0 }}</span>
+                <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63] mt-1 leading-tight">Wi-Fi<br>Redeemed</span>
+            </div>
+
+            <div class="flex flex-col items-center text-center">
+                <span class="text-2xl font-black {{ ($lowStockCount ?? 0) > 0 ? 'text-amber-700' : 'text-[#3E2723]' }} tracking-tighter" x-text="live.lowStockCount">{{ $lowStockCount ?? 0 }}</span>
+                <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63] mt-1 leading-tight">Low<br>Stock</span>
             </div>
         </div>
     </div>
@@ -700,22 +674,18 @@ document.addEventListener('alpine:init', () => {
         loadingInsights: false,
         insights: null,
         errorInsights: null,
+        // Host metrics (CPU load, memory, temperature) are deliberately absent:
+        // they render only on the super_admin System Control dashboard now, so
+        // tracking and animating them here would be a 3s poll feeding nothing.
+        // The poll itself stays — bandwidth and the guest count still need it.
         liveData: {
             bandwidthDown: 0,
             bandwidthUp: 0,
-            cpuLoad: {{ $cpuLoad ?? 0 }},
-            memoryUsage: {{ $memoryUsage ?? 0 }},
-            cpuTemp: {{ $cpuTemp ?? 0 }},
             activeGuests: {{ $activeGuests ?? 0 }},
             lastRawIn: {{ $rawIn ?? 0 }},
             lastRawOut: {{ $rawOut ?? 0 }},
             lastTime: Date.now()
         },
-        // Starts false so the rings' first paint lands directly on the correct value with
-        // no CSS transition active (avoids animating from the SVG's unset-stroke-dasharray
-        // default, which renders as a full ring, down to the real value on every page load).
-        // Only flips true after that first paint, so later live-poll updates still animate.
-        ringsReady: false,
 
         // Business/AI data — polled far less often than the system pulse above,
         // since revenue/orders/AI findings don't need 3s granularity. Seeded
@@ -777,7 +747,6 @@ document.addEventListener('alpine:init', () => {
         charts: { sales: null, category: null },
 
         init() {
-            this.$nextTick(() => { this.ringsReady = true; });
             // Start polling for live stats every 3 seconds
             setInterval(() => this.fetchLiveStats(), 3000);
 
@@ -807,9 +776,6 @@ document.addEventListener('alpine:init', () => {
                 this.liveData.lastRawOut = data.rawOut;
                 this.liveData.lastTime = now;
 
-                this.animateNumber(this.liveData, 'cpuLoad', data.cpuLoad);
-                this.animateNumber(this.liveData, 'memoryUsage', data.memoryUsage);
-                this.animateNumber(this.liveData, 'cpuTemp', data.cpuTemp);
                 this.liveData.activeGuests = data.activeGuests;
 
             } catch (error) {
