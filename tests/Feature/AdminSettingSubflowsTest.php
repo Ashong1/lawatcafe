@@ -28,14 +28,16 @@ class AdminSettingSubflowsTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
+        // No low_stock_threshold here any more: a single shop-wide number is
+        // meaningless across ingredients measured in ml, g and pieces, so each
+        // ingredient carries its own.
         $this->actingAs($admin)->post(route('admin.settings.store.update'), [
-            'low_stock_threshold' => 250,
             'store_open_time' => '07:00',
             'store_close_time' => '21:00',
             'receipt_header' => 'Salamat po!',
         ])->assertRedirect();
 
-        $this->assertSame('250', Setting::get('low_stock_threshold'));
+        $this->assertSame('07:00', Setting::get('store_open_time'));
         $this->assertSame('Salamat po!', Setting::get('receipt_header'));
     }
 

@@ -82,9 +82,10 @@ class StaffController extends Controller
 
     private function getEightySixList(): Collection
     {
-        $lowStockThreshold = (int) Setting::get('low_stock_threshold', 500);
-
-        return Ingredient::where('current_stock', '<=', $lowStockThreshold)->get(['name', 'current_stock', 'unit']);
+        // Each ingredient's own threshold — see the note in
+        // DashboardController::getStats() for why the shop-wide number went.
+        return Ingredient::whereColumn('current_stock', '<=', 'low_stock_threshold')
+            ->get(['name', 'current_stock', 'unit']);
     }
 
     private function getShiftNotes(): string

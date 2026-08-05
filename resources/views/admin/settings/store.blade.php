@@ -20,23 +20,36 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
                 <div class="space-y-8">
-                    {{-- Inventory Threshold --}}
+                    {{-- The shop-wide "Low Stock Threshold" that used to live here is
+                         gone. One number cannot mean anything across ingredients
+                         measured in millilitres, grams and pieces — and in practice
+                         it was set to 500 against per-ingredient thresholds of
+                         3000-5000, so nothing ever crossed it and the dashboard's
+                         low-stock alert was permanently silent while the inventory
+                         page showed red. Each ingredient carries its own threshold,
+                         set where its stock is managed. --}}
                     <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
-                        <div class="flex items-center gap-3 mb-8">
+                        <div class="flex items-center gap-3 mb-6">
                             <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600">
                                 <x-lucide-package-search class="w-6 h-6" />
                             </div>
                             <div>
                                 <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">Stock Alerts</h3>
-                                <p class="text-[10px] text-[#6D4C41] font-medium italic">Trigger notifications when stock drops below this.</p>
+                                <p class="text-[10px] text-[#6D4C41] font-medium italic">Set per ingredient, in its own unit.</p>
                             </div>
                         </div>
 
-                        <div>
-                            <label for="low-stock-threshold" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">Low Stock Threshold (Grams/Units)</label>
-                            <input id="low-stock-threshold" type="number" name="low_stock_threshold" value="{{ old('low_stock_threshold', $settings['low_stock_threshold']) }}" class="w-full bg-[#FDF8F5] border-2 @error('low_stock_threshold') border-red-500 @enderror rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723]">
-                            <x-field-error name="low_stock_threshold" />
-                        </div>
+                        <p class="text-xs text-[#6D4C41] font-medium leading-relaxed mb-5">
+                            Each ingredient has its own low-stock threshold, because a sensible level for
+                            milk in millilitres is not a sensible level for cups in pieces. Set them on the
+                            ingredient itself &mdash; alerts, purchase-order drafts and the AI's stock advice
+                            all read from there.
+                        </p>
+
+                        <a href="{{ route('inventory.ingredients.index') }}" class="inline-flex items-center gap-2 px-5 py-3 bg-[#FDF8F5] border-2 border-[#F0E6D2] hover:border-[#3E2723] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#3E2723] transition active:scale-95">
+                            <x-lucide-package class="w-4 h-4" />
+                            Manage Ingredient Thresholds
+                        </a>
                     </div>
                 </div>
 

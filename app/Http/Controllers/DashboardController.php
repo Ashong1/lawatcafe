@@ -289,13 +289,17 @@ class DashboardController extends Controller
                     break;
             }
 
-            $lowStockThreshold = (int) Setting::get('low_stock_threshold', 500);
-
             // System Alerts Logic
             $alerts = [];
 
-            // Low Stock Alert
-            $lowStockItems = Ingredient::where('current_stock', '<', $lowStockThreshold)->get();
+            // Low Stock Alert. Compared against each ingredient's OWN threshold,
+            // not a shop-wide number: one figure cannot mean anything across
+            // millilitres, grams and pieces at once, and the global setting this
+            // replaces was 500 against per-ingredient thresholds of 3000-5000 —
+            // so every ingredient crossed its real threshold long before this
+            // alert would ever have fired. The inventory page went red while the
+            // dashboard reported nothing wrong.
+            $lowStockItems = Ingredient::whereColumn('current_stock', '<=', 'low_stock_threshold')->get();
             if ($lowStockItems->count() > 0) {
                 $alerts[] = [
                     'type' => 'warning',

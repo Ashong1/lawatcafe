@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Ingredient;
 use App\Models\InventoryLog;
-use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\SystemAlert;
 use App\Services\IngredientService;
@@ -20,9 +19,11 @@ class IngredientController extends Controller
     public function index()
     {
         $ingredients = Ingredient::all();
-        $lowStockThreshold = (int) Setting::get('low_stock_threshold', 500);
 
-        return view('inventory.ingredients', compact('ingredients', 'lowStockThreshold'));
+        // No shop-wide threshold passed any more: the view already compares
+        // each row against its own low_stock_threshold column, which is the only
+        // comparison that means anything when units differ per ingredient.
+        return view('inventory.ingredients', compact('ingredients'));
     }
 
     // 2. Add a new ingredient

@@ -21,7 +21,6 @@ class SettingController extends Controller
     public function store()
     {
         $settings = [
-            'low_stock_threshold' => Setting::get('low_stock_threshold', '500'),
             'store_open_time' => Setting::get('store_open_time', '08:00'),
             'store_close_time' => Setting::get('store_close_time', '22:00'),
             'receipt_header' => Setting::get('receipt_header', 'Thank you for visiting Lawa\'t Kape!'),
@@ -228,7 +227,6 @@ class SettingController extends Controller
     {
         $validated = $request->validate([
             'voucher_durations' => 'nullable|json',
-            'low_stock_threshold' => 'nullable|numeric',
             'free_wifi_min_amount' => 'nullable|numeric|min:0',
             'free_wifi_duration' => 'nullable|numeric|min:1',
             'store_open_time' => 'nullable|string',

@@ -116,13 +116,15 @@ class UiUxFieldValidationErrorsTest extends TestCase
         $superAdmin = User::factory()->create(['role' => 'super_admin']);
 
         $this->actingAs($superAdmin)->from(route('admin.settings.store'))
-            ->post(route('admin.settings.store.update'), ['low_stock_threshold' => 'not-a-number'])
+            // free_wifi_min_amount, since the shop-wide low-stock threshold
+            // this used to exercise no longer exists.
+            ->post(route('admin.settings.store.update'), ['free_wifi_min_amount' => 'not-a-number'])
             ->assertRedirect(route('admin.settings.store'))
-            ->assertSessionHasErrors(['low_stock_threshold']);
+            ->assertSessionHasErrors(['free_wifi_min_amount']);
 
         $response = $this->actingAs($superAdmin)->get(route('admin.settings.store'));
 
         $response->assertOk();
-        $response->assertSee('The low stock threshold field must be a number.', false);
+        $response->assertSee('The free wifi min amount field must be a number.', false);
     }
 }

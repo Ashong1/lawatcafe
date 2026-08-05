@@ -2,9 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Ingredient;
 use App\Models\Product;
-use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -137,7 +135,8 @@ class UiUxAccessibilitySweepTest extends TestCase
         $response = $this->actingAs($superAdmin)->get(route('admin.settings.store'));
 
         $response->assertOk();
-        foreach (['low-stock-threshold', 'store-open-time', 'store-close-time', 'receipt-header'] as $id) {
+        // low-stock-threshold was removed with the shop-wide setting itself.
+        foreach (['store-open-time', 'store-close-time', 'receipt-header'] as $id) {
             $response->assertSee("for=\"{$id}\"", false);
             $response->assertSee("id=\"{$id}\"", false);
         }

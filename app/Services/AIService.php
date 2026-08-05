@@ -1519,9 +1519,10 @@ Return ONLY a JSON array, at most 5 items:
     private function getLowStockIngredients()
     {
         return Cache::remember('ai_ctx_low_stock', 30, function () {
-            $threshold = (int) Setting::get('low_stock_threshold', 500);
-
-            return Ingredient::where('current_stock', '<', $threshold)->get(['name', 'current_stock', 'unit']);
+            // Per-ingredient threshold. With the old shop-wide number the
+            // assistant was told nothing was low while the shop was nearly out.
+            return Ingredient::whereColumn('current_stock', '<=', 'low_stock_threshold')
+                ->get(['name', 'current_stock', 'unit']);
         });
     }
 
