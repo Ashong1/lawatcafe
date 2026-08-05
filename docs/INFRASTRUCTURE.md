@@ -126,6 +126,12 @@ rejected outright. Automation **filter** rules can — `GET
 and accept an alias name, and `shaper1` takes a pipe UUID. That is what
 `shaper:tiers` uses, and it needs no VLAN or separate interface.
 
+Bandwidth values are written as whole numbers because OPNsense's pipe
+`bandwidth` field is an integer — `1.5` Mbit is rejected outright with
+"Bandwidth out of range". A fractional Mbps is therefore written in the next
+unit down (1.5 Mbit → `1500 Kbit`, the same cap) rather than rounded, so the
+figure an admin typed is the figure that is enforced.
+
 Three things to know before touching any of this:
 
 1. **The filter rule action can only be `pass`.** The API exposes no `match`, the

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\OpnSenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -259,5 +260,63 @@ class FairUseCapTest extends TestCase
                 'bw_free_down' => 2, 'bw_free_up' => 1,
                 'bw_premium_down' => 10, 'bw_premium_up' => 5,
             ])->assertSessionHasErrors('bw_fair_use_mbps');
+    }
+
+    /**
+     * The exact report: saving with a free upload of 1.5 Mbps failed with
+     * "OPNsense rejected the bandwidth pipe 'lawatcafe_free_up'". The pipe's
+     * bandwidth field is an integer, and OPNsense answers "Bandwidth out of
+     * range" for 1.5 — verified live. Rounding somebody's 1.5 down to 1 would
+     * silently change what they asked for, so the value moves to the next unit
+     * down instead: 1.5 Mbit and 1500 Kbit are the same cap.
+     */
+    public function test_a_fractional_rate_is_written_in_kbit_rather_than_rounded(): void
+    {
+        $this->fakeOpnsense();
+
+        app(OpnSenseService::class)->upsertShaperPipe('free', 'up', 1.5);
+
+        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'addPipe')
+            || ($request['pipe']['bandwidth'] === '1500' && $request['pipe']['bandwidthMetric'] === 'Kbit'));
+    }
+
+    /** A whole number stays in Mbit — no need to inflate every value. */
+    public function test_a_whole_rate_stays_in_mbit(): void
+    {
+        $this->fakeOpnsense();
+
+        app(OpnSenseService::class)->upsertShaperPipe('free', 'down', 3.0);
+
+        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'addPipe')
+            || ($request['pipe']['bandwidth'] === '3' && $request['pipe']['bandwidthMetric'] === 'Mbit'));
+    }
+
+    /** Whatever the unit, the field must never carry a decimal point. */
+    public function test_the_bandwidth_written_is_always_a_whole_number(): void
+    {
+        $this->fakeOpnsense();
+
+        $service = app(OpnSenseService::class);
+        foreach ([0.5, 1.5, 2, 2.25, 10, 20.75] as $mbps) {
+            $service->upsertShaperPipe('free', 'down', $mbps);
+        }
+
+        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'addPipe')
+            || ctype_digit($request['pipe']['bandwidth']));
+    }
+
+    /** And the whole per-tier save survives a fractional value end to end. */
+    public function test_saving_with_a_fractional_tier_rate_succeeds(): void
+    {
+        $this->fakeOpnsense();
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('network.traffic.update'), [
+                'bw_fair_use_mbps' => 20,
+                'bw_free_down' => 3, 'bw_free_up' => 1.5,
+                'bw_premium_down' => 10, 'bw_premium_up' => 2.5,
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
     }
 }

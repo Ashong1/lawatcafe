@@ -729,14 +729,23 @@ class OpnSenseService
 
         $name = $this->shaperObjectName($tier, $direction);
 
+        // OPNsense's bandwidth field is an integer. A fractional Mbit value —
+        // 1.5, which the settings form legitimately allows — is rejected with
+        // "Bandwidth out of range", which surfaced as the whole per-tier save
+        // failing. Rather than round somebody's 1.5 Mbps down to 1, express it
+        // in the next unit down: 1.5 Mbit and 1500 Kbit are the same cap, and
+        // only one of them is a whole number.
+        $isWhole = abs($mbps - round($mbps)) < 0.0001;
+        $bandwidth = $isWhole ? (string) (int) round($mbps) : (string) (int) round($mbps * 1000);
+
         $payload = [
             'pipe' => [
                 'enabled' => '1',
-                'bandwidth' => (string) $mbps,
-                // 'Mbit', never 'Mbit/s' — bandwidthMetric is an OptionField
-                // whose only valid values are bit/Kbit/Mbit/Gbit. The old
-                // 'Mbit/s' was not one of them.
-                'bandwidthMetric' => 'Mbit',
+                'bandwidth' => $bandwidth,
+                // 'Mbit'/'Kbit', never 'Mbit/s' — bandwidthMetric is an
+                // OptionField whose only valid values are bit/Kbit/Mbit/Gbit.
+                // The old 'Mbit/s' was not one of them.
+                'bandwidthMetric' => $isWhole ? 'Mbit' : 'Kbit',
                 'mask' => $direction === 'down' ? 'dst-ip' : 'src-ip',
                 'description' => $name,
             ],
@@ -753,7 +762,7 @@ class OpnSenseService
             if ($response->successful() && ($data['result'] ?? null) !== 'failed') {
                 $resolved = $data['uuid'] ?? $uuid;
 
-                Log::info("OPNsense: upserted shaper pipe {$name} at {$mbps} Mbit.", ['uuid' => $resolved]);
+                Log::info("OPNsense: upserted shaper pipe {$name} at {$bandwidth} ".($isWhole ? 'Mbit' : 'Kbit').'.', ['uuid' => $resolved]);
 
                 return $resolved;
             }
