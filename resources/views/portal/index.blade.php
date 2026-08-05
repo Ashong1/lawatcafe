@@ -20,16 +20,13 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; scroll-behavior: smooth; }
     
-    /* Responsive sizing as per design guide */
+    /* Sizing lives on the element as utilities now, shared verbatim with
+       portal/status and portal/success — see the comment there. This class
+       keeps only what is genuinely local to the entry card. */
     .portal-card {
-        width: 90%;
-        max-width: 360px;
-        height: 85dvh;
-        max-height: 600px;
         display: flex;
         flex-direction: column;
         background: #FAF7F2;
-        border-radius: 2.5rem;
         overflow: hidden;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         border: 1px solid #E6D5C3;
@@ -43,16 +40,8 @@
         font-size: 16px !important;
     }
 
-    /* Tablets, Laptops, Desktops */
-    @media (min-width: 768px) {
-        .portal-card {
-            max-width: 450px;
-            height: 700px;
-            max-height: 80vh;
-        }
-    }
-
-    /* Extra tall screens */
+    /* Extra tall desktop screens — the one rule with no Tailwind equivalent,
+       since it keys off viewport HEIGHT as well as width. */
     @media (min-height: 900px) and (min-width: 768px) {
         .portal-card {
             height: 750px;
@@ -133,7 +122,15 @@
     </div>
 
     <!-- Main Compact Card -->
-    <div class="portal-card relative z-10">
+    {{-- Phone sizing is shared verbatim with portal/status and portal/success:
+         w-[92%] max-w-[420px] h-[88dvh] max-h-[640px]. The three pages used to
+         each carry their own numbers (90%/360px/85dvh here against
+         96%/672px/92dvh on the other two), so on a phone the card visibly
+         jumped wider and roughly 180px taller the instant a code was accepted —
+         mid-flow, on the one screen a guest is already unsure about. Desktop
+         still diverges on purpose: this is a narrow entry card, those are
+         two-column panels. --}}
+    <div class="portal-card relative z-10 w-[92%] max-w-[420px] h-[88dvh] max-h-[640px] rounded-[2rem] md:rounded-[2.5rem] md:max-w-[450px] md:h-[700px] md:max-h-[80vh]">
         
         <!-- 1. Header (Fixed) -->
         <div class="shrink-0 bg-[#3E2723] p-5 text-center relative overflow-hidden border-b border-[#271815]">

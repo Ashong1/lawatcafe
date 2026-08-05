@@ -15,7 +15,7 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
 </head>
-<body class="bg-[#FAF7F2] text-[#4A3B32] min-h-screen font-sans antialiased flex items-center justify-center p-2 lg:p-8"
+<body class="bg-[#FAF7F2] text-[#4A3B32] min-h-screen font-sans antialiased flex items-center justify-center p-4 lg:p-8"
       style="font-family: 'Montserrat', sans-serif;"
       x-data="portalSystem({{ $expirationTime->getTimestampMs() }})"
       x-init="
@@ -34,7 +34,11 @@
         <div class="absolute inset-0 bg-black/50"></div>
     </div>
 
-    <div class="relative z-10 w-[96%] lg:w-full max-w-[calc(42rem+1mm)] lg:max-w-[calc(64rem+1mm)] rounded-[2.5rem] shadow-2xl border border-[#E6D5C3] overflow-hidden bg-[#FAF7F2] flex flex-col lg:flex-row transition-all duration-500 my-auto h-[92dvh] lg:h-[750px] max-h-[92dvh] lg:max-h-[800px]">
+    {{-- Phone sizing is shared verbatim with portal/index — see the full
+         reasoning there. Short version: the three portal pages each had their
+         own numbers, so a phone jumped wider and ~180px taller the moment a
+         code was accepted. --}}
+    <div class="relative z-10 w-[92%] max-w-[420px] h-[88dvh] max-h-[640px] rounded-[2rem] md:rounded-[2.5rem] md:max-w-[42rem] md:h-[85dvh] md:max-h-[720px] lg:w-full lg:max-w-[calc(64rem+1mm)] lg:h-[750px] lg:max-h-[800px] shadow-2xl border border-[#E6D5C3] overflow-hidden bg-[#FAF7F2] flex flex-col lg:flex-row transition-all duration-500 my-auto">
 
         <!-- Sidebar Branding (Desktop) -->
         <div class="hidden lg:flex lg:w-[calc(42%+2mm)] bg-[#3E2723] relative flex-col justify-center items-center p-12 overflow-hidden text-center shrink-0 border-r border-[#271815]">
@@ -110,7 +114,11 @@
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">
                             <x-lucide-download class="w-6 h-6 text-[#8D6E63] mb-3" stroke-width="2.5" />
                             <span class="text-[10px] font-black text-[#6D4C41] uppercase tracking-widest mb-1">Data</span>
-                            <span class="text-lg font-black text-[#3E2723] tabular-nums">{{ number_format($session['bytes_received'] / (1024 * 1024), 1) }} MB</span>
+                            {{-- Defaulted, not assumed: OPNsense does not always
+                                 include a counter on a freshly-created session,
+                                 and an undefined key here is a 500 on the one
+                                 page a paying guest is most likely to be on. --}}
+                            <span class="text-lg font-black text-[#3E2723] tabular-nums">{{ number_format(($session['bytes_received'] ?? 0) / (1024 * 1024), 1) }} MB</span>
                         </div>
 
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">
@@ -170,9 +178,18 @@
                         <!-- Chat texture overlay -->
                         <div class="absolute inset-0 opacity-[0.02] pointer-events-none texture-squares"></div>
                         
-                        <div class="absolute top-5 left-8 flex items-center gap-2.5 z-10 bg-[#FAF7F2] px-4 py-1.5 rounded-full border border-[#F0E6D2] shadow-sm" :class="aiCue ? 'animate-bounce' : ''">
-                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-[#3E2723]">AI Agent Active</span>
+                        {{-- In normal flow, not absolutely positioned. Floating
+                             it over the chat reserved no space, so the oldest
+                             message in the scroll area sat underneath the badge
+                             and was unreadable — and it got worse as the
+                             conversation grew, because the history scrolls under
+                             a fixed overlay. A shrink-0 row costs the same
+                             vertical space and simply cannot collide. --}}
+                        <div class="shrink-0 relative z-10 mb-4 flex">
+                            <div class="flex items-center gap-2.5 bg-[#FAF7F2] px-4 py-1.5 rounded-full border border-[#F0E6D2] shadow-sm" x-bind:class="aiCue ? 'animate-bounce' : ''">
+                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                <span class="text-[9px] font-black uppercase tracking-[0.2em] text-[#3E2723]">AI Agent Active</span>
+                            </div>
                         </div>
 
                         <x-agent-chat

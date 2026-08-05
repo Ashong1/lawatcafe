@@ -185,6 +185,145 @@ class CaptivePortalActivationTest extends TestCase
     }
 
     /**
+     * A redeemed voucher is not a spent one. The guest bought a span of time,
+     * not one connection, and the tab holding their session is trivially lost —
+     * the phone sleeps, the captive window closes, they switch to mobile data
+     * and back. Re-entry is safe precisely because the voucher is MAC-bound.
+     */
+    public function test_the_same_device_can_re_enter_its_code_while_time_remains(): void
+    {
+        $voucher = Voucher::create([
+            'code' => 'LAWA-BACK',
+            'duration_minutes' => 120,
+            'tier' => 'free',
+            'is_used' => true,
+            'used_at' => now()->subMinutes(30),
+            'activated_at' => now()->subMinutes(30),
+            'ip_address' => self::IP,
+            'mac_address' => self::MAC,
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
+            $mock->shouldReceive('listSessions')->andReturn([]);
+        });
+
+        $this->fromGuestDevice()
+            ->post(route('portal.authenticate'), ['passcode' => $voucher->code])
+            ->assertRedirect(route('portal.success'))
+            ->assertSessionHasNoErrors();
+
+        // Still one redemption — re-entry must not restart the clock, or a
+        // guest could hold the code and refresh their way to unlimited Wi-Fi.
+        $this->assertTrue($voucher->fresh()->used_at->eq($voucher->used_at));
+    }
+
+    /**
+     * Re-entry follows the device, not the address: DHCP moves guests around,
+     * and every downstream check matches on the recorded IP.
+     */
+    public function test_re_entry_updates_the_recorded_ip_when_dhcp_has_moved_the_device(): void
+    {
+        $voucher = Voucher::create([
+            'code' => 'LAWA-MOVED',
+            'duration_minutes' => 120,
+            'tier' => 'free',
+            'is_used' => true,
+            'used_at' => now()->subMinutes(10),
+            'activated_at' => now()->subMinutes(10),
+            'ip_address' => '192.168.2.140',
+            'mac_address' => self::MAC,
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
+            $mock->shouldReceive('listSessions')->andReturn([]);
+        });
+
+        $this->fromGuestDevice()
+            ->post(route('portal.authenticate'), ['passcode' => $voucher->code])
+            ->assertRedirect(route('portal.success'));
+
+        $this->assertSame(self::IP, $voucher->fresh()->ip_address);
+    }
+
+    /** The binding has to actually bind — a different device gets nothing. */
+    public function test_another_device_cannot_reuse_a_bound_code(): void
+    {
+        Voucher::create([
+            'code' => 'LAWA-BOUND',
+            'duration_minutes' => 120,
+            'tier' => 'free',
+            'is_used' => true,
+            'used_at' => now()->subMinutes(10),
+            'activated_at' => now()->subMinutes(10),
+            'ip_address' => '192.168.2.140',
+            'mac_address' => 'AA:AA:AA:AA:AA:AA',
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            // A different MAC entirely.
+            $mock->shouldReceive('resolveMacForIp')->andReturn('BB:BB:BB:BB:BB:BB');
+            $mock->shouldReceive('listSessions')->andReturn([]);
+        });
+
+        $this->fromGuestDevice()
+            ->post(route('portal.authenticate'), ['passcode' => 'LAWA-BOUND'])
+            ->assertSessionHas('error', 'This code is already in use on another device.');
+    }
+
+    public function test_a_code_whose_time_has_run_out_is_still_refused(): void
+    {
+        Voucher::create([
+            'code' => 'LAWA-SPENT',
+            'duration_minutes' => 60,
+            'tier' => 'free',
+            'is_used' => true,
+            'used_at' => now()->subHours(3),
+            'activated_at' => now()->subHours(3),
+            'ip_address' => self::IP,
+            'mac_address' => self::MAC,
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
+            $mock->shouldReceive('listSessions')->andReturn([]);
+        });
+
+        $this->fromGuestDevice()
+            ->post(route('portal.authenticate'), ['passcode' => 'LAWA-SPENT'])
+            ->assertSessionHas('error', 'This code has already been used and its time has run out.');
+    }
+
+    /**
+     * Vouchers redeemed when the ARP lookup came back empty carry no MAC, so
+     * the IP is the only binding available — refusing them outright would
+     * strand a guest who genuinely paid.
+     */
+    public function test_a_voucher_with_no_recorded_mac_falls_back_to_matching_on_ip(): void
+    {
+        Voucher::create([
+            'code' => 'LAWA-NOMAC',
+            'duration_minutes' => 120,
+            'tier' => 'free',
+            'is_used' => true,
+            'used_at' => now()->subMinutes(10),
+            'activated_at' => now()->subMinutes(10),
+            'ip_address' => self::IP,
+            'mac_address' => null,
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('resolveMacForIp')->andReturn(null);
+            $mock->shouldReceive('listSessions')->andReturn([]);
+        });
+
+        $this->fromGuestDevice()
+            ->post(route('portal.authenticate'), ['passcode' => 'LAWA-NOMAC'])
+            ->assertRedirect(route('portal.success'));
+    }
+
+    /**
      * A firewall that cannot be reached must leave the voucher unactivated, so
      * the guest can retry and the recovery path above still applies.
      */

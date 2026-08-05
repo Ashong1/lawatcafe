@@ -15,14 +15,18 @@
 </style>
 @include('portal.partials.captive-assistant')
 </head>
-<body class="bg-[#FAF7F2] text-[#4A3B32] min-h-screen font-sans antialiased flex items-center justify-center p-2 lg:p-8" style="font-family: 'Montserrat', sans-serif;">
+<body class="bg-[#FAF7F2] text-[#4A3B32] min-h-screen font-sans antialiased flex items-center justify-center p-4 lg:p-8" style="font-family: 'Montserrat', sans-serif;">
 
     <div class="fixed inset-0 z-0">
         <div class="absolute inset-0 bg-cover bg-center bg-no-repeat portal-bg-photo" style="background-image: url('/images/lawat-bg.jpg');"></div>
         <div class="absolute inset-0 bg-black/50"></div>
     </div>
 
-    <div class="relative z-10 w-[96%] lg:w-full max-w-[calc(42rem+1mm)] lg:max-w-[calc(64rem+1mm)] rounded-[2.5rem] shadow-2xl border border-[#E6D5C3] overflow-hidden bg-[#FAF7F2] flex flex-col lg:flex-row transition-all duration-500 my-auto h-[92dvh] lg:h-[750px] max-h-[92dvh] lg:max-h-[800px]">
+    {{-- Phone sizing is shared verbatim with portal/index — see the full
+         reasoning there. Short version: the three portal pages each had their
+         own numbers, so a phone jumped wider and ~180px taller the moment a
+         code was accepted. --}}
+    <div class="relative z-10 w-[92%] max-w-[420px] h-[88dvh] max-h-[640px] rounded-[2rem] md:rounded-[2.5rem] md:max-w-[42rem] md:h-[85dvh] md:max-h-[720px] lg:w-full lg:max-w-[calc(64rem+1mm)] lg:h-[750px] lg:max-h-[800px] shadow-2xl border border-[#E6D5C3] overflow-hidden bg-[#FAF7F2] flex flex-col lg:flex-row transition-all duration-500 my-auto">
 
         <!-- Sidebar Branding (Desktop) -->
         <div class="hidden lg:flex lg:w-[calc(42%+2mm)] bg-[#3E2723] relative flex-col justify-center items-center p-12 overflow-hidden text-center shrink-0 border-r border-[#271815]">

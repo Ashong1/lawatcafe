@@ -118,6 +118,24 @@ class CaptivePortalController extends Controller
     }
 
     /**
+     * Whether this device is the one a redeemed voucher is bound to.
+     *
+     * The MAC is the binding whenever both sides of it are known — it survives
+     * the DHCP lease changing under the guest, which the IP does not. The IP is
+     * only a fallback for vouchers redeemed when the ARP lookup came back empty
+     * (see resolveTrustedIdentity), since those have no MAC to compare against
+     * and refusing them outright would strand a paying guest.
+     */
+    private function voucherBelongsTo(Voucher $voucher, string $ip, ?string $mac): bool
+    {
+        if (! empty($mac) && ! empty($voucher->mac_address_hash)) {
+            return hash_equals($voucher->mac_address_hash, Voucher::hashMac($mac));
+        }
+
+        return $voucher->ip_address === $ip;
+    }
+
+    /**
      * RFC 8908 Captive Portal API.
      *
      * Advertised to clients via DHCP option 114 (RFC 8910) from Kea on
@@ -331,16 +349,53 @@ class CaptivePortalController extends Controller
                 return back()->with('error', 'That code doesn\'t match any voucher — double-check it against your receipt.');
             }
 
-            if ($voucher->is_used) {
-                return back()->with('error', 'This code has already been used.');
-            }
-
             [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
 
             if ($this->isMacBanned($mac)) {
                 Log::warning("Portal authenticate: rejected banned device {$mac} ({$ip}).");
 
                 return back()->with('error', 'This device has been blocked from network access. Please see staff for assistance.');
+            }
+
+            // A redeemed voucher is not automatically a spent one. The guest
+            // paid for a span of time, not for a single connection, and the
+            // browser tab holding their session is trivially lost — the phone
+            // sleeps, the captive window is closed, they switch to mobile data
+            // and back. Refusing the code outright in those cases charged them
+            // twice for time they already owned.
+            //
+            // Re-entry is what the MAC binding is FOR: the voucher is tied to
+            // the device that redeemed it, so honouring the code again is safe
+            // precisely because a different device cannot use it.
+            if ($voucher->is_used) {
+                $secondsRemaining = $this->secondsRemainingOn($voucher);
+
+                if (! $secondsRemaining) {
+                    return back()->with('error', 'This code has already been used and its time has run out.');
+                }
+
+                // Redeemed against no device at all — nothing to match on, so
+                // there is no honest way to hand it to whoever is asking. Kept
+                // separate from the "another device" branch below because
+                // claiming a specific rival device exists would be a guess.
+                if (empty($voucher->mac_address_hash) && empty($voucher->ip_address)) {
+                    return back()->with('error', 'This code has already been used.');
+                }
+
+                if (! $this->voucherBelongsTo($voucher, $ip, $mac)) {
+                    Log::warning("Portal authenticate: {$mac} ({$ip}) tried to reuse voucher {$voucher->code} bound to another device.");
+
+                    return back()->with('error', 'This code is already in use on another device.');
+                }
+
+                // Same device, time still on the clock. Re-point the voucher at
+                // the address it is on now — DHCP may well have moved it since
+                // the first redemption, and every downstream check (the RFC 8908
+                // API, EnforceSessionLimits, the sessions page) matches on the
+                // recorded IP.
+                $voucher->update(['ip_address' => $ip, 'mac_address' => $mac ?: $voucher->mac_address]);
+
+                return redirect()->route('portal.success');
             }
 
             // Claim the voucher for this device, but do NOT open the firewall
