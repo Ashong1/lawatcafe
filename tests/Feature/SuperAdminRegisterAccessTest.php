@@ -57,6 +57,19 @@ class SuperAdminRegisterAccessTest extends TestCase
         $this->actingAs($superAdmin)->post(route('shift.end', $shift->id), [])->assertRedirect(route('dashboard'));
     }
 
+    /**
+     * The kitchen display is floor work for whoever is actually making the
+     * drinks, so it belongs on the same side of the line as the register.
+     */
+    public function test_super_admin_cannot_reach_the_kitchen_display(): void
+    {
+        $superAdmin = $this->superAdmin();
+
+        $this->actingAs($superAdmin)->get(route('kds.index'))->assertRedirect(route('dashboard'));
+        // The polling endpoint too — the page is only half the surface.
+        $this->actingAs($superAdmin)->getJson(route('kds.data'))->assertStatus(403);
+    }
+
     /** A fetch()-based caller needs a real status code, not a redirect it can't see. */
     public function test_a_json_request_is_refused_with_403_rather_than_a_redirect(): void
     {
@@ -65,12 +78,13 @@ class SuperAdminRegisterAccessTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function test_admins_and_staff_keep_full_register_access(): void
+    public function test_admins_and_staff_keep_full_register_and_kitchen_access(): void
     {
         foreach (['admin', 'staff'] as $role) {
-            $this->actingAs(User::factory()->create(['role' => $role]))
-                ->get(route('pos'))
-                ->assertOk();
+            $user = User::factory()->create(['role' => $role]);
+
+            $this->actingAs($user)->get(route('pos'))->assertOk();
+            $this->actingAs($user)->get(route('kds.index'))->assertOk();
         }
     }
 
@@ -87,17 +101,19 @@ class SuperAdminRegisterAccessTest extends TestCase
         $this->actingAs($superAdmin)->get(route('admin.finance.z-reads'))->assertOk();
     }
 
-    public function test_the_sidebar_stops_offering_the_register_to_super_admin(): void
+    public function test_the_sidebar_stops_offering_the_register_and_kitchen_to_super_admin(): void
     {
         $superAdminSidebar = $this->actingAs($this->superAdmin())->get(route('dashboard'));
         $superAdminSidebar->assertOk();
         $superAdminSidebar->assertDontSee('POS Register', false);
         $superAdminSidebar->assertDontSee('Open POS', false);
+        $superAdminSidebar->assertDontSee('Kitchen Display', false);
 
-        // The same layout must still render it for an ordinary admin, otherwise
-        // this assertion would pass for the wrong reason.
+        // The same layout must still render them for an ordinary admin,
+        // otherwise these assertions would pass for the wrong reason.
         $adminSidebar = $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('dashboard'));
         $adminSidebar->assertSee('POS Register', false);
         $adminSidebar->assertSee('Open POS', false);
+        $adminSidebar->assertSee('Kitchen Display', false);
     }
 }

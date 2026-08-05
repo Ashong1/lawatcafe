@@ -187,9 +187,10 @@
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Findings History</span>
             </a>
-            {{-- Hidden for super_admin, which is the developer/system account and
-                 has no cashiering duty — DenySuperAdmin enforces the same rule on
-                 the routes, this just stops the sidebar offering a dead end. --}}
+            {{-- Both hidden for super_admin, which is the developer/system
+                 account: the register and the kitchen display are floor work,
+                 not management. DenySuperAdmin enforces the same rule on the
+                 routes; this just stops the sidebar offering a dead end. --}}
             @unless(auth()->user()->isSuperAdmin())
             <a href="/pos" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('pos') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="POS Register">
                 <x-lucide-calculator class="w-5 h-5 shrink-0 {{ request()->is('pos') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
@@ -202,7 +203,6 @@
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">POS Register</span>
             </a>
-            @endunless
             <a href="/kds" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('kds') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Kitchen Display">
                 <x-lucide-chef-hat class="w-5 h-5 shrink-0 {{ request()->is('kds') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen"
@@ -214,6 +214,7 @@
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Kitchen Display</span>
             </a>
+            @endunless
             <a href="{{ route('pos.history') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('pos.history') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Order History">
                 <x-lucide-history class="w-5 h-5 shrink-0 {{ request()->routeIs('pos.history') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="sidebarOpen"
@@ -399,7 +400,7 @@
         </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.87</span>
+            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.88</span>
             <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
@@ -419,7 +420,10 @@
                 <div class="hidden lg:block h-4 w-[1px] bg-[#F0E6D2]"></div>
 
                 <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group cursor-pointer">
-                    <span class="hidden lg:inline text-[11px] uppercase tracking-widest text-[#6D4C41] group-hover:text-[#3E2723] transition font-bold">Admin Status:</span>
+                    {{-- The real role, not the layout's name. This header said
+                         "Admin Status:" for everyone it rendered, so the
+                         super_admin account was labelled a plain admin. --}}
+                    <span class="hidden lg:inline text-[11px] uppercase tracking-widest text-[#6D4C41] group-hover:text-[#3E2723] transition font-bold">{{ Auth::user()->roleLabel() }}:</span>
                     <span class="text-sm font-bold text-[#3E2723] group-hover:text-amber-700 transition">{{ Auth::user()->name }}</span>
                 </a>
 

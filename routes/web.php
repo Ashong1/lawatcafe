@@ -88,18 +88,19 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/shift/start', [ShiftController::class, 'start'])->name('shift.start');
         Route::post('/shift/transaction/{shift}', [ShiftController::class, 'recordTransaction'])->name('shift.transaction');
         Route::post('/shift/end/{shift}', [ShiftController::class, 'end'])->name('shift.end');
+
+        // Kitchen Display System — floor work like the register, not a report:
+        // it exists to be tapped by whoever is actually making the drinks.
+        Route::get('/kds', [KdsController::class, 'index'])->name('kds.index');
+        Route::get('/kds/data', [KdsController::class, 'data'])->name('kds.data');
+        Route::post('/kds/{sale}/status', [KdsController::class, 'updateStatus'])->name('kds.update');
+        Route::post('/kds/item/{item}/status', [KdsController::class, 'updateItemStatus'])->name('kds.item.update');
     });
 
     // Deliberately outside the block above: the closing report is the Z-read,
     // and reading one is a management duty, not a cashiering one. It is linked
     // straight from admin/finance/z-reads, which super_admin can reach.
     Route::get('/shift/closing-report/{shift}', [ShiftController::class, 'showClosingReport'])->name('shift.closing-report');
-
-    // Kitchen Display System
-    Route::get('/kds', [KdsController::class, 'index'])->name('kds.index');
-    Route::get('/kds/data', [KdsController::class, 'data'])->name('kds.data');
-    Route::post('/kds/{sale}/status', [KdsController::class, 'updateStatus'])->name('kds.update');
-    Route::post('/kds/item/{item}/status', [KdsController::class, 'updateItemStatus'])->name('kds.item.update');
 
     // Order History
     Route::get('/pos/history', [OrderHistoryController::class, 'index'])->name('pos.history');

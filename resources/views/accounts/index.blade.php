@@ -51,15 +51,14 @@
                                 {{ $user->email }}
                             </td>
                             <td class="py-4 px-4">
-                                @if($user->role === 'admin')
-                                    <span class="px-2.5 py-1 bg-amber-100 text-[#3E2723] border border-amber-200 rounded-lg text-[10px] font-black uppercase tracking-widest">
-                                        System Admin
-                                    </span>
-                                @else
-                                    <span class="px-2.5 py-1 bg-gray-100 text-gray-600 border border-gray-200 rounded-lg text-[10px] font-black uppercase tracking-widest">
-                                        Barista
-                                    </span>
-                                @endif
+                                {{-- Reads the role rather than branching on one
+                                     value with a catch-all else, which labelled
+                                     every non-admin "Barista" — correct today
+                                     only because staff is the sole other role
+                                     this list can contain. --}}
+                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border {{ $user->isAdminOrAbove() ? 'bg-amber-100 text-[#3E2723] border-amber-200' : 'bg-gray-100 text-gray-600 border-gray-200' }}">
+                                    {{ $user->roleLabel() }}
+                                </span>
                             </td>
                             <td class="py-4 px-4 text-[#6D4C41] font-bold text-xs hidden md:table-cell">
                                 {{ $user->created_at->format('M d, Y') }}
