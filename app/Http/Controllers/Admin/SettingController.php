@@ -128,13 +128,17 @@ class SettingController extends Controller
         $settings = [
             'opnsense_zone' => Setting::get('opnsense_zone', '0'),
             'network_ignored_ips' => Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.100,192.168.2.5,192.168.2.4'),
-            'network_infrastructure_ips' => Setting::get('network_infrastructure_ips', '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4'),
+            'network_infrastructure_ips' => Setting::get('network_infrastructure_ips', Setting::DEFAULT_INFRASTRUCTURE_IPS),
         ];
 
         $staticIps = StaticIpAssignment::latest()->get();
         $allowedAddresses = $opnsense->getAllowedAddresses();
 
-        return view('admin.settings.network', compact('settings', 'staticIps', 'allowedAddresses'));
+        // Shown next to both IP lists so an admin can see at a glance which
+        // addresses are dynamic and therefore unusable as fixed identities.
+        $dhcpPools = array_column($opnsense->getDhcpPools(), 'label');
+
+        return view('admin.settings.network', compact('settings', 'staticIps', 'allowedAddresses', 'dhcpPools'));
     }
 
     /**
@@ -211,13 +215,37 @@ class SettingController extends Controller
     /**
      * Update Network Configuration — super_admin only, enforced at the route level.
      */
-    public function updateNetwork(Request $request)
+    public function updateNetwork(Request $request, OpnSenseService $opnsense)
     {
         $validated = $request->validate([
             'network_ignored_ips' => 'nullable|string',
             'network_infrastructure_ips' => 'nullable|string',
             'opnsense_zone' => 'nullable|string',
         ]);
+
+        // Both lists are permanent exemptions: an address in either one stops
+        // being treated as a customer. A DHCP-pool address can't carry that
+        // meaning — it belongs to a different phone every few hours — so
+        // accepting one guarantees a real guest silently disappears from the
+        // sessions page later. (Skipped when OPNsense is unreachable and the
+        // pool list comes back empty, rather than blocking the save.)
+        //
+        // Only newly-introduced addresses are checked. network_ignored_ips is
+        // posted as a hidden field on this form, so rejecting a value that is
+        // already stored would lock the admin out of saving anything at all
+        // through a field this page never lets them edit.
+        foreach (['network_ignored_ips', 'network_infrastructure_ips'] as $field) {
+            $submitted = array_filter(array_map('trim', explode(',', (string) ($validated[$field] ?? ''))));
+            $stored = array_filter(array_map('trim', explode(',', (string) Setting::get($field, ''))));
+
+            foreach (array_diff($submitted, $stored) as $ip) {
+                if ($pool = $opnsense->dhcpPoolContaining($ip)) {
+                    return back()->withInput()->withErrors([
+                        $field => "{$ip} is inside the DHCP pool {$pool['label']}, so it belongs to whichever guest currently holds that lease. Exempting it would hide a real customer. Give the device a static DHCP reservation outside the pool first.",
+                    ]);
+                }
+            }
+        }
 
         $this->applySettings($validated);
 

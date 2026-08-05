@@ -81,6 +81,7 @@ class UiUxFieldValidationErrorsTest extends TestCase
         $superAdmin = User::factory()->create(['role' => 'super_admin']);
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
+            $mock->shouldReceive('getDhcpPools')->andReturn([]);
         });
 
         $this->actingAs($superAdmin)->from(route('admin.settings.network'))

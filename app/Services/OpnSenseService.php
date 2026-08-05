@@ -158,6 +158,120 @@ class OpnSenseService
     }
 
     /**
+     * The Kea DHCPv4 dynamic pool ranges, as integer start/end pairs.
+     *
+     * An address inside one of these ranges belongs to whichever guest Kea
+     * handed it to today and to somebody else tomorrow, so it can never
+     * identify a fixed device. Treating one as permanent (infrastructure /
+     * ignored) silently erases a real customer from the sessions page and the
+     * dashboard counts the moment the lease rotates onto their phone — see
+     * the .117 incident fixed in v1.0.0.78.
+     *
+     * Fails open: an unreachable OPNsense returns an empty list, which makes
+     * every caller skip the check rather than block an admin from saving.
+     *
+     * @return array<int, array{start: int, end: int, label: string}>
+     */
+    public function getDhcpPools(): array
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return [];
+        }
+
+        return Cache::remember('opnsense_dhcp_pools', 600, function () {
+            try {
+                $response = $this->client()->get("{$this->baseUrl}/api/kea/dhcpv4/searchSubnet");
+
+                if (! $response->successful()) {
+                    return [];
+                }
+
+                $pools = [];
+
+                foreach ($response->json('rows') ?? [] as $subnet) {
+                    // One subnet's "pools" field holds newline- or
+                    // comma-separated ranges, each either "start-end" or CIDR.
+                    foreach (preg_split('/[\r\n,]+/', (string) ($subnet['pools'] ?? '')) as $pool) {
+                        $pool = trim($pool);
+                        if ($pool === '') {
+                            continue;
+                        }
+
+                        $range = $this->parsePoolRange($pool);
+                        if ($range) {
+                            $pools[] = $range + ['label' => $pool];
+                        }
+                    }
+                }
+
+                return $pools;
+            } catch (\Exception $e) {
+                Log::error('OPNsense: Exception fetching DHCP pools: '.$e->getMessage());
+
+                return [];
+            }
+        });
+    }
+
+    /**
+     * The dynamic pool an address falls inside, or null if it is safely
+     * outside every pool (a reservation, a manually-configured static, or
+     * another subnet entirely).
+     *
+     * @return array{start: int, end: int, label: string}|null
+     */
+    public function dhcpPoolContaining(string $ip): ?array
+    {
+        $long = ip2long(trim($ip));
+
+        if ($long === false) {
+            return null;
+        }
+
+        foreach ($this->getDhcpPools() as $pool) {
+            if ($long >= $pool['start'] && $long <= $pool['end']) {
+                return $pool;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{start: int, end: int}|null
+     */
+    protected function parsePoolRange(string $pool): ?array
+    {
+        if (str_contains($pool, '-')) {
+            [$start, $end] = array_map('trim', explode('-', $pool, 2));
+            $start = ip2long($start);
+            $end = ip2long($end);
+
+            return ($start !== false && $end !== false && $end >= $start)
+                ? ['start' => $start, 'end' => $end]
+                : null;
+        }
+
+        if (str_contains($pool, '/')) {
+            [$base, $bits] = explode('/', $pool, 2);
+            $base = ip2long(trim($base));
+            $bits = (int) $bits;
+
+            if ($base === false || $bits < 0 || $bits > 32) {
+                return null;
+            }
+
+            $mask = $bits === 0 ? 0 : (-1 << (32 - $bits)) & 0xFFFFFFFF;
+
+            return ['start' => $base & $mask, 'end' => ($base & $mask) | (~$mask & 0xFFFFFFFF)];
+        }
+
+        $single = ip2long($pool);
+
+        return $single !== false ? ['start' => $single, 'end' => $single] : null;
+    }
+
+    /**
      * Get current Kea DHCPv4 leases from OPNsense — the authoritative
      * source for a device's self-reported hostname (whatever the client
      * sent in its DHCP request), which in practice is far more often

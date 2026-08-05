@@ -73,6 +73,7 @@ class UiUxPhase1RegressionTest extends TestCase
             $mock->shouldReceive('getArpTable')->andReturn([]);
             $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
+            $mock->shouldReceive('getDhcpPools')->andReturn([]);
         });
 
         $response = $this->actingAs($admin)->get(route('network.sessions'));
@@ -86,6 +87,7 @@ class UiUxPhase1RegressionTest extends TestCase
         $superAdmin = User::factory()->create(['role' => 'super_admin']);
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
+            $mock->shouldReceive('getDhcpPools')->andReturn([]);
         });
 
         $response = $this->actingAs($superAdmin)->get(route('admin.settings.network'));
@@ -100,6 +102,7 @@ class UiUxPhase1RegressionTest extends TestCase
         $superAdmin = User::factory()->create(['role' => 'super_admin']);
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
+            $mock->shouldReceive('getDhcpPools')->andReturn([]);
         });
 
         $store = $this->actingAs($superAdmin)->get(route('admin.settings.store'));

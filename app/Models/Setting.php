@@ -20,6 +20,21 @@ class Setting extends Model
     private const MISSING = '__setting_missing__';
 
     /**
+     * Seed value for network_infrastructure_ips, shared with the settings
+     * screen so the code and the textarea can never disagree.
+     *
+     * Every address here must sit OUTSIDE the Kea dynamic pool — a fixed
+     * service (Proxmox host/LXC, switch, AP) or a MAC-bound reservation.
+     * 192.168.2.117 used to be in this list purely because an access point
+     * happened to hold that lease the day the list was written; the pool is
+     * 192.168.2.110-199, so once the lease rotated, real guest phones landed
+     * on .117 and were filed as infrastructure — invisible in Active Sessions
+     * and uncounted on the dashboard. Do not add a pooled address here;
+     * SettingController::updateNetwork now rejects them.
+     */
+    public const DEFAULT_INFRASTRUCTURE_IPS = '192.168.254.254,192.168.254.108,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4';
+
+    /**
      * Get a setting value by key.
      *
      * The default is applied *after* the cache, never inside it. Caching the
@@ -63,8 +78,7 @@ class Setting extends Model
      */
     public static function infrastructureIps(): array
     {
-        $default = '192.168.254.254,192.168.254.108,192.168.2.117,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4';
-        $ips = array_filter(array_map('trim', explode(',', static::get('network_infrastructure_ips', $default))));
+        $ips = array_filter(array_map('trim', explode(',', static::get('network_infrastructure_ips', self::DEFAULT_INFRASTRUCTURE_IPS))));
 
         $opnsenseIp = config('services.opnsense.ip');
         if ($opnsenseIp) {

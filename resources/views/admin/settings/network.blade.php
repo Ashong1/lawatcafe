@@ -213,10 +213,25 @@
                         
                         <div>
                             <label for="network-infrastructure-ips" class="block text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-2">Infrastructure IPs (Comma Separated)</label>
-                            <textarea id="network-infrastructure-ips" name="network_infrastructure_ips" rows="3" class="w-full text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-2xl p-4 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">{{ $settings['network_infrastructure_ips'] }}</textarea>
+                            <textarea id="network-infrastructure-ips" name="network_infrastructure_ips" rows="3" class="w-full text-sm font-mono font-bold bg-[#FDF8F5] border-2 @error('network_infrastructure_ips') border-red-500 @else border-[#F0E6D2] @enderror rounded-2xl p-4 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">{{ old('network_infrastructure_ips', $settings['network_infrastructure_ips']) }}</textarea>
+
+                            @error('network_infrastructure_ips')
+                                <p class="text-[11px] text-red-600 font-bold mt-2 leading-relaxed">{{ $message }}</p>
+                            @enderror
+                            @error('network_ignored_ips')
+                                <p class="text-[11px] text-red-600 font-bold mt-2 leading-relaxed">{{ $message }}</p>
+                            @enderror
+
                             <p class="text-[11px] text-[#8D6E63] mt-3 leading-relaxed font-medium italic">
                                 Enter the IPs of your Proxmox server or physical Access Points. They will be isolated in the "Network Infrastructure" table.
                             </p>
+                            @if (! empty($dhcpPools))
+                                <p class="text-[11px] text-[#8D6E63] mt-2 leading-relaxed font-medium">
+                                    Use fixed addresses only. Anything in the DHCP pool
+                                    (<span class="font-mono font-bold">{{ implode(', ', $dhcpPools) }}</span>)
+                                    is handed out to guests and will hide a real customer.
+                                </p>
+                            @endif
                         </div>
                     </div>
 

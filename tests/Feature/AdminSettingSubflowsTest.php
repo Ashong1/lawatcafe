@@ -55,6 +55,7 @@ class AdminSettingSubflowsTest extends TestCase
         Setting::set('network_ignored_ips', '10.0.0.1');
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
+            $mock->shouldReceive('getDhcpPools')->andReturn([]);
         });
 
         $this->actingAs($superAdmin)->get(route('admin.settings.network'))
