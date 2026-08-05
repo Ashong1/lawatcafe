@@ -25,6 +25,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->validateCsrfTokens(except: [
             'portal/authenticate',
+            // Same reasoning, and the same window, as portal/authenticate: a
+            // phone's sign-in assistant is not a cookie jar you can rely on, and
+            // a 419 here would strand a guest who has already paid. Nothing is
+            // taken on trust from the request body either — activate() acts on
+            // the device identity it resolves from OPNsense's own ARP table.
+            'portal/activate',
             'portal/verify-payment',
             'portal/upload',
             'portal/chat',
@@ -43,7 +49,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // response instead of a 401 — fetch() follows the redirect silently,
         // reads the login page's HTML as the "response", and the caller sees
         // a dead widget with no error at all.
-        $exceptions->shouldRenderJsonWhen(function ($request, \Throwable $e) {
+        $exceptions->shouldRenderJsonWhen(function ($request, Throwable $e) {
             return $request->ajax() || $request->expectsJson();
         });
     })->create();

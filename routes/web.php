@@ -30,6 +30,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TrafficController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\WastageController;
+use App\Http\Middleware\DenySuperAdmin;
 use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Support\Facades\Route;
 
@@ -51,6 +52,11 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::post('/disconnect', [CaptivePortalController::class, 'disconnect'])->name('disconnect')->middleware('throttle:portal-disconnect');
     Route::get('/unlock', [CaptivePortalController::class, 'unlock'])->name('unlock');
     Route::get('/success', [CaptivePortalController::class, 'success'])->name('success');
+    // Opens the firewall for an already-redeemed voucher. Split from
+    // authenticate() so the guest decides when their sign-in window closes —
+    // see CaptivePortalController::activate(). Shares voucher-auth's limiter:
+    // it is the same redemption flow and needs the same brute-force ceiling.
+    Route::post('/activate', [CaptivePortalController::class, 'activate'])->name('activate')->middleware('throttle:voucher-auth');
 });
 
 // RFC 8908 Captive Portal API, advertised to clients via DHCP option 114
@@ -66,11 +72,28 @@ Route::get('/captive-portal-api', [CaptivePortalController::class, 'captivePorta
 // ==========================================
 Route::middleware(['auth'])->group(function () {
 
-    // Shared POS Access
-    Route::get('/pos', [PosController::class, 'index'])->name('pos');
-    Route::post('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
-    Route::get('/pos/receipt/{sale}', [PosController::class, 'receipt'])->name('pos.receipt');
-    Route::post('/pos/suggest-pairing', [PosController::class, 'suggestPairing'])->name('pos.suggest-pairing');
+    // Register + shift: admin and staff only. super_admin is the developer/
+    // system account (see User::isSuperAdmin()) and has no cashiering duty —
+    // and any sale it rang would land in the real shift and cash
+    // reconciliation figures. Order history stays readable by everyone below,
+    // since reviewing sales IS a management duty.
+    Route::middleware([DenySuperAdmin::class])->group(function () {
+        Route::get('/pos', [PosController::class, 'index'])->name('pos');
+        Route::post('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
+        Route::get('/pos/receipt/{sale}', [PosController::class, 'receipt'])->name('pos.receipt');
+        Route::post('/pos/suggest-pairing', [PosController::class, 'suggestPairing'])->name('pos.suggest-pairing');
+
+        // Running a shift — opening the drawer, recording against it, closing
+        // it out. All cashiering actions.
+        Route::post('/shift/start', [ShiftController::class, 'start'])->name('shift.start');
+        Route::post('/shift/transaction/{shift}', [ShiftController::class, 'recordTransaction'])->name('shift.transaction');
+        Route::post('/shift/end/{shift}', [ShiftController::class, 'end'])->name('shift.end');
+    });
+
+    // Deliberately outside the block above: the closing report is the Z-read,
+    // and reading one is a management duty, not a cashiering one. It is linked
+    // straight from admin/finance/z-reads, which super_admin can reach.
+    Route::get('/shift/closing-report/{shift}', [ShiftController::class, 'showClosingReport'])->name('shift.closing-report');
 
     // Kitchen Display System
     Route::get('/kds', [KdsController::class, 'index'])->name('kds.index');
@@ -81,12 +104,6 @@ Route::middleware(['auth'])->group(function () {
     // Order History
     Route::get('/pos/history', [OrderHistoryController::class, 'index'])->name('pos.history');
     Route::post('/pos/history/void/{sale}', [OrderHistoryController::class, 'void'])->name('pos.history.void');
-
-    // Shift Management
-    Route::post('/shift/start', [ShiftController::class, 'start'])->name('shift.start');
-    Route::get('/shift/closing-report/{shift}', [ShiftController::class, 'showClosingReport'])->name('shift.closing-report');
-    Route::post('/shift/transaction/{shift}', [ShiftController::class, 'recordTransaction'])->name('shift.transaction');
-    Route::post('/shift/end/{shift}', [ShiftController::class, 'end'])->name('shift.end');
 
     // Shared Profile Management
     Route::controller(ProfileController::class)->group(function () {

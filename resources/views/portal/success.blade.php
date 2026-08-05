@@ -73,49 +73,57 @@
 
                 <div class="bg-amber-50 border-2 border-amber-200/50 rounded-[2rem] p-8 mb-8 text-center relative overflow-hidden shadow-sm max-w-md mx-auto w-full">
                     <div class="absolute top-0 left-0 w-full h-1 bg-amber-500/30"></div>
-                    <span class="block text-[10px] font-black text-amber-800 uppercase tracking-[0.3em] mb-3">Session Activated</span>
+                    <span class="block text-[10px] font-black text-amber-800 uppercase tracking-[0.3em] mb-3">Voucher Accepted</span>
 
-                    {{-- Two audiences, one page. In an ordinary browser this tab
-                         survives, so we say where we're about to take them. In the
-                         phone's sign-in assistant the tab is disposable — the OS
-                         destroys it the moment its connectivity probe succeeds — so
-                         the only durable thing we can hand over is the address. --}}
-                    <p class="browser-only text-sm lg:text-base text-[#3E2723] font-bold">Your session is live. We'll show you the details in a moment.</p>
+                    <p class="text-4xl lg:text-5xl font-black text-[#3E2723] tracking-tighter mb-1">
+                        {{ $durationMinutes >= 60 ? rtrim(rtrim(number_format($durationMinutes / 60, 1), '0'), '.') : $durationMinutes }}<span class="text-lg lg:text-2xl ml-1">{{ $durationMinutes >= 60 ? 'hr' : 'min' }}</span>
+                    </p>
+                    <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.25em] mb-5">of Wi-Fi &mdash; until {{ $expiresAt->format('g:i A') }}</p>
 
-                    <p class="cna-only text-sm lg:text-base text-[#3E2723] font-bold mb-4">To watch your remaining time, open this address in your normal browser:</p>
-                    <p class="cna-only font-mono text-xs lg:text-sm font-black text-[#3E2723] bg-white/70 border border-amber-200 rounded-xl py-3 px-4 select-all break-all">{{ route('portal.index') }}</p>
-                    <p class="cna-only text-[10px] text-[#8D6E63] font-bold mt-3 leading-relaxed">This sign-in window closes on its own once you're online — bookmark the address above to check back.</p>
+                    {{-- The address is the one thing that has to survive this page.
+                         Shown to every guest, not just the sign-in assistant: once
+                         the firewall opens, an assistant window is destroyed by the
+                         OS without warning, and even a real browser tab gets closed.
+                         This is where they come back to watch the clock. --}}
+                    <p class="text-xs lg:text-sm text-[#3E2723] font-bold mb-3">To check your remaining time later, open this in your browser:</p>
+                    <p class="font-mono text-xs lg:text-sm font-black text-[#3E2723] bg-white/70 border border-amber-200 rounded-xl py-3 px-4 select-all break-all">{{ route('portal.index') }}</p>
                 </div>
 
+                {{-- activate() redirects back here when OPNsense is unreachable, so
+                     the guest gets a real reason and a retry instead of a button
+                     that silently does nothing. --}}
+                @if(session('error'))
+                    <div class="max-w-sm mx-auto w-full mb-4 bg-red-50 border-2 border-red-200 rounded-2xl px-5 py-4 text-center">
+                        <p class="text-xs lg:text-sm font-bold text-red-700">{{ session('error') }}</p>
+                    </div>
+                @endif
+
                 <div class="max-w-sm mx-auto w-full space-y-4">
-                    <a href="{{ route('portal.index') }}" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-[11px] lg:text-sm">
+                    {{-- The moment of truth. Until this is tapped the guest has no
+                         internet, which is exactly why this page is still on screen
+                         at all: the phone's captive assistant only tears its window
+                         down once its connectivity probe succeeds. Activating on a
+                         tap hands that timing to the guest instead of the OS. --}}
+                    <form method="POST" action="{{ route('portal.activate') }}" x-data="{ submitting: false }" @submit="submitting = true">
+                        @csrf
+                        <button type="submit" x-bind:disabled="submitting"
+                                class="w-full bg-[#3E2723] hover:bg-[#271815] disabled:opacity-70 text-white py-5 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-[11px] lg:text-sm">
+                            <span x-show="!submitting">{{ $alreadyActive ? 'Continue Browsing' : 'Start Browsing' }}</span>
+                            <span x-show="submitting" style="display: none;">Connecting&hellip;</span>
+                            <x-lucide-globe class="w-5 h-5 lg:w-6 lg:h-6" x-show="!submitting" />
+                        </button>
+                    </form>
+
+                    <a href="{{ route('portal.index') }}" class="w-full bg-white border-2 border-[#E6D5C3] text-[#6D4C41] py-4 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-[10px] lg:text-xs hover:border-[#8D6E63]">
                         <span>View My Session</span>
-                        <x-lucide-timer class="w-5 h-5 lg:w-6 lg:h-6" />
+                        <x-lucide-timer class="w-4 h-4 lg:w-5 lg:h-5" />
                     </a>
 
-                    {{-- Navigating to a plain-HTTP external site is what makes the
-                         phone's captive-network assistant notice it has internet and
-                         close itself, handing the guest to their real browser. Kept
-                         as a deliberate secondary action rather than the automatic
-                         destination — it used to be both, which dumped every guest on
-                         a blank third-party page and threw away the countdown.
-
-                         Suppressed entirely when portal_browse_url is unset, since it
-                         then resolves to the portal and would duplicate the primary
-                         button directly above it. --}}
-                    @if($browseUrl !== route('portal.index'))
-                        <a href="{{ $browseUrl }}" target="_blank" rel="noopener" class="w-full bg-white border-2 border-[#E6D5C3] text-[#6D4C41] py-4 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-[10px] lg:text-xs hover:border-[#8D6E63]">
-                            <span>Start Browsing</span>
-                            <x-lucide-globe class="w-4 h-4 lg:w-5 lg:h-5" />
-                        </a>
-                    @endif
-
-                    <p id="countdown" class="browser-only text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.3em] animate-pulse">
-                        Showing your session in 5s... <button type="button" id="cancel-redirect" class="underline decoration-dotted ml-1 normal-case tracking-normal font-bold">Cancel</button>
-                    </p>
-
                     <p class="cna-only text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.2em] leading-relaxed">
-                        You're online — this window closes on its own
+                        This window closes once you're online
+                    </p>
+                    <p class="browser-only text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.2em] leading-relaxed">
+                        Take your time &mdash; you're connected when you tap above
                     </p>
                 </div>
 
@@ -124,36 +132,10 @@
 
     </div>
 
-    <script>
-        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const countdownEl = document.getElementById('countdown');
-
-        // Inside the phone's sign-in assistant, auto-navigating is pointless and
-        // actively misleading: the OS tears this window down as soon as its own
-        // connectivity probe succeeds, so whatever we navigate to is destroyed
-        // mid-load and the guest sees a flash of a page they can never return to.
-        // Let the assistant close itself and leave them the address instead.
-        if (reducedMotion || window.isCaptiveAssistant()) {
-            // Auto-navigation is a motion/vestibular concern too, not just animated
-            // visuals — skip it and leave the buttons above as the way forward.
-            countdownEl.style.display = 'none';
-        } else {
-            let timeLeft = 5;
-            const interval = setInterval(() => {
-                timeLeft--;
-                countdownEl.firstChild.textContent = `Showing your session in ${timeLeft}s... `;
-                if (timeLeft <= 0) {
-                    clearInterval(interval);
-                    window.location.href = @json(route('portal.index'));
-                }
-            }, 1000);
-
-            document.getElementById('cancel-redirect').addEventListener('click', () => {
-                clearInterval(interval);
-                countdownEl.style.display = 'none';
-            });
-        }
-    </script>
+    {{-- The 5s auto-redirect that used to live here is gone on purpose. It only
+         existed to move the guest along after the firewall had already opened,
+         which is precisely the race this page now avoids: nothing on this page
+         navigates or connects until the guest taps Start Browsing. --}}
 
 </body>
 </html>

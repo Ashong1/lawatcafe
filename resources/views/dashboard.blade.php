@@ -27,12 +27,14 @@
 
 <!-- Quick Actions Ribbon -->
 <div class="flex flex-row flex-wrap items-center gap-4 mb-8">
+    @unless(auth()->user()->isSuperAdmin())
     <a href="{{ route('pos') }}" class="bg-white px-5 py-3 rounded-2xl shadow-sm border border-[#F0E6D2] hover:border-[#3E2723] transition-all group flex items-center gap-3 active:scale-95">
         <div class="p-2 bg-[#3E2723]/5 rounded-lg text-[#3E2723] group-hover:bg-[#3E2723] group-hover:text-white transition-colors">
             <x-lucide-shopping-cart class="w-4 h-4" />
         </div>
         <span class="text-[10px] font-black uppercase tracking-widest text-[#3E2723]">Open POS</span>
     </a>
+    @endunless
 
     <a href="{{ route('network.vouchers.index', ['action' => 'generate']) }}" class="bg-white px-5 py-3 rounded-2xl shadow-sm border border-[#F0E6D2] hover:border-amber-500 transition-all group flex items-center gap-3 active:scale-95">
         <div class="p-2 bg-amber-50 rounded-lg text-amber-700 group-hover:bg-amber-500 group-hover:text-white transition-colors">
@@ -549,12 +551,14 @@
                             <div class="bg-blue-600 h-full w-full origin-left transition-transform duration-700" :style="`transform: scaleX(${(insights?.meta?.progress_percent ?? 0) / 100})`"></div>
                         </div>
                         <p class="text-xs text-blue-800/80 font-medium">Barista AI is establishing a baseline. Accuracy will improve as more sales are recorded.</p>
+                        @unless(auth()->user()->isSuperAdmin())
                         <div class="mt-3">
                             <a href="{{ route('pos') }}" class="inline-flex items-center gap-2 text-xs font-bold text-blue-700 bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded-lg transition-colors">
                                 <x-lucide-shopping-cart class="w-3 h-3" />
                                 Go to POS Register
                             </a>
                         </div>
+                        @endunless
                     </div>
                 </template>
 

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Setting;
 use App\Models\Voucher;
 use App\Services\OpnSenseService;
+use App\Services\TrafficShapingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
@@ -57,75 +58,103 @@ class CaptivePortalStatusPageTest extends TestCase
     }
 
     /**
-     * Regression: the success page used to auto-navigate to neverssl.com after
-     * 5s (a captive-network-assistant dismissal trick), which dumped every
-     * guest on a blank third-party page and threw away the countdown they'd
-     * just been given. The automatic destination is now the portal's own
-     * status page; reaching the open web is a deliberate secondary action.
+     * A redeemed-but-not-yet-activated voucher, i.e. exactly the state
+     * authenticate() now leaves the guest in.
      */
-    public function test_success_page_lands_the_guest_on_their_own_session_not_a_third_party_site(): void
+    private function redeemPendingVoucher(string $code = 'LAWA-PEND', int $minutes = 120): Voucher
     {
-        $response = $this->get(route('portal.success'));
-
-        $response->assertOk();
-        $response->assertSee(route('portal.index'), false);
-        $this->assertStringNotContainsString(
-            'window.location.href = "http://neverssl.com"',
-            $response->getContent(),
-            'The 5s auto-redirect must not send guests to a third-party site.'
-        );
+        return Voucher::create([
+            'code' => $code,
+            'duration_minutes' => $minutes,
+            'tier' => 'free',
+            'is_used' => true,
+            'used_at' => now(),
+            'activated_at' => null,
+            'ip_address' => '192.168.2.50',
+            'mac_address' => 'AA:BB:CC:DD:EE:FF',
+        ]);
     }
 
-    public function test_success_page_shows_the_portal_address_for_reopening_in_a_real_browser(): void
+    private function mockIdentityOnly(): void
     {
-        $response = $this->get(route('portal.success'));
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('resolveMacForIp')->andReturn('AA:BB:CC:DD:EE:FF');
+            $mock->shouldReceive('listSessions')->andReturn([]);
+        });
+    }
 
-        $response->assertSee('open this address in your normal browser', false);
+    private function getSuccessPage()
+    {
+        return $this->withServerVariables(['REMOTE_ADDR' => '192.168.2.50'])->get(route('portal.success'));
+    }
+
+    /**
+     * The success page is now the whole point of the redemption split: it is
+     * the last moment the sign-in window is guaranteed to be alive, because the
+     * firewall has not been opened yet. It must state the time bought and the
+     * address to come back to.
+     */
+    public function test_success_page_states_the_time_bought_and_where_to_check_it(): void
+    {
+        $this->redeemPendingVoucher(minutes: 120);
+        $this->mockIdentityOnly();
+
+        $response = $this->getSuccessPage();
+
+        $response->assertOk();
+        $response->assertSee('2', false);          // 120 minutes rendered as hours
+        $response->assertSee('Voucher Accepted', false);
+        $response->assertSee('To check your remaining time later', false);
         $response->assertSee(route('portal.index'), false);
     }
 
     /**
-     * The success page serves two audiences from one response: an ordinary
-     * browser, where the tab survives and the 5s hand-off to the status page is
-     * right; and the phone's captive-network assistant, where the OS destroys
-     * the window the moment its connectivity probe succeeds, so auto-navigating
-     * only flashes a page the guest can never get back to. Both variants must
-     * ship in the markup — which one shows is decided client-side by the
-     * html.is-cna class, since the user agent is the only signal available.
+     * Nothing on this page may connect or navigate on its own. The old 5s
+     * auto-redirect fired after the firewall was already open, which is the
+     * exact race that destroyed the window before the guest could read it.
      */
-    public function test_success_page_ships_both_the_browser_and_assistant_variants(): void
+    public function test_success_page_never_navigates_or_connects_by_itself(): void
     {
-        $response = $this->get(route('portal.success'));
+        $this->redeemPendingVoucher();
+        $this->mockIdentityOnly();
 
-        $response->assertOk();
-        $response->assertSee('browser-only', false);
-        $response->assertSee('cna-only', false);
-        $response->assertSee('isCaptiveAssistant', false);
+        $content = $this->getSuccessPage()->getContent();
+
+        $this->assertStringNotContainsString('window.location.href', $content);
+        $this->assertStringNotContainsString('setInterval', $content);
+        $this->assertStringNotContainsString('neverssl', $content);
+        // Going online is a form the guest submits, never something automatic.
+        $this->assertStringContainsString(route('portal.activate'), $content);
     }
 
     /**
-     * The auto-redirect must stay gated on the assistant check. Without the
-     * gate the assistant navigates mid-teardown, which is the failure this
-     * whole split exists to prevent.
+     * Reached without a redeemed voucher — a stale bookmark, or the back button
+     * after expiry. Showing a success page there would simply be false.
      */
-    public function test_success_page_auto_redirect_is_gated_on_the_assistant_check(): void
+    public function test_success_page_redirects_when_there_is_no_redeemed_voucher(): void
     {
-        $content = $this->get(route('portal.success'))->getContent();
+        $this->mockIdentityOnly();
 
-        $this->assertStringContainsString(
-            'reducedMotion || window.isCaptiveAssistant()',
-            $content,
-            'The countdown redirect must be skipped inside a captive-network assistant.'
-        );
+        $this->getSuccessPage()->assertRedirect(route('portal.index'));
     }
 
     public function test_browse_url_is_configurable_rather_than_a_hardcoded_domain(): void
     {
         Setting::set('portal_browse_url', 'http://example.test');
+        $this->redeemPendingVoucher();
 
-        $response = $this->get(route('portal.success'));
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('resolveMacForIp')->andReturn('AA:BB:CC:DD:EE:FF');
+            $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('authorizeDevice')->andReturn(true);
+        });
+        // Tier provisioning is TrafficShapingServiceTest's subject, not this
+        // test's — left real it reaches back into the OPNsense mock above.
+        $this->mock(TrafficShapingService::class, fn ($mock) => $mock->shouldReceive('assignTier'));
 
-        $response->assertSee('http://example.test', false);
+        $this->withServerVariables(['REMOTE_ADDR' => '192.168.2.50'])
+            ->post(route('portal.activate'))
+            ->assertRedirect('http://example.test');
     }
 
     /**
@@ -137,33 +166,13 @@ class CaptivePortalStatusPageTest extends TestCase
      */
     public function test_no_third_party_fallback_when_browse_url_is_unset(): void
     {
-        $content = $this->get(route('portal.success'))->getContent();
-
-        $this->assertStringNotContainsString('neverssl', $content);
-    }
-
-    /**
-     * With no outbound destination configured the fallback is the portal
-     * itself, so the secondary button would point at the same place as the
-     * primary one directly above it. Suppress it rather than render a
-     * duplicate.
-     */
-    public function test_duplicate_browse_button_is_suppressed_when_it_targets_the_portal(): void
-    {
         // Setting::get caches rememberForever, and the cache outlives
         // RefreshDatabase — without this the value another test wrote is still
         // sitting there and the "unset" half of this test is meaningless.
         Cache::forget('setting.portal_browse_url');
+        $this->redeemPendingVoucher();
+        $this->mockIdentityOnly();
 
-        $content = $this->get(route('portal.success'))->getContent();
-
-        // Assert on the rendered anchor, not the words — the surrounding
-        // script carries explanatory comments that mention the button by name.
-        $this->assertStringNotContainsString('<span>Start Browsing</span>', $content);
-
-        Setting::set('portal_browse_url', 'http://example.test');
-        $configured = $this->get(route('portal.success'))->getContent();
-
-        $this->assertStringContainsString('<span>Start Browsing</span>', $configured);
+        $this->assertStringNotContainsString('neverssl', $this->getSuccessPage()->getContent());
     }
 }

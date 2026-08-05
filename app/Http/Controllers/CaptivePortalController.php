@@ -189,7 +189,7 @@ class CaptivePortalController extends Controller
     }
 
     // Show the main captive portal page
-    public function index(Request $request, OpnSenseService $opnsense)
+    public function index(Request $request, OpnSenseService $opnsense, TrafficShapingService $shaping)
     {
         // 1. Capture OPNsense redirect parameters
         if ($request->has('clientIp')) {
@@ -206,6 +206,25 @@ class CaptivePortalController extends Controller
 
         // 2. Check if already connected
         $activeSession = $this->liveSessionFor($ip, $mac, $opnsense);
+
+        // Recover an abandoned redemption. Since authenticate() now claims the
+        // voucher without opening the firewall, a guest whose sign-in window
+        // died before they tapped through would otherwise be left holding a
+        // spent code and no internet. activated_at is what makes this safe to
+        // do automatically: it is only null for a voucher that has never been
+        // let through, so this cannot re-open a session the guest deliberately
+        // disconnected or that EnforceSessionLimits reaped.
+        if (! $activeSession) {
+            $pending = $this->activeVoucherFor($ip, $mac);
+
+            if ($pending && ! $pending->activated_at && $this->secondsRemainingOn($pending) && ! $this->isMacBanned($mac)) {
+                Log::info("Portal: recovering unactivated voucher {$pending->code} for {$ip}.");
+
+                if ($this->grantAccess($pending, $ip, $opnsense, $shaping)) {
+                    $activeSession = $this->liveSessionFor($ip, $mac, $opnsense);
+                }
+            }
+        }
 
         if ($activeSession) {
             // VERIFY IF VOUCHER IS STILL VALID
@@ -282,7 +301,7 @@ class CaptivePortalController extends Controller
             'passcode' => 'required|string',
         ]);
 
-        return DB::transaction(function () use ($request, $opnsense, $shaping) {
+        return DB::transaction(function () use ($request, $opnsense) {
             // 1. Verify the Lawa't Voucher in your Database.
             // Codes are issued uppercase (VoucherService), the field renders
             // uppercase, and a phone keyboard will happily add a trailing space
@@ -324,14 +343,17 @@ class CaptivePortalController extends Controller
                 return back()->with('error', 'This device has been blocked from network access. Please see staff for assistance.');
             }
 
-            // 2. Authorize via backend API first
-            $authorized = $opnsense->authorizeDevice($ip, $voucher->code);
-
-            if (! $authorized) {
-                return back()->with('error', 'Failed to communicate with the firewall. Please try again.');
-            }
-
-            // 3. Mark voucher as used in the database
+            // Claim the voucher for this device, but do NOT open the firewall
+            // yet — that is what activate() does.
+            //
+            // Authorizing here is what made the portal appear to close itself
+            // the instant a guest typed a valid code: the phone's captive
+            // assistant probes for connectivity constantly, and the moment that
+            // probe succeeds the OS destroys the window. The success page, which
+            // is the only place we tell the guest how to watch their remaining
+            // time, was racing that teardown and losing. With no internet yet,
+            // the assistant stays open and the guest reads the page in their own
+            // time before tapping through.
             $voucher->update([
                 'is_used' => true,
                 'used_at' => now(),
@@ -339,10 +361,56 @@ class CaptivePortalController extends Controller
                 'mac_address' => $mac,
             ]);
 
-            $shaping->assignTier($voucher, $ip, $opnsense);
-
             return redirect()->route('portal.success');
         });
+    }
+
+    /**
+     * Open the firewall for a device that has already redeemed a voucher.
+     *
+     * Split out of authenticate() so the guest, not the OS, decides when their
+     * sign-in window goes away. Safe to call more than once: a voucher that is
+     * already activated with a live session short-circuits, so a double tap or
+     * a retry can't double-charge anyone's time.
+     */
+    public function activate(Request $request, OpnSenseService $opnsense, TrafficShapingService $shaping)
+    {
+        [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
+
+        if ($this->isMacBanned($mac)) {
+            Log::warning("Portal activate: rejected banned device {$mac} ({$ip}).");
+
+            return redirect()->route('portal.index')->with('error', 'This device has been blocked from network access. Please see staff for assistance.');
+        }
+
+        $voucher = $this->activeVoucherFor($ip, $mac);
+
+        if (! $this->secondsRemainingOn($voucher)) {
+            return redirect()->route('portal.index')->with('error', 'Your session has expired. Please enter a new voucher.');
+        }
+
+        if (! $this->grantAccess($voucher, $ip, $opnsense, $shaping)) {
+            return redirect()->route('portal.success')->with('error', 'Failed to communicate with the firewall. Please try again.');
+        }
+
+        return redirect()->away($this->browseUrl());
+    }
+
+    /**
+     * Authorize a redeemed voucher's device on OPNsense and apply its speed
+     * tier. The single place the firewall is opened, shared by activate() and
+     * index()'s recovery path so the two can't drift.
+     */
+    private function grantAccess(Voucher $voucher, string $ip, OpnSenseService $opnsense, TrafficShapingService $shaping): bool
+    {
+        if (! $opnsense->authorizeDevice($ip, $voucher->code)) {
+            return false;
+        }
+
+        $voucher->update(['activated_at' => now()]);
+        $shaping->assignTier($voucher, $ip, $opnsense);
+
+        return true;
     }
 
     // Handle e-wallet receipt uploads
@@ -476,18 +544,39 @@ class CaptivePortalController extends Controller
     }
 
     /**
-     * Show the success page after connection.
+     * The page a guest lands on straight after redeeming a code.
+     *
+     * This is the one moment the portal has the guest's full attention with
+     * the sign-in window still guaranteed to be alive — the firewall has not
+     * been opened yet, so the OS has no reason to tear it down. It therefore
+     * has to carry everything they need: how long they bought, and where to
+     * come back to watch it tick down.
      */
-    public function success()
+    public function success(Request $request, OpnSenseService $opnsense)
     {
-        // Plain HTTP on purpose: this link exists to make the phone's
-        // captive-network assistant notice working internet and dismiss
-        // itself. An HTTPS target defeats that (the assistant can't complete
-        // the handshake pre-validation on some stacks), and an HSTS-preloaded
-        // host would silently upgrade and do the same. Configurable so the
-        // shop isn't permanently tied to a third-party domain.
+        [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
+
+        $voucher = $this->activeVoucherFor($ip, $mac);
+        $secondsRemaining = $this->secondsRemainingOn($voucher);
+
+        // Reached without a redeemed voucher (a stale bookmark, a back button
+        // after expiry) — there is nothing to activate, so send them to the
+        // code entry form rather than showing a success page that lies.
+        if (! $secondsRemaining) {
+            return redirect()->route('portal.index');
+        }
+
         return view('portal.success', [
+            // Plain HTTP on purpose: this link exists to make the phone's
+            // captive-network assistant notice working internet and dismiss
+            // itself. An HTTPS target defeats that (the assistant can't complete
+            // the handshake pre-validation on some stacks), and an HSTS-preloaded
+            // host would silently upgrade and do the same. Configurable so the
+            // shop isn't permanently tied to a third-party domain.
             'browseUrl' => $this->browseUrl(),
+            'durationMinutes' => $voucher->duration_minutes,
+            'expiresAt' => $voucher->used_at->copy()->addMinutes($voucher->duration_minutes),
+            'alreadyActive' => $voucher->activated_at !== null,
         ]);
     }
 }
