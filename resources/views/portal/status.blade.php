@@ -97,22 +97,32 @@
             <div class="flex-1 min-h-0 overflow-hidden sm:overflow-y-auto px-4 py-4 sm:px-6 sm:py-8 lg:px-16 lg:py-10 no-scrollbar relative z-10 flex flex-col">
 
                 <!-- Tab: Status -->
-                <div x-show="activeTab === 'status'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-8" x-transition:enter-end="opacity-100 translate-y-0" class="flex flex-col h-full flex-1 justify-center" x-cloak>
-                    <div class="text-center mb-10 shrink-0">
-                        <div class="inline-block p-4 rounded-full bg-green-50 border border-green-100 mb-6 shadow-sm">
-                            <x-lucide-shield-check class="w-8 h-8 text-green-600" stroke-width="2.5" />
+                {{-- Scrolls on its own. The wrapper above is overflow-hidden so the
+                     AI tab's message list can be the scroll container, but that
+                     took this tab's scrolling with it — on a phone the Disconnect
+                     button sat below the fold with no way to reach it. Each tab
+                     now owns its own overflow instead of sharing the wrapper's.
+
+                     justify-center is gone with it: centring content taller than
+                     the box pushes the top AND bottom out of reach. --}}
+                <div x-show="activeTab === 'status'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-8" x-transition:enter-end="opacity-100 translate-y-0" class="flex flex-col h-full flex-1 min-h-0 overflow-y-auto no-scrollbar sm:justify-center" x-cloak>
+                    {{-- Collapsed on phones so the cards and the Disconnect button
+                         below fit without a hunt. Unchanged from sm up. --}}
+                    <div class="text-center mb-4 sm:mb-10 shrink-0">
+                        <div class="inline-block p-2 sm:p-4 rounded-full bg-green-50 border border-green-100 mb-2 sm:mb-6 shadow-sm">
+                            <x-lucide-shield-check class="w-5 h-5 sm:w-8 sm:h-8 text-green-600" stroke-width="2.5" />
                         </div>
-                        <h2 class="text-3xl lg:text-5xl font-black text-[#3E2723] mb-3 tracking-tight">You're Online</h2>
-                        <p class="text-xs lg:text-base text-[#8D6E63] font-medium max-w-md mx-auto px-4">Your device is authenticated. Enjoy your premium stay at Lawa't Kape!</p>
+                        <h2 class="text-xl sm:text-3xl lg:text-5xl font-black text-[#3E2723] mb-1 sm:mb-3 tracking-tight">You're Online</h2>
+                        <p class="hidden sm:block text-xs lg:text-base text-[#8D6E63] font-medium max-w-md mx-auto px-4">Your device is authenticated. Enjoy your premium stay at Lawa't Kape!</p>
                     </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 max-w-4xl mx-auto w-full px-2">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-10 max-w-4xl mx-auto w-full px-2">
                         {{-- role="timer" with aria-live="off" on purpose: the label changes
                              every second, and a polite live region would make a screen reader
                              read the clock aloud once a second and talk over everything else.
                              The label instead exposes the whole value on demand, so it can be
                              queried whenever the guest actually wants it. --}}
-                        <div class="bg-amber-50 border-2 border-amber-200/50 rounded-3xl p-6 shadow-sm col-span-2 flex flex-col items-center justify-center transition-all hover:bg-amber-100/50 group"
+                        <div class="bg-amber-50 border-2 border-amber-200/50 rounded-3xl p-4 sm:p-6 shadow-sm col-span-2 flex flex-col items-center justify-center transition-all hover:bg-amber-100/50 group"
                              role="timer" aria-live="off"
                              :aria-label="`Time remaining: ${remainingLabel} ${remainingUnit}`">
                             <span class="text-[10px] font-black text-amber-800 uppercase tracking-widest mb-2 group-hover:scale-110 transition-transform" aria-hidden="true">Time Remaining</span>

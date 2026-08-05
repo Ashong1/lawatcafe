@@ -102,12 +102,18 @@ command; both are idempotent and report by default, writing only with `--apply`.
 
 | Layer | Applies to | Command | Objects |
 |---|---|---|---|
-| Fair-use ceiling | every device on `lan` | `shaper:fair-use {mbps} --apply` | `lawatcafe_fairuse_down`/`_up` pipes + 2 **Shaper** rules |
-| Per-tier caps | members of a tier alias | `shaper:tiers --apply` | `lawatcafe_{free,premium}_{down,up}` pipes + 4 **filter** rules |
+| Fair-use ceiling | every device on `lan` | `shaper:fair-use {mbps} --apply` | `lawatcafe_fairuse_down`/`_up` pipes + 2 filter rules (seq 11-12) |
+| Per-tier caps | members of a tier alias | `shaper:tiers --apply` | `lawatcafe_{free,premium}_{down,up}` pipes + 4 filter rules (seq 101-104) |
 
-The tier rules are sequenced after the fair-use rules and do not short-circuit,
-so a guest in a tier gets their tier's cap while everything in no tier — the
-POS, the application server, Pi-hole, staff devices — keeps the ceiling.
+**Both layers live in the pf filter table**, and that is load-bearing. The
+Shaper's own rule table is evaluated independently of pf sequence, so while the
+fair-use cap lived there its `any`/`any` rule silently beat every per-tier rule
+and a free guest measured the 20 Mbit ceiling. With all six rules in one table
+and `quick` disabled, sequence decides: the catch-all sits at 11-12, the tier
+rules at 101-104, and a tier member's higher-sequence rule is the one whose pipe
+applies. Everything in no tier — the POS, this server, Pi-hole, staff — falls to
+the ceiling. `shaper:fair-use` deletes any rule it finds still in the Shaper
+table, since leaving one there reintroduces exactly that fault.
 
 **Why the ceiling is 20 Mbit and not the free tier's value.** The captive portal
 zone is bound to `lan`, and so is everything else the shop runs; there is no

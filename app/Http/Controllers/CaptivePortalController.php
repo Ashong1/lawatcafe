@@ -390,7 +390,7 @@ class CaptivePortalController extends Controller
 
         return $request->wantsJson()
             ? response()->json(['success' => false, 'message' => $message], 422)
-            : back()->with('error', $message);
+            : redirect()->route('portal.index')->with('error', $message);
     }
 
     // Handle standard passcode entry
@@ -426,8 +426,13 @@ class CaptivePortalController extends Controller
             // a single generic message for both makes it impossible for a guest
             // (or the staff helping them) to tell whether they mistyped the code
             // or are trying to reuse one that already worked.
+            // route('portal.index'), never back(). A phone's sign-in window sends
+            // no Referer, so back() falls through to '/' — which redirects to the
+            // staff login page. The error flash was being consumed there and
+            // never shown, so a guest who mistyped their code just saw the form
+            // reset with no explanation at all.
             if (! $voucher) {
-                return back()->with('error', 'That code doesn\'t match any voucher — double-check it against your receipt.');
+                return redirect()->route('portal.index')->with('error', 'That code doesn\'t match any voucher — double-check it against your receipt.');
             }
 
             [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
@@ -435,7 +440,7 @@ class CaptivePortalController extends Controller
             if ($this->isMacBanned($mac)) {
                 Log::warning("Portal authenticate: rejected banned device {$mac} ({$ip}).");
 
-                return back()->with('error', 'This device has been blocked from network access. Please see staff for assistance.');
+                return redirect()->route('portal.index')->with('error', 'This device has been blocked from network access. Please see staff for assistance.');
             }
 
             // A redeemed voucher is not automatically a spent one. The guest
@@ -452,7 +457,7 @@ class CaptivePortalController extends Controller
                 $secondsRemaining = $this->secondsRemainingOn($voucher);
 
                 if (! $secondsRemaining) {
-                    return back()->with('error', 'This code has already been used and its time has run out.');
+                    return redirect()->route('portal.index')->with('error', 'This code has already been used and its time has run out.');
                 }
 
                 // Redeemed against no device at all — nothing to match on, so
@@ -460,13 +465,13 @@ class CaptivePortalController extends Controller
                 // separate from the "another device" branch below because
                 // claiming a specific rival device exists would be a guess.
                 if (empty($voucher->mac_address_hash) && empty($voucher->ip_address)) {
-                    return back()->with('error', 'This code has already been used.');
+                    return redirect()->route('portal.index')->with('error', 'This code has already been used.');
                 }
 
                 if (! $this->voucherBelongsTo($voucher, $ip, $mac)) {
                     Log::warning("Portal authenticate: {$mac} ({$ip}) tried to reuse voucher {$voucher->code} bound to another device.");
 
-                    return back()->with('error', 'This code is already in use on another device.');
+                    return redirect()->route('portal.index')->with('error', 'This code is already in use on another device.');
                 }
 
                 // Same device, time still on the clock. Re-point the voucher at
@@ -567,7 +572,7 @@ class CaptivePortalController extends Controller
 
         return $request->wantsJson()
             ? response()->json(['success' => false, 'message' => $message], 422)
-            : back()->with('error', $message);
+            : redirect()->route('portal.index')->with('error', $message);
     }
 
     public function chat(Request $request, AIService $ai, OpnSenseService $opnsense, ConversationHistoryService $conversations, ChatStreamResponder $responder)

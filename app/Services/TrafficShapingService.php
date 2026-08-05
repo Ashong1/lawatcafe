@@ -139,37 +139,78 @@ class TrafficShapingService
             return false;
         }
 
-        $existing = $opnsense->readShaperConfig();
-        $sequence = 0;
+        $existingPipes = $opnsense->readShaperConfig()['pipes'] ?? [];
+        $existingRules = $opnsense->readFilterRules();
+        $sequence = 10;
 
         foreach (self::DIRECTIONS as $direction) {
             $sequence++;
             $name = $opnsense->shaperObjectName(self::FAIR_USE_TIER, $direction);
 
-            $pipeUuid = $opnsense->upsertShaperPipe(self::FAIR_USE_TIER, $direction, $mbps, $existing['pipes'][$name] ?? null);
+            $pipeUuid = $opnsense->upsertShaperPipe(self::FAIR_USE_TIER, $direction, $mbps, $existingPipes[$name] ?? null);
             if (! $pipeUuid) {
                 $this->lastError = "OPNsense rejected the bandwidth pipe '{$name}'.";
 
                 return false;
             }
 
-            // null alias = source/destination "any". The per-IP mask on the pipe
-            // is what keeps this a ceiling per device rather than a shared total.
-            $ruleUuid = $opnsense->upsertShaperRule(self::FAIR_USE_TIER, $direction, $pipeUuid, null, $sequence, $existing['rules'][$name] ?? null);
+            // A FILTER rule matching any/any, not a Shaper rule. The two are
+            // separate tables: a Shaper rule catches traffic independently of pf
+            // sequence, so while this cap lived there it silently beat every
+            // per-tier filter rule and put free guests on the 20 Mbit ceiling.
+            // With both in the filter table, sequence decides — this sits below
+            // the tier rules, and since they do not short-circuit, a tier
+            // member's higher-sequence rule is the one whose pipe applies.
+            $ruleUuid = $opnsense->upsertTierFilterRule(
+                self::FAIR_USE_TIER,
+                $direction,
+                $pipeUuid,
+                'any',
+                $sequence,
+                $existingRules[$name] ?? null
+            );
+
             if (! $ruleUuid) {
-                $this->lastError = "OPNsense rejected the shaper rule '{$name}'.";
+                $this->lastError = "OPNsense rejected the fair-use rule '{$name}'.";
 
                 return false;
             }
         }
 
+        $this->retireLegacyShaperRules($opnsense);
+
         if (! $opnsense->reconfigureShaper()) {
-            $this->lastError = 'The pipes and rules were written, but the shaper would not reload — they are staged, not live.';
+            $this->lastError = 'The pipes were written but the shaper would not reload.';
+
+            return false;
+        }
+
+        if (! $opnsense->applyFilterRules()) {
+            $this->lastError = 'The firewall rules were written but would not apply — they are staged, not live.';
 
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Delete any rule still sitting in the Shaper's own table.
+     *
+     * Everything this app provisions lives in the filter table now. A leftover
+     * Shaper rule is not inert — it matches independently of pf sequence and
+     * overrides the per-tier rules — so it has to go rather than simply stop
+     * being written.
+     */
+    private function retireLegacyShaperRules(OpnSenseService $opnsense): void
+    {
+        foreach ($opnsense->readShaperConfig()['rules'] ?? [] as $name => $uuid) {
+            if ($opnsense->deleteShaperRule($uuid)) {
+                Log::info("Traffic shaping: retired legacy shaper rule {$name} — the same cap is a filter rule now.");
+            } else {
+                Log::warning("Traffic shaping: could not retire legacy shaper rule {$name}; it may still override per-tier rules.");
+            }
+        }
     }
 
     /**

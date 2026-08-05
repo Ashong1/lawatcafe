@@ -997,6 +997,32 @@ class OpnSenseService
         }
     }
 
+    /**
+     * Remove a rule from the Shaper's own table.
+     *
+     * Used to retire the fair-use rules once the same cap moved to the filter
+     * table. Leaving both in place is not merely untidy: the two are separate
+     * rule tables, so a Shaper rule matching any/any catches traffic
+     * independently of pf sequence and silently wins over a per-tier filter
+     * rule — which is exactly how a free guest ended up on the 20 Mbit ceiling.
+     */
+    public function deleteShaperRule(string $uuid): bool
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return false;
+        }
+
+        try {
+            $response = $this->client()->post("{$this->baseUrl}/api/trafficshaper/settings/delRule/{$uuid}");
+
+            return $response->successful() && ($response->json('result') ?? null) !== 'failed';
+        } catch (\Exception $e) {
+            Log::error("OPNsense: Exception deleting shaper rule {$uuid}: ".$e->getMessage());
+
+            return false;
+        }
+    }
+
     /** Filter rules are staged until applied; without this they never take effect. */
     public function applyFilterRules(): bool
     {
