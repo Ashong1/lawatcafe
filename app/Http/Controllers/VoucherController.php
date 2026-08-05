@@ -51,15 +51,43 @@ class VoucherController extends Controller
      */
     public function generateBatch(Request $request)
     {
+        // duration_minutes carries either a preset's minute count or the literal
+        // "custom", in which case the real number arrives alongside it. Keeping
+        // the preset select plainly named means the form still submits without
+        // JavaScript; only the custom branch needs the second field.
         $request->validate([
             'quantity' => 'required|integer|min:1|max:100',
-            'duration_minutes' => 'required|integer|min:1',
+            'duration_minutes' => ['required', function ($attribute, $value, $fail) {
+                if ($value === 'custom') {
+                    return;
+                }
+
+                // Must still be a positive integer, exactly as before the custom
+                // branch existed — "is an integer" alone would let a negative
+                // preset through and produce vouchers that are born expired.
+                $minutes = filter_var($value, FILTER_VALIDATE_INT);
+
+                if ($minutes === false || $minutes < 1) {
+                    $fail('Choose a duration, or pick "Custom duration" to enter your own.');
+                }
+            }],
+            // 30 days. Not a policy limit so much as a typo guard — a voucher
+            // measured in years is always a slipped keystroke, and it would sit
+            // in the sessions list forever.
+            'custom_duration_minutes' => 'required_if:duration_minutes,custom|nullable|integer|min:1|max:43200',
             'tier' => 'nullable|in:free,premium',
+        ], [
+            'custom_duration_minutes.required_if' => 'Enter how many minutes the voucher should last.',
+            'custom_duration_minutes.max' => 'A voucher can last at most 43,200 minutes (30 days).',
         ]);
+
+        $minutes = $request->duration_minutes === 'custom'
+            ? (int) $request->custom_duration_minutes
+            : (int) $request->duration_minutes;
 
         $result = $this->vouchers->generateBatch(
             (int) $request->quantity,
-            (int) $request->duration_minutes,
+            $minutes,
             auth()->id(),
             'human',
             $request->input('tier', 'free'),

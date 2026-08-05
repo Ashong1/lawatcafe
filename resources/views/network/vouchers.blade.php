@@ -219,12 +219,32 @@
 
                 <div class="mb-8">
                     <label for="duration_minutes" class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Voucher Duration</label>
-                    <select id="duration_minutes" name="duration_minutes" required class="w-full p-3 border @error('duration_minutes') border-red-500 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
+                    {{-- The presets stay a plain named select, so this still works
+                         with no JS at all; "custom" is the only branch that needs
+                         Alpine, and it reveals a second field rather than trying to
+                         make one input mean two things. --}}
+                    <select id="duration_minutes" name="duration_minutes" required x-model="durationChoice" class="w-full p-3 border @error('duration_minutes') border-red-500 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
                         @foreach($durations as $price => $mins)
                             <option value="{{ $mins }}">₱{{ $price }} - {{ $mins >= 1440 ? 'Whole Day' : ($mins >= 60 ? ($mins/60) . ' Hour(s)' : $mins . ' Mins') }}</option>
                         @endforeach
+                        <option value="custom">Custom duration&hellip;</option>
                     </select>
                     <x-field-error name="duration_minutes" />
+
+                    <div x-show="durationChoice === 'custom'" x-cloak class="mt-3">
+                        <label for="custom_duration_minutes" class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Minutes</label>
+                        <input type="number" id="custom_duration_minutes" name="custom_duration_minutes"
+                               min="1" max="43200" step="1"
+                               value="{{ old('custom_duration_minutes') }}"
+                               placeholder="e.g. 90"
+                               {{-- Never `required` while hidden: the browser refuses to
+                                    submit a form containing an invalid required field it
+                                    cannot scroll to, which would deadlock the presets. --}}
+                               x-bind:required="durationChoice === 'custom'"
+                               class="w-full p-3 border @error('custom_duration_minutes') border-red-500 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
+                        <p class="mt-2 text-[10px] text-[#8D6E63] font-medium">Anything from 1 minute up to 30 days (43,200 minutes).</p>
+                        <x-field-error name="custom_duration_minutes" />
+                    </div>
                 </div>
 
                 <div class="mb-8">
@@ -250,6 +270,11 @@
         return {
             isModalOpen: {{ (request('action') === 'generate' || $errors->any()) ? 'true' : 'false' }},
             submitting: false,
+            // Seeded from old input so a failed validation round-trip reopens the
+            // modal still showing the custom field the admin was filling in.
+            // Falls back to the first preset, not '' — x-model owns the select's
+            // value, and an empty seed would clear the default selection.
+            durationChoice: @js((string) old('duration_minutes', collect($durations)->first() ?? 60)),
             selectedVouchers: [],
             vouchers: {!! json_encode($vouchers->pluck('id')) !!},
             get allSelected() {
