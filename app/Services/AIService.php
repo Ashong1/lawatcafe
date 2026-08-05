@@ -1515,7 +1515,16 @@ Return ONLY a JSON array, at most 5 items:
                 return null;
             }
             $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=".$this->geminiKey;
-            $prompt = "A customer just ordered '{$itemName}'. In under 12 words, write a friendly one-line suggestion to also get '{$suggestedName}'. No markdown, no quotes.";
+            // Written as the line the CASHIER SAYS, not a description of the
+            // pairing. The old prompt asked for "a friendly suggestion", which
+            // produced blurbs about the products — true, but nothing a barista
+            // can read out to the person in front of them. What is actually
+            // useful at a till is the sentence itself.
+            $prompt = 'You are helping a cashier at a Filipino coffee shop offer a customer something extra. '
+                ."The customer just ordered: {$itemName}. You want to offer them: {$suggestedName}. "
+                .'Write ONLY the one sentence the cashier should say out loud to the customer. '
+                .'Speak directly to the customer using "you". Keep it under 15 words, warm and natural, the way a real barista talks — not a slogan and not pushy. '
+                .'No markdown, no quotation marks, no emoji, no preamble.';
 
             $response = Http::timeout(2)->post($url, [
                 'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],

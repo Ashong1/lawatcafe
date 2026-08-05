@@ -33,9 +33,17 @@
      x-transition:leave-end="opacity-0 -translate-y-1"
      class="shrink-0 mb-3 p-3 rounded-xl border border-amber-200 bg-amber-50 flex items-center gap-3" style="display: none;">
     <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-        <x-lucide-sparkles class="w-4 h-4 text-amber-700" />
+        <x-lucide-message-circle class="w-4 h-4 text-amber-700" />
     </div>
-    <p class="flex-1 text-[11px] font-bold text-amber-900 leading-snug" x-text="suggestion && suggestion.message"></p>
+    {{-- Labelled and quoted so it reads as a line to say, not a note about the
+         products. A cashier glancing at this mid-order needs to know instantly
+         that it is speakable as-is. --}}
+    <div class="flex-1 min-w-0">
+        <span class="block text-[8px] font-black uppercase tracking-[0.2em] text-amber-700/70 mb-0.5">Say to customer</span>
+        {{-- Real quote characters, not HTML entities: x-text sets textContent,
+             so an entity would show up literally as &ldquo; on screen. --}}
+        <p class="text-[11px] font-bold text-amber-900 leading-snug" x-text="suggestion && '“' + suggestion.message + '”'"></p>
+    </div>
     <button type="button" @click="addSuggestion()" class="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition">Add</button>
     <button type="button" @click="dismissSuggestion()" aria-label="Dismiss suggestion" class="shrink-0 w-6 h-6 flex items-center justify-center text-amber-700/50 hover:text-amber-900 transition">
         <x-lucide-x class="w-3.5 h-3.5" />

@@ -160,6 +160,25 @@
                         <label for="category-description" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Description (Optional)</label>
                         <textarea id="category-description" name="description" x-model="formData.description" rows="2" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-medium" placeholder="Brief description of this group..."></textarea>
                     </div>
+
+                    {{-- Drives the POS pairing suggestion: it offers the opposite
+                         kind, so a drink prompts a pastry and a pastry prompts a
+                         drink. Without this the fallback could only pick "some
+                         other category", which on a menu with two drink
+                         categories meant suggesting a second drink. --}}
+                    <div class="mt-4">
+                        <label class="flex items-start gap-3 p-3 rounded-xl border-2 border-[#F0E6D2] bg-[#FAFAFA] cursor-pointer hover:border-[#3E2723] transition-all">
+                            {{-- The hidden 0 makes an unchecked box submit a value;
+                                 without it the field is simply absent and could never
+                                 be turned back off. --}}
+                            <input type="hidden" name="is_food" value="0">
+                            <input type="checkbox" id="category-is-food" name="is_food" value="1" x-model="formData.is_food" class="mt-0.5 w-4 h-4 rounded border-2 border-[#D7CCC8] text-[#3E2723] focus:ring-[#3E2723]">
+                            <span>
+                                <span class="block text-[10px] font-black text-[#3E2723] uppercase tracking-widest">This is food, not a drink</span>
+                                <span class="block text-[10px] text-[#6D4C41] font-medium mt-0.5">Tick for pastries and snacks. The POS suggests food with drinks, and drinks with food.</span>
+                            </span>
+                        </label>
+                    </div>
                 </div>
 
                 <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
@@ -180,13 +199,13 @@
             suggesting: false,
             modalTitle: 'Add New Category',
             formAction: '{{ route('inventory.categories.store') }}',
-            formData: { id: null, name: '', description: '', icon: 'coffee', color: '#3E2723' },
+            formData: { id: null, name: '', description: '', icon: 'coffee', color: '#3E2723', is_food: false },
 
             openAddModal() {
                 this.isEditing = false;
                 this.modalTitle = 'Add New Category';
                 this.formAction = '{{ route('inventory.categories.store') }}';
-                this.formData = { id: null, name: '', description: '', icon: 'coffee', color: '#3E2723' };
+                this.formData = { id: null, name: '', description: '', icon: 'coffee', color: '#3E2723', is_food: false };
                 this.submitting = false;
                 this.isModalOpen = true;
             },
@@ -194,7 +213,10 @@
                 this.isEditing = true;
                 this.modalTitle = 'Edit Category';
                 this.formAction = `/inventory/categories/${category.id}`;
-                this.formData = { ...category };
+                // Cast: the model sends a real boolean, but a category saved
+                // before this column existed arrives as 0/1 and x-model on a
+                // checkbox needs an actual boolean to tick the box.
+                this.formData = { ...category, is_food: Boolean(category.is_food) };
                 this.submitting = false;
                 this.isModalOpen = true;
             },

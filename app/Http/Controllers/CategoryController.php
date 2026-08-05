@@ -44,7 +44,12 @@ class CategoryController extends Controller
             'icon' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:7',
             'sort_order' => 'nullable|integer',
+            // Unchecked checkboxes are simply absent from the payload, so this
+            // is normalised below rather than defaulted in the rules.
+            'is_food' => 'nullable|boolean',
         ]);
+
+        $validated['is_food'] = $request->boolean('is_food');
 
         $validated['slug'] = Str::slug($validated['name']);
 
@@ -61,7 +66,12 @@ class CategoryController extends Controller
             'icon' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:7',
             'sort_order' => 'nullable|integer',
+            // Unchecked checkboxes are simply absent from the payload, so this
+            // is normalised below rather than defaulted in the rules.
+            'is_food' => 'nullable|boolean',
         ]);
+
+        $validated['is_food'] = $request->boolean('is_food');
 
         $validated['slug'] = Str::slug($validated['name']);
 

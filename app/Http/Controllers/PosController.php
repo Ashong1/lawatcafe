@@ -351,7 +351,14 @@ class PosController extends Controller
         }
 
         $itemName = Product::find($request->product_id)?->name ?? 'that item';
-        $message = $ai->phraseSuggestion($itemName, $suggestion['name']) ?? "Pairs well with {$suggestion['name']}!";
+
+        // Both the AI line and this fallback are things the cashier SAYS to the
+        // customer. The fallback used to be "Pairs well with X!" — a fact about
+        // the products, which leaves the barista to compose the actual sentence
+        // themselves in front of a waiting customer. A spoken line can just be
+        // read out, and reads the same whether or not the AI answered in time.
+        $message = $ai->phraseSuggestion($itemName, $suggestion['name'])
+            ?? "Would you like a {$suggestion['name']} to go with that?";
 
         return response()->json([
             'suggestion' => [

@@ -8,7 +8,9 @@ use Illuminate\Support\Str;
 
 class Category extends Model
 {
-    protected $fillable = ['name', 'slug', 'description', 'icon', 'color', 'sort_order'];
+    protected $fillable = ['name', 'slug', 'description', 'icon', 'color', 'sort_order', 'is_food'];
+
+    protected $casts = ['is_food' => 'boolean'];
 
     /**
      * The menu context groups products by category name, so renaming or
