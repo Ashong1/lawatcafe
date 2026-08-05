@@ -7,6 +7,7 @@ use App\Models\StaticIpAssignment;
 use App\Models\Voucher;
 use App\Services\GhostDeviceDetectionService;
 use App\Services\OpnSenseService;
+use App\Services\QrCodeService;
 use App\Services\TrafficShapingService;
 use App\Services\VoucherService;
 use Carbon\Carbon;
@@ -129,7 +130,16 @@ class VoucherController extends Controller
      */
     public function print(Voucher $voucher)
     {
-        return view('network.print-voucher', compact('voucher'));
+        return view('network.print-voucher', [
+            'voucher' => $voucher,
+            // The slip is the one thing the customer physically keeps, so it is
+            // where the "check my remaining time" QR belongs — scanning it opens
+            // the status page in their own browser with nothing typed. Rendered
+            // inline as SVG: a printed slip has no network to fetch an image
+            // from. See QrCodeService.
+            'portalQr' => app(QrCodeService::class)->svg(route('portal.index'), 110),
+            'portalUrl' => route('portal.index'),
+        ]);
     }
 
     /**
@@ -144,7 +154,14 @@ class VoucherController extends Controller
 
         $vouchers = Voucher::whereIn('id', $request->ids)->get();
 
-        return view('network.print-vouchers-batch', compact('vouchers'));
+        // One QR for the whole batch: every slip points at the same status
+        // page, so encoding it once and reusing the markup keeps a 50-voucher
+        // print from doing 50 identical encodes.
+        return view('network.print-vouchers-batch', [
+            'vouchers' => $vouchers,
+            'portalQr' => app(QrCodeService::class)->svg(route('portal.index'), 90),
+            'portalUrl' => route('portal.index'),
+        ]);
     }
 
     /**

@@ -13,6 +13,7 @@ use App\Services\Agent\LessonLibrary;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
 use App\Services\OpnSenseService;
+use App\Services\QrCodeService;
 use App\Services\TrafficShapingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -677,6 +678,14 @@ class CaptivePortalController extends Controller
             // host would silently upgrade and do the same. Configurable so the
             // shop isn't permanently tied to a third-party domain.
             'browseUrl' => $this->browseUrl(),
+            // Scannable route back to this page. The sign-in window is destroyed
+            // by the OS the moment the device goes online and cannot hand a URL
+            // to the real browser, and this Kea build cannot advertise DHCP
+            // option 114 for the native remaining-time display (see
+            // docs/INFRASTRUCTURE.md), so a code the guest can scan — from their
+            // voucher slip, or from a companion device — is the only route left
+            // that involves no typing.
+            'portalQr' => app(QrCodeService::class)->svg(route('portal.index'), 132),
             'durationMinutes' => $voucher->duration_minutes,
             'expiresAt' => $voucher->used_at->copy()->addMinutes($voucher->duration_minutes),
             'alreadyActive' => $voucher->activated_at !== null,

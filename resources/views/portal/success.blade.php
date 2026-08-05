@@ -89,7 +89,18 @@
                          the firewall opens, an assistant window is destroyed by the
                          OS without warning, and even a real browser tab gets closed.
                          This is where they come back to watch the clock. --}}
-                    <p class="text-xs lg:text-sm text-[#3E2723] font-bold mb-3">To check your remaining time later, open this in your browser:</p>
+                    <p class="text-xs lg:text-sm text-[#3E2723] font-bold mb-3">To check your remaining time later, scan the code on your voucher slip &mdash; or open this address:</p>
+
+                    {{-- Also shown here so a companion device can scan it, and so
+                         the guest recognises the same code on their slip. The
+                         phone reading this page cannot scan its own screen, which
+                         is exactly why the slip carries it too. --}}
+                    @if(!empty($portalQr))
+                        <div class="flex justify-center mb-3">
+                            <div class="bg-white p-2 rounded-xl border border-amber-200">{!! $portalQr !!}</div>
+                        </div>
+                    @endif
+
                     <p class="font-mono text-xs lg:text-sm font-black text-[#3E2723] bg-white/70 border border-amber-200 rounded-xl py-3 px-4 select-all break-all">{{ route('portal.index') }}</p>
                 </div>
 
