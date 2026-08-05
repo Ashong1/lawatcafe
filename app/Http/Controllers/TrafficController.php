@@ -26,7 +26,11 @@ class TrafficController extends Controller
     public function update(Request $request, OpnSenseService $opnsense, TrafficShapingService $shaping)
     {
         $validated = $request->validate([
-            'bw_fair_use_mbps' => 'required|numeric|min:1|max:1000',
+            // nullable, not required. A page loaded before this field existed
+            // submits without it, and rejecting the whole save for a value that
+            // is already stored helps nobody — the browser tab is stale, the
+            // setting is not. Falls back to the saved ceiling below.
+            'bw_fair_use_mbps' => 'nullable|numeric|min:1|max:1000',
             'bw_free_up' => 'required|numeric|min:0.1',
             'bw_free_down' => 'required|numeric|min:0.1',
             'bw_premium_up' => 'required|numeric|min:0.1',
@@ -35,7 +39,11 @@ class TrafficController extends Controller
         ]);
 
         foreach ($validated as $key => $value) {
-            Setting::set($key, $value);
+            // Skip nulls: an omitted optional field means "leave it alone", not
+            // "blank it out".
+            if ($value !== null) {
+                Setting::set($key, $value);
+            }
         }
 
         // Provision the fair-use ceiling, not the per-tier chain. The per-tier
@@ -45,7 +53,9 @@ class TrafficController extends Controller
         // nothing but "any" for source and destination, so a rule matching a
         // tier alias is rejected outright. Attempting it made Save fail every
         // single time while the setting had in fact been stored.
-        $applied = $shaping->applyFairUseCap((float) $validated['bw_fair_use_mbps'], $opnsense);
+        $mbps = (float) ($validated['bw_fair_use_mbps'] ?? Setting::get('bw_fair_use_mbps', 20));
+
+        $applied = $shaping->applyFairUseCap($mbps, $opnsense);
 
         if (! $applied) {
             // Report what actually failed. The old wording blamed the
@@ -57,7 +67,7 @@ class TrafficController extends Controller
             return redirect()->back()->with('error', 'Settings saved, but the fair-use ceiling could not be applied. '.$reason);
         }
 
-        return redirect()->back()->with('success', "Settings saved. A {$validated['bw_fair_use_mbps']} Mbps per-device ceiling is now live on the guest network.");
+        return redirect()->back()->with('success', "Settings saved. A {$mbps} Mbps per-device ceiling is now live on the guest network.");
     }
 
     public function stats(OpnSenseService $opnsense)

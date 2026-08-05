@@ -192,4 +192,60 @@ class FairUseCapTest extends TestCase
         $response->assertSee('Fair-Use Ceiling', false);
         $response->assertSee('recorded, not enforced', false);
     }
+
+    /**
+     * The exact report: an admin with the Bandwidth page already open when this
+     * field shipped submitted the old form and got "The bw fair use mbps field
+     * is required" — a hard failure over a value that was already stored. A
+     * stale tab is not a reason to refuse the whole save.
+     */
+    public function test_a_form_submitted_without_the_new_field_still_saves(): void
+    {
+        Setting::set('bw_fair_use_mbps', '20');
+        Cache::forget('setting.bw_fair_use_mbps');
+        $this->fakeOpnsense();
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('network.traffic.update'), [
+                // No bw_fair_use_mbps at all — the pre-deploy form.
+                'bw_free_down' => 2, 'bw_free_up' => 1,
+                'bw_premium_down' => 10, 'bw_premium_up' => 5,
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
+
+        // And the stored ceiling is what got applied, not zero or null.
+        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'addPipe')
+            || ($request['pipe']['bandwidth'] ?? null) === '20');
+    }
+
+    /** An omitted optional field means "leave it alone", never "blank it out". */
+    public function test_an_omitted_ceiling_does_not_erase_the_stored_one(): void
+    {
+        Setting::set('bw_fair_use_mbps', '35');
+        Cache::forget('setting.bw_fair_use_mbps');
+        $this->fakeOpnsense();
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('network.traffic.update'), [
+                'bw_free_down' => 2, 'bw_free_up' => 1,
+                'bw_premium_down' => 10, 'bw_premium_up' => 5,
+            ])->assertSessionHas('success');
+
+        Cache::forget('setting.bw_fair_use_mbps');
+        $this->assertSame('35', Setting::get('bw_fair_use_mbps'));
+    }
+
+    /** A value that IS sent still has to be sane. */
+    public function test_an_out_of_range_ceiling_is_still_rejected(): void
+    {
+        $this->fakeOpnsense();
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('network.traffic.update'), [
+                'bw_fair_use_mbps' => 0,
+                'bw_free_down' => 2, 'bw_free_up' => 1,
+                'bw_premium_down' => 10, 'bw_premium_up' => 5,
+            ])->assertSessionHasErrors('bw_fair_use_mbps');
+    }
 }
