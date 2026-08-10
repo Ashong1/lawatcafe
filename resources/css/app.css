@@ -324,6 +324,45 @@ html {
     }
 }
 
+/* Collapsed desktop sidebar — the icon rail.
+   `lk-sidebar-rail` is bound from the same `sidebarOpen` flag that drives the
+   column's width and the labels' visibility, so the three can never disagree.
+   Scoped to lg and up on purpose: below that the sidebar is an off-canvas drawer
+   at full width and always shows its labels, so it is never a rail.
+   With the labels display:none'd, the icons were left stranded at the padding
+   they use when there is a label beside them — a column of icons hugging the left
+   edge of an otherwise empty 5rem column. The selectors match only top-level nav
+   rows (direct links, and the buttons that open a submenu); submenu panels
+   collapse to zero height in this state and never render. Overriding Tailwind's
+   px-3 / justify-between needs the extra class in the selector to win on
+   specificity, which is why this is here rather than a utility on each row. */
+@media (min-width: 1024px) {
+    .lk-sidebar-rail nav > a,
+    .lk-sidebar-rail nav > div > button {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    /* The wordmark is gone at this width, so the cup centres itself rather than
+       staying at the left inset it uses when it sits beside "Lawa't Kape". */
+    .lk-sidebar-rail .lk-brand-mark {
+        left: 50%;
+        margin-right: 0;
+        transform: translateX(-50%);
+    }
+}
+
+/* The iOS home-indicator inset, exposed as a plain custom property so JavaScript
+   can read it. env() is only usable inside CSS values, and the floating chat
+   widget is positioned from JS (left/top in px), so it has no other way to learn
+   how much of the bottom of the viewport is unsafe to sit in. Substituted at
+   computed-value time, which means getComputedStyle() returns a real px length;
+   readers still parseFloat with a 0 fallback for anything that does not. */
+:root {
+    --lk-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -23,7 +23,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{-- viewport-fit=cover lets the layout extend under the iOS home indicator;
+         everything that needs to stay clear of it uses env(safe-area-inset-bottom)
+         (see <main> below and the floating chat's clampPosition()). --}}
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Admin - Lawa't Kape</title>
     
     <!-- Favicons -->
@@ -145,16 +148,50 @@
     <aside
         class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transition-transform duration-300 ease-in-out
                lg:static lg:z-20 lg:max-w-none lg:translate-x-0 lg:flex-none lg:transition-[width] lg:[will-change:width]
-               bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl shrink-0 relative [view-transition-name:app-sidebar]
-               {{ $sidebarOpen ? 'lg:w-64' : 'lg:w-20' }}"
-        :class="[mobileNavOpen ? 'translate-x-0' : '-translate-x-full', sidebarOpen ? 'lg:w-64' : 'lg:w-20']">
+               {{-- No `relative` here. Tailwind emits the position utilities in a
+                    fixed order (.static, .fixed, .absolute, .relative, .sticky) at
+                    equal specificity, so an element carrying both `fixed` and
+                    `relative` resolves to relative — the later rule wins. That
+                    silently cancelled the `fixed` above: below lg the drawer stayed
+                    in the flex flow, took its full 288px off a 390px phone, and then
+                    translated itself off-screen, leaving an empty 288px gutter with
+                    the page crushed into what was left. Nothing inside is positioned
+                    against this element, so it does not need a containing block. --}}
+               bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl shrink-0 [view-transition-name:app-sidebar]
+               {{ $sidebarOpen ? 'lg:w-64' : 'lg:w-20 lk-sidebar-rail' }}"
+        {{-- Object syntax, NOT the array form this used to use. Alpine's array/string
+             class binding only removes classes it added itself, and `lg:w-64` is
+             already in the static class attribute above (server-rendered so the
+             sidebar paints at the right width before Alpine boots). So collapsing
+             added `lg:w-20` without ever removing `lg:w-64` — and since Tailwind
+             emits .lg\:w-64 after .lg\:w-20 at equal specificity, the wider rule won
+             and the collapse button did nothing. The object form removes falsy keys
+             outright, server-rendered or not. --}}
+        :class="{
+            'translate-x-0': mobileNavOpen,
+            '-translate-x-full': ! mobileNavOpen,
+            'lg:w-64': sidebarOpen,
+            'lg:w-20': ! sidebarOpen,
+            {{-- Marker for the collapsed icon-rail treatment in app.css: with the
+                 labels display:none'd, the icons need centring in the narrow column
+                 rather than sitting at their expanded left padding. A single state
+                 flag rather than a per-item binding, so width, labels and icon
+                 alignment cannot drift apart — they all read `sidebarOpen`. --}}
+            'lk-sidebar-rail': ! sidebarOpen,
+        }">
         
         <div class="h-20 flex items-center px-6 border-b border-[#5D4037] shrink-0 overflow-hidden relative">
-            <x-lucide-coffee class="w-8 h-8 text-amber-500 mr-2 shrink-0 absolute left-6" />
+            <x-lucide-coffee class="lk-brand-mark w-8 h-8 text-amber-500 mr-2 shrink-0 absolute left-6" />
             <div class="flex items-baseline whitespace-nowrap ml-10 transition-opacity duration-300" :class="navLabelsVisible ? 'opacity-100' : 'opacity-0 invisible'">
                 <span class="text-3xl font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-xs font-bold tracking-[0.2em] uppercase opacity-90">Kape</span>
             </div>
+            {{-- Until now the drawer could only be dismissed by hitting the backdrop
+                 or Escape, neither of which is discoverable on a phone. --}}
+            <button @click="mobileNavOpen = false" aria-label="Close menu"
+                    class="lg:hidden absolute right-4 p-2 rounded-lg text-[#A1887F] hover:text-white hover:bg-[#4E342E] transition">
+                <x-lucide-x class="w-5 h-5" />
+            </button>
         </div>
 
         {{-- When a submenu is expanded this nav overflows and becomes its own
@@ -438,12 +475,16 @@
         </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="navLabelsVisible" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.115</span>
+            <span x-show="navLabelsVisible" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.116</span>
             <span x-show="!navLabelsVisible" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
 
-    <div class="flex-1 flex flex-col overflow-hidden [contain:layout_style]">
+    {{-- min-w-0: a flex child's default min-width is `auto`, i.e. its own
+         min-content size, so a single wide descendant (a table, a nowrap header)
+         can push this column wider than the viewport no matter what flex-1 says.
+         Zeroing it lets the column actually shrink to the phone's width. --}}
+    <div class="flex-1 min-w-0 flex flex-col overflow-hidden [contain:layout_style]">
         
         {{-- No flex-wrap: on a phone this header used to wrap onto two or three
              rows and push the page down. Everything below is either sized to
@@ -452,7 +493,7 @@
 
             {{-- Two buttons rather than one that guesses the viewport: below lg
                  it opens the drawer, from lg it collapses the column. --}}
-            <button @click="mobileNavOpen = true" aria-label="Open menu" class="lg:hidden text-[#3E2723] hover:bg-[#FDF8F5] p-2 -ml-2 rounded-lg transition focus:outline-none flex items-center justify-center shrink-0">
+            <button @click="mobileNavOpen = ! mobileNavOpen" :aria-expanded="mobileNavOpen ? 'true' : 'false'" aria-label="Toggle menu" class="lg:hidden text-[#3E2723] hover:bg-[#FDF8F5] p-2 -ml-2 rounded-lg transition focus:outline-none flex items-center justify-center shrink-0">
                 <x-lucide-menu class="w-6 h-6" />
             </button>
             <button @click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar" class="hidden lg:flex text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none items-center justify-center">
@@ -490,7 +531,15 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
+        {{-- Padding is written per-axis rather than as `p-4 sm:p-6 lg:p-8` so the
+             bottom can be set independently: below lg the floating Barista AI
+             button parks itself over the bottom-right of this scroller, and with a
+             symmetric padding the last row of any page sat permanently underneath
+             it. The extra room (button + its gap + the iOS home indicator) lets
+             that row scroll clear. From lg the button has a wide margin of its own
+             and POS locks the viewport height, so the padding goes back to 2rem. --}}
+        <main class="flex-1 overflow-x-hidden overflow-y-auto px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8
+                     pb-[calc(6.5rem+env(safe-area-inset-bottom))] lg:pb-8">
             @yield('content')
         </main>
     </div>

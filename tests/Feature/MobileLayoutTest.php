@@ -47,8 +47,17 @@ class MobileLayoutTest extends TestCase
         $this->assertMatchesRegularExpression('/<aside\b[^>]*\bfixed\b/', $html);
         $this->assertMatchesRegularExpression('/<aside\b[^>]*\blg:static\b/', $html);
 
+        // `fixed` only holds if nothing later in the same declaration re-positions
+        // the element. It carried a `relative` for a while, which beat it on source
+        // order and quietly put the column back into the flow.
+        preg_match('/<aside\s+class="([^"]*)"/', $html, $m);
+        $this->assertNotContains('relative', preg_split('/\s+/', trim($m[1])),
+            '`relative` on the sidebar overrides `fixed` — the drawer goes back into the flex flow.');
+
         // Off-screen until asked for, and never off-screen on a desktop.
-        $this->assertStringContainsString("mobileNavOpen ? 'translate-x-0' : '-translate-x-full'", $html);
+        // Object syntax rather than the array form: see the note on the binding.
+        $this->assertStringContainsString("'translate-x-0': mobileNavOpen", $html);
+        $this->assertStringContainsString("'-translate-x-full': ! mobileNavOpen", $html);
         $this->assertMatchesRegularExpression('/<aside\b[^>]*\blg:translate-x-0\b/', $html);
 
         // A backdrop to tap, and a way out that isn't hunting for it.
@@ -83,13 +92,23 @@ class MobileLayoutTest extends TestCase
         $html = $this->actingAs(User::factory()->create(['role' => $role]))
             ->get($url)->assertOk()->getContent();
 
-        $this->assertMatchesRegularExpression('/<button\b[^>]*@click="mobileNavOpen = true"[^>]*\blg:hidden\b/', $html);
+        // A toggle, not a one-way open: tapping the same button again is the first
+        // thing anyone tries to close a drawer with.
+        $this->assertMatchesRegularExpression('/<button\b[^>]*@click="mobileNavOpen = ! mobileNavOpen"[^>]*\blg:hidden\b/', $html);
+        // Plus an explicit X inside the drawer — backdrop-tap is not discoverable.
+        $this->assertMatchesRegularExpression('/<button\b[^>]*@click="mobileNavOpen = false"[^>]*aria-label="Close menu"/', $html);
         $this->assertMatchesRegularExpression('/<button\b[^>]*@click="sidebarOpen = !sidebarOpen"[^>]*\bhidden lg:flex\b/', $html);
     }
 
     /**
      * 32px of padding on each side of a 390px screen spends a sixth of the
      * width on nothing.
+     *
+     * Written per-axis rather than as the `p-4 sm:p-6 lg:p-8` shorthand it used
+     * to be, because the bottom now has a separate job: below lg the floating
+     * chat button parks over the bottom-right of this scroller, and the last row
+     * of every page sat underneath it. Expressed as a shorthand, `sm:p-6` and
+     * `lg:p-8` are emitted after the bottom-padding rule and would wipe it out.
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('shells')]
     public function test_main_padding_steps_up_with_the_viewport(string $role, string $url): void
@@ -97,7 +116,27 @@ class MobileLayoutTest extends TestCase
         $html = $this->actingAs(User::factory()->create(['role' => $role]))
             ->get($url)->assertOk()->getContent();
 
-        $this->assertMatchesRegularExpression('/<main\b[^>]*\bp-4 sm:p-6 lg:p-8\b/', $html);
+        $this->assertMatchesRegularExpression('/<main\b[^>]*\bpx-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8\b/s', $html);
+        // Nothing may set padding on all four sides at once here — see above.
+        $this->assertDoesNotMatchRegularExpression('/<main\b[^>]*\bp-4 sm:p-6 lg:p-8\b/', $html);
+    }
+
+    /**
+     * Room for the last row to scroll clear of the floating chat button, and for
+     * the iOS home indicator underneath it now that the layout opts into
+     * viewport-fit=cover.
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('shells')]
+    public function test_main_reserves_space_for_the_floating_chat_button(string $role, string $url): void
+    {
+        $html = $this->actingAs(User::factory()->create(['role' => $role]))
+            ->get($url)->assertOk()->getContent();
+
+        $this->assertStringContainsString('pb-[calc(6.5rem+env(safe-area-inset-bottom))]', $html);
+        // From lg the button has a wide margin of its own and POS locks the
+        // viewport height, so the reserve is handed back.
+        $this->assertMatchesRegularExpression('/<main\b[^>]*\blg:pb-8\b/s', $html);
+        $this->assertStringContainsString('content="width=device-width, initial-scale=1, viewport-fit=cover"', $html);
     }
 
     /**

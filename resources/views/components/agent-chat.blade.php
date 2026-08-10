@@ -495,7 +495,19 @@ document.addEventListener('alpine:init', () => {
             // control) — reserve its ~80px (button + margin) here too, or a
             // window sized against the full viewport height would push that
             // button off the bottom of a short screen with nowhere to clamp it.
-            return Math.min(550, window.innerHeight - 32 - 80);
+            return Math.min(550, window.innerHeight - 32 - 80 - this.safeBottom());
+        },
+
+        // With viewport-fit=cover the layout viewport now runs underneath the iOS
+        // home indicator, so window.innerHeight includes ground the widget must
+        // not park on. Read once per call rather than cached: the inset changes
+        // on rotation, and this is a cheap style read on an already-styled root.
+        safeBottom() {
+            const raw = getComputedStyle(document.documentElement)
+                .getPropertyValue('--lk-safe-bottom');
+            const px = parseFloat(raw);
+
+            return Number.isFinite(px) ? px : 0;
         },
 
         // Shared bound, used everywhere position is set WITHOUT being a direct
@@ -512,7 +524,7 @@ document.addEventListener('alpine:init', () => {
             // screen — hence a lower bound that depends on open state, where the
             // upper bound used to.
             const minY = this.open ? this.chatHeight() + 16 + 16 : 16;
-            const maxY = Math.max(minY, window.innerHeight - 80);
+            const maxY = Math.max(minY, window.innerHeight - 80 - this.safeBottom());
 
             this.posX = Math.min(Math.max(this.posX, 16), maxX);
             this.posY = Math.min(Math.max(this.posY, minY), maxY);

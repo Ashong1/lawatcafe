@@ -13,7 +13,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{-- See layouts/admin.blade.php for why viewport-fit=cover. --}}
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Staff - Lawa't Kape</title>
     
     <!-- Favicons -->
@@ -130,16 +131,33 @@
     <aside
         class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transition-transform duration-300 ease-in-out
                lg:static lg:z-20 lg:max-w-none lg:translate-x-0 lg:flex-none lg:transition-[width] lg:[will-change:width]
-               bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl shrink-0 relative [view-transition-name:app-sidebar]
-               {{ $sidebarOpen ? 'lg:w-64' : 'lg:w-20' }}"
-        :class="[mobileNavOpen ? 'translate-x-0' : '-translate-x-full', sidebarOpen ? 'lg:w-64' : 'lg:w-20']">
+               {{-- No `relative` here — it would beat the `fixed` above. See the
+                    long note on the same element in layouts/admin.blade.php. --}}
+               bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl shrink-0 [view-transition-name:app-sidebar]
+               {{ $sidebarOpen ? 'lg:w-64' : 'lg:w-20 lk-sidebar-rail' }}"
+        {{-- Object syntax so the server-rendered `lg:w-64` is actually removed on
+             collapse — see the note on the same element in layouts/admin.blade.php. --}}
+        :class="{
+            'translate-x-0': mobileNavOpen,
+            '-translate-x-full': ! mobileNavOpen,
+            'lg:w-64': sidebarOpen,
+            'lg:w-20': ! sidebarOpen,
+            {{-- Centres the icons when collapsed — see app.css and the note in
+                 layouts/admin.blade.php. --}}
+            'lk-sidebar-rail': ! sidebarOpen,
+        }">
         
         <div class="h-20 flex items-center px-6 border-b border-[#5D4037] shrink-0 overflow-hidden relative">
-            <x-lucide-coffee class="w-8 h-8 text-amber-500 mr-2 shrink-0 absolute left-6" />
+            <x-lucide-coffee class="lk-brand-mark w-8 h-8 text-amber-500 mr-2 shrink-0 absolute left-6" />
             <div class="flex items-baseline whitespace-nowrap ml-10 transition-opacity duration-300" :class="navLabelsVisible ? 'opacity-100' : 'opacity-0 invisible'">
                 <span class="text-3xl font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-xs font-bold tracking-[0.2em] uppercase opacity-90">Kape</span>
             </div>
+            {{-- Discoverable way out of the drawer — backdrop-tap and Escape are not. --}}
+            <button @click="mobileNavOpen = false" aria-label="Close menu"
+                    class="lg:hidden absolute right-4 p-2 rounded-lg text-[#A1887F] hover:text-white hover:bg-[#4E342E] transition">
+                <x-lucide-x class="w-5 h-5" />
+            </button>
         </div>
 
         {{-- See the matching comment in layouts/admin.blade.php: clicking a
@@ -250,12 +268,14 @@
             </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="navLabelsVisible" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.115</span>
+            <span x-show="navLabelsVisible" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.116</span>
             <span x-show="!navLabelsVisible" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
 
-    <div class="flex-1 flex flex-col overflow-hidden [contain:layout_style]">
+    {{-- min-w-0 so this column can shrink below its min-content width — see the
+         note on the same element in layouts/admin.blade.php. --}}
+    <div class="flex-1 min-w-0 flex flex-col overflow-hidden [contain:layout_style]">
         
         {{-- No flex-wrap: on a phone this header wrapped onto two or three rows
              and pushed the page down. Everything here fits one row or hides
@@ -263,7 +283,7 @@
         <header class="min-h-14 h-auto py-2 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center justify-between gap-3 px-4 sm:px-6 z-10 shrink-0 [view-transition-name:app-header]">
 
             {{-- Below lg this opens the drawer; from lg it collapses the column. --}}
-            <button @click="mobileNavOpen = true" aria-label="Open menu" class="lg:hidden text-[#3E2723] hover:bg-[#FDF8F5] p-2 -ml-2 rounded-lg transition focus:outline-none flex items-center justify-center shrink-0">
+            <button @click="mobileNavOpen = ! mobileNavOpen" :aria-expanded="mobileNavOpen ? 'true' : 'false'" aria-label="Toggle menu" class="lg:hidden text-[#3E2723] hover:bg-[#FDF8F5] p-2 -ml-2 rounded-lg transition focus:outline-none flex items-center justify-center shrink-0">
                 <x-lucide-menu class="w-6 h-6" />
             </button>
             <button @click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar" class="hidden lg:flex text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none items-center justify-center">
@@ -300,7 +320,10 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
+        {{-- Per-axis padding so the bottom can clear the floating chat button —
+             see the note on the same element in layouts/admin.blade.php. --}}
+        <main class="flex-1 overflow-x-hidden overflow-y-auto px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8
+                     pb-[calc(6.5rem+env(safe-area-inset-bottom))] lg:pb-8">
             @yield('content')
         </main>
     </div>

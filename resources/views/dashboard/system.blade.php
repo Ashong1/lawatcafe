@@ -14,15 +14,21 @@
     <div class="max-w-7xl mx-auto">
 
         <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
-                <h2 class="flex items-center gap-3 text-[#3E2723]">
-                    <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                    <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">System Control</span>
+            <div class="min-w-0">
+                {{-- flex-wrap plus a smaller step at the bottom end: "System Control"
+                     is set in uppercase at 0.2em tracking, which is wide enough that
+                     the two halves of this title together overran a 320-360px
+                     viewport and clipped. Given room they sit on one line exactly as
+                     before; below that the words drop to a second line rather than
+                     running off the edge. Desktop sizes are untouched. --}}
+                <h2 class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#3E2723]">
+                    <span class="text-2xl sm:text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                    <span class="text-sm sm:text-lg md:text-xl font-bold tracking-[0.15em] sm:tracking-[0.2em] uppercase sm:mt-2">System Control</span>
                 </h2>
                 <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Infrastructure, network and AI stack health.</p>
             </div>
-            <div class="flex flex-col items-end gap-3">
-                <div class="flex flex-wrap items-center gap-2 justify-end">
+            <div class="flex flex-col items-start md:items-end gap-3 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 md:justify-end">
                     <a href="{{ route('admin.settings.network') }}" class="bg-[#3E2723] text-white px-5 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-[#271815] transition-all shadow-lg active:scale-95">
                         <x-lucide-server-cog class="w-4 h-4" />
                         Network Settings
@@ -37,7 +43,11 @@
         </div>
 
         {{-- Row 1: the four things worth waking up for --}}
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+        {{-- One up on a phone. Two of these side by side on a 360px screen leaves
+             ~150px per tile, which is not enough for a label like "Pending AI
+             Actions" set in uppercase at 0.1em tracking without it wrapping into a
+             column of fragments. --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
             @php
                 $unhealthyJobs = collect($scheduledJobs)->where('healthy', false)->count();
                 $downProviders = collect($aiProviders)->filter(fn ($p) => $p['configured'] && $p['circuit']['open'])->count();
@@ -85,7 +95,12 @@
                     </div>
                 </div>
 
-                <div class="flex flex-row justify-center items-center w-full gap-4 md:gap-6 flex-1">
+                {{-- Four gauges in one row need ~350px; a 320px phone has ~240px of
+                     card interior. They pair up two-by-two below sm and go back to a
+                     single centred row from there, which is where the desktop
+                     appearance starts. --}}
+                <div class="grid grid-cols-2 place-items-center w-full gap-4 flex-1
+                            sm:flex sm:flex-row sm:justify-center sm:items-center md:gap-6">
                     <x-system-gauge label-top="CPU" label-bottom="Load" colour="amber" value-expr="Math.round(liveData.cpuLoad) + '%'" dash-expr="liveData.cpuLoad" :fallback="number_format($cpuLoad, 0) . '%'" />
                     <x-system-gauge label-top="Mem" label-bottom="Usage" colour="blue" value-expr="Math.round(liveData.memoryUsage) + '%'" dash-expr="liveData.memoryUsage" :fallback="number_format($memoryUsage, 0) . '%'" />
                     <x-system-gauge label-top="CPU" label-bottom="Temp" colour="red" value-expr="liveData.cpuTemp + '°'" dash-expr="Math.min(liveData.cpuTemp, 100)" :fallback="$cpuTemp . '°'" />
@@ -128,7 +143,11 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-row justify-around items-center w-full flex-1">
+                    {{-- Same two-by-two fold as the gauges above: four figures with
+                         "Paying Guests" / "Infra Nodes" underneath do not fit across
+                         a phone. --}}
+                    <div class="grid grid-cols-2 gap-4 w-full flex-1
+                                sm:flex sm:flex-row sm:justify-around sm:items-center">
                         <div class="flex flex-col items-center">
                             <div class="flex items-baseline gap-1 mb-1">
                                 <x-skeleton x-show="!liveData.hasRate" variant="block" size="h-6" class="w-16" />
