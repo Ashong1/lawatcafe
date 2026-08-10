@@ -38,6 +38,14 @@ class ChatStreamResponder
         ?ConversationHistoryService $conversations = null,
     ): StreamedResponse {
         return response()->stream(function () use ($messages, $audience, $actor, $context, $userMessage, $fallbackReply, $conversation, $conversations) {
+            // First byte, sent before any provider is contacted. Nothing renders
+            // it — the client ignores event types it does not know — but it
+            // forces the headers and the first chunk out through the reverse
+            // proxy immediately, and it starts the client's idle timer from a
+            // connection that is demonstrably open rather than from a request
+            // that may not have reached PHP at all.
+            $this->emit(['type' => 'open']);
+
             $onTextDelta = function (string $delta) {
                 $this->emit(['type' => 'delta', 'text' => $delta]);
             };

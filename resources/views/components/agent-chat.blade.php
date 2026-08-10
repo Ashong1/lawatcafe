@@ -61,6 +61,14 @@
                         <div class="p-3 rounded-2xl shadow-sm text-xs font-medium relative w-fit max-w-[85%] break-words whitespace-normal mx-1"
                              :class="msg.role === 'user' ? 'bg-[#3E2723] text-white self-end rounded-br-sm' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] self-start rounded-bl-sm'">
                             <span x-html="formatMarkdown(msg.content)" class="leading-relaxed"></span>
+                            {{-- The reply is still being written. Without this
+                                 there was no signal at all once the dots went
+                                 away, so any pause mid-answer looked like a
+                                 hang. No x-cloak: it lives inside an x-for
+                                 template, which nothing renders before Alpine
+                                 has booted and evaluated the condition. --}}
+                            <span x-show="msg.streaming" aria-hidden="true"
+                                  class="inline-block w-1.5 h-3 ml-0.5 -mb-0.5 bg-amber-500 rounded-sm animate-pulse"></span>
                         </div>
                     </template>
 
@@ -98,8 +106,8 @@
         <div class="flex gap-2 shrink-0 pt-3">
             <input type="text" x-model="message" @keydown.enter="send()" placeholder="Ask something..."
                    class="flex-1 bg-white border-2 border-[#F0E6D2] rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all shadow-sm text-[#3E2723] placeholder:font-medium"
-                   :disabled="thinking">
-            <button @click="send()" class="bg-[#3E2723] text-white px-4 py-3 rounded-2xl hover:bg-[#271815] transition shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center shrink-0" :disabled="thinking || !message.trim()">
+                   :disabled="streaming">
+            <button @click="send()" class="bg-[#3E2723] text-white px-4 py-3 rounded-2xl hover:bg-[#271815] transition shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center shrink-0" :disabled="streaming || !message.trim()">
                 <x-lucide-send class="w-5 h-5" />
             </button>
         </div>
@@ -223,6 +231,10 @@
                             <div class="max-w-[85%] p-4 rounded-2xl text-xs font-medium leading-relaxed shadow-sm"
                                  :class="msg.role === 'user' ? 'bg-[#3E2723] text-white rounded-tr-none' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] rounded-tl-none'">
                                 <span x-html="formatMarkdown(msg.content)"></span>
+                                {{-- Still-writing caret — see the note on the
+                                     same element in the floating variant. --}}
+                                <span x-show="msg.streaming" aria-hidden="true"
+                                      class="inline-block w-1.5 h-3 ml-0.5 -mb-0.5 bg-amber-500 rounded-sm animate-pulse"></span>
                             </div>
                             <span class="text-[8px] font-black uppercase tracking-widest text-[#6D4C41] mt-1.5 mx-1" x-text="msg.role === 'user' ? 'You' : @js($title)"></span>
                         </div>
@@ -289,10 +301,10 @@
             <input type="text" x-model="message" @keydown.enter="send()"
                    placeholder="Ask a question or request an action..."
                    class="flex-1 bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-[#3E2723] transition-all"
-                   :disabled="thinking">
+                   :disabled="streaming">
             <button @click="send()"
                     class="bg-[#3E2723] text-white p-3 rounded-xl hover:bg-[#271815] transition shadow-lg active:scale-90 disabled:opacity-50"
-                    :disabled="thinking || !message.trim()">
+                    :disabled="streaming || !message.trim()">
                 <x-lucide-send class="w-5 h-5" />
             </button>
         </div>
@@ -423,6 +435,23 @@ document.addEventListener('alpine:init', () => {
         open: false,
         message: '',
         thinking: false,
+
+        // True for the whole request, where `thinking` is only true until the
+        // first token lands. Everything that must stay locked until the reply is
+        // actually finished reads this one — sending a second message mid-stream
+        // used to be possible the moment text started, interleaving two replies
+        // into one transcript.
+        streaming: false,
+
+        // How long a silent stream is allowed to stay open.
+        //
+        // The worst legitimate gap is a provider stalling for its full ~18s
+        // stream timeout and the next model in the cascade then taking a few
+        // seconds to produce its first token — a bit over 20s of genuine
+        // silence, during which nothing is wrong. Sized above that with room to
+        // spare, while still well under the server's 60s conversation budget so
+        // a truly dead socket does not sit there for a minute.
+        IDLE_TIMEOUT_MS: 35000,
         toolStatusLabel: null,
         history: [
             { kind: 'text', role: 'assistant', content: config.greeting, isGreeting: true }
@@ -455,7 +484,13 @@ document.addEventListener('alpine:init', () => {
                 const saved = sessionStorage.getItem(this.storageKey);
                 if (saved) {
                     const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed) && parsed.length) this.history = parsed;
+                    // Nothing restored is still being written to. If the tab was
+                    // closed mid-stream the flag can be sitting in storage, and
+                    // it would come back as a caret blinking forever under a
+                    // reply that finished minutes ago.
+                    if (Array.isArray(parsed) && parsed.length) {
+                        this.history = parsed.map(m => m.streaming ? { ...m, streaming: false } : m);
+                    }
                 }
                 if (this.historyEnabled) {
                     const savedId = sessionStorage.getItem(this.conversationIdStorageKey);
@@ -590,7 +625,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         async send() {
-            if (!this.message.trim() || this.thinking) return;
+            if (!this.message.trim() || this.thinking || this.streaming) return;
 
             const userMsg = this.message;
             // Captured before pushing the new turn below, so this never has to
@@ -615,15 +650,42 @@ document.addEventListener('alpine:init', () => {
             this.history.push({ kind: 'text', role: 'user', content: userMsg });
             this.message = '';
             this.thinking = true;
+            this.streaming = true;
             this.toolStatusLabel = null;
             this.scrollToBottom();
             this.save();
 
-            // Client-side ceiling matching the worst-case server-side provider
-            // cascade, so a dead request reads as "slow, try again" rather than
-            // hanging indefinitely with no feedback.
+            // An IDLE timeout, not a total one, and that distinction is the whole
+            // bug this replaced.
+            //
+            // This used to be a flat `setTimeout(abort, 20000)` armed once when
+            // the request started. The server is allowed far longer than that —
+            // ToolCallOrchestrator budgets 60s for a conversation, and each of up
+            // to 5 round trips gets its own ~18s provider cascade — so any answer
+            // that took more than 20 seconds of wall clock was killed by the
+            // browser *while it was still streaming perfectly well*. The bubble
+            // stopped mid-sentence, and because the server carried on and
+            // persisted the finished reply, refreshing the page showed the rest
+            // of it. Exactly the reported symptom.
+            //
+            // Rearming on every chunk means "no data for a while" ends the
+            // request, which is what a stall actually looks like, while a long
+            // answer that is still arriving is left alone. The absolute ceiling
+            // below is only a backstop against a socket that dribbles forever.
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 20000);
+            let idleTimer = null;
+
+            const giveUpAfterSilence = () => {
+                clearTimeout(idleTimer);
+                idleTimer = setTimeout(() => controller.abort(), this.IDLE_TIMEOUT_MS);
+            };
+
+            // Comfortably past the server's own 60s conversation budget, so the
+            // client is never the first to give up on a request that is going to
+            // finish.
+            const hardStop = setTimeout(() => controller.abort(), 75000);
+
+            giveUpAfterSilence();
 
             // The in-progress assistant bubble streamed text gets appended into.
             // Stays null until the first real content delta arrives — a round
@@ -679,6 +741,12 @@ document.addEventListener('alpine:init', () => {
                     const { done, value } = await reader.read();
                     if (done) break;
 
+                    // Data arrived, so the stream is alive — push the deadline
+                    // back rather than counting down toward killing a working
+                    // response. Done on the raw chunk, not on parsed events: SSE
+                    // keep-alives and partial frames are evidence of life too.
+                    giveUpAfterSilence();
+
                     buffer += decoder.decode(value, { stream: true });
 
                     let boundary;
@@ -703,7 +771,13 @@ document.addEventListener('alpine:init', () => {
                             this.toolStatusLabel = this.labelForTool(event.tool);
                         } else if (event.type === 'delta') {
                             if (!assistantEntry) {
-                                assistantEntry = { kind: 'text', role: 'assistant', content: '' };
+                                // `streaming` stays true here where `thinking`
+                                // goes false. The dots are replaced by the
+                                // caret on this bubble — before, nothing at all
+                                // marked the reply as unfinished, so a pause
+                                // between tokens or a tool call part-way through
+                                // an answer was indistinguishable from a hang.
+                                assistantEntry = { kind: 'text', role: 'assistant', content: '', streaming: true };
                                 this.history.push(assistantEntry);
                                 this.thinking = false;
                             }
@@ -748,12 +822,27 @@ document.addEventListener('alpine:init', () => {
                     }
                 }
             } catch (error) {
-                const message = error.name === 'AbortError'
-                    ? "That's taking longer than expected — please try again."
-                    : "I'm sorry, I'm having trouble connecting right now.";
+                // A stream that produced text and then died is a different event
+                // from one that never connected, and saying "having trouble
+                // connecting" under half an answer is plainly untrue. The reply
+                // is finished and stored server-side either way, so the useful
+                // thing to say is where to find the rest of it.
+                const cutOffMidReply = assistantEntry && assistantEntry.content;
+
+                const message = cutOffMidReply
+                    ? '_(The connection dropped part-way through this reply. It finished on the server — reopen the chat or refresh to see all of it.)_'
+                    : (error.name === 'AbortError'
+                        ? "That's taking longer than expected — please try again."
+                        : "I'm sorry, I'm having trouble connecting right now.");
+
                 this.history.push({ kind: 'text', role: 'assistant', content: message });
             } finally {
-                clearTimeout(timeoutId);
+                clearTimeout(idleTimer);
+                clearTimeout(hardStop);
+                // However the stream ended, the bubble is no longer being
+                // written to — the caret must not be left blinking on it.
+                if (assistantEntry) assistantEntry.streaming = false;
+                this.streaming = false;
                 this.thinking = false;
                 this.toolStatusLabel = null;
                 this.scrollToBottom();
