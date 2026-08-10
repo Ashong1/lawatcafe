@@ -5,7 +5,7 @@
 @section('content')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div x-data="dashboardManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+<div x-data="dashboardManager()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
 
 <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -480,7 +480,7 @@
 </div>
 
     <!-- AI Insights Modal -->
-    <x-modal-shell show="showInsightsModal" max-width="2xl" panel-class="p-8 border-t-8 border-[#3E2723] max-h-[90vh] flex flex-col relative" labelled-by="ai-insights-heading">
+    <x-modal-shell show="showInsightsModal" max-width="2xl" panel-class="p-5 sm:p-8 border-t-8 border-[#3E2723] max-h-[90vh] flex flex-col relative" labelled-by="ai-insights-heading">
             <button @click="showInsightsModal = false" aria-label="Close" class="absolute top-6 right-6 text-[#6D4C41] hover:text-[#3E2723] transition">
                 <x-lucide-x class="w-6 h-6" />
             </button>

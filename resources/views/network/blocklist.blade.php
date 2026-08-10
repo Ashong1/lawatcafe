@@ -2,7 +2,7 @@
 @section('title', 'Network Blocklist')
 
 @section('content')
-<div class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+<div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
     
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -21,7 +21,7 @@
             </button>
 
             <!-- Ban Modal -->
-            <x-modal-shell show="showModal" max-width="xl" panel-class="p-8 border-t-8 border-red-600" labelled-by="ban-device-heading">
+            <x-modal-shell show="showModal" max-width="xl" panel-class="p-5 sm:p-8 border-t-8 border-red-600" labelled-by="ban-device-heading">
                     <h3 id="ban-device-heading" class="text-xl font-black text-[#3E2723] mb-2 uppercase tracking-tight">Restrict Network Access</h3>
                     <p class="text-xs text-[#8D6E63] mb-8 font-medium leading-relaxed">Enter the device details to permanently block it from connecting to the guest Wi-Fi.</p>
 

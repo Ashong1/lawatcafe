@@ -143,7 +143,10 @@ class SidebarMenuStateTest extends TestCase
 
         $response->assertOk();
         foreach (['inventory', 'network', 'settings', 'system'] as $section) {
-            $response->assertSee("x-bind:style=\"(menus.{$section} && sidebarOpen) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'\"", false);
+            // navLabelsVisible, not sidebarOpen: from lg it IS sidebarOpen, but
+            // below lg the sidebar is a drawer whose labels are always shown, so
+            // a submenu must expand there even with the desktop cookie collapsed.
+            $response->assertSee("x-bind:style=\"(menus.{$section} && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'\"", false);
         }
     }
 }

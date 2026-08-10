@@ -2,7 +2,7 @@
 @section('title', 'Staff Management')
 
 @section('content')
-<div x-data="accountManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+<div x-data="accountManager()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
         <div class="mb-8 border-b border-[#E6D5C3] pb-6">
             <h2 class="text-3xl font-black text-[#3E2723] tracking-wider uppercase italic" style="font-family: 'Dancing Script', cursive;">Lawa't <span class="font-sans not-italic font-bold text-[#4A3B32] text-2xl tracking-[0.2em]">STAFF MANAGEMENT</span></h2>
@@ -108,7 +108,7 @@
     </div>
 
     <!-- Account Modal -->
-    <x-modal-shell show="isModalOpen" max-width="xl" panel-class="p-8 border-t-8 border-[#3E2723]" labelled-by="account-modal-title">
+    <x-modal-shell show="isModalOpen" max-width="xl" panel-class="p-5 sm:p-8 border-t-8 border-[#3E2723]" labelled-by="account-modal-title">
             <h2 id="account-modal-title" class="text-2xl font-black text-[#3E2723] mb-2 uppercase tracking-tight" x-text="modalTitle"></h2>
             <p class="text-xs text-[#8D6E63] mb-8 font-medium">Configure authentication and system permission levels.</p>
 

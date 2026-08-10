@@ -95,7 +95,11 @@
             });
         @endif
       "
-      class="bg-[#FDF8F5] text-[#4A3B32] flex h-screen overflow-hidden font-sans" style="font-family: 'Montserrat', sans-serif;">
+      @keydown.escape.window="mobileNavOpen = false"
+      {{-- h-screen is 100vh, the viewport *without* the browser chrome, so on a
+           phone the bottom of the app sits under the URL bar. dvh tracks the
+           visible height; h-screen stays as the fallback. --}}
+      class="bg-[#FDF8F5] text-[#4A3B32] flex h-screen supports-[height:100dvh]:h-[100dvh] overflow-hidden font-sans" style="font-family: 'Montserrat', sans-serif;">
 
     <!-- Staff Support AI Floating Chat -->
     <x-agent-chat
@@ -108,13 +112,31 @@
         :history-enabled="true"
     />
 
+    {{-- Below lg the sidebar is an off-canvas drawer, not a column: as a flex
+         sibling it took 256px off a ~390px phone before the page got a pixel.
+         Desktop behaviour is unchanged from lg up. --}}
+    <div x-show="mobileNavOpen"
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="mobileNavOpen = false"
+         class="fixed inset-0 bg-black/60 z-40 lg:hidden"
+         aria-hidden="true"></div>
+
     <aside
-        class="{{ $sidebarOpen ? 'w-64' : 'w-20' }} flex-none bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl z-20 transition-[width] duration-300 ease-in-out shrink-0 relative [view-transition-name:app-sidebar] [will-change:width]"
-        :class="{ '!w-20': !sidebarOpen }">
+        class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transition-transform duration-300 ease-in-out
+               lg:static lg:z-20 lg:max-w-none lg:translate-x-0 lg:flex-none lg:transition-[width] lg:[will-change:width]
+               bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl shrink-0 relative [view-transition-name:app-sidebar]
+               {{ $sidebarOpen ? 'lg:w-64' : 'lg:w-20' }}"
+        :class="[mobileNavOpen ? 'translate-x-0' : '-translate-x-full', sidebarOpen ? 'lg:w-64' : 'lg:w-20']">
         
         <div class="h-20 flex items-center px-6 border-b border-[#5D4037] shrink-0 overflow-hidden relative">
             <x-lucide-coffee class="w-8 h-8 text-amber-500 mr-2 shrink-0 absolute left-6" />
-            <div class="flex items-baseline whitespace-nowrap ml-10 transition-opacity duration-300" :class="sidebarOpen ? 'opacity-100' : 'opacity-0 invisible'">
+            <div class="flex items-baseline whitespace-nowrap ml-10 transition-opacity duration-300" :class="navLabelsVisible ? 'opacity-100' : 'opacity-0 invisible'">
                 <span class="text-3xl font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-xs font-bold tracking-[0.2em] uppercase opacity-90">Kape</span>
             </div>
@@ -131,7 +153,7 @@
              @scroll.passive="saveNavScroll($event.target.scrollTop)">
             <a href="{{ route('staff.dashboard') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('staff.dashboard') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Staff Hub">
                 <x-lucide-layout-dashboard class="w-6 h-6 shrink-0 {{ request()->routeIs('staff.dashboard') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -143,7 +165,7 @@
             
             <a href="/pos" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('pos') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="POS Register">
                 <x-lucide-calculator class="w-6 h-6 shrink-0 {{ request()->is('pos') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -155,7 +177,7 @@
 
             <a href="/kds" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('kds') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Kitchen Display">
                 <x-lucide-chef-hat class="w-6 h-6 shrink-0 {{ request()->is('kds') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -167,7 +189,7 @@
 
             <a href="{{ route('pos.history') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('pos.history') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Order History">
                 <x-lucide-history class="w-6 h-6 shrink-0 {{ request()->routeIs('pos.history') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -179,7 +201,7 @@
 
             <a href="{{ route('staff.deliveries.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('staff.deliveries.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Receive Delivery">
                 <x-lucide-truck class="w-6 h-6 shrink-0 {{ request()->routeIs('staff.deliveries.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -191,7 +213,7 @@
 
             <a href="{{ route('network.vouchers.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.vouchers.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Vouchers">
                 <x-lucide-ticket class="w-6 h-6 shrink-0 {{ request()->routeIs('network.vouchers.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -203,7 +225,7 @@
 
             <a href="{{ route('network.sessions') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.sessions') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Active Sessions">
                 <x-lucide-wifi class="w-6 h-6 shrink-0 {{ request()->routeIs('network.sessions') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -215,7 +237,7 @@
 
             <a href="{{ route('ai.analysis.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('ai.analysis.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Findings History">
                 <x-lucide-radar class="w-6 h-6 shrink-0 {{ request()->routeIs('ai.analysis.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -228,30 +250,39 @@
             </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.112</span>
-            <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
+            <span x-show="navLabelsVisible" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.113</span>
+            <span x-show="!navLabelsVisible" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
 
     <div class="flex-1 flex flex-col overflow-hidden [contain:layout_style]">
         
-        <header class="min-h-14 h-auto py-2 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center flex-wrap justify-between gap-y-2 px-6 z-10 shrink-0 [view-transition-name:app-header]">
+        {{-- No flex-wrap: on a phone this header wrapped onto two or three rows
+             and pushed the page down. Everything here fits one row or hides
+             until there is room. --}}
+        <header class="min-h-14 h-auto py-2 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center justify-between gap-3 px-4 sm:px-6 z-10 shrink-0 [view-transition-name:app-header]">
 
-            <button @click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar" class="text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none flex items-center justify-center">
+            {{-- Below lg this opens the drawer; from lg it collapses the column. --}}
+            <button @click="mobileNavOpen = true" aria-label="Open menu" class="lg:hidden text-[#3E2723] hover:bg-[#FDF8F5] p-2 -ml-2 rounded-lg transition focus:outline-none flex items-center justify-center shrink-0">
+                <x-lucide-menu class="w-6 h-6" />
+            </button>
+            <button @click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar" class="hidden lg:flex text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none items-center justify-center">
                 <x-lucide-menu class="w-6 h-6" />
             </button>
 
-            <div class="flex items-center space-x-6">
+            <div class="flex items-center gap-1 sm:gap-3 lg:gap-6 min-w-0">
                 <x-notification-bell />
                 <x-agent-pending-badge :is-admin="false" />
 
                 <div class="hidden lg:block h-4 w-[1px] bg-[#F0E6D2]"></div>
 
-                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group cursor-pointer">
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group cursor-pointer min-w-0">
                     {{-- Reads the user's actual role — see admin.blade.php's
                          matching header and User::roleLabel(). --}}
                     <span class="hidden lg:inline text-[11px] uppercase tracking-widest text-[#6D4C41] group-hover:text-[#3E2723] transition font-bold">{{ Auth::user()->roleLabel() }}:</span>
-                    <span class="text-sm font-bold text-[#3E2723] group-hover:text-amber-700 transition">{{ Auth::user()->name }}</span>
+                    {{-- The one thing here that can grow without limit, so the
+                         one thing allowed to truncate. --}}
+                    <span class="text-sm font-bold text-[#3E2723] group-hover:text-amber-700 transition truncate max-w-[7rem] sm:max-w-[12rem] lg:max-w-none">{{ Auth::user()->name }}</span>
                 </a>
 
                 <div class="hidden lg:block h-4 w-[1px] bg-[#F0E6D2]"></div>
@@ -259,14 +290,17 @@
                 <form method="POST" action="{{ route('logout') }}"
                       onsubmit="try { sessionStorage.removeItem('agentChatHistory:staff'); sessionStorage.removeItem('agentChatConversationId:staff'); } catch (e) {}">
                     @csrf
-                    <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-bold tracking-widest uppercase transition">
-                        Logout
+                    {{-- Word on desktop, icon on a phone — the label is what
+                         made this row wrap. --}}
+                    <button type="submit" aria-label="Log out" class="text-red-500 hover:text-red-700 transition flex items-center shrink-0 p-2 -mr-2 sm:p-0 sm:mr-0">
+                        <span class="hidden sm:inline text-xs font-bold tracking-widest uppercase">Logout</span>
+                        <x-lucide-log-out class="sm:hidden w-5 h-5" />
                     </button>
                 </form>
             </div>
         </header>
 
-        <main class="flex-1 overflow-x-hidden overflow-y-auto p-8">
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
             @yield('content')
         </main>
     </div>
@@ -300,8 +334,27 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('staffLayout', () => ({
                 sidebarOpen: @json($sidebarOpen),
+                // The drawer, below lg only. Not persisted: a menu that reopens
+                // itself on every page load is a menu in the way.
+                mobileNavOpen: false,
+                isDesktop: window.matchMedia('(min-width: 1024px)').matches,
+                // Collapsing to icons is a desktop affordance; a collapsed
+                // cookie must not follow you onto a phone, where the drawer has
+                // room for the labels.
+                get navLabelsVisible() {
+                    return this.isDesktop ? this.sidebarOpen : true;
+                },
                 menus: @json($menus),
                 init() {
+                    const desktop = window.matchMedia('(min-width: 1024px)');
+                    desktop.addEventListener('change', e => {
+                        this.isDesktop = e.matches;
+                        // Rotating to landscape with the drawer open would
+                        // otherwise leave a backdrop over a desktop layout with
+                        // nothing left to close it.
+                        if (e.matches) this.mobileNavOpen = false;
+                    });
+
                     this.$watch('sidebarOpen', v => document.cookie = `lk_sidebar_open=${v ? 1 : 0};path=/;max-age=31536000;SameSite=Lax`);
                     this.$watch('menus', v => document.cookie = `lk_staff_menus=${encodeURIComponent(JSON.stringify(v))};path=/;max-age=31536000;SameSite=Lax`);
                     // Seed the cookie from the current (possibly route-derived) state on

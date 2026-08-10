@@ -18,6 +18,14 @@ class UiUxPhase1RegressionTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** The layout's own <header> opening tag, so class assertions can be scoped to it. */
+    private function headerTag(string $html): string
+    {
+        $this->assertSame(1, preg_match('/<header\\b[^>]*>/', $html, $m), 'Expected exactly one <header> tag in the layout.');
+
+        return $m[0];
+    }
+
     public function test_modal_shell_centered_panel_has_a_max_height_and_scrolls(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -29,29 +37,45 @@ class UiUxPhase1RegressionTest extends TestCase
         $response->assertSee('overflow-y-auto', false);
     }
 
-    public function test_admin_header_hides_low_value_elements_and_wraps_at_narrow_widths(): void
+    /**
+     * The header used to be allowed to wrap at narrow widths. Wrapping is what
+     * a header does when it has more in it than it can fit, and the result was
+     * two or three stacked rows shoving the page down the screen on a phone.
+     * It no longer wraps: the role label hides, the logout word becomes an
+     * icon, and the user's name — the one item that can grow without limit —
+     * truncates. Same goal, without spending vertical space to reach it.
+     */
+    public function test_admin_header_fits_one_row_at_narrow_widths(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->get('/dashboard');
 
         $response->assertOk();
+        // Scoped to the header tag: flex-wrap is legitimate elsewhere on the
+        // page (shortcut rows, tag chips), so a whole-document assertion would
+        // pass or fail for unrelated reasons.
+        $this->assertStringNotContainsString('flex-wrap', $this->headerTag($response->getContent()));
         $response->assertSee('hidden lg:inline', false);
-        $response->assertSee('flex-wrap', false);
+        $response->assertSee('truncate max-w-[7rem]', false);
+        // Logout: word from sm up, icon below it.
+        $response->assertSee('hidden sm:inline', false);
         // The odd-one-out contrast failure on this label is fixed in the same edit.
         $response->assertDontSee('text-[#A1887F] group-hover:text-[#3E2723]', false);
         $response->assertSee('text-[#6D4C41] group-hover:text-[#3E2723]', false);
     }
 
-    public function test_staff_header_hides_low_value_elements_and_wraps_at_narrow_widths(): void
+    public function test_staff_header_fits_one_row_at_narrow_widths(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
 
         $response = $this->actingAs($staff)->get(route('staff.dashboard'));
 
         $response->assertOk();
+        $this->assertStringNotContainsString('flex-wrap', $this->headerTag($response->getContent()));
         $response->assertSee('hidden lg:inline', false);
-        $response->assertSee('flex-wrap', false);
+        $response->assertSee('truncate max-w-[7rem]', false);
+        $response->assertSee('hidden sm:inline', false);
     }
 
     public function test_notification_bell_and_pending_badge_dropdowns_cap_width_to_viewport(): void

@@ -105,7 +105,12 @@
             });
         @endif
       "
-      class="bg-[#FDF8F5] text-[#4A3B32] flex h-screen overflow-hidden font-sans" style="font-family: 'Montserrat', sans-serif;">
+      @keydown.escape.window="mobileNavOpen = false"
+      {{-- h-screen is 100vh, which on a phone is the viewport *without* the
+           browser chrome — the bottom of the app ends up under the URL bar.
+           dvh tracks the visible height instead; the plain h-screen stays as
+           the fallback for anything that has not heard of dvh. --}}
+      class="bg-[#FDF8F5] text-[#4A3B32] flex h-screen supports-[height:100dvh]:h-[100dvh] overflow-hidden font-sans" style="font-family: 'Montserrat', sans-serif;">
 
     <!-- Barista AI Floating Chat -->
     <x-agent-chat
@@ -118,13 +123,35 @@
         :history-enabled="true"
     />
 
+    {{-- Below lg the sidebar is an off-canvas drawer, not a column. As a flex
+         sibling it took 256px (or 80px collapsed) off a ~390px phone before the
+         page got a single pixel, which is most of why every screen read as
+         cramped. `fixed` takes it out of the flow entirely, so main gets the
+         whole width and the drawer slides over it on demand. Desktop is
+         untouched: from lg it goes back to being a static column that widens
+         and narrows exactly as before. --}}
+    <div x-show="mobileNavOpen"
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="mobileNavOpen = false"
+         class="fixed inset-0 bg-black/60 z-40 lg:hidden"
+         aria-hidden="true"></div>
+
     <aside
-        class="{{ $sidebarOpen ? 'w-64' : 'w-20' }} flex-none bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl z-20 transition-[width] duration-300 ease-in-out shrink-0 relative [view-transition-name:app-sidebar] [will-change:width]"
-        :class="{ '!w-20': !sidebarOpen }">
+        class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transition-transform duration-300 ease-in-out
+               lg:static lg:z-20 lg:max-w-none lg:translate-x-0 lg:flex-none lg:transition-[width] lg:[will-change:width]
+               bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl shrink-0 relative [view-transition-name:app-sidebar]
+               {{ $sidebarOpen ? 'lg:w-64' : 'lg:w-20' }}"
+        :class="[mobileNavOpen ? 'translate-x-0' : '-translate-x-full', sidebarOpen ? 'lg:w-64' : 'lg:w-20']">
         
         <div class="h-20 flex items-center px-6 border-b border-[#5D4037] shrink-0 overflow-hidden relative">
             <x-lucide-coffee class="w-8 h-8 text-amber-500 mr-2 shrink-0 absolute left-6" />
-            <div class="flex items-baseline whitespace-nowrap ml-10 transition-opacity duration-300" :class="sidebarOpen ? 'opacity-100' : 'opacity-0 invisible'">
+            <div class="flex items-baseline whitespace-nowrap ml-10 transition-opacity duration-300" :class="navLabelsVisible ? 'opacity-100' : 'opacity-0 invisible'">
                 <span class="text-3xl font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-xs font-bold tracking-[0.2em] uppercase opacity-90">Kape</span>
             </div>
@@ -145,7 +172,7 @@
              @scroll.passive="saveNavScroll($event.target.scrollTop)">
             <a href="/dashboard" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('dashboard') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Dashboard">
                 <x-lucide-layout-dashboard class="w-5 h-5 shrink-0 {{ request()->is('dashboard') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -156,7 +183,7 @@
             </a>
             <a href="{{ route('admin.analytics') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('admin/analytics') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Insights">
                 <x-lucide-brain-circuit class="w-5 h-5 shrink-0 {{ request()->is('admin/analytics') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -167,7 +194,7 @@
             </a>
             <a href="{{ route('admin.ai.actions.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('admin.ai.actions.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Agent Activity">
                 <x-lucide-list-checks class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.ai.actions.*') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -178,7 +205,7 @@
             </a>
             <a href="{{ route('admin.ai.lessons.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('admin.ai.lessons.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Learning">
                 <x-lucide-graduation-cap class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.ai.lessons.*') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -189,7 +216,7 @@
             </a>
             <a href="{{ route('ai.analysis.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('ai.analysis.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Findings History">
                 <x-lucide-radar class="w-5 h-5 shrink-0 {{ request()->routeIs('ai.analysis.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -205,7 +232,7 @@
             @unless(auth()->user()->isSuperAdmin())
             <a href="/pos" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('pos') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="POS Register">
                 <x-lucide-calculator class="w-5 h-5 shrink-0 {{ request()->is('pos') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -216,7 +243,7 @@
             </a>
             <a href="/kds" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('kds') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Kitchen Display">
                 <x-lucide-chef-hat class="w-5 h-5 shrink-0 {{ request()->is('kds') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -228,7 +255,7 @@
             @endunless
             <a href="{{ route('pos.history') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('pos.history') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Order History">
                 <x-lucide-history class="w-5 h-5 shrink-0 {{ request()->routeIs('pos.history') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -239,7 +266,7 @@
             </a>
             <a href="{{ route('admin.finance.z-reads') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('admin.finance.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Z-Reads / Audits">
                 <x-lucide-lock class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.finance.*') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="sidebarOpen"
+                <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -256,7 +283,7 @@
                         title="Inventory">
                     <div class="flex items-center">
                         <x-lucide-package class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
-                        <span x-show="sidebarOpen"
+                        <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -265,7 +292,7 @@
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Inventory</span>
                     </div>
-                    <x-lucide-chevron-down x-show="sidebarOpen"
+                    <x-lucide-chevron-down x-show="navLabelsVisible"
                                      x-transition:enter="transition ease-in-out duration-300"
                                      x-transition:enter-start="opacity-0"
                                      x-transition:enter-end="opacity-100"
@@ -276,7 +303,7 @@
                 </button>
                 <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
                      style="grid-template-rows: 0fr"
-                     x-bind:style="(menus.inventory && sidebarOpen) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                     x-bind:style="(menus.inventory && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
                             <a href="/inventory/products" class="block py-2 text-xs {{ request()->is('inventory/products') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Products</a>
@@ -299,7 +326,7 @@
                         title="Network">
                     <div class="flex items-center">
                         <x-lucide-wifi class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
-                        <span x-show="sidebarOpen"
+                        <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -308,7 +335,7 @@
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Network</span>
                     </div>
-                    <x-lucide-chevron-down x-show="sidebarOpen"
+                    <x-lucide-chevron-down x-show="navLabelsVisible"
                                      x-transition:enter="transition ease-in-out duration-300"
                                      x-transition:enter-start="opacity-0"
                                      x-transition:enter-end="opacity-100"
@@ -319,7 +346,7 @@
                 </button>
                 <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
                      style="grid-template-rows: 0fr"
-                     x-bind:style="(menus.network && sidebarOpen) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                     x-bind:style="(menus.network && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
                             <a href="/network/sessions" class="block py-2 text-xs {{ request()->is('network/sessions') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Active Sessions</a>
@@ -340,7 +367,7 @@
                         title="Business Settings">
                     <div class="flex items-center">
                         <x-lucide-settings-2 class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
-                        <span x-show="sidebarOpen"
+                        <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -349,7 +376,7 @@
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Business Settings</span>
                     </div>
-                    <x-lucide-chevron-down x-show="sidebarOpen"
+                    <x-lucide-chevron-down x-show="navLabelsVisible"
                                      x-transition:enter="transition ease-in-out duration-300"
                                      x-transition:enter-start="opacity-0"
                                      x-transition:enter-end="opacity-100"
@@ -360,7 +387,7 @@
                 </button>
                 <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
                      style="grid-template-rows: 0fr"
-                     x-bind:style="(menus.settings && sidebarOpen) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                     x-bind:style="(menus.settings && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
                             <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">{{ auth()->user()->isSuperAdmin() ? 'Staff & Admin Accounts' : 'Staff Accounts' }}</a>
@@ -378,7 +405,7 @@
                         title="System Administration — super_admin only">
                     <div class="flex items-center">
                         <x-lucide-shield-check class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
-                        <span x-show="sidebarOpen"
+                        <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
@@ -387,7 +414,7 @@
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">System Administration</span>
                     </div>
-                    <x-lucide-chevron-down x-show="sidebarOpen"
+                    <x-lucide-chevron-down x-show="navLabelsVisible"
                                      x-transition:enter="transition ease-in-out duration-300"
                                      x-transition:enter-start="opacity-0"
                                      x-transition:enter-end="opacity-100"
@@ -398,7 +425,7 @@
                 </button>
                 <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
                      style="grid-template-rows: 0fr"
-                     x-bind:style="(menus.system && sidebarOpen) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                     x-bind:style="(menus.system && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
                             <a href="{{ route('admin.settings.network') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.network') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Network Config</a>
@@ -411,31 +438,41 @@
         </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="sidebarOpen" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.112</span>
-            <span x-show="!sidebarOpen" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
+            <span x-show="navLabelsVisible" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.113</span>
+            <span x-show="!navLabelsVisible" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>
 
     <div class="flex-1 flex flex-col overflow-hidden [contain:layout_style]">
         
-        <header class="min-h-14 h-auto py-2 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center flex-wrap justify-between gap-y-2 px-6 z-10 shrink-0 [view-transition-name:app-header]">
+        {{-- No flex-wrap: on a phone this header used to wrap onto two or three
+             rows and push the page down. Everything below is either sized to
+             fit one row or hidden until there is room for it. --}}
+        <header class="min-h-14 h-auto py-2 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center justify-between gap-3 px-4 sm:px-6 z-10 shrink-0 [view-transition-name:app-header]">
 
-            <button @click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar" class="text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none flex items-center justify-center">
+            {{-- Two buttons rather than one that guesses the viewport: below lg
+                 it opens the drawer, from lg it collapses the column. --}}
+            <button @click="mobileNavOpen = true" aria-label="Open menu" class="lg:hidden text-[#3E2723] hover:bg-[#FDF8F5] p-2 -ml-2 rounded-lg transition focus:outline-none flex items-center justify-center shrink-0">
+                <x-lucide-menu class="w-6 h-6" />
+            </button>
+            <button @click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar" class="hidden lg:flex text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none items-center justify-center">
                 <x-lucide-menu class="w-6 h-6" />
             </button>
 
-            <div class="flex items-center space-x-6">
+            <div class="flex items-center gap-1 sm:gap-3 lg:gap-6 min-w-0">
                 <x-notification-bell />
                 <x-agent-pending-badge :is-admin="true" />
 
                 <div class="hidden lg:block h-4 w-[1px] bg-[#F0E6D2]"></div>
 
-                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group cursor-pointer">
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group cursor-pointer min-w-0">
                     {{-- The real role, not the layout's name. This header said
                          "Admin Status:" for everyone it rendered, so the
                          super_admin account was labelled a plain admin. --}}
                     <span class="hidden lg:inline text-[11px] uppercase tracking-widest text-[#6D4C41] group-hover:text-[#3E2723] transition font-bold">{{ Auth::user()->roleLabel() }}:</span>
-                    <span class="text-sm font-bold text-[#3E2723] group-hover:text-amber-700 transition">{{ Auth::user()->name }}</span>
+                    {{-- A long name is the one thing here that can grow without
+                         limit, so it is the one thing allowed to truncate. --}}
+                    <span class="text-sm font-bold text-[#3E2723] group-hover:text-amber-700 transition truncate max-w-[7rem] sm:max-w-[12rem] lg:max-w-none">{{ Auth::user()->name }}</span>
                 </a>
 
                 <div class="hidden lg:block h-4 w-[1px] bg-[#F0E6D2]"></div>
@@ -443,14 +480,17 @@
                 <form method="POST" action="{{ route('logout') }}"
                       onsubmit="try { sessionStorage.removeItem('agentChatHistory:admin'); sessionStorage.removeItem('agentChatConversationId:admin'); } catch (e) {}">
                     @csrf
-                    <button type="submit" class="text-xs text-red-500 hover:text-red-700 font-bold tracking-widest uppercase transition">
-                        Logout
+                    {{-- Word on desktop, icon on a phone — the label is what
+                         made this row wrap. --}}
+                    <button type="submit" aria-label="Log out" class="text-red-500 hover:text-red-700 transition flex items-center shrink-0 p-2 -mr-2 sm:p-0 sm:mr-0">
+                        <span class="hidden sm:inline text-xs font-bold tracking-widest uppercase">Logout</span>
+                        <x-lucide-log-out class="sm:hidden w-5 h-5" />
                     </button>
                 </form>
             </div>
         </header>
 
-        <main class="flex-1 overflow-x-hidden overflow-y-auto p-8">
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
             @yield('content')
         </main>
     </div>
@@ -484,11 +524,30 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('adminLayout', () => ({
                 sidebarOpen: @json($sidebarOpen),
+                // The drawer, below lg only. Deliberately NOT persisted: a menu
+                // that reopens itself on every page load is a menu in the way.
+                mobileNavOpen: false,
+                isDesktop: window.matchMedia('(min-width: 1024px)').matches,
+                // Collapsing to icons is a desktop affordance. In the drawer
+                // there is room for the labels and no reason to hide them, so a
+                // collapsed cookie must not follow you onto a phone.
+                get navLabelsVisible() {
+                    return this.isDesktop ? this.sidebarOpen : true;
+                },
                 // Starts empty (every key falsy) on purpose — see the comment
                 // in init() below for why.
                 menus: {},
                 initialMenus: @json($menus),
                 init() {
+                    const desktop = window.matchMedia('(min-width: 1024px)');
+                    desktop.addEventListener('change', e => {
+                        this.isDesktop = e.matches;
+                        // Rotating to landscape with the drawer open would
+                        // otherwise leave the backdrop covering a desktop
+                        // layout that no longer has anything to close it.
+                        if (e.matches) this.mobileNavOpen = false;
+                    });
+
                     this.$watch('sidebarOpen', v => document.cookie = `lk_sidebar_open=${v ? 1 : 0};path=/;max-age=31536000;SameSite=Lax`);
                     this.$watch('menus', v => document.cookie = `lk_admin_menus=${encodeURIComponent(JSON.stringify(v))};path=/;max-age=31536000;SameSite=Lax`);
                     // Seed the cookie from the real (possibly route-derived) state on

@@ -2,7 +2,7 @@
 @section('title', 'Suppliers Database')
 
 @section('content')
-<div x-data="supplierManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+<div x-data="supplierManager()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
     
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -166,7 +166,7 @@
 
                     <div>
                         <label class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Delivery Schedule</label>
-                        <div class="grid grid-cols-4 gap-2">
+                        <div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
                             <template x-for="day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']" :key="day">
                                 <label class="cursor-pointer">
                                     <input type="checkbox" name="delivery_days[]" :value="day" x-model="formData.delivery_days" class="sr-only peer">

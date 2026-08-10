@@ -2,7 +2,7 @@
 @section('title', 'WiFi Voucher Management')
 
 @section('content')
-<div x-data="voucherManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+<div x-data="voucherManager()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
     
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -206,7 +206,7 @@
     @endif
 
     <!-- Generation Modal -->
-    <x-modal-shell show="isModalOpen" max-width="xl" panel-class="rounded-2xl p-8 border-t-8 border-[#3E2723]" labelled-by="generate-vouchers-heading">
+    <x-modal-shell show="isModalOpen" max-width="xl" panel-class="rounded-2xl p-5 sm:p-8 border-t-8 border-[#3E2723]" labelled-by="generate-vouchers-heading">
             <h2 id="generate-vouchers-heading" class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-widest">Generate Vouchers</h2>
 
             <form action="{{ route('network.vouchers.generate') }}" method="POST" @submit="submitting = true">

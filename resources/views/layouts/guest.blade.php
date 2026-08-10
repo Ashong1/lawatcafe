@@ -58,7 +58,11 @@
     <div class="absolute inset-0 z-0 opacity-40 bg-cover bg-center ambient-pan" style="background-image: url('/images/lawat-bg.jpg'); filter: blur(8px);"></div>
 
     <!-- Main Centered Card -->
-    <div class="relative z-10 w-full max-w-6xl min-h-[600px] mx-4 flex rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-[#5D4037] dash-card-in">
+    {{-- min-h-[600px] unconditionally was taller than a small phone's whole
+         viewport, which pushed the sign-in button off the bottom of a screen
+         that had nothing below it to scroll. It only applies once there is
+         room for it. --}}
+    <div class="relative z-10 w-full max-w-6xl min-h-[32rem] sm:min-h-[600px] mx-4 flex rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-[#5D4037] dash-card-in">
 
         <!-- Left Side: Full Artwork -->
         <div class="hidden md:block md:w-[55%] lg:w-[60%] bg-[#FDF8F5] dash-card-in [animation-delay:100ms]">
@@ -66,7 +70,7 @@
         </div>
 
         <!-- Right Side: Dark Coffee Form -->
-        <div class="w-full md:w-[45%] lg:w-[40%] bg-[#3E2723] p-8 sm:p-10 flex flex-col justify-center text-[#FDF8F5] overflow-y-auto max-h-[90vh] dash-card-in [animation-delay:200ms]">
+        <div class="w-full md:w-[45%] lg:w-[40%] bg-[#3E2723] p-6 sm:p-10 flex flex-col justify-center text-[#FDF8F5] overflow-y-auto max-h-[90vh] dash-card-in [animation-delay:200ms]">
             
             <!-- Logo & Header -->
             <div class="text-center mb-10 mt-4">

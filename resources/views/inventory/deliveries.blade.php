@@ -2,7 +2,7 @@
 @section('title', 'Supplier Deliveries')
 
 @section('content')
-<div x-data="deliveryManager()" class="bg-[#FDF8F5] min-h-screen -m-6 p-6 md:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+<div x-data="deliveryManager()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
     
     <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -194,7 +194,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="grid grid-cols-3 gap-3 items-end">
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                                         <!-- Pack Input (Conditional) -->
                                         <div x-show="getIngredient(item.ingredient_id)?.packaging_unit" class="flex flex-col">
                                             <label :for="'delivery-item-'+index+'-packs'" class="block text-[9px] text-[#6D4C41] font-black uppercase mb-1">

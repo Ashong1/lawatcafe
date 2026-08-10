@@ -212,7 +212,7 @@
     </div>
 
     <!-- Variant Selection Modal -->
-    <x-modal-shell show="showVariantModal" max-width="sm" panel-class="p-8 border-t-8 border-[#3E2723]" labelled-by="variant-modal-title">
+    <x-modal-shell show="showVariantModal" max-width="sm" panel-class="p-5 sm:p-8 border-t-8 border-[#3E2723]" labelled-by="variant-modal-title">
             <h2 id="variant-modal-title" class="text-2xl font-black text-[#3E2723] mb-1" x-text="pendingItem?.name"></h2>
             <p class="text-sm font-medium text-[#8D6E63] mb-6">Select preparation preference:</p>
 
@@ -261,7 +261,7 @@
         @include('pos.partials.cart')
     </x-modal-shell>
 
-    <x-modal-shell show="showModal" max-width="sm" panel-class="p-8 text-center border-t-8 border-[#3E2723]" labelled-by="order-placed-modal-title">
+    <x-modal-shell show="showModal" max-width="sm" panel-class="p-5 sm:p-8 text-center border-t-8 border-[#3E2723]" labelled-by="order-placed-modal-title">
             <div class="w-20 h-20 bg-[#E8F5E9] rounded-full flex items-center justify-center mx-auto mb-6 text-[#2E7D32]">
                 <x-lucide-check class="w-10 h-10" />
             </div>
