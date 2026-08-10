@@ -777,8 +777,29 @@ document.addEventListener('alpine:init', () => {
                                 // marked the reply as unfinished, so a pause
                                 // between tokens or a tool call part-way through
                                 // an answer was indistinguishable from a hang.
-                                assistantEntry = { kind: 'text', role: 'assistant', content: '', streaming: true };
-                                this.history.push(assistantEntry);
+                                this.history.push({ kind: 'text', role: 'assistant', content: '', streaming: true });
+
+                                // Read the entry back OUT of the array rather
+                                // than keeping the literal we just pushed, and
+                                // this line is the whole reason replies appeared
+                                // truncated.
+                                //
+                                // Alpine's reactivity (@vue/reactivity) stores
+                                // the raw object in the array and only hands out
+                                // a tracking Proxy when you read an element back
+                                // through it. Mutating the literal directly goes
+                                // around that Proxy: the data updates, no
+                                // dependency is ever notified, and the DOM keeps
+                                // whatever it last painted. So the bubble froze
+                                // mid-sentence at some incidental re-render,
+                                // every later delta went unseen, and — worst —
+                                // the authoritative `meta.reply` assignment
+                                // below repainted nothing at all. save() then
+                                // wrote the COMPLETE text to sessionStorage,
+                                // which is exactly why refreshing the page
+                                // produced the rest of the answer.
+                                assistantEntry = this.history[this.history.length - 1];
+
                                 this.thinking = false;
                             }
                             this.toolStatusLabel = null;

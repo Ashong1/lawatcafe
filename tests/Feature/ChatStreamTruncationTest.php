@@ -134,6 +134,42 @@ class ChatStreamTruncationTest extends TestCase
     // ------------------------------------------------- the "is it alive" signal
 
     /**
+     * The actual cause of the truncation, and the one that survived the first
+     * attempt at fixing this.
+     *
+     * Alpine's reactivity stores the raw object you push into an array and only
+     * hands out a tracking Proxy when an element is read back out through it.
+     * The stream held on to the object literal it had pushed and mutated that
+     * directly, so every delta and the final authoritative `meta.reply`
+     * assignment updated the data while notifying nothing — the DOM kept
+     * whatever it had last painted, and save() then wrote the complete text to
+     * session storage. Hence a reply that was cut off on screen and whole again
+     * after a refresh.
+     *
+     * Verified against @vue/reactivity directly: mutating the pushed literal
+     * produced zero re-renders; reading the element back first produced one per
+     * mutation.
+     */
+    public function test_the_streaming_bubble_is_read_back_out_of_the_reactive_array(): void
+    {
+        $html = $this->widgetSource();
+
+        $this->assertStringContainsString(
+            'assistantEntry = this.history[this.history.length - 1];',
+            $html,
+            'The stream is holding the raw pushed literal again — mutations will not repaint.'
+        );
+
+        // The literal must go straight into the array, never into a variable
+        // that is then pushed and kept.
+        $this->assertStringNotContainsString(
+            "assistantEntry = { kind: 'text'",
+            $html,
+            'A raw entry is being held across the stream; deltas and meta.reply will not render.'
+        );
+    }
+
+    /**
      * The other half of the report: "it looks like it is hanging". `thinking`
      * goes false on the first token, and nothing replaced it, so a pause
      * part-way through an answer looked identical to a dead request.
