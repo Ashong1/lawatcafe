@@ -111,6 +111,115 @@
                 </button>
             </form>
 
+            {{-- The adaptive loop. Writes no firewall itself — it sets the
+                 envelope the agent may move the ceiling within, and
+                 `shaper:adapt` does the acting. Kept as its own card so the
+                 manual ceiling above stays a plain, immediate control. --}}
+            <form action="{{ route('network.traffic.adaptive') }}" method="POST"
+                  class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] space-y-6">
+                @csrf
+
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700 shrink-0">
+                        <x-lucide-bot class="w-6 h-6" />
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Adaptive Ceiling</h3>
+                        <p class="text-[10px] text-[#6D4C41] font-medium leading-relaxed mt-1">
+                            Barista AI lowers the cap as the room fills so no one device crowds the others out,
+                            and raises it again when the shop is quiet. It learns the line speed and the busy
+                            hours from what it measures &mdash; nothing to configure but the bounds.
+                        </p>
+                    </div>
+                </div>
+
+                {{-- What it has worked out so far. Shown whether or not the loop
+                     is on, because sampling runs either way and this is how an
+                     owner judges whether it knows enough to be trusted yet. --}}
+                <div class="p-4 bg-[#FDF8F5] border border-[#F0E6D2] rounded-2xl space-y-3">
+                    <p class="text-[9px] font-black uppercase tracking-widest text-[#8D6E63]">What it has learned</p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <p class="text-[9px] font-black uppercase tracking-widest text-[#8D6E63]">Line speed</p>
+                            @if($learned['capacity']['learned'])
+                                <p class="text-sm font-black text-[#3E2723] whitespace-nowrap">{{ $learned['capacity']['down'] }} Mbps down</p>
+                                <p class="text-[9px] text-[#6D4C41] font-medium">{{ $learned['capacity']['up'] }} Mbps up · from {{ $learned['capacity']['informative'] }} usable samples</p>
+                            @else
+                                <p class="text-sm font-black text-[#8D6E63]">Still measuring</p>
+                                <p class="text-[9px] text-[#6D4C41] font-medium">{{ $learned['capacity']['informative'] }} usable of {{ $learned['capacity']['samples'] }} samples &mdash; needs 12</p>
+                            @endif
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-black uppercase tracking-widest text-[#8D6E63]">Busy hours</p>
+                            @if(count($learned['peak_hours']))
+                                <p class="text-sm font-black text-[#3E2723]">
+                                    {{ collect($learned['peak_hours'])->map(fn ($h) => sprintf('%02d:00', $h))->join(', ') }}
+                                </p>
+                                <p class="text-[9px] text-[#6D4C41] font-medium">Shared strictly during these; more generous outside them</p>
+                            @else
+                                <p class="text-sm font-black text-[#8D6E63]">Not yet known</p>
+                                <p class="text-[9px] text-[#6D4C41] font-medium">Learned from guest counts by hour of day</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- A hold is as informative as a change: it is the loop
+                         deciding not to disturb the shop, and saying why. --}}
+                    @if($learned['last_decision'])
+                        <div class="pt-3 border-t border-[#F0E6D2]">
+                            <p class="text-[9px] font-black uppercase tracking-widest text-[#8D6E63] mb-1">
+                                Last decision &mdash;
+                                <span class="{{ $learned['last_decision']['decision'] === 'applied' ? 'text-green-700' : ($learned['last_decision']['decision'] === 'failed' ? 'text-red-700' : 'text-amber-700') }}">
+                                    {{ $learned['last_decision']['decision'] }}
+                                </span>
+                            </p>
+                            <p class="text-[11px] text-[#4A3B32] font-medium leading-relaxed">{{ $learned['last_decision']['reason'] }}</p>
+                            <p class="text-[9px] text-[#8D6E63] font-medium mt-1">
+                                {{ $learned['last_decision']['guests'] }} guest(s) online ·
+                                {{ \Illuminate\Support\Carbon::parse($learned['last_decision']['at'])->diffForHumans() }}
+                            </p>
+                        </div>
+                    @endif
+                </div>
+
+                <label for="bw-adaptive-enabled" class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" id="bw-adaptive-enabled" name="bw_adaptive_enabled" value="1"
+                           @checked(old('bw_adaptive_enabled', $settings['bw_adaptive_enabled']) === '1' || old('bw_adaptive_enabled') === '1')
+                           class="w-5 h-5 rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
+                    <span class="text-[11px] font-black text-[#3E2723] uppercase tracking-widest">Let Barista AI adjust the ceiling</span>
+                </label>
+
+                <div class="grid grid-cols-2 gap-4 md:gap-6">
+                    <div>
+                        <label for="bw-adaptive-min" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Never below (Mbps)</label>
+                        <input type="number" id="bw-adaptive-min" name="bw_adaptive_min" step="0.5" min="5" max="1000"
+                               value="{{ old('bw_adaptive_min', $settings['bw_adaptive_min']) }}"
+                               class="w-full bg-white border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
+                        <x-field-error name="bw_adaptive_min" />
+                    </div>
+                    <div>
+                        <label for="bw-adaptive-max" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Never above (Mbps)</label>
+                        <input type="number" id="bw-adaptive-max" name="bw_adaptive_max" step="0.5" min="5" max="1000"
+                               value="{{ old('bw_adaptive_max', $settings['bw_adaptive_max']) }}"
+                               class="w-full bg-white border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
+                        <x-field-error name="bw_adaptive_max" />
+                    </div>
+                </div>
+
+                <p class="text-[10px] text-[#6D4C41] font-medium leading-relaxed">
+                    The agent can never leave these bounds, whatever it decides &mdash; a request outside them is
+                    applied at the nearest one. Every change is logged to
+                    <a href="{{ route('admin.ai.actions.index') }}" class="font-black text-amber-700 hover:text-amber-900 underline">Agent Activity</a>
+                    and sends you a notification. To approve each change by hand instead, move
+                    <span class="font-mono">adjustFairUseCeiling</span> to "requires confirmation" on the Agent Permissions page.
+                </p>
+
+                <button type="submit" class="w-full py-4 bg-white border-2 border-[#3E2723] hover:bg-[#FDF8F5] text-[#3E2723] rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-[0.98]">
+                    Save Adaptive Settings
+                </button>
+            </form>
+
             <div class="bg-white p-6 rounded-2xl border border-[#F0E6D2] shadow-sm">
                 <h4 class="text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-4">Real-time Network Impact</h4>
                 <div class="space-y-6">

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Services\AdaptiveBandwidthService;
+use App\Services\LinkCapacityLearner;
 use App\Services\OpnSenseService;
 use App\Services\TrafficShapingService;
 use Illuminate\Http\Request;
@@ -30,11 +32,55 @@ class TrafficController extends Controller
     /** Matches ProvisionFairUseCap's default, so the two never disagree. */
     private const DEFAULT_CEILING = '20';
 
-    public function index()
+    public function index(AdaptiveBandwidthService $adaptive, LinkCapacityLearner $learner)
     {
-        $settings = ['bw_fair_use_mbps' => Setting::get('bw_fair_use_mbps', self::DEFAULT_CEILING)];
+        $settings = [
+            'bw_fair_use_mbps' => Setting::get('bw_fair_use_mbps', self::DEFAULT_CEILING),
+            'bw_adaptive_enabled' => Setting::get('bw_adaptive_enabled', AdaptiveBandwidthService::DEFAULTS['bw_adaptive_enabled']),
+            'bw_adaptive_min' => Setting::get('bw_adaptive_min', AdaptiveBandwidthService::DEFAULTS['bw_adaptive_min']),
+            'bw_adaptive_max' => Setting::get('bw_adaptive_max', AdaptiveBandwidthService::DEFAULTS['bw_adaptive_max']),
+        ];
 
-        return view('network.traffic', compact('settings'));
+        // What the loop has worked out for itself, shown whether or not it is
+        // switched on — the sampling runs either way, so an owner deciding
+        // whether to enable it can see how much the system already knows.
+        $learned = [
+            'capacity' => $learner->estimate(),
+            'peak_hours' => $learner->peakHours(),
+            'last_decision' => $adaptive->lastDecision(),
+        ];
+
+        return view('network.traffic', compact('settings', 'learned'));
+    }
+
+    /**
+     * The adaptive loop's own settings. Separate from the ceiling's own form
+     * because it writes no firewall: it changes the envelope the agent may move
+     * within, not the cap currently in force.
+     */
+    public function updateAdaptive(Request $request)
+    {
+        $validated = $request->validate([
+            'bw_adaptive_enabled' => 'nullable|boolean',
+            // Same floor as the manual form, for the same reason: the shop's own
+            // till and kitchen display sit on this interface.
+            'bw_adaptive_min' => 'required|numeric|min:5|max:1000',
+            'bw_adaptive_max' => 'required|numeric|min:5|max:1000|gte:bw_adaptive_min',
+        ], [
+            'bw_adaptive_max.gte' => 'The maximum must be at least the minimum.',
+        ]);
+
+        Setting::set('bw_adaptive_enabled', $request->boolean('bw_adaptive_enabled') ? '1' : '0');
+        Setting::set('bw_adaptive_min', (string) $validated['bw_adaptive_min']);
+        Setting::set('bw_adaptive_max', (string) $validated['bw_adaptive_max']);
+
+        return redirect()->back()->with('success', $request->boolean('bw_adaptive_enabled')
+            ? sprintf(
+                'Adaptive ceiling is on. Barista AI may move the cap between %s and %s Mbps as the room fills and empties.',
+                $validated['bw_adaptive_min'],
+                $validated['bw_adaptive_max']
+            )
+            : 'Adaptive ceiling is off. The cap stays where you set it; throughput sampling continues so the loop keeps learning.');
     }
 
     /**

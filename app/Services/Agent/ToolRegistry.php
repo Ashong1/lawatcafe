@@ -3,6 +3,7 @@
 namespace App\Services\Agent;
 
 use App\Services\Agent\Contracts\AgentTool;
+use App\Services\Agent\Tools\AdjustFairUseCeilingTool;
 use App\Services\Agent\Tools\BlockDeviceTool;
 use App\Services\Agent\Tools\CheckMySessionTool;
 use App\Services\Agent\Tools\CheckStockLevelsTool;
@@ -89,6 +90,10 @@ class ToolRegistry
             SetSessionBandwidthTierTool::class,
             SuggestCategoryContentTool::class,
             GetAnomalySignalsTool::class,
+            // Admin and above only, and never guest or staff: this one moves the
+            // ceiling for every device in the shop at once, where
+            // setSessionBandwidthTier above touches a single session.
+            AdjustFairUseCeilingTool::class,
         ];
     }
 

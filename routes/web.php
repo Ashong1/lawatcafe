@@ -245,6 +245,9 @@ Route::middleware(['auth'])->group(function () {
             // firewall, and only records the figure once OPNsense accepts it —
             // see TrafficController::update().
             Route::post('/traffic', [TrafficController::class, 'update'])->name('traffic.update');
+            // The adaptive loop's envelope — writes settings only. The firewall
+            // write happens later, from shaper:adapt via the agent tool.
+            Route::post('/traffic/adaptive', [TrafficController::class, 'updateAdaptive'])->name('traffic.adaptive');
 
             Route::get('/blocklist', [BlocklistController::class, 'index'])->name('blocklist');
             Route::post('/blocklist', [BlocklistController::class, 'store'])->name('blocklist.store');
