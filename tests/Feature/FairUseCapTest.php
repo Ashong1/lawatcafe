@@ -195,13 +195,12 @@ class FairUseCapTest extends TestCase
     }
 
     /**
-     * The Bandwidth Shaping page reports; it does not configure. Its QoS form
-     * offered four per-tier fields this gateway cannot enforce and a burst
-     * toggle nothing reads, alongside the one control that worked — so most of
-     * what an admin could set there silently did nothing. The ceiling now
-     * belongs to `shaper:fair-use` alone.
+     * The page offers per-tier rates and states the ceiling. The ceiling has no
+     * input of its own: it is the one figure that really reaches the network,
+     * and `shaper:fair-use` owns it so it can never be half-applied from a
+     * browser.
      */
-    public function test_the_page_is_read_only_and_states_the_ceiling(): void
+    public function test_the_page_offers_tier_rates_and_states_the_ceiling(): void
     {
         Setting::set('bw_fair_use_mbps', '20');
         Cache::forget('setting.bw_fair_use_mbps');
@@ -213,19 +212,79 @@ class FairUseCapTest extends TestCase
         $response->assertSee('Fair-Use Ceiling', false);
         $response->assertSee('20 Mbps', false);
 
-        $response->assertDontSee('QoS Configuration', false);
+        $response->assertSee('name="bw_free_down"', false);
+        $response->assertSee('name="bw_free_up"', false);
+        $response->assertSee('name="bw_premium_down"', false);
+        $response->assertSee('name="bw_premium_up"', false);
+
+        // The ceiling and the dead burst toggle stay out of the form.
         $response->assertDontSee('name="bw_fair_use_mbps"', false);
-        $response->assertDontSee('name="bw_free_down"', false);
-        $response->assertDontSee('name="bw_premium_down"', false);
         $response->assertDontSee('name="bw_burst_enabled"', false);
     }
 
-    /** And nothing may POST to it any more. */
-    public function test_the_page_accepts_no_post(): void
+    /**
+     * The page must not promise enforcement it cannot deliver. It briefly said
+     * per-tier caps were enforced, on the strength of filter rules that saved
+     * and applied and did nothing.
+     */
+    public function test_the_page_states_that_per_tier_rates_are_not_enforced(): void
     {
         $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->post('/network/traffic', ['bw_fair_use_mbps' => 99])
-            ->assertStatus(405);
+            ->get(route('network.traffic'))
+            ->assertSee('Recorded, not enforced', false);
+    }
+
+    public function test_the_tier_rates_are_saved(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('network.traffic.update'), [
+                'bw_free_down' => 3, 'bw_free_up' => 1.5,
+                'bw_premium_down' => 12, 'bw_premium_up' => 6,
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
+
+        foreach (['bw_free_down' => '3', 'bw_free_up' => '1.5',
+            'bw_premium_down' => '12', 'bw_premium_up' => '6'] as $key => $expected) {
+            Cache::forget("setting.{$key}");
+            $this->assertSame($expected, Setting::get($key));
+        }
+    }
+
+    /**
+     * Saving must not touch OPNsense at all. The old action provisioned
+     * per-tier pipes and rules on every save, OPNsense rejected the rules every
+     * time, and the page reported a failure for values that had been stored.
+     */
+    public function test_saving_the_tier_rates_calls_no_firewall(): void
+    {
+        Http::fake();
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('network.traffic.update'), [
+                'bw_free_down' => 2, 'bw_free_up' => 1,
+                'bw_premium_down' => 10, 'bw_premium_up' => 5,
+            ])->assertSessionHas('success');
+
+        Http::assertNothingSent();
+    }
+
+    /** A fractional rate is legitimate here — nothing writes it to a pipe. */
+    public function test_a_rate_below_the_minimum_is_rejected(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('network.traffic.update'), [
+                'bw_free_down' => 0, 'bw_free_up' => 1,
+                'bw_premium_down' => 10, 'bw_premium_up' => 5,
+            ])->assertSessionHasErrors('bw_free_down');
+    }
+
+    /** Every tier field is required — a partial save would strand one rate. */
+    public function test_an_incomplete_save_is_rejected(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('network.traffic.update'), ['bw_free_down' => 2])
+            ->assertSessionHasErrors(['bw_free_up', 'bw_premium_down', 'bw_premium_up']);
     }
 
     /**

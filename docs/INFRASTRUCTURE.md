@@ -147,10 +147,27 @@ enforces them. Both routes were tried and both are closed on this build:
    not the tier's. Setting `quick=1` changed nothing. The captive portal decides
    guest traffic in its own anchor before these rules are reached.
 
-What is left is what the Shaper *can* match: interface, direction, protocol,
-port, DSCP. **Separating the tiers therefore requires each tier on its own
+3. **DSCP can be matched but not marked.** Checked 2026-08-10, because the
+   Shaper rule schema does expose a `dscp` field with 21 values — if guest
+   packets carried a different mark per tier, two rules could steer them into
+   two pipes. Nothing on this build can apply that mark. The filter rule's
+   `tos` is a match criterion, not a set; `set-prio` writes an 802.1p priority,
+   which dummynet does not read; and there is no normalization/scrub endpoint
+   where pf's `set-tos` would live (`firewall/filter/get_normalization` and
+   `firewall/normalization/get` both 404). The mark would have to come from the
+   guest's own device, which is not ours to set. The captive portal zone has no
+   bandwidth fields either (`captiveportal/settings/get_zone`: `idletimeout`,
+   `hardtimeout`, `concurrentlogins`, … and nothing for rate).
+
+What is left is what the Shaper can match *and* we can control: interface and
+direction. **Separating the tiers therefore requires each tier on its own
 interface** — a second SSID mapped to a VLAN, which in turn needs an AP that
-can do multiple SSIDs. The tier aliases and `shaper:reconcile-tiers` (scheduled
+can do multiple SSIDs. Note the Shaper's own `interface` list offers only
+`lo0, lan, wan`, so that route needs the web UI as well as new hardware.
+
+The remaining untried path is RADIUS: the portal zone does have an
+`authservers` field, and WISPr-Bandwidth-Max-Down/Up is how hotspots normally
+do this. Whether *this* build honours those attributes is unverified. The tier aliases and `shaper:reconcile-tiers` (scheduled
 every 5 minutes) are kept because they are what that would be built on, and
 keeping membership honest costs one alias read per tier.
 
