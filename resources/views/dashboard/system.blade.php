@@ -131,14 +131,16 @@
                     <div class="flex flex-row justify-around items-center w-full flex-1">
                         <div class="flex flex-col items-center">
                             <div class="flex items-baseline gap-1 mb-1">
-                                <span class="text-xl font-black text-[#1565C0]" x-text="liveData.bandwidthDown.toFixed(2)">{{ number_format($bandwidthDown ?? 0, 2) }}</span>
+                                <x-skeleton x-show="!liveData.hasRate" variant="block" size="h-6" class="w-16" />
+                                <span x-show="liveData.hasRate" x-cloak class="text-xl font-black text-[#1565C0]" x-text="liveData.bandwidthDown.toFixed(2)"></span>
                                 <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Mbps</span>
                             </div>
                             <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Download</span>
                         </div>
                         <div class="flex flex-col items-center">
                             <div class="flex items-baseline gap-1 mb-1">
-                                <span class="text-xl font-black text-[#059669]" x-text="liveData.bandwidthUp.toFixed(2)">{{ number_format($bandwidthUp ?? 0, 2) }}</span>
+                                <x-skeleton x-show="!liveData.hasRate" variant="block" size="h-6" class="w-16" />
+                                <span x-show="liveData.hasRate" x-cloak class="text-xl font-black text-[#059669]" x-text="liveData.bandwidthUp.toFixed(2)"></span>
                                 <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Mbps</span>
                             </div>
                             <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Upload</span>
@@ -300,6 +302,11 @@
 document.addEventListener('alpine:init', () => {
     Alpine.data('systemDashboard', () => ({
         liveData: {
+            // Throughput is derived from two counter samples, so there is no
+            // rate to show until the second one lands. The server-rendered
+            // fallback here was a literal 0.00, which on a busy network reads
+            // as an outage rather than as "not measured yet".
+            hasRate: false,
             bandwidthDown: 0,
             bandwidthUp: 0,
             cpuLoad: {{ $cpuLoad ?? 0 }},
@@ -335,6 +342,7 @@ document.addEventListener('alpine:init', () => {
                 if (seconds > 0 && this.liveData.lastRawIn > 0) {
                     this.liveData.bandwidthDown = Math.max(0, ((d.rawIn - this.liveData.lastRawIn) * 8) / seconds / 1000000);
                     this.liveData.bandwidthUp = Math.max(0, ((d.rawOut - this.liveData.lastRawOut) * 8) / seconds / 1000000);
+                    this.liveData.hasRate = true;
                 }
 
                 this.liveData.lastRawIn = d.rawIn;

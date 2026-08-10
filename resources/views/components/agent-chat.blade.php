@@ -181,9 +181,19 @@
              @click.outside="showHistory = false"
              class="absolute top-[92px] left-4 right-4 z-20 bg-white rounded-2xl shadow-2xl border border-[#F0E6D2] max-h-72 overflow-y-auto"
              style="display: none;">
-            <div x-show="loadingHistory" class="p-4 text-center text-[10px] font-black uppercase tracking-widest text-[#6D4C41]">Loading…</div>
+            {{-- Rows rather than the word "Loading…": the list that replaces
+                 this is a stack of conversation rows, so the panel keeps its
+                 height instead of jumping when they arrive. --}}
+            <div x-show="loadingHistory" class="divide-y divide-[#F0E6D2]">
+                @for ($i = 0; $i < 3; $i++)
+                    <div class="px-4 py-3 flex items-center justify-between gap-2">
+                        <x-skeleton variant="text" :lines="1" class="flex-1 min-w-0" />
+                        <x-skeleton variant="block" size="h-3" class="w-10 shrink-0" />
+                    </div>
+                @endfor
+            </div>
             <div x-show="!loadingHistory && conversationList.length === 0" class="p-4 text-center text-[10px] font-black uppercase tracking-widest text-[#6D4C41]">No past conversations yet.</div>
-            <template x-for="conv in conversationList" :key="conv.id">
+            <template x-for="conv in loadingHistory ? [] : conversationList" :key="conv.id">
                 <div @click="openConversation(conv.id)"
                      tabindex="0" role="button" @keydown.enter="openConversation(conv.id)" @keydown.space.prevent="openConversation(conv.id)"
                      class="flex items-center justify-between gap-2 px-4 py-3 border-b border-[#F0E6D2] last:border-0 cursor-pointer hover:bg-[#FDF8F5] transition group"

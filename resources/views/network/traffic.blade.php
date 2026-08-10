@@ -22,13 +22,21 @@
                 </div>
                 <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
                 <div class="flex items-center gap-3">
+                    {{-- A rate needs two samples two seconds apart, so for the
+                         first moments there is genuinely no number to show.
+                         Printing "0.00 Mbps" there was a measurement the app
+                         had not taken — on a busy network it read as an outage.
+                         The skeleton is the same width as the figure it
+                         becomes, so nothing shifts when it lands. --}}
                     <div class="flex flex-col">
                         <span class="text-[8px] font-black text-[#6D4C41] uppercase tracking-tighter">Down</span>
-                        <span class="text-xs font-bold text-[#3E2723]" x-text="downSpeed">0.00 Mbps</span>
+                        <x-skeleton x-show="!hasRate" variant="block" size="h-4" class="w-16 mt-0.5" />
+                        <span x-show="hasRate" x-cloak class="text-xs font-bold text-[#3E2723]" x-text="downSpeed"></span>
                     </div>
                     <div class="flex flex-col">
                         <span class="text-[8px] font-black text-[#6D4C41] uppercase tracking-tighter">Up</span>
-                        <span class="text-xs font-bold text-[#3E2723]" x-text="upSpeed">0.00 Mbps</span>
+                        <x-skeleton x-show="!hasRate" variant="block" size="h-4" class="w-16 mt-0.5" />
+                        <span x-show="hasRate" x-cloak class="text-xs font-bold text-[#3E2723]" x-text="upSpeed"></span>
                     </div>
                 </div>
             </div>
@@ -151,7 +159,8 @@
                     <div>
                         <div class="flex justify-between text-[10px] font-bold text-[#8D6E63] uppercase mb-2">
                             <span>Throughput vs Per-Device Ceiling</span>
-                            <span x-text="utilization + '%'">0%</span>
+                            <x-skeleton x-show="!hasRate" variant="block" size="h-3" class="w-10" />
+                            <span x-show="hasRate" x-cloak x-text="utilization + '%'"></span>
                         </div>
                         <div class="w-full h-2 bg-[#FDF8F5] rounded-full overflow-hidden border border-[#F0E6D2]">
                             <div class="h-full w-full bg-amber-600 origin-left transition-transform duration-1000" :style="'transform: scaleX(' + (utilization / 100) + ')'"></div>
@@ -160,11 +169,13 @@
                     <div class="grid grid-cols-2 gap-4 mt-4">
                         <div class="p-3 bg-[#FDF8F5] rounded-xl border border-[#F0E6D2]/50 text-center">
                             <p class="text-[8px] font-black text-[#8D6E63] uppercase tracking-widest mb-1">Total Downloaded</p>
-                            <p class="text-sm font-bold text-[#3E2723]" x-text="totalIn">0 GB</p>
+                            <x-skeleton x-show="!hasTotals" variant="block" size="h-4" class="w-20 mx-auto" />
+                                <p x-show="hasTotals" x-cloak class="text-sm font-bold text-[#3E2723]" x-text="totalIn"></p>
                         </div>
                         <div class="p-3 bg-[#FDF8F5] rounded-xl border border-[#F0E6D2]/50 text-center">
                             <p class="text-[8px] font-black text-[#8D6E63] uppercase tracking-widest mb-1">Total Uploaded</p>
-                            <p class="text-sm font-bold text-[#3E2723]" x-text="totalOut">0 GB</p>
+                            <x-skeleton x-show="!hasTotals" variant="block" size="h-4" class="w-20 mx-auto" />
+                                <p x-show="hasTotals" x-cloak class="text-sm font-bold text-[#3E2723]" x-text="totalOut"></p>
                         </div>
                     </div>
                     <p class="text-[10px] text-[#6D4C41] font-medium italic leading-relaxed">
@@ -181,6 +192,10 @@
 <script>
     function trafficMonitor() {
         return {
+            // Totals arrive with the first sample; a rate needs two. Two
+            // flags, because they become available at different moments.
+            hasTotals: false,
+            hasRate: false,
             downSpeed: '0.00 Mbps',
             upSpeed: '0.00 Mbps',
             totalIn: '0 GB',
@@ -222,6 +237,7 @@
 
                         this.downSpeed = mbpsIn + ' Mbps';
                         this.upSpeed = mbpsOut + ' Mbps';
+                        this.hasRate = true;
 
                         // Measured against the one figure this gateway actually
                         // enforces — the per-device fair-use ceiling. The old
@@ -231,6 +247,7 @@
                         this.utilization = Math.min(100, Math.round((parseFloat(mbpsIn) / maxDown) * 100));
                     }
 
+                    this.hasTotals = true;
                     this.totalIn = (currentIn / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
                     this.totalOut = (currentOut / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
 

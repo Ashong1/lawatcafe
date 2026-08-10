@@ -269,6 +269,61 @@ html {
         repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0 1px, transparent 1px 14px);
 }
 
+/* Skeleton placeholders.
+   ------------------------------------------------------------------
+   Used wherever a region is genuinely empty until a fetch resolves, so the
+   wait has a shape instead of being a blank panel or a spinner that says
+   nothing about what is coming. Deliberately NOT used on server-rendered
+   values: replacing a number that is already in the HTML with a grey bar
+   would be a downgrade, not a loading state.
+
+   The sweep is a background-position animation on a gradient rather than a
+   moving pseudo-element, so it composites on one layer and costs nothing on
+   a phone. Colours are the app's own paper//tan, not neutral grey, so a
+   loading card reads as the same material as the card it becomes. */
+@keyframes lk-skeleton-sweep {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+
+.lk-skeleton {
+    background-color: #EFE6DC;
+    background-image: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.75) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: lk-skeleton-sweep 1.6s ease-in-out infinite;
+    border-radius: 0.5rem;
+    /* A placeholder must never be mistaken for content that failed to fill
+       in — it has no text, so it needs a height of its own. */
+    min-height: 0.75rem;
+}
+
+/* On the dark cards (the brown panels) the paper tone disappears. */
+.lk-skeleton-dark {
+    background-color: rgba(255, 255, 255, 0.12);
+    background-image: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.18) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+}
+
+/* Motion is decoration here; the layout alone already communicates "not
+   ready". Anyone who has asked for less of it keeps the shape and loses the
+   sweep. Matches the reduced-motion handling on the view transitions above. */
+@media (prefers-reduced-motion: reduce) {
+    .lk-skeleton {
+        animation: none;
+        background-image: none;
+    }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

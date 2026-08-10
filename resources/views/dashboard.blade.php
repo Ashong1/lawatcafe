@@ -284,7 +284,8 @@
             <div class="flex flex-row justify-around items-center w-full flex-1">
                 <div class="flex flex-col items-center">
                     <div class="flex items-baseline gap-1 mb-1">
-                        <span class="text-xl font-black text-[#1565C0]" x-text="liveData.bandwidthDown.toFixed(2)">{{ number_format($bandwidthDown ?? 0, 2) }}</span>
+                        <x-skeleton x-show="!liveData.hasRate" variant="block" size="h-6" class="w-16" />
+                        <span x-show="liveData.hasRate" x-cloak class="text-xl font-black text-[#1565C0]" x-text="liveData.bandwidthDown.toFixed(2)"></span>
                         <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Mbps</span>
                     </div>
                     <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Download</span>
@@ -292,7 +293,8 @@
 
                 <div class="flex flex-col items-center">
                     <div class="flex items-baseline gap-1 mb-1">
-                        <span class="text-xl font-black text-[#059669]" x-text="liveData.bandwidthUp.toFixed(2)">{{ number_format($bandwidthUp ?? 0, 2) }}</span>
+                        <x-skeleton x-show="!liveData.hasRate" variant="block" size="h-6" class="w-16" />
+                        <span x-show="liveData.hasRate" x-cloak class="text-xl font-black text-[#059669]" x-text="liveData.bandwidthUp.toFixed(2)"></span>
                         <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Mbps</span>
                     </div>
                     <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Upload</span>
@@ -495,14 +497,44 @@
                 </div>
             </div>
 
-            <!-- Loading State -->
-            <div x-show="loadingInsights" class="flex flex-col items-center justify-center py-12 flex-1">
-                <div class="flex gap-2 mb-4">
-                    <div class="w-3 h-3 bg-amber-500 rounded-full animate-bounce"></div>
-                    <div class="w-3 h-3 bg-amber-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                    <div class="w-3 h-3 bg-amber-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+            {{-- Loading State.
+                 A skeleton in the shape of the answer, not three bouncing dots
+                 in the middle of an empty panel. The forecast is normally
+                 served from a warm cache in milliseconds, but when that cache
+                 misses this is a full multi-provider AI call — the better part
+                 of ten seconds — and the old spinner spent all of it telling
+                 nobody anything about what was coming.
+
+                 The wording stays: this one really is analysing, and saying so
+                 is why a nine-second wait is tolerable rather than broken. --}}
+            <div x-show="loadingInsights" class="flex-1 space-y-6 py-2">
+                <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-widest">Analyzing store data…</p>
+
+                {{-- Forecast card: label, figure, trend sentence. --}}
+                <div class="bg-[#FDF8F5] border border-[#F0E6D2] p-4 rounded-2xl space-y-4">
+                    <div class="flex justify-between items-start gap-4">
+                        <x-skeleton variant="stat" class="w-full max-w-[12rem]" />
+                        <x-skeleton variant="circle" size="w-6 h-6" />
+                    </div>
+                    <x-skeleton variant="text" :lines="2" class="w-full" />
                 </div>
-                <p class="text-sm font-bold text-[#8D6E63] uppercase tracking-widest animate-pulse">Analyzing Store Data...</p>
+
+                {{-- Demand-risk rows. --}}
+                <div class="space-y-3">
+                    <x-skeleton variant="title" class="w-full" />
+                    @for ($i = 0; $i < 2; $i++)
+                        <div class="flex items-center gap-3 bg-[#FDF8F5] border border-[#F0E6D2] p-3 rounded-xl">
+                            <x-skeleton variant="circle" size="w-8 h-8" />
+                            <x-skeleton variant="text" :lines="2" class="flex-1 min-w-0" />
+                        </div>
+                    @endfor
+                </div>
+
+                {{-- Strategic advice. --}}
+                <div class="space-y-3">
+                    <x-skeleton variant="title" class="w-full" />
+                    <x-skeleton variant="text" :lines="3" class="w-full" />
+                </div>
             </div>
 
             <!-- Error State -->
@@ -679,6 +711,9 @@ document.addEventListener('alpine:init', () => {
         // tracking and animating them here would be a 3s poll feeding nothing.
         // The poll itself stays — bandwidth and the guest count still need it.
         liveData: {
+            // No rate exists until two counter samples are in. The 0.00 that
+            // used to render meanwhile was a measurement never taken.
+            hasRate: false,
             bandwidthDown: 0,
             bandwidthUp: 0,
             activeGuests: {{ $activeGuests ?? 0 }},
@@ -769,6 +804,7 @@ document.addEventListener('alpine:init', () => {
                     if (inDelta >= 0 && outDelta >= 0) {
                         this.animateNumber(this.liveData, 'bandwidthDown', (inDelta * 8) / (1024 * 1024) / deltaT);
                         this.animateNumber(this.liveData, 'bandwidthUp', (outDelta * 8) / (1024 * 1024) / deltaT);
+                        this.liveData.hasRate = true;
                     }
                 }
 

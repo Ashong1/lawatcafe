@@ -37,7 +37,7 @@
         </div>
 
         <div class="max-h-[360px] overflow-y-auto custom-scrollbar">
-            <template x-for="item in items" :key="item.id">
+            <template x-for="item in loaded ? items : []" :key="item.id">
                 <div class="p-4 border-b border-[#FAFAFA]" :class="isAdmin ? 'hover:bg-[#FDF8F5]/50 cursor-pointer' : ''" @click="isAdmin && goToActivity()"
                      :tabindex="isAdmin ? '0' : '-1'" :role="isAdmin ? 'button' : null"
                      @keydown.enter="isAdmin && goToActivity()" @keydown.space.prevent="isAdmin && goToActivity()">
@@ -54,7 +54,21 @@
                 </div>
             </template>
 
-            <template x-if="items.length === 0">
+            {{-- "Nothing pending" was shown from the moment the panel opened,
+                 before the fetch it triggers has answered — a reassuring
+                 message the app had no basis for yet. --}}
+            <template x-if="!loaded">
+                <div class="divide-y divide-[#FAFAFA]">
+                    @for ($i = 0; $i < 2; $i++)
+                        <div class="p-4 flex gap-3">
+                            <x-skeleton variant="circle" size="w-8 h-8" />
+                            <x-skeleton variant="text" :lines="2" class="flex-1 min-w-0" />
+                        </div>
+                    @endfor
+                </div>
+            </template>
+
+            <template x-if="loaded && items.length === 0">
                 <div class="py-12 text-center flex flex-col items-center opacity-30">
                     <x-lucide-check-circle-2 class="w-8 h-8 mb-2" />
                     <p class="text-xs font-bold uppercase tracking-widest text-[#6D4C41]">Nothing pending</p>
@@ -75,6 +89,8 @@ document.addEventListener('alpine:init', () => {
         open: false,
         count: config.initialCount ?? 0,
         items: [],
+        // Distinguishes "nothing pending" from "not asked yet".
+        loaded: false,
 
         init() {
             this.fetchPreview();
@@ -100,6 +116,10 @@ document.addEventListener('alpine:init', () => {
                 this.items = await response.json();
             } catch (error) {
                 console.error('Failed to fetch pending agent action preview');
+            } finally {
+                // finally, not the try: a dropped request must stop the
+                // skeleton too, or the panel shimmers indefinitely.
+                this.loaded = true;
             }
         },
 

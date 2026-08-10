@@ -32,7 +32,7 @@
         </div>
 
         <div class="max-h-[400px] overflow-y-auto custom-scrollbar">
-            <template x-for="notif in notifications" :key="notif.id">
+            <template x-for="notif in loaded ? notifications : []" :key="notif.id">
                 <div @click="markAsRead(notif)"
                      tabindex="0" role="button" @keydown.enter="markAsRead(notif)" @keydown.space.prevent="markAsRead(notif)"
                      class="p-4 border-b border-[#FAFAFA] hover:bg-[#FDF8F5]/50 transition-colors cursor-pointer group"
@@ -65,7 +65,23 @@
                 </div>
             </template>
 
-            <template x-if="notifications.length === 0">
+            {{-- Until the first fetch lands, an empty list is not the same
+                 thing as no notifications — this panel used to claim "No
+                 notifications" the instant it opened, then quietly fill in.
+                 The skeleton is the shape of two rows, so the panel does not
+                 resize under the reader when the real ones arrive. --}}
+            <template x-if="!loaded">
+                <div class="divide-y divide-[#FAFAFA]">
+                    @for ($i = 0; $i < 2; $i++)
+                        <div class="p-4 flex gap-3">
+                            <x-skeleton variant="circle" size="w-8 h-8" />
+                            <x-skeleton variant="text" :lines="2" class="flex-1 min-w-0" />
+                        </div>
+                    @endfor
+                </div>
+            </template>
+
+            <template x-if="loaded && notifications.length === 0">
                 <div class="py-12 text-center flex flex-col items-center opacity-30">
                     <x-lucide-bell-off class="w-8 h-8 mb-2" />
                     <p class="text-xs font-bold uppercase tracking-widest text-[#6D4C41]">No notifications</p>
@@ -85,6 +101,8 @@ document.addEventListener('alpine:init', () => {
         open: false,
         unreadCount: initialUnreadCount,
         notifications: [],
+        // Distinguishes "nothing to show" from "not asked yet".
+        loaded: false,
 
         init() {
             this.fetchNotifications();
@@ -111,6 +129,10 @@ document.addEventListener('alpine:init', () => {
                 this.notifications = data.data;
             } catch (error) {
                 console.error('Failed to fetch notifications');
+            } finally {
+                // finally, not the try: a failed fetch has to stop the skeleton
+                // too, or the panel shimmers forever on a dropped request.
+                this.loaded = true;
             }
         },
 
