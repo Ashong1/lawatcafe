@@ -4,90 +4,82 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Services\OpnSenseService;
+use App\Services\TrafficShapingService;
 use Illuminate\Http\Request;
 
 /**
- * The guest network's traffic page: what is enforced, and what each voucher
- * tier is rated at.
+ * The guest network's traffic page: the one cap this gateway enforces.
  *
- * Two different kinds of number live here and the page must never blur them.
+ * That cap is a single Shaper rule per direction across the whole guest
+ * interface, with a per-IP mask so the figure is a ceiling PER DEVICE rather
+ * than a total shared between them.
  *
- * The fair-use ceiling is real. One Shaper rule per direction caps every
- * device on the guest interface, and `shaper:fair-use` owns it — no form, so
- * there is no way to half-apply it from a browser.
+ * The page used to carry a second form for per-tier voucher rates. Those were
+ * recorded and never enforced — this OPNsense build can shape an interface and
+ * nothing smaller: Shaper rules accept only "any" for source and destination,
+ * filter rules naming an alias save and apply and then shape nothing, the portal
+ * zone has no bandwidth fields, and while a Shaper rule can match DSCP no
+ * endpoint can set a mark per tier. Offering four inputs that changed no traffic
+ * was answering a question the gateway cannot be asked, so the form is gone and
+ * the figure that does reach the network is editable in its place.
  *
- * The per-tier rates are a record. This OPNsense build can shape an interface
- * and nothing smaller: its Shaper rules accept only "any" for source and
- * destination, filter rules that name an alias save and apply and then shape
- * nothing, and the portal zone has no bandwidth fields. Re-checked live on
- * 2026-08-10 — a Shaper rule can match DSCP, but no endpoint can set a DSCP
- * mark per tier, so that lane is closed too.
- *
- * Saving therefore writes settings and calls no firewall. The values still
- * matter: `shaper:provision` reads them, vouchers carry a tier, and the Plans
- * page quotes them to guests.
- *
- * (The free and premium keys are spelled out below rather than written as a
- * glob with a star and a slash — that sequence ends a docblock, and writing it
- * here once took the whole page down with a ParseError.)
+ * The stored rates themselves are untouched: the Plans page still quotes them.
  */
 class TrafficController extends Controller
 {
-    /**
-     * Defaults match the seeded plan figures, so a fresh install shows the
-     * same rates the Plans page quotes.
-     */
-    private const TIER_DEFAULTS = [
-        'bw_free_down' => '2',
-        'bw_free_up' => '1',
-        'bw_premium_down' => '10',
-        'bw_premium_up' => '5',
-    ];
+    /** Matches ProvisionFairUseCap's default, so the two never disagree. */
+    private const DEFAULT_CEILING = '20';
 
     public function index()
     {
-        $settings = ['bw_fair_use_mbps' => Setting::get('bw_fair_use_mbps', '20')];
-
-        foreach (self::TIER_DEFAULTS as $key => $default) {
-            $settings[$key] = Setting::get($key, $default);
-        }
+        $settings = ['bw_fair_use_mbps' => Setting::get('bw_fair_use_mbps', self::DEFAULT_CEILING)];
 
         return view('network.traffic', compact('settings'));
     }
 
     /**
-     * Record the per-tier rates.
+     * Apply the fair-use ceiling, then record it.
      *
-     * Deliberately touches no firewall. An earlier version of this action
-     * provisioned per-tier pipes and rules on every save; OPNsense rejected
-     * the rules every time, so the page reported a failure for values that had
-     * in fact been stored. A save that only saves cannot fail that way.
+     * That order is the whole point. This action really does rewrite the live
+     * firewall, so the stored figure must never be allowed to describe a cap the
+     * gateway is not running — on a rejection nothing is saved and the page says
+     * what OPNsense refused. It shares applyFairUseCap() with `shaper:fair-use`
+     * so the browser and the CLI cannot drift into differently-behaving copies
+     * of the same provisioning.
      */
-    public function update(Request $request)
+    public function update(Request $request, TrafficShapingService $shaper, OpnSenseService $opnsense)
     {
-        // A rate below 0.1 is not a slow tier, it is a broken one, and the
-        // upper bound keeps a typo from advertising a gigabit café.
+        // The floor is not cosmetic. The captive portal zone is bound to `lan`,
+        // which also carries the POS, this application server, Pi-hole and
+        // OPNsense itself, and the ceiling applies to all of them. At the old
+        // per-tier value (2 Mbit) it would have throttled the register and every
+        // AI call this app makes, so anything that low is a mistake rather than
+        // a policy. The upper bound keeps a typo from quietly removing the cap.
         $validated = $request->validate([
-            'bw_free_down' => 'required|numeric|min:0.1|max:1000',
-            'bw_free_up' => 'required|numeric|min:0.1|max:1000',
-            'bw_premium_down' => 'required|numeric|min:0.1|max:1000',
-            'bw_premium_up' => 'required|numeric|min:0.1|max:1000',
-        ]);
+            'bw_fair_use_mbps' => 'required|numeric|min:5|max:1000',
+        ], [], ['bw_fair_use_mbps' => 'fair-use ceiling']);
 
-        foreach ($validated as $key => $value) {
-            Setting::set($key, $value);
+        $mbps = (float) $validated['bw_fair_use_mbps'];
+
+        if (! $shaper->applyFairUseCap($mbps, $opnsense)) {
+            // Deliberately not saved. A rejection can land after the download
+            // pipe is already written, so the gateway may be holding a partly
+            // applied cap — say so rather than letting a stored number imply a
+            // clean state.
+            return redirect()->back()->withInput()->with('error', sprintf(
+                '%s The ceiling was not saved, and the gateway may be part-way through the change — '
+                .'try again, or run php artisan shaper:fair-use %s --apply.',
+                $shaper->lastError() ?? 'OPNsense rejected the configuration.',
+                rtrim(rtrim(number_format($mbps, 2, '.', ''), '0'), '.')
+            ));
         }
 
+        Setting::set('bw_fair_use_mbps', (string) $mbps);
+
         return redirect()->back()->with('success', sprintf(
-            'Tier rates saved — free %s/%s Mbps, premium %s/%s Mbps (down/up). '
-            .'They are recorded against vouchers and shown on the Plans page. '
-            .'Traffic is unchanged: this gateway shapes by interface only, so every '
-            .'guest stays on the %s Mbps per-device ceiling.',
-            $validated['bw_free_down'],
-            $validated['bw_free_up'],
-            $validated['bw_premium_down'],
-            $validated['bw_premium_up'],
-            Setting::get('bw_fair_use_mbps', '20')
+            'Fair-use ceiling is live at %s Mbps per device, each way. It applies to every device on '
+            .'the guest interface — the POS and this server included.',
+            rtrim(rtrim(number_format($mbps, 2, '.', ''), '0'), '.')
         ));
     }
 

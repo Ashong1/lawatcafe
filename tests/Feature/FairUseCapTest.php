@@ -195,12 +195,12 @@ class FairUseCapTest extends TestCase
     }
 
     /**
-     * The page offers per-tier rates and states the ceiling. The ceiling has no
-     * input of its own: it is the one figure that really reaches the network,
-     * and `shaper:fair-use` owns it so it can never be half-applied from a
-     * browser.
+     * The page offers exactly one number: the ceiling. The four per-tier inputs
+     * that used to sit below it were recorded and never enforced, so they were
+     * removed rather than left implying the gateway could tell a free guest from
+     * a premium one.
      */
-    public function test_the_page_offers_tier_rates_and_states_the_ceiling(): void
+    public function test_the_page_offers_the_ceiling_and_nothing_that_is_not_enforced(): void
     {
         Setting::set('bw_fair_use_mbps', '20');
         Cache::forget('setting.bw_fair_use_mbps');
@@ -210,81 +210,117 @@ class FairUseCapTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Fair-Use Ceiling', false);
-        $response->assertSee('20 Mbps', false);
+        // Editable, and seeded with what is actually in force.
+        $response->assertSee('name="bw_fair_use_mbps"', false);
+        $response->assertSee('value="20"', false);
 
-        $response->assertSee('name="bw_free_down"', false);
-        $response->assertSee('name="bw_free_up"', false);
-        $response->assertSee('name="bw_premium_down"', false);
-        $response->assertSee('name="bw_premium_up"', false);
-
-        // The ceiling and the dead burst toggle stay out of the form.
-        $response->assertDontSee('name="bw_fair_use_mbps"', false);
-        $response->assertDontSee('name="bw_burst_enabled"', false);
-    }
-
-    /**
-     * The page must not promise enforcement it cannot deliver. It briefly said
-     * per-tier caps were enforced, on the strength of filter rules that saved
-     * and applied and did nothing.
-     */
-    public function test_the_page_states_that_per_tier_rates_are_not_enforced(): void
-    {
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->get(route('network.traffic'))
-            ->assertSee('Recorded, not enforced', false);
-    }
-
-    public function test_the_tier_rates_are_saved(): void
-    {
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->post(route('network.traffic.update'), [
-                'bw_free_down' => 3, 'bw_free_up' => 1.5,
-                'bw_premium_down' => 12, 'bw_premium_up' => 6,
-            ])
-            ->assertSessionHasNoErrors()
-            ->assertSessionHas('success');
-
-        foreach (['bw_free_down' => '3', 'bw_free_up' => '1.5',
-            'bw_premium_down' => '12', 'bw_premium_up' => '6'] as $key => $expected) {
-            Cache::forget("setting.{$key}");
-            $this->assertSame($expected, Setting::get($key));
+        foreach (['bw_free_down', 'bw_free_up', 'bw_premium_down', 'bw_premium_up', 'bw_burst_enabled'] as $gone) {
+            $response->assertDontSee('name="'.$gone.'"', false);
         }
     }
 
     /**
-     * Saving must not touch OPNsense at all. The old action provisioned
-     * per-tier pipes and rules on every save, OPNsense rejected the rules every
-     * time, and the page reported a failure for values that had been stored.
+     * The page must not promise enforcement it cannot deliver, and the ceiling
+     * is not a per-guest allowance: it is bound to `lan`, so the shop's own
+     * equipment is held to it too. Anyone about to lower it needs to read that
+     * before typing rather than after saving.
      */
-    public function test_saving_the_tier_rates_calls_no_firewall(): void
+    public function test_the_page_says_the_ceiling_covers_the_shops_own_equipment(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get(route('network.traffic'))
+            ->assertSee('Applies to the whole interface', false);
+    }
+
+    /** Saving applies the cap to the gateway, then records it. */
+    public function test_saving_the_ceiling_applies_it_and_records_it(): void
+    {
+        $this->fakeOpnsense();
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('network.traffic.update'), ['bw_fair_use_mbps' => 35])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success');
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'addPipe')
+            && ($request['pipe']['bandwidth'] ?? null) === '35');
+
+        Cache::forget('setting.bw_fair_use_mbps');
+        $this->assertSame('35', Setting::get('bw_fair_use_mbps'));
+    }
+
+    /**
+     * The order that matters. A stored figure describing a cap the gateway is
+     * not running is worse than no figure at all — an admin reads it, believes
+     * the network is capped, and it is not. On a rejection nothing is saved.
+     */
+    public function test_a_rejected_ceiling_is_not_recorded(): void
+    {
+        Setting::set('bw_fair_use_mbps', '20');
+        Cache::forget('setting.bw_fair_use_mbps');
+
+        Http::fake([
+            '*/api/trafficshaper/settings/searchPipes*' => Http::response(['rows' => []], 200),
+            '*/api/trafficshaper/settings/searchRules*' => Http::response(['rows' => []], 200),
+            '*/api/trafficshaper/settings/get' => Http::response(['ts' => [
+                'pipes' => ['pipe' => []], 'rules' => ['rule' => []],
+            ]], 200),
+            '*/api/trafficshaper/settings/addRule' => Http::response(['result' => 'failed'], 200),
+            '*' => Http::response(['result' => 'saved', 'uuid' => 'obj-1'], 200),
+        ]);
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('network.traffic.update'), ['bw_fair_use_mbps' => 35])
+            ->assertSessionHas('error');
+
+        Cache::forget('setting.bw_fair_use_mbps');
+        $this->assertSame('20', Setting::get('bw_fair_use_mbps'));
+    }
+
+    /**
+     * A ceiling low enough to throttle the register is a mistake, not a policy:
+     * the captive portal zone is bound to `lan`, which carries the POS, this
+     * server, Pi-hole and OPNsense. Nothing may reach the firewall on a refusal.
+     */
+    public function test_a_ceiling_low_enough_to_throttle_the_shop_is_refused(): void
     {
         Http::fake();
 
         $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->post(route('network.traffic.update'), [
-                'bw_free_down' => 2, 'bw_free_up' => 1,
-                'bw_premium_down' => 10, 'bw_premium_up' => 5,
-            ])->assertSessionHas('success');
+            ->post(route('network.traffic.update'), ['bw_fair_use_mbps' => 2])
+            ->assertSessionHasErrors('bw_fair_use_mbps');
 
         Http::assertNothingSent();
     }
 
-    /** A fractional rate is legitimate here — nothing writes it to a pipe. */
-    public function test_a_rate_below_the_minimum_is_rejected(): void
+    /** An absent value must not be read as "uncapped". */
+    public function test_an_empty_ceiling_is_rejected(): void
     {
+        Http::fake();
+
         $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->post(route('network.traffic.update'), [
-                'bw_free_down' => 0, 'bw_free_up' => 1,
-                'bw_premium_down' => 10, 'bw_premium_up' => 5,
-            ])->assertSessionHasErrors('bw_free_down');
+            ->post(route('network.traffic.update'), [])
+            ->assertSessionHasErrors('bw_fair_use_mbps');
+
+        Http::assertNothingSent();
     }
 
-    /** Every tier field is required — a partial save would strand one rate. */
-    public function test_an_incomplete_save_is_rejected(): void
+    /**
+     * The per-tier rates are no longer editable, but they were never deleted —
+     * the Plans page still quotes them to guests, and dropping the form must not
+     * quietly reset what those guests are being told.
+     */
+    public function test_removing_the_tier_form_left_the_stored_rates_alone(): void
     {
+        $this->fakeOpnsense();
+        Setting::set('bw_premium_down', '12');
+
         $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->post(route('network.traffic.update'), ['bw_free_down' => 2])
-            ->assertSessionHasErrors(['bw_free_up', 'bw_premium_down', 'bw_premium_up']);
+            ->post(route('network.traffic.update'), ['bw_fair_use_mbps' => 35])
+            ->assertSessionHas('success');
+
+        Cache::forget('setting.bw_premium_down');
+        $this->assertSame('12', Setting::get('bw_premium_down'));
     }
 
     /**

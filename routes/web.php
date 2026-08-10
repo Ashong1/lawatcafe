@@ -241,8 +241,9 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/plans', [VoucherController::class, 'plans'])->name('plans');
             Route::get('/traffic', [TrafficController::class, 'index'])->name('traffic');
             Route::get('/traffic/stats', [TrafficController::class, 'stats'])->name('traffic.stats');
-            // Records the per-tier rates. Writes settings only, never the
-            // firewall — see TrafficController.
+            // Applies the fair-use ceiling. This one DOES write the live
+            // firewall, and only records the figure once OPNsense accepts it —
+            // see TrafficController::update().
             Route::post('/traffic', [TrafficController::class, 'update'])->name('traffic.update');
 
             Route::get('/blocklist', [BlocklistController::class, 'index'])->name('blocklist');
