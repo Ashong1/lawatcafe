@@ -131,6 +131,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    // Declared before the {id} route: 'read' would otherwise match as an id and
+    // the bulk clear would look for a notification called "read".
+    Route::delete('/notifications/read', [NotificationController::class, 'destroyRead'])->name('notifications.destroy-read');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     // Shared Network Info (Vouchers list + Active Sessions visible to staff —
     // set-tier stays admin-only, see the ADMIN ONLY network group below).

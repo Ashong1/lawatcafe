@@ -268,7 +268,7 @@
             </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="navLabelsVisible" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.118</span>
+            <span x-show="navLabelsVisible" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v1.0.0.119</span>
             <span x-show="!navLabelsVisible" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
         </div>
     </aside>

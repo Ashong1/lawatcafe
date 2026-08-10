@@ -58,9 +58,22 @@
                             <p class="text-[11px] text-[#8D6E63] font-medium leading-relaxed mt-0.5" x-text="notif.data.message"></p>
                             <p class="text-[9px] text-[#6D4C41] font-bold uppercase tracking-tighter mt-2" x-text="formatDate(notif.created_at)"></p>
                         </div>
-                        <template x-if="!notif.read_at">
-                            <div class="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1 shrink-0"></div>
-                        </template>
+                        <div class="flex items-start gap-2 shrink-0">
+                            <template x-if="!notif.read_at">
+                                <div class="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1.5"></div>
+                            </template>
+                            {{-- .stop on both, and on the keyboard handlers too:
+                                 the whole row is a button that marks the item
+                                 read and then navigates away, so without it
+                                 dismissing one would open it instead. --}}
+                            <button @click.stop="remove(notif)"
+                                    @keydown.enter.stop="remove(notif)"
+                                    @keydown.space.stop.prevent="remove(notif)"
+                                    :aria-label="`Delete notification: ${notif.data.title}`"
+                                    class="p-1 -m-1 rounded-lg text-[#D7CCC8] hover:text-red-600 hover:bg-red-50 transition focus:outline-none focus:ring-2 focus:ring-red-300">
+                                <x-lucide-x class="w-3.5 h-3.5" />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </template>
@@ -89,8 +102,15 @@
             </template>
         </div>
 
-        <div x-show="notifications.length > 0" class="p-3 bg-[#FDF8F5] text-center border-t border-[#F0E6D2]">
-            <a href="#" class="text-[10px] font-black text-[#3E2723] uppercase tracking-widest hover:text-amber-800 transition">View All Activity</a>
+        {{-- Was a "View All Activity" link pointing at href="#", which went
+             nowhere. The footer is where a bulk action belongs, and clearing
+             what has already been read is the one this panel actually needed —
+             a list that only ever grows is why nobody scrolls it. --}}
+        <div x-show="hasRead" x-cloak class="p-3 bg-[#FDF8F5] text-center border-t border-[#F0E6D2]">
+            <button @click="clearRead()"
+                    class="text-[10px] font-black text-[#6D4C41] uppercase tracking-widest hover:text-red-700 transition focus:outline-none">
+                Clear read notifications
+            </button>
         </div>
     </div>
 </div>
@@ -165,6 +185,64 @@ document.addEventListener('alpine:init', () => {
                 this.unreadCount = 0;
             } catch (error) {
                 console.error('Failed to mark all as read');
+            }
+        },
+
+        get hasRead() {
+            return this.notifications.some(n => n.read_at);
+        },
+
+        /**
+         * Removed from the list first and reconciled with the server after.
+         * A dismiss that sits there for a round trip reads as a dead button and
+         * gets clicked again; the list is restored if the request fails, so an
+         * optimistic update never silently loses one.
+         */
+        async remove(notif) {
+            const previous = [...this.notifications];
+            this.notifications = this.notifications.filter(n => n.id !== notif.id);
+
+            try {
+                const response = await fetch(`/notifications/${notif.id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+                });
+
+                if (!response.ok) throw new Error('delete failed');
+
+                // The count comes back from the server rather than being
+                // decremented here — the badge is also seeded server-side and
+                // polled on a timer, and local arithmetic would drift from it.
+                const data = await response.json();
+                this.unreadCount = data.unread_count;
+
+                // The list is one page of ten; pull the next one up so the panel
+                // does not empty out a row at a time.
+                this.fetchNotifications();
+            } catch (error) {
+                this.notifications = previous;
+                console.error('Failed to delete notification');
+            }
+        },
+
+        async clearRead() {
+            const previous = [...this.notifications];
+            this.notifications = this.notifications.filter(n => !n.read_at);
+
+            try {
+                const response = await fetch('{{ route("notifications.destroy-read") }}', {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+                });
+
+                if (!response.ok) throw new Error('clear failed');
+
+                const data = await response.json();
+                this.unreadCount = data.unread_count;
+                this.fetchNotifications();
+            } catch (error) {
+                this.notifications = previous;
+                console.error('Failed to clear read notifications');
             }
         },
 
