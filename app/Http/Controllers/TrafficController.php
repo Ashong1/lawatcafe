@@ -4,83 +4,31 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Services\OpnSenseService;
-use App\Services\TrafficShapingService;
-use Illuminate\Http\Request;
 
+/**
+ * The guest network's traffic monitor.
+ *
+ * This page used to carry a QoS form: a per-device ceiling, a free and a
+ * premium tier, a burst toggle. Only the ceiling was ever enforced — the
+ * tier fields wrote values that this OPNsense build cannot act on, and the
+ * burst toggle wrote a setting nothing reads. A form whose controls mostly
+ * do nothing is worse than no form, so the page now reports the shaping that
+ * is in force and the ceiling is set with `php artisan shaper:fair-use`.
+ *
+ * The free and premium settings themselves stay: the Plans page shows them to
+ * guests and `shaper:provision` still reads them. (Spelling them out rather
+ * than as a glob with a star and a slash — that sequence ends a docblock, and
+ * writing it here took the whole page down with a ParseError.)
+ */
 class TrafficController extends Controller
 {
     public function index()
     {
         $settings = [
-            'bw_free_up' => Setting::get('bw_free_up', '1'),
-            'bw_free_down' => Setting::get('bw_free_down', '2'),
-            'bw_premium_up' => Setting::get('bw_premium_up', '5'),
-            'bw_premium_down' => Setting::get('bw_premium_down', '10'),
-            'bw_burst_enabled' => Setting::get('bw_burst_enabled', '0'),
             'bw_fair_use_mbps' => Setting::get('bw_fair_use_mbps', '20'),
         ];
 
         return view('network.traffic', compact('settings'));
-    }
-
-    public function update(Request $request, OpnSenseService $opnsense, TrafficShapingService $shaping)
-    {
-        $validated = $request->validate([
-            // nullable, not required. A page loaded before this field existed
-            // submits without it, and rejecting the whole save for a value that
-            // is already stored helps nobody — the browser tab is stale, the
-            // setting is not. Falls back to the saved ceiling below.
-            'bw_fair_use_mbps' => 'nullable|numeric|min:1|max:1000',
-            'bw_free_up' => 'required|numeric|min:0.1',
-            'bw_free_down' => 'required|numeric|min:0.1',
-            'bw_premium_up' => 'required|numeric|min:0.1',
-            'bw_premium_down' => 'required|numeric|min:0.1',
-            'bw_burst_enabled' => 'boolean',
-        ]);
-
-        foreach ($validated as $key => $value) {
-            // Skip nulls: an omitted optional field means "leave it alone", not
-            // "blank it out".
-            if ($value !== null) {
-                Setting::set($key, $value);
-            }
-        }
-
-        // Provision the fair-use ceiling, not the per-tier chain. The per-tier
-        // values are still recorded — vouchers carry a tier, and they are the
-        // intent to restore once guests have their own interface — but they
-        // cannot be provisioned on this build: the shaper's rule model offers
-        // nothing but "any" for source and destination, so a rule matching a
-        // tier alias is rejected outright. Attempting it made Save fail every
-        // single time while the setting had in fact been stored.
-        $mbps = (float) ($validated['bw_fair_use_mbps'] ?? Setting::get('bw_fair_use_mbps', 20));
-
-        // The ceiling only. Per-tier shaping was attempted through firewall
-        // filter rules, whose source_net/destination_net do take an alias name
-        // and whose shaper1 does take a pipe UUID — the rules save, apply, and
-        // report OK, and then shape nothing at all. Measured on a member of the
-        // free tier with its rules live: 18 Mbit, the ceiling's value, not the
-        // tier's. quick=1 changes nothing. The captive portal decides guest
-        // traffic in its own anchor before these rules are ever reached.
-        $applied = $shaping->applyFairUseCap($mbps, $opnsense);
-
-        if (! $applied) {
-            // Report what actually failed. The old wording blamed the
-            // connection, which sent people to check the one thing that was
-            // working — OPNsense answers every request here and is rejecting
-            // the payload, not refusing to talk.
-            $reason = $shaping->lastError() ?? 'OPNsense rejected the shaper configuration.';
-
-            return redirect()->back()->with('error', 'Settings saved, but the fair-use ceiling could not be applied. '.$reason);
-        }
-
-        return redirect()->back()->with('success', sprintf(
-            'Settings saved. A %s Mbps per-device ceiling is live on the guest network. '
-            .'The free and premium figures are recorded against vouchers but are not '
-            .'enforced — this gateway can only shape by interface, so separating the '
-            .'tiers needs each one on its own interface.',
-            $mbps
-        ));
     }
 
     public function stats(OpnSenseService $opnsense)

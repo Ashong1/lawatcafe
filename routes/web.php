@@ -239,9 +239,10 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/vouchers/{voucher}', [VoucherController::class, 'destroy'])->name('vouchers.destroy');
 
             Route::get('/plans', [VoucherController::class, 'plans'])->name('plans');
+            // Read-only. The QoS form that used to POST here is gone — see
+            // TrafficController.
             Route::get('/traffic', [TrafficController::class, 'index'])->name('traffic');
-            Route::get('/traffic/stats', [TrafficController::class, 'stats'])->name('traffic.stats'); // Added stats route
-            Route::post('/traffic', [TrafficController::class, 'update'])->name('traffic.update');
+            Route::get('/traffic/stats', [TrafficController::class, 'stats'])->name('traffic.stats');
 
             Route::get('/blocklist', [BlocklistController::class, 'index'])->name('blocklist');
             Route::post('/blocklist', [BlocklistController::class, 'store'])->name('blocklist.store');

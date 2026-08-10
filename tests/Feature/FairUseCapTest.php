@@ -152,125 +152,6 @@ class FairUseCapTest extends TestCase
     }
 
     /**
-     * The Bandwidth Shaping page must provision the cap that works, not the
-     * per-tier chain that cannot. Saving used to fail every single time on this
-     * hardware while the values had in fact been stored — an error on every
-     * click, for a setting that had saved.
-     */
-    public function test_saving_the_bandwidth_page_applies_the_fair_use_ceiling(): void
-    {
-        $this->fakeOpnsense();
-
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->post(route('network.traffic.update'), [
-                'bw_fair_use_mbps' => 20,
-                'bw_free_down' => 2, 'bw_free_up' => 1,
-                'bw_premium_down' => 10, 'bw_premium_up' => 5,
-            ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
-
-        // The Shaper rules stay any/any — that is the only form they accept.
-        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'trafficshaper/settings/addRule')
-            || ($request['rule']['source'] ?? null) === 'any');
-
-        // And nothing is written to the filter table. Rules there carrying a
-        // pipe UUID save and apply cleanly and then shape nothing, so writing
-        // them only leaves inert pass rules on a live firewall.
-        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'firewall/filter'));
-
-        Cache::forget('setting.bw_fair_use_mbps');
-        $this->assertSame('20', Setting::get('bw_fair_use_mbps'));
-    }
-
-    /** The tier values are still recorded — vouchers carry a tier. */
-    public function test_the_per_tier_values_are_still_saved_even_though_they_are_not_enforced(): void
-    {
-        $this->fakeOpnsense();
-
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->post(route('network.traffic.update'), [
-                'bw_fair_use_mbps' => 20,
-                'bw_free_down' => 3, 'bw_free_up' => 2,
-                'bw_premium_down' => 12, 'bw_premium_up' => 6,
-            ])->assertSessionHas('success');
-
-        Cache::forget('setting.bw_free_down');
-        $this->assertSame('3', Setting::get('bw_free_down'));
-    }
-
-    /**
-     * The page must not promise enforcement it cannot deliver. It briefly said
-     * per-tier caps were enforced, on the strength of filter rules that saved
-     * and applied and did nothing.
-     */
-    public function test_the_page_states_that_per_tier_caps_are_not_enforced(): void
-    {
-        $response = $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->get(route('network.traffic'));
-
-        $response->assertOk();
-        $response->assertSee('Fair-Use Ceiling', false);
-        $response->assertSee('recorded, not enforced', false);
-    }
-
-    /**
-     * The exact report: an admin with the Bandwidth page already open when this
-     * field shipped submitted the old form and got "The bw fair use mbps field
-     * is required" — a hard failure over a value that was already stored. A
-     * stale tab is not a reason to refuse the whole save.
-     */
-    public function test_a_form_submitted_without_the_new_field_still_saves(): void
-    {
-        Setting::set('bw_fair_use_mbps', '20');
-        Cache::forget('setting.bw_fair_use_mbps');
-        $this->fakeOpnsense();
-
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->post(route('network.traffic.update'), [
-                // No bw_fair_use_mbps at all — the pre-deploy form.
-                'bw_free_down' => 2, 'bw_free_up' => 1,
-                'bw_premium_down' => 10, 'bw_premium_up' => 5,
-            ])
-            ->assertSessionHasNoErrors()
-            ->assertSessionHas('success');
-
-        // And the stored ceiling is what got applied, not zero or null.
-        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'addPipe')
-            || ($request['pipe']['bandwidth'] ?? null) === '20');
-    }
-
-    /** An omitted optional field means "leave it alone", never "blank it out". */
-    public function test_an_omitted_ceiling_does_not_erase_the_stored_one(): void
-    {
-        Setting::set('bw_fair_use_mbps', '35');
-        Cache::forget('setting.bw_fair_use_mbps');
-        $this->fakeOpnsense();
-
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->post(route('network.traffic.update'), [
-                'bw_free_down' => 2, 'bw_free_up' => 1,
-                'bw_premium_down' => 10, 'bw_premium_up' => 5,
-            ])->assertSessionHas('success');
-
-        Cache::forget('setting.bw_fair_use_mbps');
-        $this->assertSame('35', Setting::get('bw_fair_use_mbps'));
-    }
-
-    /** A value that IS sent still has to be sane. */
-    public function test_an_out_of_range_ceiling_is_still_rejected(): void
-    {
-        $this->fakeOpnsense();
-
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->post(route('network.traffic.update'), [
-                'bw_fair_use_mbps' => 0,
-                'bw_free_down' => 2, 'bw_free_up' => 1,
-                'bw_premium_down' => 10, 'bw_premium_up' => 5,
-            ])->assertSessionHasErrors('bw_fair_use_mbps');
-    }
-
-    /**
      * The exact report: saving with a free upload of 1.5 Mbps failed with
      * "OPNsense rejected the bandwidth pipe 'lawatcafe_free_up'". The pipe's
      * bandwidth field is an integer, and OPNsense answers "Bandwidth out of
@@ -313,19 +194,38 @@ class FairUseCapTest extends TestCase
             || ctype_digit($request['pipe']['bandwidth']));
     }
 
-    /** And the whole per-tier save survives a fractional value end to end. */
-    public function test_saving_with_a_fractional_tier_rate_succeeds(): void
+    /**
+     * The Bandwidth Shaping page reports; it does not configure. Its QoS form
+     * offered four per-tier fields this gateway cannot enforce and a burst
+     * toggle nothing reads, alongside the one control that worked — so most of
+     * what an admin could set there silently did nothing. The ceiling now
+     * belongs to `shaper:fair-use` alone.
+     */
+    public function test_the_page_is_read_only_and_states_the_ceiling(): void
     {
-        $this->fakeOpnsense();
+        Setting::set('bw_fair_use_mbps', '20');
+        Cache::forget('setting.bw_fair_use_mbps');
 
+        $response = $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get(route('network.traffic'));
+
+        $response->assertOk();
+        $response->assertSee('Fair-Use Ceiling', false);
+        $response->assertSee('20 Mbps', false);
+
+        $response->assertDontSee('QoS Configuration', false);
+        $response->assertDontSee('name="bw_fair_use_mbps"', false);
+        $response->assertDontSee('name="bw_free_down"', false);
+        $response->assertDontSee('name="bw_premium_down"', false);
+        $response->assertDontSee('name="bw_burst_enabled"', false);
+    }
+
+    /** And nothing may POST to it any more. */
+    public function test_the_page_accepts_no_post(): void
+    {
         $this->actingAs(User::factory()->create(['role' => 'admin']))
-            ->post(route('network.traffic.update'), [
-                'bw_fair_use_mbps' => 20,
-                'bw_free_down' => 3, 'bw_free_up' => 1.5,
-                'bw_premium_down' => 10, 'bw_premium_up' => 2.5,
-            ])
-            ->assertSessionHasNoErrors()
-            ->assertSessionHas('success');
+            ->post('/network/traffic', ['bw_fair_use_mbps' => 99])
+            ->assertStatus(405);
     }
 
     /**
