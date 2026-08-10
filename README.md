@@ -126,6 +126,29 @@ Further reading, grouped by concern:
 
 This app doesn't run standalone — it sits behind a real network stack (OPNsense for routing/firewall/captive-portal/DHCP, Nginx Proxy Manager as the reverse proxy, Pi-hole for guest DNS, all on Proxmox). See **[docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md)** for the full topology, what each box does, and what the app's `OpnSenseService` actually manages via API.
 
+## Versioning
+
+Four segments, `MAJOR.MINOR.PATCH.BUILD`:
+
+| Segment | Moves when | Example |
+|---|---|---|
+| **major** | The system is a different thing and would need re-explaining | stays at `1` |
+| **minor** | A capability someone would notice | adaptive bandwidth shaping |
+| **patch** | A batch of fixes verified on the live system | a deploy that survived service |
+| **build** | Every commit | always |
+
+The build counter never resets, so `1.8.0.122` is followed by `1.9.0.123`. It is
+what someone reads off the sidebar to check they are on the latest build, and
+that only works if it never repeats.
+
+The version lives in **one** place — the `version` field in `composer.json`.
+`config/app.php` reads it and both sidebars render `config('app.version')`, so a
+release is a one-line edit. `VersioningTest` fails if a literal version string
+reappears in a view.
+
+Release history is in **[CHANGELOG.md](CHANGELOG.md)**; the rules, the triggers,
+and how to cut a release are in **[docs/VERSIONING.md](docs/VERSIONING.md)**.
+
 ## License
 
 Licensed under the [MIT license](https://opensource.org/licenses/MIT), per `composer.json`.

@@ -17,6 +17,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Version
+    |--------------------------------------------------------------------------
+    |
+    | Read from composer.json so there is exactly one place to edit when
+    | cutting a release. It used to be hand-maintained in three — composer.json
+    | and the version badge in both the admin and staff sidebars — which is a
+    | standing invitation for the badge a user reads to disagree with what is
+    | actually deployed.
+    |
+    | Resolved once, at config-cache time on a deployed box, so this is not a
+    | file read per request. See docs/VERSIONING.md for what each segment means
+    | and when to move it.
+    |
+    */
+
+    'version' => json_decode(file_get_contents(base_path('composer.json')), true)['version'] ?? '0.0.0.0',
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
