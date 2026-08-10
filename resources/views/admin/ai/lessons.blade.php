@@ -29,6 +29,72 @@
             </div>
         </div>
 
+        {{-- Where the loop actually is right now.
+             Without this the page showed only what came out of the loop, and
+             an empty queue reads as a broken feature. It was not broken: it had
+             never been given anything to learn from, and every hourly run
+             correctly stopped at "not enough evidence". Those are very
+             different problems with the same appearance, so the page states
+             which one it is. --}}
+        <div class="bg-white border border-[#F0E6D2] rounded-3xl p-6 mb-8">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em]">Loop Status</h3>
+                <span class="text-[9px] font-bold uppercase tracking-widest text-[#8D6E63]">
+                    @if($pipeline['lastRun'])
+                        Last checked {{ $pipeline['lastRun'] }}
+                    @else
+                        {{-- The heartbeat outlives the run by two hours, so its
+                             absence means the scheduler is not reaching this. --}}
+                        <span class="text-red-700">No run recorded &mdash; check the scheduler</span>
+                    @endif
+                </span>
+            </div>
+
+            @if(! $pipeline['everRated'])
+                <div class="flex items-start gap-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+                    <x-lucide-message-square-dashed class="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+                    <div class="text-xs text-amber-900 font-medium leading-relaxed">
+                        <p class="font-black uppercase tracking-widest text-[10px] mb-1">Waiting for its first rating</p>
+                        <p>
+                            Nothing has been rated yet, so there is nothing to learn from and the hourly
+                            run has correctly had nothing to do. The thumbs sit under every reply in the
+                            chat window &mdash; on the guest portal, on staff chat and on this one. Rate
+                            <span class="font-black">{{ $pipeline['needed'] }}</span> replies and the next
+                            run will have something to generalise from. A thumbs-down also offers
+                            &ldquo;Teach it&rdquo;, where a correction you type becomes the strongest
+                            signal the loop takes.
+                        </p>
+                    </div>
+                </div>
+            @else
+                <div class="flex flex-wrap items-center gap-x-8 gap-y-4">
+                    <div>
+                        <p class="text-[9px] font-black text-[#8D6E63] uppercase tracking-widest">Evidence Waiting</p>
+                        <p class="text-2xl font-black tracking-tighter text-[#3E2723] mt-1">
+                            {{ $pipeline['evidence'] }}<span class="text-sm text-[#8D6E63]"> / {{ $pipeline['needed'] }}</span>
+                        </p>
+                        <p class="text-[9px] font-bold uppercase tracking-widest text-[#8D6E63] mt-1">
+                            @if($pipeline['evidence'] >= $pipeline['needed'])
+                                Enough &mdash; next run will distil it
+                            @else
+                                {{ $pipeline['needed'] - $pipeline['evidence'] }} more before it can generalise
+                            @endif
+                        </p>
+                    </div>
+                    <div class="h-10 w-[1px] bg-[#F0E6D2] hidden sm:block"></div>
+                    <div>
+                        <p class="text-[9px] font-black text-[#8D6E63] uppercase tracking-widest">Awaiting Review</p>
+                        <p class="text-2xl font-black tracking-tighter text-[#3E2723] mt-1">{{ $proposed->count() }}</p>
+                    </div>
+                    <div class="h-10 w-[1px] bg-[#F0E6D2] hidden sm:block"></div>
+                    <div>
+                        <p class="text-[9px] font-black text-[#8D6E63] uppercase tracking-widest">In Force</p>
+                        <p class="text-2xl font-black tracking-tighter text-[#3E2723] mt-1">{{ $approved->count() }}</p>
+                    </div>
+                </div>
+            @endif
+        </div>
+
         {{-- Satisfaction: the measurable claim that any of this is working. --}}
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
             @foreach(['overall' => 'All Chats', 'guest' => 'Guest Portal', 'staff' => 'Staff', 'admin' => 'Admin'] as $key => $label)

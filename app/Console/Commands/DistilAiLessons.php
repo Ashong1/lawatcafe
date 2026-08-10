@@ -33,8 +33,15 @@ class DistilAiLessons extends Command
     /** Evidence rows per run. Enough to see a pattern, small enough to fit a prompt. */
     private const MAX_EVIDENCE = 60;
 
-    /** A pattern seen once is an anecdote. Below this, say nothing. */
-    private const MIN_EVIDENCE_FOR_A_RUN = 3;
+    /**
+     * A pattern seen once is an anecdote. Below this, say nothing.
+     *
+     * Public because the review page reports progress towards it. An admin
+     * looking at an empty queue cannot otherwise tell "not enough evidence yet"
+     * apart from "this feature is broken" — and that ambiguity is what made the
+     * loop look dead for its whole first week.
+     */
+    public const MIN_EVIDENCE_FOR_A_RUN = 3;
 
     public function handle(AIService $ai): int
     {

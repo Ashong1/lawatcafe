@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Console\Commands\DistilAiLessons;
 use App\Models\AiFeedback;
 use App\Models\AiLesson;
 use App\Models\Setting;
@@ -391,5 +392,64 @@ class AiLearningLoopTest extends TestCase
         AiFeedback::create(['audience' => 'guest', 'signal' => AiFeedback::SIGNAL_RATING, 'sentiment' => -1]);
 
         $this->assertSame(0.0, AiFeedback::satisfactionRate(7));
+    }
+
+    /**
+     * The gap that made a working loop look like a dead one.
+     *
+     * With nothing ever rated, the review page showed two empty boxes — the
+     * same two empty boxes it would show if the distiller were crashing every
+     * hour. An admin has no way to tell those apart, and the honest state
+     * ("nothing has been fed in yet") is the one that tells them what to do
+     * about it.
+     */
+    public function test_the_review_page_says_when_nothing_has_ever_been_rated(): void
+    {
+        $this->assertSame(0, AiFeedback::count());
+
+        $response = $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get(route('admin.ai.lessons.index'));
+
+        $response->assertOk();
+        $response->assertSee('Waiting for its first rating', false);
+        // And it says where the control is, rather than leaving them to hunt.
+        $response->assertSee('thumbs sit under every reply', false);
+    }
+
+    /** Once evidence exists, the page counts it against the threshold. */
+    public function test_the_review_page_reports_progress_towards_the_evidence_threshold(): void
+    {
+        AiFeedback::create(['audience' => 'guest', 'signal' => AiFeedback::SIGNAL_RATING, 'sentiment' => 1]);
+
+        $response = $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get(route('admin.ai.lessons.index'));
+
+        $response->assertOk();
+        $response->assertSee('Evidence Waiting', false);
+        $response->assertDontSee('Waiting for its first rating', false);
+        $response->assertSee(DistilAiLessons::MIN_EVIDENCE_FOR_A_RUN - 1 .' more before it can generalise', false);
+    }
+
+    /**
+     * The page must not promise a run the command will not make, so it counts
+     * evidence exactly the way DistilAiLessons does — undistilled feedback only.
+     */
+    public function test_already_distilled_feedback_does_not_count_towards_the_threshold(): void
+    {
+        AiFeedback::create([
+            'audience' => 'guest', 'signal' => AiFeedback::SIGNAL_RATING,
+            'sentiment' => 1, 'distilled_at' => now(),
+        ]);
+
+        $response = $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get(route('admin.ai.lessons.index'));
+
+        $response->assertOk();
+        // It HAS been rated before, so the first-run notice would be wrong —
+        // but the distilled row is spent, so it must not be counted as evidence
+        // still waiting.
+        $response->assertDontSee('Waiting for its first rating', false);
+        $response->assertSee('Evidence Waiting', false);
+        $response->assertSee(DistilAiLessons::MIN_EVIDENCE_FOR_A_RUN.' more before it can generalise', false);
     }
 }

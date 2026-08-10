@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Console\Commands\DistilAiLessons;
+use App\Models\AiActionAudit;
 use App\Models\AiFeedback;
 use App\Models\AiLesson;
 use App\Models\Setting;
 use App\Services\Agent\LessonLibrary;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Capture side of the learning loop, plus the human review gate on what it
@@ -84,7 +88,36 @@ class AiFeedbackController extends Controller
                 ->where('created_at', '>=', now()->subDays(7))
                 ->count(),
             'autoApply' => Setting::get('ai_learning_auto_apply', '0') === '1',
+            // Where the loop actually is, rather than only what came out of it.
+            // Two empty boxes look the same whether the loop is broken or has
+            // simply never been fed, and it had never been fed: not one rating
+            // had been recorded, so every hourly run correctly concluded there
+            // was nothing to generalise from and stopped. That is a working
+            // pipeline and an idle one, and the page could not tell them apart.
+            'pipeline' => $this->pipelineStatus(),
         ]);
+    }
+
+    /**
+     * @return array{evidence:int, needed:int, lastRun:?string, everRated:bool}
+     */
+    private function pipelineStatus(): array
+    {
+        // Counted the same way DistilAiLessons counts it, so the page cannot
+        // promise a run the command will not make.
+        $evidence = AiFeedback::undistilled()->count()
+            + AiActionAudit::where('status', 'failed')
+                ->where('created_at', '>=', now()->subDay())
+                ->count();
+
+        $stamp = Cache::get('ai_learn_last_run');
+
+        return [
+            'evidence' => $evidence,
+            'needed' => DistilAiLessons::MIN_EVIDENCE_FOR_A_RUN,
+            'lastRun' => $stamp ? Carbon::createFromTimestamp($stamp)->diffForHumans() : null,
+            'everRated' => AiFeedback::exists(),
+        ];
     }
 
     public function approve(Request $request, AiLesson $lesson)
