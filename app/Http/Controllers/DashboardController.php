@@ -505,11 +505,18 @@ class DashboardController extends Controller
             ? $ai->buildSuperAdminSystemPrompt()
             : $ai->buildAdminSystemPrompt();
 
-        // Learned lessons stay on the 'admin' bucket for both roles: they are
-        // conclusions about how to answer this shop's questions, and a lesson
-        // worth following is not less true because the person asking also owns
-        // the server.
-        $messages = [['role' => 'system', 'content' => $systemPrompt.app(LessonLibrary::class)->exemplarBlockFor('admin', $request->message)]];
+        // Admin cafe-management lessons apply to both roles: a conclusion about
+        // how to answer this shop's questions is not less true because the
+        // person asking also owns the server, so super_admin keeps them as a
+        // superset. The super_admin bucket adds the infrastructure/diagnostic
+        // exemplars on top — worked examples of estate questions — and those
+        // never appear for a plain admin.
+        $library = app(LessonLibrary::class);
+        $exemplarBlock = $library->exemplarBlockFor('admin', $request->message);
+        if ($isSuperAdmin) {
+            $exemplarBlock .= $library->exemplarBlockFor('super_admin', $request->message);
+        }
+        $messages = [['role' => 'system', 'content' => $systemPrompt.$exemplarBlock]];
         foreach ($conversations->slidingWindow($request->history ?? []) as $msg) {
             if (! empty($msg['content'])) {
                 $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];

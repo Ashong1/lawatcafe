@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Console\Commands\DistilAiLessons;
 use App\Models\AiActionAudit;
+use App\Models\AiConversation;
 use App\Models\AiFeedback;
 use App\Models\AiLesson;
 use App\Models\Setting;
@@ -104,11 +105,13 @@ class AiFeedbackController extends Controller
     private function pipelineStatus(): array
     {
         // Counted the same way DistilAiLessons counts it, so the page cannot
-        // promise a run the command will not make.
+        // promise a run the command will not make — including the settled
+        // admin/owner conversations the loop now mines passively.
         $evidence = AiFeedback::undistilled()->count()
             + AiActionAudit::where('status', 'failed')
                 ->where('created_at', '>=', now()->subDay())
-                ->count();
+                ->count()
+            + AiConversation::minable()->where('context', 'admin')->whereHas('user')->count();
 
         $stamp = Cache::get('ai_learn_last_run');
 

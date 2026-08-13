@@ -190,7 +190,7 @@ class LessonLibrary
     /** Called whenever a lesson's status changes, so prompts pick it up promptly. */
     public static function forget(string $audience): void
     {
-        foreach (array_unique([$audience, 'guest', 'staff', 'admin']) as $key) {
+        foreach (array_unique([$audience, 'guest', 'staff', 'admin', 'super_admin']) as $key) {
             Cache::forget("ai_lessons_{$key}");
         }
     }

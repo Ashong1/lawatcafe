@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Console\Commands\DistilAiLessons;
+use App\Models\AiConversation;
 use App\Models\AiFeedback;
 use App\Models\AiLesson;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\Agent\LessonLibrary;
 use App\Services\AIService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Mockery;
@@ -341,6 +343,170 @@ class AiLearningLoopTest extends TestCase
         $this->artisan('ai:learn')->assertSuccessful();
 
         $this->assertSame(AiLesson::STATUS_APPROVED, AiLesson::first()->status);
+    }
+
+    // --- Conversation mining -----------------------------------------------
+
+    private function seedConversation(string $role = 'admin', ?array $messages = null, ?Carbon $lastMessageAt = null): AiConversation
+    {
+        return AiConversation::create([
+            'user_id' => User::factory()->create(['role' => $role])->id,
+            // super_admin chat is stored under the 'admin' context; only the
+            // owner's role tells the two apart, which is exactly what the
+            // mining split relies on.
+            'context' => 'admin',
+            'messages' => $messages ?? [
+                ['kind' => 'text', 'role' => 'user', 'content' => 'Are the background jobs healthy?'],
+                ['kind' => 'text', 'role' => 'assistant', 'content' => 'Yes — the scheduler ran four minutes ago and every job is green.'],
+            ],
+            // Old enough to count as settled (minable() requires >= 30 min quiet).
+            'last_message_at' => $lastMessageAt ?? now()->subHour(),
+        ]);
+    }
+
+    /**
+     * Capture what actually reaches the distiller, so a test can assert the
+     * conversation corpus rather than only the lesson that comes back. Returns a
+     * holder whose ->conversations is filled with the 4th distilLessons() arg
+     * once the command runs.
+     */
+    private function spyOnDistiller(?array $returns): object
+    {
+        $holder = new \stdClass;
+        $holder->conversations = null;
+
+        $ai = Mockery::mock(AIService::class);
+        $ai->shouldReceive('distilLessons')->andReturnUsing(
+            function ($corpus, $failures, $decided, $conversations = []) use ($holder, $returns) {
+                $holder->conversations = $conversations;
+
+                return $returns;
+            }
+        );
+        $this->app->instance(AIService::class, $ai);
+
+        return $holder;
+    }
+
+    /**
+     * The whole point of the feature: the loop learns from admin/owner
+     * conversations without anyone clicking a thumb, and a transcript is tagged
+     * by its owner's role so an owner's estate question can only ever become a
+     * super_admin lesson.
+     */
+    public function test_conversations_reach_the_distiller_tagged_by_role(): void
+    {
+        $this->seedConversation('super_admin');
+        $this->seedConversation('admin');
+        $this->seedConversation('admin');
+
+        $spy = $this->spyOnDistiller([]);
+
+        $this->artisan('ai:learn')->assertSuccessful();
+
+        $audiences = array_column($spy->conversations, 'audience');
+        sort($audiences);
+        $this->assertSame(['admin', 'admin', 'super_admin'], $audiences);
+        // And each carries the actual dialogue, not just a label.
+        $this->assertStringContainsString('background jobs', json_encode($spy->conversations));
+    }
+
+    /** A settled transcript alone can trip a run — no explicit rating needed. */
+    public function test_conversations_count_towards_the_evidence_threshold(): void
+    {
+        $this->seedConversation('admin');
+        $this->seedConversation('admin');
+        $this->seedConversation('admin');
+
+        $ai = Mockery::mock(AIService::class);
+        $ai->shouldReceive('distilLessons')->once()->andReturn([]);
+        $this->app->instance(AIService::class, $ai);
+
+        $this->artisan('ai:learn')->assertSuccessful();
+    }
+
+    /** A transcript is drawn from once, then marked so the next run skips it. */
+    public function test_a_conversation_is_only_mined_once(): void
+    {
+        $this->seedConversation('admin');
+        $this->seedConversation('admin');
+        $this->seedConversation('admin');
+        $this->mockDistiller([]);
+
+        $this->artisan('ai:learn')->assertSuccessful();
+
+        $this->assertSame(0, AiConversation::minable()->count());
+        $this->assertSame(3, AiConversation::whereNotNull('mined_at')->count());
+
+        // Nothing left to mine, so the second run must not reach the distiller.
+        $ai = Mockery::mock(AIService::class);
+        $ai->shouldNotReceive('distilLessons');
+        $this->app->instance(AIService::class, $ai);
+        $this->artisan('ai:learn')->assertSuccessful();
+    }
+
+    /** Mining mid-exchange would draw a lesson from half an answer. */
+    public function test_an_unsettled_conversation_is_left_alone(): void
+    {
+        $fresh = $this->seedConversation('admin', null, now());
+        $this->seedEvidence(3); // clear the threshold another way
+
+        $spy = $this->spyOnDistiller([]);
+
+        $this->artisan('ai:learn')->assertSuccessful();
+
+        $this->assertSame([], $spy->conversations);
+        $this->assertNull($fresh->fresh()->mined_at);
+    }
+
+    /**
+     * An outage must not silently consume an unread transcript, mirroring the
+     * same discipline the feedback rows get.
+     */
+    public function test_an_ai_outage_leaves_conversations_unmined(): void
+    {
+        $this->seedConversation('admin');
+        $this->seedConversation('admin');
+        $this->seedConversation('admin');
+        $this->mockDistiller(null);
+
+        $this->artisan('ai:learn')->assertFailed();
+
+        $this->assertSame(3, AiConversation::minable()->count());
+    }
+
+    /**
+     * The read-side split: an infrastructure lesson lives in the super_admin
+     * bucket and reaches the owner's prompt as a superset, but can NEVER leak
+     * into a plain admin's prompt.
+     */
+    public function test_infra_lessons_reach_super_admin_but_never_plain_admin(): void
+    {
+        $this->makeLesson([
+            'audience' => 'super_admin',
+            'status' => AiLesson::STATUS_APPROVED,
+            'reviewed_at' => now(),
+            'body' => 'When asked whether jobs are healthy, call getScheduledJobHealth before answering.',
+        ]);
+        $this->makeLesson([
+            'audience' => 'admin',
+            'status' => AiLesson::STATUS_APPROVED,
+            'reviewed_at' => now(),
+            'body' => 'When the owner asks about wastage, lead with the highest-cost ingredient.',
+        ]);
+        LessonLibrary::forget('all');
+
+        $ai = app(AIService::class);
+        $superPrompt = $ai->buildSuperAdminSystemPrompt();
+        $adminPrompt = $ai->buildAdminSystemPrompt();
+
+        // The owner sees both the cafe lesson and the infra lesson.
+        $this->assertStringContainsString('highest-cost ingredient', $superPrompt);
+        $this->assertStringContainsString('getScheduledJobHealth', $superPrompt);
+
+        // A plain admin sees the cafe lesson but never the infra one.
+        $this->assertStringContainsString('highest-cost ingredient', $adminPrompt);
+        $this->assertStringNotContainsString('getScheduledJobHealth', $adminPrompt);
     }
 
     // --- Review ------------------------------------------------------------

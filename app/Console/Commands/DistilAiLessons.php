@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\AiActionAudit;
+use App\Models\AiConversation;
 use App\Models\AiFeedback;
 use App\Models\AiLesson;
 use App\Models\Setting;
@@ -23,6 +24,15 @@ use Illuminate\Support\Str;
  * afternoon of somebody feeding the bot nonsense could end up written into its
  * permanent instructions — a persistent prompt injection with a scheduled job
  * helpfully doing the writing.
+ *
+ * Beyond explicit signals (thumbs, corrections, tool failures), this also
+ * mines the admin and super_admin CONVERSATIONS themselves — the transcript of
+ * what the owner asked and how the assistant answered. A busy owner almost
+ * never rates their own assistant, so before this the admin/super_admin side of
+ * the loop was starved and the whole thing leaned on guest-portal ratings.
+ * Mining the transcripts is safe where mining guest chat would not be: these
+ * are authenticated, trusted users, not anonymous WiFi traffic — and every
+ * conclusion still passes the same human review gate before it reaches a prompt.
  */
 class DistilAiLessons extends Command
 {
@@ -32,6 +42,12 @@ class DistilAiLessons extends Command
 
     /** Evidence rows per run. Enough to see a pattern, small enough to fit a prompt. */
     private const MAX_EVIDENCE = 60;
+
+    /** Settled conversations mined per run. Bounded so the prompt stays small. */
+    private const MAX_CONVERSATIONS = 15;
+
+    /** Text turns kept per conversation — the tail, where the resolution is. */
+    private const MAX_TURNS_PER_CONVERSATION = 12;
 
     /**
      * A pattern seen once is an anecdote. Below this, say nothing.
@@ -60,13 +76,26 @@ class DistilAiLessons extends Command
             ->limit(15)
             ->get();
 
-        if ($evidence->count() + $failures->count() < self::MIN_EVIDENCE_FOR_A_RUN) {
+        // Settled admin/owner conversations — the passive evidence source. The
+        // user relation is eager-loaded so role (admin vs super_admin) can tag
+        // each transcript without an N+1, and rows with a deleted user are
+        // skipped rather than crashing on a null role.
+        $conversations = AiConversation::query()
+            ->minable()
+            ->where('context', 'admin')
+            ->with('user:id,role')
+            ->whereHas('user')
+            ->orderBy('last_message_at')
+            ->limit(self::MAX_CONVERSATIONS)
+            ->get();
+
+        if ($evidence->count() + $failures->count() + $conversations->count() < self::MIN_EVIDENCE_FOR_A_RUN) {
             $this->info('Not enough new evidence to learn from yet.');
 
             return self::SUCCESS;
         }
 
-        $proposals = $this->askForLessons($ai, $evidence, $failures);
+        $proposals = $this->askForLessons($ai, $evidence, $failures, $conversations);
 
         if ($proposals === null) {
             $this->warn('AI stack unreachable — evidence left undistilled for the next run.');
@@ -87,10 +116,14 @@ class DistilAiLessons extends Command
 
         if (! $this->option('dry-run')) {
             AiFeedback::whereIn('id', $evidence->pluck('id'))->update(['distilled_at' => now()]);
+            // Same discipline as the feedback rows: only stamp mined_at once the
+            // distiller has actually run and returned, so an AI-stack outage
+            // (handled above) never silently consumes a transcript unread.
+            AiConversation::whereIn('id', $conversations->pluck('id'))->update(['mined_at' => now()]);
             LessonLibrary::forget('all');
         }
 
-        $this->info("{$created} new lesson(s) proposed from {$evidence->count()} feedback rows and {$failures->count()} tool failures.");
+        $this->info("{$created} new lesson(s) proposed from {$evidence->count()} feedback rows, {$failures->count()} tool failures and {$conversations->count()} conversation(s).");
 
         return self::SUCCESS;
     }
@@ -101,7 +134,7 @@ class DistilAiLessons extends Command
      * Building the evidence is this command's job; wording the prompt is the
      * AI service's, alongside every other prompt in the system.
      */
-    private function askForLessons(AIService $ai, $evidence, $failures): ?array
+    private function askForLessons(AIService $ai, $evidence, $failures, $conversations): ?array
     {
         $corpus = $evidence->map(fn (AiFeedback $f) => [
             'audience' => $f->audience,
@@ -117,6 +150,12 @@ class DistilAiLessons extends Command
             'result' => Str::limit(json_encode($a->result), 200),
         ])->all();
 
+        $conversationList = $conversations
+            ->map(fn (AiConversation $c) => $this->transcriptFor($c))
+            ->filter()
+            ->values()
+            ->all();
+
         // Already-decided lessons go in so the model does not re-propose them.
         // Rejections matter more than approvals here: without them, every run
         // cheerfully suggests the same idea a human already turned down, and
@@ -128,7 +167,40 @@ class DistilAiLessons extends Command
             ->map(fn (AiLesson $l) => ['status' => $l->status, 'lesson' => $l->body])
             ->all();
 
-        return $ai->distilLessons($corpus, $failureList, $decided);
+        return $ai->distilLessons($corpus, $failureList, $decided, $conversationList);
+    }
+
+    /**
+     * Flatten one stored conversation into a tagged transcript for the distiller.
+     *
+     * The audience is decided HERE from the conversation owner's role, never
+     * from anything the model returns: a super_admin's transcript can only
+     * produce a super_admin-tagged lesson, and an admin's only an admin one, so
+     * an infrastructure conclusion can never be filed against the cafe bucket by
+     * a hallucinated audience field. Only user/assistant text turns are kept —
+     * tool-call rows carry no natural-language pattern to generalise from — and
+     * a conversation with nothing the assistant actually said is dropped.
+     */
+    private function transcriptFor(AiConversation $conversation): ?array
+    {
+        $audience = $conversation->user->isSuperAdmin() ? 'super_admin' : 'admin';
+
+        $turns = collect($conversation->messages ?? [])
+            ->filter(fn ($m) => in_array($m['role'] ?? null, ['user', 'assistant'], true)
+                && ! empty($m['content']))
+            ->map(fn ($m) => [
+                'role' => $m['role'],
+                'text' => Str::limit((string) $m['content'], 300),
+            ])
+            ->take(-self::MAX_TURNS_PER_CONVERSATION)
+            ->values()
+            ->all();
+
+        if (empty($turns) || ! collect($turns)->contains(fn ($t) => $t['role'] === 'assistant')) {
+            return null;
+        }
+
+        return ['audience' => $audience, 'turns' => $turns];
     }
 
     /** Validate and persist one proposal. Returns false when it is not worth keeping. */
@@ -141,7 +213,7 @@ class DistilAiLessons extends Command
         // The model is a suggester, not an authority: everything it hands back
         // is validated as if it came from a form. An unrecognised audience would
         // otherwise create a lesson that silently reaches nobody.
-        if (! in_array($audience, ['guest', 'staff', 'admin', 'all'], true)) {
+        if (! in_array($audience, ['guest', 'staff', 'admin', 'super_admin', 'all'], true)) {
             return false;
         }
 

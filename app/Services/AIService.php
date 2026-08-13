@@ -1188,7 +1188,15 @@ SCOPE — what you can and cannot do:
 DIAGNOSTIC HABITS:
 - 'Is anything wrong?' means: check server health, scheduled jobs and recent errors, then report only what actually needs attention. Say so plainly when everything is fine.
 - 'Something is broken / slow' means: look at recent errors first, then the AI stack and the jobs, before offering a theory.
-- There is no queue worker on this deployment, so the scheduler is the only background mechanism. If jobs look stalled, that is significant and worth raising unprompted.";
+- There is no queue worker on this deployment, so the scheduler is the only background mechanism. If jobs look stalled, that is significant and worth raising unprompted."
+            // Infrastructure/diagnostic lessons live in their own 'super_admin'
+            // bucket and are added on TOP of the admin cafe lessons already
+            // baked in by buildAdminSystemPrompt() above — this account is a
+            // superset of admin, so a cafe-management lesson is still true for
+            // it. The reverse never happens: promptBlockFor('admin') never
+            // returns super_admin lessons, so an infra conclusion cannot leak
+            // into the plain owner's prompt.
+            .app(LessonLibrary::class)->promptBlockFor('super_admin');
     }
 
     /**
@@ -1326,13 +1334,14 @@ OPERATIONAL GUIDELINES:
      * Returns null only when every provider failed — an empty array is a real
      * and useful answer meaning "nothing here is worth saying".
      */
-    public function distilLessons(array $corpus, array $failures, array $decided): ?array
+    public function distilLessons(array $corpus, array $failures, array $decided, array $conversations = []): ?array
     {
         $prompt = "You are reviewing how an AI assistant for a coffee shop (Lawa't Kape) performed, and writing down what it should do differently next time.
 
 ### EVIDENCE ###
 Feedback and corrections: ".json_encode($corpus).'
 Failed tool calls: '.json_encode($failures).'
+Recent staff/owner conversations (each tagged with the audience it belongs to — a lesson drawn from one MUST use that same audience): '.json_encode($conversations).'
 
 ### ALREADY DECIDED (do not repeat any of these, in any wording) ###
 '.json_encode($decided).'
@@ -1341,7 +1350,7 @@ Failed tool calls: '.json_encode($failures).'
 - It must be specific to THIS shop and traceable to the evidence above. "Be more helpful" is useless; "When guests ask about parking, tell them there are 6 slots behind the building" is a lesson.
 - It must change behaviour. If following it would not alter a single reply, do not write it.
 - Never contradict the assistant\'s safety rules, never grant it new abilities, and never restate something under ALREADY DECIDED.
-- audience must be exactly one of: guest, staff, admin, all.
+- audience must be exactly one of: guest, staff, admin, super_admin, all. Use "admin" for the shop owner\'s cafe-management questions and "super_admin" ONLY for the system owner\'s infrastructure/diagnostic questions (server health, background jobs, the AI stack, the captive portal, accounts). Never file an infrastructure lesson under "admin".
 - kind "exemplar" is for a question that was answered WELL and is likely to recur - set trigger to the question and body to the ideal answer. kind "lesson" is a standing instruction.
 - If the evidence supports nothing worth saying, return an empty array. That is a valid and useful answer.
 

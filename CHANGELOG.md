@@ -9,6 +9,29 @@ the history was rewritten.
 
 ---
 
+## 1.9.0 — Barista AI learns from owner conversations
+*build 123*
+
+- The learning loop now mines the admin and owner (super_admin) conversations
+  themselves, not just thumbs and corrections. A settled transcript is fed to
+  the distiller as evidence, so the assistant can generalise a lesson from what
+  the owner actually asked and how it answered — even when nobody clicked a
+  rating. This closes the gap that left the loop leaning almost entirely on the
+  guest portal, where the rating volume was. Mining is safe here where it would
+  not be for guest chat: these are authenticated, trusted users, and every
+  conclusion still passes the same human review gate before it reaches a prompt.
+- Owner (super_admin) infrastructure/diagnostic conversations now distil into
+  their own `super_admin` lesson bucket, kept out of the plain admin prompt. The
+  owner's prompt is a superset — it keeps the cafe-management lessons and adds
+  the infra ones on top — but an infrastructure conclusion can never leak into a
+  shop admin's instructions.
+- Conversations are drawn from once (`ai_conversations.mined_at`) and only after
+  they have gone quiet, so a lesson is never distilled from half an exchange, and
+  an AI-stack outage leaves the transcript unread for the next run rather than
+  silently consuming it.
+
+---
+
 ## 1.8.0 — Mobile shell, adaptive shaping, streaming fixes
 *builds 113–121 · `aafb9d8`*
 
