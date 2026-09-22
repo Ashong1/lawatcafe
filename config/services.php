@@ -66,6 +66,21 @@ return [
         // Set true (and point PHP at a trusted CA bundle) once OPNsense has a
         // cert your environment actually trusts.
         'verify_tls' => env('OPNSENSE_VERIFY_TLS', false),
+
+        // Static safety net for OpnSenseService::isProtectedIp(): addresses that
+        // must never be disconnected or blocked no matter what a voucher/session
+        // lookup says, even if the OPNsense allow-list is unreadable and the
+        // Setting-based infrastructure list is misconfigured. Kept deliberately
+        // hardcoded rather than only DB-driven, so this guard survives a bad
+        // Settings row.
+        'protected_ips' => [
+            '192.168.2.4',
+            '192.168.2.5',
+            '192.168.2.99',
+            '192.168.2.100',
+            '192.168.2.250',
+            '192.168.2.251',
+        ],
     ],
 
 ];

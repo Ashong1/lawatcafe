@@ -329,8 +329,14 @@ class CaptivePortalController extends Controller
             if ($voucher) {
                 $expirationTime = $voucher->used_at->addMinutes($voucher->duration_minutes);
                 if (now()->greaterThan($expirationTime)) {
-                    // DISCONNECT EXPIRED SESSION
-                    $opnsense->disconnectDevice($activeSession['sessionId']);
+                    // DISCONNECT EXPIRED SESSION — never a protected IP in
+                    // practice (infrastructure has no voucher), but this is
+                    // guest-facing, unauthenticated input, so check anyway.
+                    if ($opnsense->isProtectedIp($ip)) {
+                        Log::warning("Portal: refusing to disconnect protected IP {$ip} despite an expired voucher match.");
+                    } else {
+                        $opnsense->disconnectDevice($activeSession['sessionId']);
+                    }
 
                     return redirect()->route('portal.index')->with('error', 'Your session has expired. Please enter a new voucher.');
                 }

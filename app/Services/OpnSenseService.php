@@ -1289,6 +1289,56 @@ class OpnSenseService
         });
     }
 
+    /**
+     * The full set of addresses this app must never disconnect or block,
+     * regardless of what a voucher/session lookup says: OPNsense's own
+     * captive-portal allow-list (getAllowedAddresses), the static
+     * config('services.opnsense.protected_ips') safety net, and the app's
+     * own infrastructure-IP setting (Setting::infrastructureIps). Three
+     * independent sources so a gap in any single one of them doesn't remove
+     * the guard.
+     *
+     * @return string[]
+     */
+    public function protectedIps(): array
+    {
+        $allowed = array_map(
+            fn ($ip) => str_replace('/32', '', $ip),
+            $this->getAllowedAddresses()['ips']
+        );
+
+        return array_values(array_unique(array_filter(array_merge(
+            $allowed,
+            config('services.opnsense.protected_ips', []),
+            Setting::infrastructureIps(),
+        ))));
+    }
+
+    /**
+     * Whether $ip is protected infrastructure that must never be kicked or
+     * blocked — see protectedIps().
+     */
+    public function isProtectedIp(string $ip): bool
+    {
+        return in_array(str_replace('/32', '', $ip), $this->protectedIps(), true);
+    }
+
+    /**
+     * Resolve a live session ID to its IP address, for callers (e.g.
+     * BlocklistService::blockAndKick) that only have a session ID and need
+     * to check it against isProtectedIp() before disconnecting.
+     */
+    public function ipForSession(string $sessionId): ?string
+    {
+        foreach ($this->listSessions() as $session) {
+            if (($session['sessionId'] ?? null) === $sessionId) {
+                return str_replace('/32', '', $session['ipAddress'] ?? '') ?: null;
+            }
+        }
+
+        return null;
+    }
+
     public function addAllowedIp(string $address): array
     {
         return $this->modifyZoneListField('allowedAddresses', $address, true);

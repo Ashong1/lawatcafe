@@ -40,6 +40,23 @@ class BlocklistService
         OpnSenseService $opnsense,
         ?string $hostname = null,
     ): array {
+        // This is reachable from the Barista AI's blockDevice tool, where the
+        // session ID comes from the model's own tool arguments rather than a
+        // human clicking a specific row — so a hallucinated or manipulated
+        // session ID pointing at protected infrastructure has to be refused
+        // before anything is banned or disconnected, not just before the kick.
+        if ($sessionId) {
+            $ip = $opnsense->ipForSession($sessionId);
+
+            if ($ip && $opnsense->isProtectedIp($ip)) {
+                return [
+                    'banned' => false,
+                    'kicked' => false,
+                    'message' => "Refused: {$ip} is protected infrastructure and cannot be blocked or disconnected.",
+                ];
+            }
+        }
+
         $existing = BannedDevice::findByMac($macAddress);
         $banned = false;
 

@@ -63,16 +63,32 @@ class EnforceSessionLimits extends Command
         // outage.
         Cache::put('enforce_sessions_last_run', now()->timestamp, 3600);
 
+        // The OPNsense captive-portal allow-list + static config safety net.
+        // Computed before anything else and fails safe: if this comes back
+        // empty (allow-list unreadable AND config protected_ips emptied out),
+        // something is badly wrong with the guard itself, so refuse to run
+        // rather than risk disconnecting infrastructure on a false negative.
+        $guardIps = $opnsense->protectedIps();
+
+        if (empty($guardIps)) {
+            Log::warning('EnforceSessions: protected-IP guard came back empty (OPNsense allow-list unreadable and config protected_ips unset). Refusing to run.');
+            $this->error('Protected-IP guard list is empty. Refusing to run to avoid disconnecting infrastructure.');
+
+            return;
+        }
+
         $this->info('Fetching active sessions from OPNsense...');
         $sessions = $opnsense->listSessions();
 
         // Never touch statically-permitted / infrastructure / VIP devices —
         // these intentionally have no voucher and are not meant to expire.
-        $protectedIps = array_merge(
+        // Setting::infrastructureIps() is already folded into $guardIps by
+        // OpnSenseService::protectedIps(), so it isn't repeated here.
+        $protectedIps = array_values(array_unique(array_merge(
+            $guardIps,
             explode(',', Setting::get('network_ignored_ips', '192.168.2.251,192.168.2.1')),
             StaticIpAssignment::pluck('ip_address')->all(),
-            Setting::infrastructureIps(),
-        );
+        )));
 
         // Runs regardless of whether OPNsense reported any sessions at all —
         // that's the most extreme case of "the app still lists it, OPNsense
@@ -93,6 +109,18 @@ class EnforceSessionLimits extends Command
             $sessionId = $session['sessionId'] ?? null;
 
             if (! $sessionId) {
+                continue;
+            }
+
+            // Protected infrastructure never gets kicked, even if it somehow
+            // matches a used voucher row below — this check has to come
+            // before the voucher/MAC-mismatch/expiration checks, not just in
+            // handleOrphanedSession(), since a protected IP that DOES match a
+            // used voucher would otherwise fall through to the expiration
+            // check like any guest session.
+            if (in_array($ip, $protectedIps, true)) {
+                $this->line(" - Session {$ip}: Protected infrastructure. Skipping.");
+
                 continue;
             }
 

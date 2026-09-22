@@ -10,8 +10,17 @@ the history was rewritten.
 ---
 
 ## 1.9.0 — Barista AI learns from owner conversations
-*build 123*
+*builds 123–124*
 
+- A protected-infrastructure guard (`OpnSenseService::isProtectedIp()`) now
+  sits in front of every device-disconnect path: session enforcement, the
+  guest portal's own expired-session check, and the Barista AI's `blockDevice`
+  tool. It combines OPNsense's captive-portal allow-list, a static config
+  fallback, and the existing infrastructure-IP setting, so no single source
+  going stale removes the protection. Closes a real gap where a protected IP
+  matching a used voucher row could still fall through to the expiration
+  check, and where the AI tool's model-supplied session ID had no
+  infrastructure-awareness at all.
 - The learning loop now mines the admin and owner (super_admin) conversations
   themselves, not just thumbs and corrections. A settled transcript is fed to
   the distiller as evidence, so the assistant can generalise a lesson from what
