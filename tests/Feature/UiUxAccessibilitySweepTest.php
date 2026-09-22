@@ -124,8 +124,8 @@ class UiUxAccessibilitySweepTest extends TestCase
         $response = $this->actingAs($superAdmin)->get(route('admin.settings.ai-providers'));
 
         $response->assertOk();
-        $response->assertSee('for="gemini_api_key"', false);
-        $response->assertSee('id="gemini_api_key"', false);
+        $response->assertSee('for="openrouter_api_key"', false);
+        $response->assertSee('id="openrouter_api_key"', false);
     }
 
     public function test_admin_settings_store_fields_are_labelled(): void

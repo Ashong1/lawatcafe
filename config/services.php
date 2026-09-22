@@ -35,14 +35,6 @@ return [
         ],
     ],
 
-    'gemini' => [
-        'key' => env('GEMINI_API_KEY'),
-    ],
-
-    'groq' => [
-        'key' => env('GROQ_API_KEY'),
-    ],
-
     'openrouter' => [
         'key' => env('OPENROUTER_API_KEY'),
     ],
@@ -81,6 +73,15 @@ return [
             '192.168.2.250',
             '192.168.2.251',
         ],
+    ],
+
+    'pihole' => [
+        'url' => env('PIHOLE_URL', 'http://192.168.2.4'),
+        // Pi-hole v6's API auth is session-based (POST /api/auth exchanges
+        // this for a short-lived sid + csrf pair, see PiholeService) — not a
+        // static bearer key like the old v5 API. Generated once from
+        // Pi-hole's Settings > Web Interface/API > App Password.
+        'app_password' => env('PIHOLE_APP_PASSWORD'),
     ],
 
 ];

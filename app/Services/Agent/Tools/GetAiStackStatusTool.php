@@ -10,12 +10,14 @@ use App\Services\Agent\ToolResult;
 use App\Services\AIService;
 
 /**
- * super_admin only. The state of the assistant's own stack — providers, circuit
- * breakers, and what it has been learning.
+ * super_admin only. The state of the assistant's own stack — its one model
+ * provider (OpenRouter), that provider's per-model circuit breakers, and
+ * what it has been learning.
  *
- * Deliberately reports no API keys or key fragments, only whether a provider is
- * configured at all. "Which of my providers is down" is a legitimate question;
- * "what is my key" is not one the assistant should ever be able to answer.
+ * Deliberately reports no API keys or key fragments, only whether the
+ * provider is configured at all. "Is my provider down" is a legitimate
+ * question; "what is my key" is not one the assistant should ever be able
+ * to answer.
  */
 class GetAiStackStatusTool implements AgentTool
 {
@@ -28,7 +30,7 @@ class GetAiStackStatusTool implements AgentTool
 
     public function description(): string
     {
-        return 'Check the AI stack itself: which model providers are configured and healthy, which circuit breakers are open, and what the assistant has learned recently (approved lessons, lessons awaiting review, guest/staff satisfaction). Use for "is the AI working", "why are replies slow or failing", or "what have you learned lately". Read-only.';
+        return 'Check the AI stack itself: whether the model provider (OpenRouter) is configured and healthy, which of its models have open circuit breakers, and what the assistant has learned recently (approved lessons, lessons awaiting review, guest/staff satisfaction). Use for "is the AI working", "why are replies slow or failing", or "what have you learned lately". Read-only.';
     }
 
     public function parametersSchema(): array
@@ -65,7 +67,7 @@ class GetAiStackStatusTool implements AgentTool
 
         $summary = empty($down)
             ? 'The AI stack is healthy — no provider circuits are open.'
-            : 'Circuit breaker open on: '.implode(', ', $down).'. Replies will be falling back to the remaining providers.';
+            : 'Circuit breaker open on: '.implode(', ', $down).'. Replies will be falling back to whichever of its other models are still healthy.';
 
         return ToolResult::ok($summary, [
             'providers' => $providers,

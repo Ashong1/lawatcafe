@@ -22,48 +22,19 @@ use Psr\Http\Message\StreamInterface;
 
 class AIService
 {
-    /** Total-request ceiling for streaming calls — see streamGeminiLoop()/streamOpenAiCompatibleLoop(). */
+    /** Total-request ceiling for streaming calls — see streamOpenAiCompatibleLoop(). */
     private const STREAM_TIMEOUT = 18;
-
-    protected $geminiKey;
-
-    protected $groqKey;
 
     protected $openRouterKey;
 
     // --- FULL FREE MODEL STACK (MAY 2026) ---
-
-    // Corrected 2026-07-28 after a real "Change Model" attempt surfaced that
-    // this whole list was stale: gemini-1.5-pro and gemini-1.5-flash both now
-    // return a genuine 404 ("not found for API version v1beta, or is not
-    // supported for generateContent") against this project's actual API
-    // key — deprecated, not a transient failure. Verified live (both plain
-    // generateContent and function-calling) before replacing them.
-    // gemini-2.0-flash itself is fine — a 429 seen during this same
-    // investigation was a per-minute free-tier rate limit on that specific
-    // model (confirmed via the error's retryDelay/quotaId), not deprecation.
-    protected $geminiModels = [
-        'gemini-2.0-flash',
-        'gemini-flash-latest',       // verified 2026-07-28; Google's stable-alias pointer
-        'gemini-flash-lite-latest',  // verified 2026-07-28; Google's stable-alias pointer
-    ];
-
-    // Verified 2026-07-27 against the real Groq /models endpoint and each
-    // model's actual chat-completions + tool-calling behavior (not just
-    // listed-as-available) — every entry below confirmed working for both.
-    // Excluded on purpose despite being live: openai/gpt-oss-safeguard-20b
-    // (a content-moderation classifier, not a general chat model),
-    // qwen/qwen3.6-27b (leaks raw <think>...</think> reasoning into the
-    // reply text — needs stripping before it's safe to show a user),
-    // groq/compound & groq/compound-mini (Groq's own agentic meta-model with
-    // its own built-in tools, which could conflict with our function-calling
-    // schema), allam-2-7b (Arabic-focused, not relevant here).
-    protected $groqModels = [
-        'llama-3.3-70b-versatile',
-        'llama-3.1-8b-instant',
-        'openai/gpt-oss-120b',
-        'openai/gpt-oss-20b',
-    ];
+    //
+    // Gemini and Groq were removed entirely (v1.9.0, per the capstone
+    // adviser's revision to standardize on a single AI provider). The
+    // resilience machinery below (circuit breaker, per-model health,
+    // healthyModelsFirst reordering, fast-path budget) is unchanged — it now
+    // just runs over OpenRouter's model list alone instead of cascading
+    // across three providers first.
 
     // Verified 2026-07-27 against OpenRouter's real /models pricing data
     // (pricing.prompt === pricing.completion === "0", not just a ":free"
@@ -95,31 +66,11 @@ class AIService
     // pass (see comment above). Offered as opt-in catalog suggestions (never
     // auto-cascaded) so an admin can deliberately try one and see current
     // real-world behavior via the replace-and-verify flow. Deliberately does
-    // NOT include the Groq-excluded models (safety classifier, reasoning
-    // leak, built-in-tools conflict, language mismatch) or the OpenRouter
-    // non-chat models (content-safety classifier, music generation) — those
-    // have concrete functional blockers, not just flakiness, so suggesting
+    // NOT include the OpenRouter non-chat models (content-safety classifier,
+    // music generation) — those have concrete functional blockers, not just
+    // flakiness, so suggesting
     // them would just set an admin up to pick something that can't work.
     protected $additionalFreeModelsCatalog = [
-        // Other Gemini API models with a free AI Studio tier. The original
-        // version of this list (gemini-2.5-flash, gemini-2.5-flash-lite,
-        // gemini-1.5-flash-8b, gemini-2.0-flash-lite) was guessed from
-        // general model-naming knowledge, not verified — and turned out to
-        // be mostly wrong (404 "no longer available to new users" for this
-        // project). Replaced 2026-07-28 with models actually confirmed live
-        // (both plain generateContent and function-calling tested) against
-        // this project's real API key.
-        'gemini' => [
-            'gemini-3.5-flash-lite',
-            'gemini-3.1-flash-lite',
-            'gemini-3.6-flash',
-        ],
-        // Left empty deliberately: Groq's hosted-model lineup changes/retires
-        // frequently and there's no verified backlog for it the way there is
-        // for Gemini/OpenRouter — guessing model IDs here risks suggesting
-        // one that's already been sunset, which is worse than suggesting
-        // nothing. The curated 4 plus "type manually" cover this provider.
-        'groq' => [],
         'openrouter' => [
             'poolside/laguna-s-2.1:free',
             'google/gemma-4-31b-it:free',
@@ -131,14 +82,12 @@ class AIService
 
     public function __construct()
     {
-        $this->geminiKey = config('services.gemini.key') ?: Setting::get('gemini_api_key');
-        $this->groqKey = config('services.groq.key') ?: Setting::get('groq_api_key');
         $this->openRouterKey = config('services.openrouter.key') ?: Setting::get('openrouter_api_key');
     }
 
     public function getModel()
     {
-        return 'Multi-Model Hyper-Stack (Google + Groq + OpenRouter)';
+        return 'OpenRouter Multi-Model Cascade';
     }
 
     /**
@@ -153,22 +102,6 @@ class AIService
      */
     private function callAI($messages, $useVision = false, array $tools = [], bool $fast = false)
     {
-        if ($this->geminiKey && ! $this->providerIsOpen('gemini')) {
-            $response = $this->callGeminiLoop($messages, $useVision, $tools, $fast);
-            $this->recordProviderResult('gemini', (bool) $response);
-            if ($response) {
-                return $response;
-            }
-        }
-
-        if ($this->groqKey && ! $useVision && ! $this->providerIsOpen('groq')) {
-            $response = $this->callGroqLoop($messages, $tools, $fast);
-            $this->recordProviderResult('groq', (bool) $response);
-            if ($response) {
-                return $response;
-            }
-        }
-
         if ($this->openRouterKey && ! $this->providerIsOpen('openrouter')) {
             $response = $this->callOpenRouterLoop($messages, $tools, $fast);
             $this->recordProviderResult('openrouter', (bool) $response);
@@ -217,8 +150,6 @@ class AIService
     public function defaultModels(string $provider): array
     {
         return match ($provider) {
-            'gemini' => $this->geminiModels,
-            'groq' => $this->groqModels,
             'openrouter' => $this->openRouterModels,
             default => [],
         };
@@ -253,14 +184,6 @@ class AIService
 
         $messages = [['role' => 'user', 'content' => 'Reply with the single word: OK.']];
         $ok = match ($provider) {
-            'gemini' => $this->testGeminiModel($newModel, $messages),
-            'groq' => $this->testOpenAiCompatibleModel(
-                $newModel,
-                'https://api.groq.com/openai/v1/chat/completions',
-                ['Authorization' => 'Bearer '.$this->groqKey],
-                $messages,
-                'groq',
-            ),
             'openrouter' => $this->testOpenAiCompatibleModel(
                 $newModel,
                 'https://openrouter.ai/api/v1/chat/completions',
@@ -342,8 +265,6 @@ class AIService
     public function getProviderStatuses(): array
     {
         $providers = [
-            'gemini' => ['label' => 'Google AI Studio (Gemini)', 'key' => $this->geminiKey, 'models' => $this->activeModels('gemini')],
-            'groq' => ['label' => 'Groq', 'key' => $this->groqKey, 'models' => $this->activeModels('groq')],
             'openrouter' => ['label' => 'OpenRouter', 'key' => $this->openRouterKey, 'models' => $this->activeModels('openrouter')],
         ];
 
@@ -399,8 +320,8 @@ class AIService
      * shuffled/limited subset the real cascade uses) with a trivial prompt,
      * recording per-model results and feeding the aggregate into the same
      * circuit-breaker bookkeeping real traffic uses. Self-contained — does
-     * not call or alter callGeminiLoop()/callGroqLoop()/callOpenRouterLoop(),
-     * so it can't affect real chat/analysis traffic.
+     * not call or alter callOpenRouterLoop(), so it can't affect real
+     * chat/analysis traffic.
      *
      * @return array{ok: int, failed: int}
      */
@@ -410,18 +331,10 @@ class AIService
         $ok = 0;
         $failed = 0;
 
-        $models = in_array($provider, ['gemini', 'groq', 'openrouter'], true) ? $this->activeModels($provider) : [];
+        $models = $provider === 'openrouter' ? $this->activeModels($provider) : [];
 
         foreach ($models as $model) {
             $success = match ($provider) {
-                'gemini' => $this->testGeminiModel($model, $messages),
-                'groq' => $this->testOpenAiCompatibleModel(
-                    $model,
-                    'https://api.groq.com/openai/v1/chat/completions',
-                    ['Authorization' => 'Bearer '.$this->groqKey],
-                    $messages,
-                    'groq',
-                ),
                 'openrouter' => $this->testOpenAiCompatibleModel(
                     $model,
                     'https://openrouter.ai/api/v1/chat/completions',
@@ -435,37 +348,11 @@ class AIService
             $success ? $ok++ : $failed++;
         }
 
-        if (in_array($provider, ['gemini', 'groq', 'openrouter'], true) && ! empty($models)) {
+        if ($provider === 'openrouter' && ! empty($models)) {
             $this->recordProviderResult($provider, $ok > 0);
         }
 
         return ['ok' => $ok, 'failed' => $failed];
-    }
-
-    private function testGeminiModel(string $model, array $messages): bool
-    {
-        try {
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=".$this->geminiKey;
-            $response = Http::timeout(8)->post($url, ['contents' => $this->buildGeminiContents($messages)]);
-
-            if ($response->successful()) {
-                $normalized = $this->normalizeGeminiResponse($response->json());
-                $msg = $normalized['choices'][0]['message'] ?? null;
-                if ($msg && ($msg['content'] || ! empty($msg['tool_calls']))) {
-                    $this->recordModelResult('gemini', $model, true);
-
-                    return true;
-                }
-            }
-
-            $this->recordModelResult('gemini', $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
-
-            return false;
-        } catch (\Exception $e) {
-            $this->recordModelResult('gemini', $model, false, 'exception');
-
-            return false;
-        }
     }
 
     private function testOpenAiCompatibleModel(string $model, string $url, array $headers, array $messages, string $provider): bool
@@ -528,43 +415,18 @@ class AIService
      */
     public function chatWithToolsStreaming(array $messages, array $tools, callable $onTextDelta): ?array
     {
-        // One deadline shared across the *entire* cascade (every model of
-        // every provider), not a fresh budget per attempt. Each per-model
+        // One deadline shared across the *entire* cascade (every candidate
+        // model), not a fresh budget per attempt. Each per-model
         // Http::timeout() used to reset to the full STREAM_TIMEOUT, but
-        // fast_path_model_limit (default 2) means a provider can try that
-        // many models in sequence — two full-length gemini attempts alone
-        // could take up to 2x STREAM_TIMEOUT, well past the client's fixed
-        // 20s fetch() abort, before groq/openrouter even got a turn. Under
-        // real provider degradation (rate limits, outages) this turned into
-        // a hard client-side abort with no reply at all instead of the
-        // graceful fallback text below arriving in time. See streamGeminiLoop()
-        // / streamOpenAiCompatibleLoop() for how $deadline bounds each attempt.
+        // fast_path_model_limit (default 2) means the cascade can try that
+        // many models in sequence — two full-length attempts alone could
+        // take up to 2x STREAM_TIMEOUT, well past the client's fixed 20s
+        // fetch() abort. Under real provider degradation (rate limits,
+        // outages) this turned into a hard client-side abort with no reply
+        // at all instead of the graceful fallback text below arriving in
+        // time. See streamOpenAiCompatibleLoop() for how $deadline bounds
+        // each attempt.
         $deadline = microtime(true) + self::STREAM_TIMEOUT;
-
-        if ($this->geminiKey && ! $this->providerIsOpen('gemini')) {
-            $response = $this->streamGeminiLoop($messages, $tools, $onTextDelta, $deadline);
-            $this->recordProviderResult('gemini', (bool) $response);
-            if ($response) {
-                return $response;
-            }
-        }
-
-        if ($this->groqKey && ! $this->providerIsOpen('groq')) {
-            $response = $this->streamOpenAiCompatibleLoop(
-                $this->activeModels('groq'),
-                'https://api.groq.com/openai/v1/chat/completions',
-                ['Authorization' => 'Bearer '.$this->groqKey],
-                $messages,
-                $tools,
-                $onTextDelta,
-                'groq',
-                $deadline
-            );
-            $this->recordProviderResult('groq', (bool) $response);
-            if ($response) {
-                return $response;
-            }
-        }
 
         if ($this->openRouterKey && ! $this->providerIsOpen('openrouter')) {
             $response = $this->streamOpenAiCompatibleLoop(
@@ -600,94 +462,20 @@ class AIService
         return max(0.0, min((float) self::STREAM_TIMEOUT, $deadline - microtime(true)));
     }
 
-    private function streamGeminiLoop(array $messages, array $tools, callable $onTextDelta, float $deadline): ?array
-    {
-        // Deliberately NOT shuffled (unlike the plain-chat cascade below) —
-        // this is the tool-calling path, where an admin's configured model
-        // order (see activeModels()) should be tried deterministically so a
-        // stronger/more tool-reliable model an admin lists first actually
-        // gets tried first, rather than being equally likely to lose a coin
-        // flip to a weaker free-tier model on a hard multi-tool turn. Still
-        // health-aware, though — see healthyModelsFirst() — a model that
-        // just failed shouldn't eat one of the few fast-path slots ahead of
-        // an admin-ranked-lower but currently-healthy one.
-        $models = $this->healthyModelsFirst('gemini', $this->activeModels('gemini'));
-        $budget = $this->fastPathBudget();
-        $models = array_slice($models, 0, max(1, $budget['modelLimit']));
-
-        foreach ($models as $model) {
-            // Bounded by what's actually left of the *shared* cascade deadline,
-            // not a fresh STREAM_TIMEOUT per model — see chatWithToolsStreaming().
-            $timeout = $this->secondsUntil($deadline);
-            if ($timeout < 2.0) {
-                break;
-            }
-
-            try {
-                $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:streamGenerateContent?alt=sse&key=".$this->geminiKey;
-                $contents = $this->buildGeminiContents($messages);
-                $payload = ['contents' => $contents];
-                if (! empty($tools)) {
-                    $payload['tools'] = $this->toGeminiTools($tools);
-                }
-
-                $response = Http::timeout((int) ceil($timeout))->withOptions(['stream' => true])->post($url, $payload);
-
-                if (! $response->successful()) {
-                    $this->recordModelResult('gemini', $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
-                    if ($response->status() === 401) {
-                        break;
-                    }
-
-                    continue;
-                }
-
-                $text = '';
-                $toolCalls = [];
-                $sawAny = false;
-
-                $this->readSseStream($response->toPsrResponse()->getBody(), function (array $event) use (&$text, &$toolCalls, &$sawAny, $onTextDelta) {
-                    foreach ($event['candidates'][0]['content']['parts'] ?? [] as $part) {
-                        if (isset($part['text'])) {
-                            $sawAny = true;
-                            $text .= $part['text'];
-                            $onTextDelta($part['text']);
-                        }
-                        if (isset($part['functionCall'])) {
-                            $sawAny = true;
-                            $toolCalls[] = [
-                                'id' => 'call_'.Str::random(8),
-                                'name' => $part['functionCall']['name'] ?? '',
-                                'arguments' => $part['functionCall']['args'] ?? [],
-                            ];
-                        }
-                    }
-                });
-
-                if ($sawAny) {
-                    $this->recordModelResult('gemini', $model, true);
-
-                    return ['choices' => [['message' => ['content' => $text ?: null, 'tool_calls' => $toolCalls]]]];
-                }
-                $this->recordModelResult('gemini', $model, false, 'empty_response');
-            } catch (\Exception $e) {
-                Log::error("Gemini Stream Loop Exception ({$model}): ".$e->getMessage());
-                $this->recordModelResult('gemini', $model, false, 'exception');
-            }
-        }
-
-        return null;
-    }
-
     /**
-     * Shared by Groq and OpenRouter — both speak the OpenAI-compatible
-     * streaming delta format. Deliberately NOT shuffled — see the matching
-     * comment on streamGeminiLoop(), this is the same tool-calling path.
+     * OpenRouter's OpenAI-compatible streaming delta format. Deliberately NOT
+     * shuffled (unlike the plain-chat cascade below) — this is the
+     * tool-calling path, where an admin's configured model order (see
+     * activeModels()) should be tried deterministically so a stronger/more
+     * tool-reliable model an admin lists first actually gets tried first,
+     * rather than being equally likely to lose a coin flip to a weaker
+     * free-tier model on a hard multi-tool turn. Still health-aware, though
+     * — see healthyModelsFirst() — a model that just failed shouldn't eat one
+     * of the few fast-path slots ahead of an admin-ranked-lower but
+     * currently-healthy one.
      */
     private function streamOpenAiCompatibleLoop(array $models, string $url, array $headers, array $messages, array $tools, callable $onTextDelta, string $provider, float $deadline): ?array
     {
-        // See the matching comment on streamGeminiLoop() — deterministic
-        // admin order, but health-aware within it.
         $modelsList = $this->healthyModelsFirst($provider, $models);
         $budget = $this->fastPathBudget();
         $modelsList = array_slice($modelsList, 0, max(1, $budget['modelLimit']));
@@ -808,87 +596,6 @@ class AIService
         ];
     }
 
-    private function callGeminiLoop($messages, $useVision, array $tools = [], bool $fast = false)
-    {
-        $models = $this->activeModels('gemini');
-        shuffle($models);
-        $models = $this->healthyModelsFirst('gemini', $models);
-        $timeout = 15;
-        if ($fast) {
-            $budget = $this->fastPathBudget();
-            $models = array_slice($models, 0, max(1, $budget['modelLimit']));
-            $timeout = $budget['timeout'];
-        }
-
-        foreach ($models as $model) {
-            try {
-                $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=".$this->geminiKey;
-                $contents = $this->buildGeminiContents($messages);
-
-                $payload = ['contents' => $contents];
-                if (! empty($tools)) {
-                    $payload['tools'] = $this->toGeminiTools($tools);
-                }
-
-                $response = Http::timeout($timeout)->post($url, $payload);
-                if ($response->successful()) {
-                    $normalized = $this->normalizeGeminiResponse($response->json());
-                    $msg = $normalized['choices'][0]['message'];
-                    if ($msg['content'] || ! empty($msg['tool_calls'])) {
-                        $this->recordModelResult('gemini', $model, true);
-
-                        return $normalized;
-                    }
-                }
-                $this->recordModelResult('gemini', $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
-                if ($response->status() === 401) {
-                    break;
-                }
-            } catch (\Exception $e) {
-                Log::error("Gemini Loop Exception ({$model}): ".$e->getMessage());
-                $this->recordModelResult('gemini', $model, false, 'exception');
-            }
-        }
-
-        return null;
-    }
-
-    private function callGroqLoop($messages, array $tools = [], bool $fast = false)
-    {
-        $models = $this->activeModels('groq');
-        shuffle($models);
-        $models = $this->healthyModelsFirst('groq', $models);
-        $timeout = 10;
-        if ($fast) {
-            $budget = $this->fastPathBudget();
-            $models = array_slice($models, 0, max(1, $budget['modelLimit']));
-            $timeout = min($timeout, $budget['timeout']);
-        }
-        foreach ($models as $model) {
-            try {
-                $payload = ['model' => $model, 'messages' => $messages];
-                if (! empty($tools)) {
-                    $payload['tools'] = $this->toOpenAiTools($tools);
-                }
-                $response = Http::timeout($timeout)->withHeaders(['Authorization' => 'Bearer '.$this->groqKey])->post('https://api.groq.com/openai/v1/chat/completions', $payload);
-                if ($response->successful()) {
-                    $this->recordModelResult('groq', $model, true);
-
-                    return $this->normalizeOpenAiResponse($response->json());
-                }
-                $this->recordModelResult('groq', $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
-                if ($response->status() === 401) {
-                    break;
-                }
-            } catch (\Exception $e) {
-                Log::error("Groq Loop Exception ({$model}): ".$e->getMessage());
-                $this->recordModelResult('groq', $model, false, 'exception');
-            }
-        }
-
-        return null;
-    }
-
     private function callOpenRouterLoop($messages, array $tools = [], bool $fast = false)
     {
         $models = $this->activeModels('openrouter');
@@ -927,73 +634,7 @@ class AIService
         return null;
     }
 
-    /**
-     * Build Gemini's `contents` array from canonical messages, including the
-     * two tool-calling-specific turn shapes: an assistant message carrying
-     * tool_calls (encoded as functionCall parts) and a tool-result message
-     * (encoded as a functionResponse part).
-     */
-    private function buildGeminiContents(array $messages): array
-    {
-        $contents = [];
-        foreach ($messages as $msg) {
-            if (($msg['role'] ?? null) === 'tool') {
-                $contents[] = [
-                    'role' => 'function',
-                    'parts' => [[
-                        'functionResponse' => [
-                            'name' => $msg['name'] ?? 'tool',
-                            'response' => ['result' => $msg['content']],
-                        ],
-                    ]],
-                ];
-
-                continue;
-            }
-
-            if (($msg['role'] ?? null) === 'assistant' && ! empty($msg['tool_calls'])) {
-                $contents[] = [
-                    'role' => 'model',
-                    'parts' => array_map(fn ($tc) => [
-                        'functionCall' => ['name' => $tc['name'], 'args' => $tc['arguments']],
-                    ], $msg['tool_calls']),
-                ];
-
-                continue;
-            }
-
-            $role = ($msg['role'] === 'user' || $msg['role'] === 'system') ? 'user' : 'model';
-            $parts = [];
-            if (is_array($msg['content'])) {
-                foreach ($msg['content'] as $p) {
-                    if ($p['type'] === 'text') {
-                        $parts[] = ['text' => $p['text']];
-                    } elseif ($p['type'] === 'image_url' && preg_match('/data:image\/.*;base64,(.*)/', $p['image_url']['url'], $m)) {
-                        $parts[] = ['inline_data' => ['mime_type' => 'image/jpeg', 'data' => $m[1]]];
-                    }
-                }
-            } else {
-                $parts[] = ['text' => $msg['content']];
-            }
-            $contents[] = ['role' => $role, 'parts' => $parts];
-        }
-
-        return $contents;
-    }
-
-    /** Canonical tool defs -> Gemini's tools/functionDeclarations shape. */
-    private function toGeminiTools(array $tools): array
-    {
-        return [[
-            'functionDeclarations' => array_map(fn ($t) => [
-                'name' => $t['name'],
-                'description' => $t['description'],
-                'parameters' => $this->jsonSchemaSafeParameters($t['parameters']),
-            ], $tools),
-        ]];
-    }
-
-    /** Canonical tool defs -> OpenAI-compatible (Groq/OpenRouter) tools shape. */
+    /** Canonical tool defs -> OpenAI-compatible (OpenRouter) tools shape. */
     private function toOpenAiTools(array $tools): array
     {
         return array_map(fn ($t) => [
@@ -1009,13 +650,11 @@ class AIService
     /**
      * PHP can't distinguish an empty array from an empty object — a
      * zero-parameter tool's `'properties' => []` (from AgentTool::parametersSchema())
-     * json_encode()s as a JSON array, but Gemini and Groq both strictly
-     * require a JSON object there and reject the request with a 400 (verified
-     * live against both APIs). OpenRouter happens to tolerate it, which is
-     * why this bug was silently invisible — every zero-parameter tool
-     * (checkStockLevels, checkMySession, getActiveSessions,
-     * shiftHandoffSummary) was quietly failing on the first two providers in
-     * the cascade and only ever succeeding on the third.
+     * json_encode()s as a JSON array, but several providers strictly require
+     * a JSON object there and reject the request with a 400 (verified live
+     * against Gemini and Groq before both were removed — kept here since
+     * OpenRouter's own upstream models aren't guaranteed to be lenient about
+     * this either).
      */
     private function jsonSchemaSafeParameters(array $parameters): array
     {
@@ -1026,29 +665,7 @@ class AIService
         return $parameters;
     }
 
-    /** Gemini's raw generateContent response -> canonical ['choices'=>[['message'=>['content'=>?,'tool_calls'=>[]]]]]. */
-    private function normalizeGeminiResponse(array $data): array
-    {
-        $parts = $data['candidates'][0]['content']['parts'] ?? [];
-        $text = null;
-        $toolCalls = [];
-        foreach ($parts as $part) {
-            if (isset($part['text'])) {
-                $text = ($text ?? '').$part['text'];
-            }
-            if (isset($part['functionCall'])) {
-                $toolCalls[] = [
-                    'id' => 'call_'.Str::random(8),
-                    'name' => $part['functionCall']['name'] ?? '',
-                    'arguments' => $part['functionCall']['args'] ?? [],
-                ];
-            }
-        }
-
-        return ['choices' => [['message' => ['content' => $text, 'tool_calls' => $toolCalls]]]];
-    }
-
-    /** Groq/OpenRouter's raw OpenAI-compatible response -> canonical shape (decodes JSON-string tool arguments). */
+    /** OpenRouter's raw OpenAI-compatible response -> canonical shape (decodes JSON-string tool arguments). */
     private function normalizeOpenAiResponse(array $data): array
     {
         $message = $data['choices'][0]['message'] ?? [];
@@ -1133,10 +750,10 @@ class AIService
         $activeVouchers = $this->getActiveVoucherCount();
 
         return "CORE IDENTITY:
-You are Barista AI, a powerful executive assistant and business analyst for the owner of Lawa't Kape.
+You are Barista AI, the network administration assistant for Lawa't Kape's Wi-Fi and captive-portal system, doubling as a business analyst for the owner.
 
 YOUR MISSION:
-Your goal is to help the owner manage the business with clinical precision. Be proactive, professional, and data-driven. When a tool is available that would accomplish what the owner is asking for, use it rather than just describing what they should do.
+Your first responsibility is the network: guest Wi-Fi sessions, bandwidth tiers, device access, and the captive portal's security posture. Watch for anything that looks like abuse, congestion, or a misconfigured rule, and raise it even if the owner didn't ask. Cafe management — stock, sales, purchase orders — is real work you should still do well, but it is the secondary half of the job: when a request could be read either way, read it as a network question first. Be proactive, professional, and data-driven throughout. When a tool is available that would accomplish what the owner is asking for, use it rather than just describing what they should do.
 
 CURRENT SHOP STATUS:
 - Today's Revenue: PHP ".number_format($todaysSales, 2).'
@@ -1176,7 +793,7 @@ OPERATIONAL GUIDELINES:
         return $this->buildAdminSystemPrompt()."
 
 SYSTEM OWNER CONTEXT:
-You are talking to the system administrator — the person responsible for the whole deployment, not just the cafe. As well as everything above, you can inspect the infrastructure: server health, background job status, the AI stack's own health, the captive portal's access posture, recent application errors, and who holds which account.
+You are talking to the system administrator — the person responsible for the whole deployment, not just the cafe. This is where your network-administration identity is most literal: as well as everything above, you can inspect the infrastructure itself — server health, background job status, the AI stack's own health, the captive portal's access posture, recent application errors, and who holds which account.
 
 SCOPE — what you can and cannot do:
 1. You CANNOT write code, deploy changes, add features, edit configuration files, or restart services. If asked, say so plainly in one sentence and then move on to what you CAN do about the underlying problem — do not just refuse and stop.
@@ -1222,7 +839,7 @@ DIAGNOSTIC HABITS:
         }
 
         return "CORE IDENTITY:
-You are Barista Support, an assistant for Lawa't Kape's on-shift staff.
+You are Barista Support, an assistant for Lawa't Kape's on-shift staff — first for keeping an eye on the Wi-Fi network (who's connected, current traffic), second for point-of-sale support (stock, recipes, sales).
 
 CURRENT SHOP STATUS:
 - Low Stock Alerts: ".(empty($lowStockIngredients) ? 'None' : implode(', ', $lowStockIngredients)).'
@@ -1514,16 +1131,15 @@ Return ONLY a JSON array, at most 5 items:
      */
     public function phraseSuggestion(string $itemName, string $suggestedName): ?string
     {
-        if (! $this->geminiKey || $this->providerIsOpen('gemini')) {
+        if (! $this->openRouterKey || $this->providerIsOpen('openrouter')) {
             return null;
         }
 
         try {
-            $model = $this->activeModels('gemini')[0] ?? null;
+            $model = $this->activeModels('openrouter')[0] ?? null;
             if (! $model) {
                 return null;
             }
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=".$this->geminiKey;
             // Written as the line the CASHIER SAYS, not a description of the
             // pairing. The old prompt asked for "a friendly suggestion", which
             // produced blurbs about the products — true, but nothing a barista
@@ -1535,22 +1151,27 @@ Return ONLY a JSON array, at most 5 items:
                 .'Speak directly to the customer using "you". Keep it under 15 words, warm and natural, the way a real barista talks — not a slogan and not pushy. '
                 .'No markdown, no quotation marks, no emoji, no preamble.';
 
-            $response = Http::timeout(2)->post($url, [
-                'contents' => [['role' => 'user', 'parts' => [['text' => $prompt]]]],
+            $response = Http::timeout(2)->withHeaders([
+                'Authorization' => 'Bearer '.$this->openRouterKey,
+                'HTTP-Referer' => config('app.url'),
+                'X-Title' => config('app.name'),
+            ])->post('https://openrouter.ai/api/v1/chat/completions', [
+                'model' => $model,
+                'messages' => [['role' => 'user', 'content' => $prompt]],
             ]);
 
             if (! $response->successful()) {
-                $this->recordProviderResult('gemini', false);
+                $this->recordProviderResult('openrouter', false);
 
                 return null;
             }
 
-            $text = trim($response->json('candidates.0.content.parts.0.text') ?? '');
-            $this->recordProviderResult('gemini', $text !== '');
+            $text = trim($response->json('choices.0.message.content') ?? '');
+            $this->recordProviderResult('openrouter', $text !== '');
 
             return $text !== '' ? $text : null;
         } catch (\Exception $e) {
-            $this->recordProviderResult('gemini', false);
+            $this->recordProviderResult('openrouter', false);
 
             return null;
         }

@@ -9,6 +9,29 @@ the history was rewritten.
 
 ---
 
+## 1.10.0 — OpenRouter-only, network-first Barista AI
+*build 126*
+
+Adviser-requested revisions for the capstone defense (BSInfoTech network
+administration): the AI stack now runs on a single provider, and its
+identity was rewritten to lead with network administration rather than POS.
+
+- **One AI provider.** Gemini and Groq are removed entirely — code, config,
+  admin UI, routes, and the model catalogs. Barista AI now runs on
+  OpenRouter alone, but keeps the existing resilience machinery (circuit
+  breaker, per-model health tracking, healthy-models-first reordering, the
+  fast-path budget) collapsed onto OpenRouter's own model list, so a single
+  bad model still fails over to another rather than failing the whole
+  request.
+- **Network administration is the lead identity.** The admin and staff
+  system prompts were rewritten so Wi-Fi sessions, bandwidth tiers, device
+  access, and the captive portal's security posture are the assistant's
+  primary responsibility, with cafe/POS support explicitly secondary — not
+  removed, just reprioritized. Each tool tier's enumeration order was
+  reshuffled the same way (network tools first, POS tools after), on the
+  theory that tool order shapes what the model reaches for on an ambiguous
+  request. No tool moved tiers and no POS capability was removed.
+
 ## 1.9.0 — Barista AI learns from owner conversations
 *builds 123–125*
 

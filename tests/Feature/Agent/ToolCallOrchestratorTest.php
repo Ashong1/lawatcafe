@@ -26,20 +26,22 @@ class ToolCallOrchestratorTest extends TestCase
         return 'data: '.json_encode($chunk)."\n\n";
     }
 
-    private function geminiFunctionCallResponse(string $name, array $args): string
+    private function openAiFunctionCallResponse(string $name, array $args): string
     {
         return $this->sse([
-            'candidates' => [[
-                'content' => ['parts' => [
-                    ['functionCall' => ['name' => $name, 'args' => $args]],
-                ]],
+            'choices' => [[
+                'delta' => ['tool_calls' => [[
+                    'index' => 0,
+                    'id' => 'call_'.substr(md5($name.json_encode($args)), 0, 8),
+                    'function' => ['name' => $name, 'arguments' => json_encode($args)],
+                ]]],
             ]],
         ]);
     }
 
-    private function geminiTextResponse(string $text): string
+    private function openAiTextResponse(string $text): string
     {
-        return $this->sse(['candidates' => [['content' => ['parts' => [['text' => $text]]]]]]);
+        return $this->sse(['choices' => [['delta' => ['content' => $text]]]]);
     }
 
     public function test_auto_tier_tool_executes_and_logs_an_executed_audit(): void
@@ -48,9 +50,9 @@ class ToolCallOrchestratorTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         Http::fake([
-            'generativelanguage.googleapis.com/*' => Http::sequence()
-                ->push($this->geminiFunctionCallResponse('checkStockLevels', []), 200)
-                ->push($this->geminiTextResponse('Milk is low.'), 200),
+            'openrouter.ai/*' => Http::sequence()
+                ->push($this->openAiFunctionCallResponse('checkStockLevels', []), 200)
+                ->push($this->openAiTextResponse('Milk is low.'), 200),
         ]);
 
         $orchestrator = app(ToolCallOrchestrator::class);
@@ -72,9 +74,9 @@ class ToolCallOrchestratorTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         Http::fake([
-            'generativelanguage.googleapis.com/*' => Http::sequence()
-                ->push($this->geminiFunctionCallResponse('checkStockLevels', ['ingredient_name' => 'Nonexistent Thing']), 200)
-                ->push($this->geminiTextResponse("I couldn't find that ingredient."), 200),
+            'openrouter.ai/*' => Http::sequence()
+                ->push($this->openAiFunctionCallResponse('checkStockLevels', ['ingredient_name' => 'Nonexistent Thing']), 200)
+                ->push($this->openAiTextResponse("I couldn't find that ingredient."), 200),
         ]);
 
         $orchestrator = app(ToolCallOrchestrator::class);
@@ -96,9 +98,9 @@ class ToolCallOrchestratorTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         Http::fake([
-            'generativelanguage.googleapis.com/*' => Http::sequence()
-                ->push($this->geminiFunctionCallResponse('checkStockLevels', []), 200)
-                ->push($this->geminiTextResponse('Milk is low.'), 200),
+            'openrouter.ai/*' => Http::sequence()
+                ->push($this->openAiFunctionCallResponse('checkStockLevels', []), 200)
+                ->push($this->openAiTextResponse('Milk is low.'), 200),
         ]);
 
         $started = [];
@@ -122,8 +124,8 @@ class ToolCallOrchestratorTest extends TestCase
         $staff = User::factory()->create(['role' => 'staff']);
 
         Http::fake([
-            'generativelanguage.googleapis.com/*' => Http::sequence()
-                ->push($this->geminiFunctionCallResponse('restockIngredient', ['ingredient_id' => 1, 'added_amount' => 5]), 200),
+            'openrouter.ai/*' => Http::sequence()
+                ->push($this->openAiFunctionCallResponse('restockIngredient', ['ingredient_id' => 1, 'added_amount' => 5]), 200),
         ]);
 
         $started = [];
@@ -149,9 +151,9 @@ class ToolCallOrchestratorTest extends TestCase
         // Two SSE chunks for the same (final, no-tool-call) round — proves
         // deltas are forwarded as they arrive, not just the accumulated whole.
         Http::fake([
-            'generativelanguage.googleapis.com/*' => Http::response(
-                $this->sse(['candidates' => [['content' => ['parts' => [['text' => 'Hello, ']]]]]])
-                .$this->sse(['candidates' => [['content' => ['parts' => [['text' => 'world!']]]]]]),
+            'openrouter.ai/*' => Http::response(
+                $this->sse(['choices' => [['delta' => ['content' => 'Hello, ']]]])
+                .$this->sse(['choices' => [['delta' => ['content' => 'world!']]]]),
                 200
             ),
         ]);
@@ -178,8 +180,8 @@ class ToolCallOrchestratorTest extends TestCase
         $staff = User::factory()->create(['role' => 'staff']);
 
         Http::fake([
-            'generativelanguage.googleapis.com/*' => Http::response(
-                $this->geminiFunctionCallResponse('restockIngredient', ['ingredient_id' => $ingredient->id, 'added_amount' => 10]),
+            'openrouter.ai/*' => Http::response(
+                $this->openAiFunctionCallResponse('restockIngredient', ['ingredient_id' => $ingredient->id, 'added_amount' => 10]),
                 200
             ),
         ]);
@@ -205,9 +207,9 @@ class ToolCallOrchestratorTest extends TestCase
         $ingredient = Ingredient::create(['name' => 'Milk', 'current_stock' => 50, 'unit' => 'ml', 'low_stock_threshold' => 500, 'status' => 'Low Stock']);
 
         Http::fake([
-            'generativelanguage.googleapis.com/*' => Http::sequence()
-                ->push($this->geminiFunctionCallResponse('restockIngredient', ['ingredient_id' => $ingredient->id, 'added_amount' => 999]), 200)
-                ->push($this->geminiTextResponse("I can't do that here."), 200),
+            'openrouter.ai/*' => Http::sequence()
+                ->push($this->openAiFunctionCallResponse('restockIngredient', ['ingredient_id' => $ingredient->id, 'added_amount' => 999]), 200)
+                ->push($this->openAiTextResponse("I can't do that here."), 200),
         ]);
 
         $orchestrator = app(ToolCallOrchestrator::class);

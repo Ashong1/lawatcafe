@@ -61,14 +61,23 @@ class ToolRegistry
         ];
     }
 
-    /** @return class-string[] */
+    /**
+     * Network tools lead each tier's list, ahead of POS/sales tools — this is
+     * a BSInfoTech network-administration capstone, and the assistant's tool
+     * enumeration order (which shapes what a model reaches for first on an
+     * ambiguous request) should read that way rather than as a POS assistant
+     * with a few network tools bolted on. See the system-prompt CORE
+     * IDENTITY/MISSION text in AIService for the matching framing change.
+     *
+     * @return class-string[]
+     */
     protected function staffToolClasses(): array
     {
         return [
             ...$this->guestToolClasses(),
-            CheckStockLevelsTool::class,
             GetActiveSessionsTool::class,
             GetTrafficStatsTool::class,
+            CheckStockLevelsTool::class,
             RestockIngredientTool::class,
             VoidSaleTool::class,
             DraftSupplierPoTool::class,
@@ -84,16 +93,16 @@ class ToolRegistry
     {
         return [
             ...$this->staffToolClasses(),
-            GenerateVoucherBatchTool::class,
             BlockDeviceTool::class,
             UnblockDeviceTool::class,
             SetSessionBandwidthTierTool::class,
-            SuggestCategoryContentTool::class,
-            GetAnomalySignalsTool::class,
             // Admin and above only, and never guest or staff: this one moves the
             // ceiling for every device in the shop at once, where
             // setSessionBandwidthTier above touches a single session.
             AdjustFairUseCeilingTool::class,
+            GetAnomalySignalsTool::class,
+            GenerateVoucherBatchTool::class,
+            SuggestCategoryContentTool::class,
         ];
     }
 
@@ -113,10 +122,10 @@ class ToolRegistry
     {
         return [
             ...$this->adminToolClasses(),
+            GetPortalPostureTool::class,
             GetSystemHealthTool::class,
             GetScheduledJobHealthTool::class,
             GetAiStackStatusTool::class,
-            GetPortalPostureTool::class,
             GetRecentSystemErrorsTool::class,
             ListUserAccountsTool::class,
         ];

@@ -70,8 +70,6 @@ class SettingController extends Controller
     {
         $providers = $ai->getProviderStatuses();
         $settings = [
-            'gemini_api_key' => Setting::get('gemini_api_key', ''),
-            'groq_api_key' => Setting::get('groq_api_key', ''),
             'openrouter_api_key' => Setting::get('openrouter_api_key', ''),
         ];
 
@@ -79,20 +77,18 @@ class SettingController extends Controller
     }
 
     /**
-     * Save AI provider API keys (fallback used only when the matching env
+     * Save the AI provider API key (fallback used only when the matching env
      * var isn't set — see AIService's constructor).
      */
     public function updateAiProviders(Request $request)
     {
         $validated = $request->validate([
-            'gemini_api_key' => 'nullable|string',
-            'groq_api_key' => 'nullable|string',
             'openrouter_api_key' => 'nullable|string',
         ]);
 
         $this->applySettings($validated);
 
-        return redirect()->back()->with('success', 'API keys updated successfully.');
+        return redirect()->back()->with('success', 'API key updated successfully.');
     }
 
     /**
@@ -100,7 +96,7 @@ class SettingController extends Controller
      */
     public function testAiProvider(string $provider, AIService $ai)
     {
-        if (! in_array($provider, ['gemini', 'groq', 'openrouter'], true)) {
+        if ($provider !== 'openrouter') {
             abort(404);
         }
 
@@ -115,7 +111,7 @@ class SettingController extends Controller
      */
     public function replaceProviderModel(Request $request, string $provider, AIService $ai)
     {
-        if (! in_array($provider, ['gemini', 'groq', 'openrouter'], true)) {
+        if ($provider !== 'openrouter') {
             abort(404);
         }
 
@@ -141,7 +137,7 @@ class SettingController extends Controller
      */
     public function resetProviderModels(string $provider, AIService $ai)
     {
-        if (! in_array($provider, ['gemini', 'groq', 'openrouter'], true)) {
+        if ($provider !== 'openrouter') {
             abort(404);
         }
 

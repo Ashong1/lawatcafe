@@ -814,8 +814,8 @@ document.addEventListener('alpine:init', () => {
                             // answer and exactly what gets persisted to conversation
                             // history. The streamed deltas are NOT guaranteed to equal
                             // it — AIService passes the same onTextDelta into every
-                            // model attempt in the gemini->groq->openrouter cascade, so
-                            // a provider that emits some text and then fails mid-stream
+                            // model attempt in the OpenRouter cascade, so
+                            // a model that emits some text and then fails mid-stream
                             // leaves that partial text in the bubble and the retry's
                             // text lands on top of it. That produced replies that were
                             // visibly truncated or duplicated, and made the bubble

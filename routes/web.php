@@ -24,6 +24,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\SiteBlockingController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffDeliveryController;
 use App\Http\Controllers\StaticIpController;
@@ -257,6 +258,13 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/blocklist', [BlocklistController::class, 'store'])->name('blocklist.store');
             Route::delete('/blocklist/{device}', [BlocklistController::class, 'destroy'])->name('blocklist.destroy');
 
+            // Site (domain) blocking — one-click via Pi-hole's DNS blacklist,
+            // distinct from the device blocklist above (that's MAC-based).
+            Route::get('/site-blocking', [SiteBlockingController::class, 'index'])->name('site-blocking');
+            Route::post('/site-blocking', [SiteBlockingController::class, 'store'])->name('site-blocking.store');
+            Route::post('/site-blocking/toggle', [SiteBlockingController::class, 'toggle'])->name('site-blocking.toggle');
+            Route::delete('/site-blocking/{domain}', [SiteBlockingController::class, 'destroy'])->name('site-blocking.destroy');
+
             // Static IP assignments (MAC-bound Kea DHCP reservations, replaces
             // the old app-only "Permanent Kape Devices" IP whitelist).
             Route::post('/static-ips', [StaticIpController::class, 'store'])->name('static-ips.store');
@@ -295,13 +303,13 @@ Route::middleware(['auth'])->group(function () {
 
             Route::middleware([RoleMiddleware::class.':super_admin'])->group(function () {
                 Route::post('/ai-providers/{provider}/test', [SettingController::class, 'testAiProvider'])
-                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->whereIn('provider', ['openrouter'])
                     ->name('ai-providers.test');
                 Route::post('/ai-providers/{provider}/models/replace', [SettingController::class, 'replaceProviderModel'])
-                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->whereIn('provider', ['openrouter'])
                     ->name('ai-providers.models.replace');
                 Route::post('/ai-providers/{provider}/models/reset', [SettingController::class, 'resetProviderModels'])
-                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->whereIn('provider', ['openrouter'])
                     ->name('ai-providers.models.reset');
                 Route::get('/network', [SettingController::class, 'network'])->name('network');
                 Route::post('/network', [SettingController::class, 'updateNetwork'])->name('network.update');

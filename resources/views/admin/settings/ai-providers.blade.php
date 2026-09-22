@@ -12,11 +12,11 @@
                     <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">AI Providers</span>
                 </h2>
                 <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">
-                    Barista AI tries these providers in order (Gemini &rarr; Groq &rarr; OpenRouter).
+                    Barista AI runs on OpenRouter alone, falling back across its own model list if one fails.
                     @if (auth()->user()->isSuperAdmin())
                         Status reflects real recent usage, or click "Test Now" to check right now.
                     @else
-                        Add your own API key below for whichever provider you have an account with.
+                        Add your own OpenRouter API key below.
                     @endif
                 </p>
             </div>
@@ -31,14 +31,14 @@
                         <x-lucide-key class="w-6 h-6" />
                     </div>
                     <div>
-                        <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">API Keys</h3>
-                        <p class="text-[10px] text-[#6D4C41] font-medium italic">Used only if the matching env var (GEMINI_API_KEY / GROQ_API_KEY / OPENROUTER_API_KEY) isn't already set on the server.</p>
+                        <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">API Key</h3>
+                        <p class="text-[10px] text-[#6D4C41] font-medium italic">Used only if OPENROUTER_API_KEY isn't already set on the server.</p>
                     </div>
                 </div>
 
                 <form action="{{ route('admin.settings.ai-providers.update') }}" method="POST" class="space-y-6">
                     @csrf
-                    @foreach (['gemini_api_key' => 'Gemini API Key', 'groq_api_key' => 'Groq API Key', 'openrouter_api_key' => 'OpenRouter API Key'] as $field => $label)
+                    @foreach (['openrouter_api_key' => 'OpenRouter API Key'] as $field => $label)
                         <div>
                             <label for="{{ $field }}" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest">{{ $label }}</label>
                             <div x-data="{ show: false }" class="relative">
@@ -53,7 +53,7 @@
 
                     <button type="submit" class="w-full py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-3">
                         <x-lucide-save class="w-5 h-5" />
-                        <span>Save API Keys</span>
+                        <span>Save API Key</span>
                     </button>
                 </form>
             </div>

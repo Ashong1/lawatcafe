@@ -122,8 +122,8 @@ class GuestChatHardeningTest extends TestCase
         // Regression: replies arrived visibly truncated (cut off mid-sentence)
         // because the widget kept whatever the deltas had accumulated and
         // discarded meta.reply. AIService hands the same onTextDelta to every
-        // model attempt in the gemini->groq->openrouter cascade, so a provider
-        // failing mid-stream leaves partial text that the retry appends to.
+        // model attempt in the OpenRouter cascade, so a model failing
+        // mid-stream leaves partial text that the retry appends to.
         $response = $this->get(route('portal.index'));
 
         $response->assertOk();

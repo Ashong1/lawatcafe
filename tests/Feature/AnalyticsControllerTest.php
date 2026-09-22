@@ -18,12 +18,10 @@ class AnalyticsControllerTest extends TestCase
     {
         parent::setUp();
         // getForecast() calls out to AIService whenever there's >=1 day of
-        // sales data — fake all 3 provider hosts so these tests (which only
+        // sales data — fake the provider host so these tests (which only
         // care about the categoryPerformance/weeklyStats SQL, not the AI
         // narrative) stay fast, deterministic, and don't burn real API quota.
         Http::fake([
-            'generativelanguage.googleapis.com/*' => Http::response([], 500),
-            'api.groq.com/*' => Http::response([], 500),
             'openrouter.ai/*' => Http::response([], 500),
         ]);
     }

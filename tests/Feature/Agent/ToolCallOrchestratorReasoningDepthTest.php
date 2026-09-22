@@ -24,20 +24,22 @@ class ToolCallOrchestratorReasoningDepthTest extends TestCase
         return 'data: '.json_encode($chunk)."\n\n";
     }
 
-    private function geminiFunctionCallResponse(string $name, array $args): string
+    private function openAiFunctionCallResponse(string $name, array $args): string
     {
         return $this->sse([
-            'candidates' => [[
-                'content' => ['parts' => [
-                    ['functionCall' => ['name' => $name, 'args' => $args]],
-                ]],
+            'choices' => [[
+                'delta' => ['tool_calls' => [[
+                    'index' => 0,
+                    'id' => 'call_'.substr(md5($name.json_encode($args)), 0, 8),
+                    'function' => ['name' => $name, 'arguments' => json_encode($args)],
+                ]]],
             ]],
         ]);
     }
 
-    private function geminiTextResponse(string $text): string
+    private function openAiTextResponse(string $text): string
     {
-        return $this->sse(['candidates' => [['content' => ['parts' => [['text' => $text]]]]]]);
+        return $this->sse(['choices' => [['delta' => ['content' => $text]]]]);
     }
 
     public function test_round_trips_now_allow_five_tool_calls_before_giving_up(): void
@@ -47,12 +49,12 @@ class ToolCallOrchestratorReasoningDepthTest extends TestCase
         // Always asks for another checkStockLevels call — never returns
         // plain text, so the loop only stops when MAX_ROUND_TRIPS runs out.
         Http::fake([
-            'generativelanguage.googleapis.com/*' => Http::sequence()
-                ->push($this->geminiFunctionCallResponse('checkStockLevels', []), 200)
-                ->push($this->geminiFunctionCallResponse('checkStockLevels', []), 200)
-                ->push($this->geminiFunctionCallResponse('checkStockLevels', []), 200)
-                ->push($this->geminiFunctionCallResponse('checkStockLevels', []), 200)
-                ->push($this->geminiFunctionCallResponse('checkStockLevels', []), 200),
+            'openrouter.ai/*' => Http::sequence()
+                ->push($this->openAiFunctionCallResponse('checkStockLevels', []), 200)
+                ->push($this->openAiFunctionCallResponse('checkStockLevels', []), 200)
+                ->push($this->openAiFunctionCallResponse('checkStockLevels', []), 200)
+                ->push($this->openAiFunctionCallResponse('checkStockLevels', []), 200)
+                ->push($this->openAiFunctionCallResponse('checkStockLevels', []), 200),
         ]);
 
         $orchestrator = app(ToolCallOrchestrator::class);
@@ -73,9 +75,9 @@ class ToolCallOrchestratorReasoningDepthTest extends TestCase
         }
 
         Http::fake([
-            'generativelanguage.googleapis.com/*' => Http::sequence()
-                ->push($this->geminiFunctionCallResponse('checkStockLevels', []), 200)
-                ->push($this->geminiTextResponse('Noted.'), 200),
+            'openrouter.ai/*' => Http::sequence()
+                ->push($this->openAiFunctionCallResponse('checkStockLevels', []), 200)
+                ->push($this->openAiTextResponse('Noted.'), 200),
         ]);
 
         $orchestrator = app(ToolCallOrchestrator::class);
@@ -88,15 +90,14 @@ class ToolCallOrchestratorReasoningDepthTest extends TestCase
         // But the second request (the one carrying the tool result back to
         // the model) must have a capped ingredients list.
         Http::assertSent(function ($request) {
-            $contents = $request->data()['contents'] ?? [];
-            $functionResponses = collect($contents)->filter(fn ($c) => ($c['role'] ?? null) === 'function');
+            $messages = $request->data()['messages'] ?? [];
+            $toolMessages = collect($messages)->filter(fn ($m) => ($m['role'] ?? null) === 'tool');
 
-            if ($functionResponses->isEmpty()) {
+            if ($toolMessages->isEmpty()) {
                 return false;
             }
 
-            $raw = $functionResponses->first()['parts'][0]['functionResponse']['response']['result'] ?? null;
-            $decoded = json_decode($raw, true);
+            $decoded = json_decode($toolMessages->first()['content'] ?? '', true);
 
             return is_array($decoded['data']['ingredients'] ?? null)
                 && count($decoded['data']['ingredients']) <= 21;
