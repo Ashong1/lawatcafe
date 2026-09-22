@@ -10,7 +10,15 @@ the history was rewritten.
 ---
 
 ## 1.9.0 — Barista AI learns from owner conversations
-*builds 123–124*
+*builds 123–125*
+
+- Fixed test coverage that build 124's protected-infrastructure guard left
+  broken: mocks of `OpnSenseService` in `EnforceSessionLimitsTest`,
+  `BlocklistServiceTest`, and `WriteToolsGlueTest` didn't know about the new
+  `protectedIps()`/`ipForSession()` calls. Also added tests that actually
+  exercise the guard's real behavior (a protected IP with a matching expired
+  voucher, and `blockAndKick()` refusing a session that resolves to one) —
+  the original commit only had a live smoke test, not suite coverage.
 
 - A protected-infrastructure guard (`OpnSenseService::isProtectedIp()`) now
   sits in front of every device-disconnect path: session enforcement, the

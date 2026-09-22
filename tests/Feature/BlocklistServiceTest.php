@@ -44,6 +44,8 @@ class BlocklistServiceTest extends TestCase
     public function test_block_and_kick_bans_a_new_device_and_disconnects_its_session(): void
     {
         $opnsense = $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('ipForSession')->with('session-123')->andReturn('192.168.2.50');
+            $mock->shouldReceive('isProtectedIp')->with('192.168.2.50')->andReturn(false);
             $mock->shouldReceive('addMacToBlockAlias')->once()->with('AA:BB:CC:DD:EE:FF');
             $mock->shouldReceive('disconnectDevice')->once()->with('session-123')->andReturn(true);
         });
@@ -60,6 +62,8 @@ class BlocklistServiceTest extends TestCase
         BannedDevice::create(['mac_address' => 'AA:BB:CC:DD:EE:FF']);
 
         $opnsense = $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('ipForSession')->with('session-123')->andReturn('192.168.2.50');
+            $mock->shouldReceive('isProtectedIp')->with('192.168.2.50')->andReturn(false);
             $mock->shouldReceive('disconnectDevice')->once()->andReturn(false);
         });
 
@@ -69,6 +73,23 @@ class BlocklistServiceTest extends TestCase
         $this->assertFalse($result['kicked']);
         $this->assertSame('Device was already banned, but the live session could not be disconnected.', $result['message']);
         $this->assertDatabaseCount('banned_devices', 1);
+    }
+
+    public function test_block_and_kick_refuses_when_the_session_resolves_to_a_protected_ip(): void
+    {
+        $opnsense = $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('ipForSession')->with('session-123')->andReturn('192.168.2.251');
+            $mock->shouldReceive('isProtectedIp')->with('192.168.2.251')->andReturn(true);
+            $mock->shouldNotReceive('addMacToBlockAlias');
+            $mock->shouldNotReceive('disconnectDevice');
+        });
+
+        $result = app(BlocklistService::class)->blockAndKick('AA:BB:CC:DD:EE:FF', 'session-123', 'AI-flagged abuse', $opnsense);
+
+        $this->assertFalse($result['banned']);
+        $this->assertFalse($result['kicked']);
+        $this->assertStringContainsString('protected infrastructure', $result['message']);
+        $this->assertDatabaseCount('banned_devices', 0);
     }
 
     public function test_block_and_kick_without_a_session_id_never_attempts_a_disconnect(): void

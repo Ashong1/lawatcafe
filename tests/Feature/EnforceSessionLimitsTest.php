@@ -31,9 +31,34 @@ class EnforceSessionLimitsTest extends TestCase
         ]);
 
         $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
             $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession()]);
             $mock->shouldReceive('disconnectDevice')->once()->with('sess-1')->andReturn(true);
             $mock->shouldReceive('removeIpFromTierAlias')->andReturn(true);
+        });
+
+        $this->artisan('network:enforce-sessions')->assertExitCode(0);
+    }
+
+    /**
+     * The actual gap the protected-IP guard closed: a protected IP that
+     * happens to match a used voucher row used to fall through to this same
+     * expiration check like any guest session — only handleOrphanedSession()
+     * consulted the allowlist before. Guard against a regression back to that.
+     */
+    public function test_never_disconnects_a_protected_ip_even_with_a_matching_expired_voucher(): void
+    {
+        Voucher::create([
+            'code' => 'LAWA-INFRA', 'duration_minutes' => 30, 'is_used' => true,
+            'used_at' => now()->subMinutes(60), 'ip_address' => '192.168.2.251', 'mac_address' => 'AABBCCDDEEFF',
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['192.168.2.251']);
+            $mock->shouldReceive('listSessions')->once()->andReturn([
+                $this->fakeSession(['ipAddress' => '192.168.2.251']),
+            ]);
+            $mock->shouldNotReceive('disconnectDevice');
         });
 
         $this->artisan('network:enforce-sessions')->assertExitCode(0);
@@ -47,6 +72,7 @@ class EnforceSessionLimitsTest extends TestCase
         ]);
 
         $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
             $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession()]);
             $mock->shouldNotReceive('disconnectDevice');
         });
@@ -58,6 +84,7 @@ class EnforceSessionLimitsTest extends TestCase
     {
         // No matching voucher at all — e.g. it was purged while still connected.
         $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
             $mock->shouldReceive('listSessions')->once()->andReturn([
                 $this->fakeSession(['last_accessed' => now()->subMinutes(90)->timestamp]),
             ]);
@@ -71,6 +98,7 @@ class EnforceSessionLimitsTest extends TestCase
     public function test_does_not_disconnect_orphaned_session_within_grace_period(): void
     {
         $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
             $mock->shouldReceive('listSessions')->once()->andReturn([
                 $this->fakeSession(['last_accessed' => now()->subMinutes(5)->timestamp]),
             ]);
@@ -85,6 +113,7 @@ class EnforceSessionLimitsTest extends TestCase
         // ---ip---/---mac--- entries are OPNsense static passthrough rules,
         // not real app-authorized sessions — must never be reaped even if ancient.
         $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
             $mock->shouldReceive('listSessions')->once()->andReturn([
                 $this->fakeSession([
                     'authenticated_via' => '---ip---',
@@ -105,6 +134,7 @@ class EnforceSessionLimitsTest extends TestCase
         ]);
 
         $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
             $mock->shouldReceive('listSessions')->once()->andReturn([
                 $this->fakeSession([
                     'ipAddress' => '192.168.2.99', // statically-assigned device
@@ -134,6 +164,7 @@ class EnforceSessionLimitsTest extends TestCase
         ]);
 
         $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
             // OPNsense reports a completely unrelated (but still-recent, non-orphaned) session, not this voucher's.
             $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession(['last_accessed' => now()->subMinutes(5)->timestamp])]);
             $mock->shouldNotReceive('disconnectDevice');
@@ -153,6 +184,7 @@ class EnforceSessionLimitsTest extends TestCase
         ]);
 
         $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
             $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession(['last_accessed' => now()->subMinutes(5)->timestamp])]);
             $mock->shouldNotReceive('disconnectDevice');
             $mock->shouldReceive('removeIpFromTierAlias')->with(\Mockery::any(), '192.168.2.61')->never();
@@ -170,6 +202,7 @@ class EnforceSessionLimitsTest extends TestCase
         ]);
 
         $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
             $mock->shouldReceive('listSessions')->once()->andReturn([]);
             $mock->shouldReceive('removeIpFromTierAlias')->with('free', '192.168.2.62')->once()->andReturn(true);
             $mock->shouldReceive('removeIpFromTierAlias')->with('premium', '192.168.2.62')->once()->andReturn(true);

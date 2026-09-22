@@ -37,6 +37,8 @@ class WriteToolsGlueTest extends TestCase
     public function test_block_device_bans_and_kicks_a_device(): void
     {
         $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('ipForSession')->with('sess-1')->andReturn('192.168.2.50');
+            $mock->shouldReceive('isProtectedIp')->with('192.168.2.50')->andReturn(false);
             $mock->shouldReceive('addMacToBlockAlias')->once()->with('AA:BB:CC:DD:EE:FF')->andReturn(true);
             $mock->shouldReceive('disconnectDevice')->once()->with('sess-1')->andReturn(true);
         });
