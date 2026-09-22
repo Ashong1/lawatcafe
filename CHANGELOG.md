@@ -9,6 +9,20 @@ the history was rewritten.
 
 ---
 
+## 1.11.0 — One-click site blocking
+*build 127*
+
+- New admin page (Network > Site Blocking) backed by Pi-hole's DNS
+  blacklist: a curated preset catalog (social media, streaming/gaming,
+  adult content, piracy) with a toggle per site — block or unblock in one
+  click, no typing — plus a custom-domain list for anything else, with the
+  same toggle and a separate permanent-remove action. New `PiholeService`
+  talks to Pi-hole v6's session-based API (POST /api/auth exchanges an app
+  password for a short-lived sid+csrf pair — nothing like the old v5
+  static-key API), re-authenticating automatically on a 401. The
+  previously-stored `PIHOLE_API_KEY` was a dead v5 token; replaced with a
+  fresh v6 app password (`PIHOLE_APP_PASSWORD`).
+
 ## 1.10.0 — OpenRouter-only, network-first Barista AI
 *build 126*
 

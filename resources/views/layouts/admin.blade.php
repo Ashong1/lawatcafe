@@ -391,6 +391,7 @@
                             <a href="/network/verifications" class="block py-2 text-xs {{ request()->is('network/verifications') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Verification Logs</a>
                             <a href="/network/traffic" class="block py-2 text-xs {{ request()->is('network/traffic') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Traffic Shaping</a>
                             <a href="/network/blocklist" class="block py-2 text-xs {{ request()->is('network/blocklist') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Device Blocklist</a>
+                            <a href="/network/site-blocking" class="block py-2 text-xs {{ request()->is('network/site-blocking') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Site Blocking</a>
                             <a href="/network/plans" class="block py-2 text-xs {{ request()->is('network/plans') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Wi-Fi Plans</a>
                         </div>
                     </div>
