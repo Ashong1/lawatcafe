@@ -10,7 +10,21 @@ the history was rewritten.
 ---
 
 ## 1.11.0 — One-click site blocking
-*build 127*
+*builds 127–128*
+
+- A high-effort code review of the new site-blocking feature (build 127)
+  found 4 real bugs, fixed here: `upsertDomain()` fabricated an "Added via
+  Lawa't Kape admin" comment onto any toggle of a domain that genuinely had
+  no comment, instead of only on real creation; domains read back from
+  Pi-hole weren't lowercased, so a mixed-case entry added outside this app
+  could silently duplicate; `toggle()` skipped the domain-format validation
+  `store()` enforced on the same underlying write path; and the "Pi-hole not
+  configured" banner checked `!== null` while the service itself checks
+  `empty()`, so an empty-string app password showed as configured. A 5th
+  finding (an extra Pi-hole round-trip per toggle, needed to decide
+  PUT-vs-POST and preserve the existing comment) was left as-is — an
+  inherent cost of treating Pi-hole as the sole source of truth rather than
+  duplicating state locally, and negligible on this LAN (~15ms).
 
 - New admin page (Network > Site Blocking) backed by Pi-hole's DNS
   blacklist: a curated preset catalog (social media, streaming/gaming,

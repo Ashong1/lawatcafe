@@ -36,6 +36,13 @@ class SiteBlockingController extends Controller
         ],
     ];
 
+    /**
+     * Shared with toggle() and store() — a malformed domain must not reach
+     * PiholeService from either endpoint, not just the one that happens to
+     * accept free-text input.
+     */
+    protected const DOMAIN_REGEX = '/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})+$/';
+
     public function index(PiholeService $pihole)
     {
         $blocked = collect($pihole->blockedDomains())->keyBy('domain');
@@ -59,14 +66,14 @@ class SiteBlockingController extends Controller
         return view('network.site-blocking', [
             'presets' => $presets,
             'customDomains' => $customDomains,
-            'piholeConfigured' => config('services.pihole.app_password') !== null,
+            'piholeConfigured' => ! empty(config('services.pihole.app_password')),
         ]);
     }
 
     public function toggle(Request $request, PiholeService $pihole)
     {
         $validated = $request->validate([
-            'domain' => 'required|string|max:255',
+            'domain' => ['required', 'string', 'max:255', 'regex:'.self::DOMAIN_REGEX],
             'block' => 'required|boolean',
         ]);
 
@@ -85,10 +92,7 @@ class SiteBlockingController extends Controller
     public function store(Request $request, PiholeService $pihole)
     {
         $validated = $request->validate([
-            'domain' => [
-                'required', 'string', 'max:255',
-                'regex:/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})+$/',
-            ],
+            'domain' => ['required', 'string', 'max:255', 'regex:'.self::DOMAIN_REGEX],
         ]);
 
         $ok = $pihole->blockDomain($validated['domain'], "Added via Lawa't Kape admin");

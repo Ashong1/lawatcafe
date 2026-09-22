@@ -117,7 +117,12 @@ class PiholeService
 
             return collect($response->json('domains') ?? [])
                 ->map(fn ($d) => [
-                    'domain' => $d['domain'],
+                    // Lowercased so a domain added outside this app (e.g.
+                    // directly in Pi-hole's own UI) with mixed case still
+                    // matches the lowercase keys used everywhere else here
+                    // (PRESETS, normalizeDomain()) instead of silently
+                    // reading as a separate, unblocked entry.
+                    'domain' => strtolower($d['domain']),
                     'comment' => $d['comment'] ?? null,
                     'enabled' => (bool) ($d['enabled'] ?? true),
                 ])
@@ -157,10 +162,16 @@ class PiholeService
 
         // Pi-hole's PUT replaces the whole entry rather than merging fields,
         // so toggling `enabled` alone would silently wipe an existing
-        // comment unless it's carried forward explicitly.
+        // comment unless it's carried forward explicitly. The attribution
+        // fallback only applies to a genuinely new entry (no $existing) —
+        // an existing entry with no comment (e.g. added outside this app)
+        // should stay commentless on a toggle, not get a fabricated "Added
+        // via..." note it never actually had.
         $payload = [
             'enabled' => $enabled,
-            'comment' => $comment ?? $existing['comment'] ?? "Added via Lawa't Kape admin",
+            'comment' => $existing
+                ? ($comment ?? $existing['comment'])
+                : ($comment ?? "Added via Lawa't Kape admin"),
         ];
 
         try {

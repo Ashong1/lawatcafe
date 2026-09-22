@@ -34,6 +34,19 @@ class SiteBlockingControllerTest extends TestCase
             && ! $custom->pluck('domain')->contains('facebook.com'));
     }
 
+    public function test_the_configured_warning_banner_shows_for_an_empty_string_app_password(): void
+    {
+        config(['services.pihole.app_password' => '']);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->mock(PiholeService::class, function ($mock) {
+            $mock->shouldReceive('blockedDomains')->once()->andReturn([]);
+        });
+
+        $this->actingAs($admin)->get(route('network.site-blocking'))
+            ->assertViewHas('piholeConfigured', false);
+    }
+
     public function test_admin_can_toggle_a_preset_site_on(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -60,6 +73,21 @@ class SiteBlockingControllerTest extends TestCase
             'domain' => 'facebook.com',
             'block' => '0',
         ])->assertRedirect();
+    }
+
+    public function test_toggling_a_malformed_domain_is_rejected(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->mock(PiholeService::class, function ($mock) {
+            $mock->shouldNotReceive('blockDomain');
+            $mock->shouldNotReceive('unblockDomain');
+        });
+
+        $this->actingAs($admin)->post(route('network.site-blocking.toggle'), [
+            'domain' => 'not a domain!!',
+            'block' => '1',
+        ])->assertSessionHasErrors('domain');
     }
 
     public function test_admin_can_add_a_custom_domain(): void

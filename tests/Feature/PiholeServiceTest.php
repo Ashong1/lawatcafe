@@ -87,6 +87,43 @@ class PiholeServiceTest extends TestCase
             && $request['comment'] === 'from admin');
     }
 
+    public function test_blocked_domains_lowercases_a_mixed_case_domain_from_pihole(): void
+    {
+        Http::fake([
+            'pihole.test/api/auth' => Http::response([
+                'session' => ['valid' => true, 'sid' => 'sid-123', 'csrf' => 'csrf-123', 'validity' => 1800],
+            ]),
+            'pihole.test/api/domains*' => Http::response([
+                'domains' => [['domain' => 'YouTube.com', 'comment' => null, 'enabled' => true]],
+            ]),
+        ]);
+
+        $service = new PiholeService;
+        $domains = $service->blockedDomains();
+
+        $this->assertSame('youtube.com', $domains[0]['domain']);
+    }
+
+    public function test_toggling_an_entry_with_no_existing_comment_does_not_fabricate_one(): void
+    {
+        Http::fake([
+            'pihole.test/api/auth' => Http::response([
+                'session' => ['valid' => true, 'sid' => 'sid-123', 'csrf' => 'csrf-123', 'validity' => 1800],
+            ]),
+            'pihole.test/api/domains*' => Http::response([
+                'domains' => [['domain' => 'facebook.com', 'comment' => null, 'enabled' => true]],
+            ]),
+            'pihole.test/api/domains/deny/exact/facebook.com' => Http::response(['processed' => ['success' => [['item' => 'facebook.com']]]]),
+        ]);
+
+        $service = new PiholeService;
+        $this->assertTrue($service->unblockDomain('facebook.com'));
+
+        Http::assertSent(fn ($request) => $request->method() === 'PUT'
+            && str_contains($request->url(), '/api/domains/deny/exact/facebook.com')
+            && $request['comment'] === null);
+    }
+
     public function test_remove_domain_sends_a_delete(): void
     {
         Http::fake([
