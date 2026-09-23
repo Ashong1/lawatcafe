@@ -69,8 +69,8 @@ class OpnSenseService
             return false;
         }
 
-        if (empty(config('services.opnsense.guest_user')) || empty(config('services.opnsense.guest_pass'))) {
-            Log::error("OPNsense: guest_user/guest_pass not configured — refusing to authorize {$ip} rather than fall back to a default credential.");
+        if (empty(config('services.opnsense.guest_pass'))) {
+            Log::error("OPNsense: guest_pass not configured — refusing to authorize {$ip} rather than fall back to a default credential.");
 
             return false;
         }
@@ -91,7 +91,7 @@ class OpnSenseService
             // on failure, so it's worth waiting out a slow-but-working router
             // rather than fast-failing a legitimate request.
             $response = $this->client(4, 8)->post($url, [
-                'user' => config('services.opnsense.guest_user'),
+                'user' => $this->guestUsername($voucherCode, $ip),
                 'password' => config('services.opnsense.guest_pass'),
                 'ip' => $ip,
             ]);
@@ -120,6 +120,31 @@ class OpnSenseService
 
             return false;
         }
+    }
+
+    /**
+     * A unique-per-voucher identity for session/connect's 'user' field.
+     *
+     * Every guest used to share one hardcoded username
+     * (config('services.opnsense.guest_user')), which meant OPNsense's
+     * captive portal daemon enforced a single-live-session limit across
+     * every guest in the shop, not per device — this was the real cause of
+     * "only one device can connect at a time", separate from (and not
+     * fixed by) the concurrentlogins zone setting. Verified live 2026-09-23:
+     * a second guest's authorizeDevice() call reliably kicked the first
+     * guest's live session under the shared identity, and giving each a
+     * distinct 'user' value let both hold sessions simultaneously. The
+     * session/connect endpoint doesn't validate this against a real OPNsense
+     * account — an arbitrary string here succeeds exactly like a
+     * pre-registered one — it's a session label, not a checked credential,
+     * so this needs no OPNsense-side user management at all.
+     */
+    protected function guestUsername(string $voucherCode, string $ip): string
+    {
+        $slug = preg_replace('/[^A-Za-z0-9_-]/', '_', $voucherCode);
+        $ipSlug = str_replace('.', '_', $ip);
+
+        return "guest_{$slug}_{$ipSlug}";
     }
 
     /**

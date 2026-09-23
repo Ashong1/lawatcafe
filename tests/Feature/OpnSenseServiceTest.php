@@ -25,7 +25,7 @@ class OpnSenseServiceTest extends TestCase
 
     public function test_authorize_device_refuses_without_a_configured_guest_password(): void
     {
-        config(['services.opnsense.guest_user' => 'laravel_guest', 'services.opnsense.guest_pass' => null]);
+        config(['services.opnsense.guest_pass' => null]);
 
         Http::fake();
 
@@ -35,21 +35,9 @@ class OpnSenseServiceTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_authorize_device_refuses_without_a_configured_guest_user(): void
+    public function test_authorize_device_proceeds_once_guest_password_is_configured(): void
     {
-        config(['services.opnsense.guest_user' => null, 'services.opnsense.guest_pass' => 'somepass']);
-
-        Http::fake();
-
-        $result = app(OpnSenseService::class)->authorizeDevice('192.168.2.50', 'LAWA-TEST');
-
-        $this->assertFalse($result);
-        Http::assertNothingSent();
-    }
-
-    public function test_authorize_device_proceeds_once_guest_credentials_are_configured(): void
-    {
-        config(['services.opnsense.guest_user' => 'laravel_guest', 'services.opnsense.guest_pass' => 'realpass']);
+        config(['services.opnsense.guest_pass' => 'realpass']);
 
         Http::fake([
             'opnsense.test/api/captiveportal/session/connect/*' => Http::response(['sessionId' => 'sess-1'], 200),
@@ -59,6 +47,34 @@ class OpnSenseServiceTest extends TestCase
 
         $this->assertTrue($result);
         Http::assertSentCount(1);
+    }
+
+    /**
+     * The real cause of "only one device can connect at a time" — every
+     * guest used to share one hardcoded username, so OPNsense's captive
+     * portal daemon enforced a single-live-session limit across the whole
+     * shop rather than per device (verified live 2026-09-23: a second
+     * guest's authorizeDevice() call reliably kicked the first guest's
+     * session under the shared identity). Fixed by deriving a distinct
+     * 'user' value per voucher+IP — session/connect doesn't validate this
+     * against a real OPNsense account, so no user-management API is needed.
+     */
+    public function test_authorize_device_uses_a_distinct_username_per_voucher_not_a_shared_identity(): void
+    {
+        config(['services.opnsense.guest_pass' => 'realpass']);
+
+        Http::fake([
+            'opnsense.test/api/captiveportal/session/connect/*' => Http::response(['sessionId' => 'sess-1'], 200),
+        ]);
+
+        app(OpnSenseService::class)->authorizeDevice('192.168.2.110', 'LAWA-AAAA');
+        app(OpnSenseService::class)->authorizeDevice('192.168.2.111', 'LAWA-BBBB');
+
+        $usernames = collect(Http::recorded())->map(fn ($pair) => $pair[0]['user'])->all();
+
+        $this->assertCount(2, array_unique($usernames), 'Two different guests must never be authorized under the same username.');
+        $this->assertStringContainsString('LAWA-AAAA', $usernames[0]);
+        $this->assertStringContainsString('LAWA-BBBB', $usernames[1]);
     }
 
     public function test_get_arp_table_is_cached_across_calls(): void

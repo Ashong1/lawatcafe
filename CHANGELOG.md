@@ -10,7 +10,24 @@ the history was rewritten.
 ---
 
 ## 1.11.0 — One-click site blocking
-*builds 127–133*
+*builds 127–134*
+
+- **The actual fix for "only one device can connect at a time."** Every
+  guest voucher redemption authorized its device on OPNsense under the
+  exact same hardcoded username (`config('services.opnsense.guest_user')`,
+  `laravel_guest`) — so OPNsense's captive portal daemon enforced a
+  single-live-session limit across the *entire shop's guest traffic*, not
+  per device. The earlier `concurrentlogins` zone setting (build 124) was a
+  red herring for this specific symptom: it stayed correctly saved at `0`
+  throughout, and even a full service restart didn't change the one-at-a-
+  time behavior, because the real constraint was never that setting at all.
+  Verified live: giving two devices distinct `user` values in the same
+  `session/connect` call let both hold sessions simultaneously immediately,
+  no service restart needed. `OpnSenseService::authorizeDevice()` now
+  derives a unique identity per voucher+IP (`guest_{code}_{ip}`) instead of
+  sharing one — `session/connect` doesn't validate this against a real
+  OPNsense account, so no user-management API is needed. `guest_user` is
+  now unused (kept in config for backward compatibility, not read anywhere).
 
 - `network:keepalive-guests` now writes a heartbeat
   (`keepalive_guests_last_run`), surfaced through `GetScheduledJobHealthTool`
