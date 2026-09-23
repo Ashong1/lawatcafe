@@ -292,6 +292,9 @@ document.addEventListener('alpine:init', () => {
         remainingUnit: 'Left',
         tickPulse: false,
         aiCue: false,
+        // One-shot: without this the warning would refire every tick for
+        // the entire last 10 minutes, not just announce the threshold once.
+        warnedTenMinutes: false,
 
         init() {
             // The embedded agent-chat component instance owns its own chat state/scrolling now —
@@ -318,6 +321,18 @@ document.addEventListener('alpine:init', () => {
 
         tickCountdown(expiresAtMs) {
             const totalSeconds = Math.max(0, Math.round((expiresAtMs - Date.now()) / 1000));
+
+            // Best-effort only: this fires from the page's own JS timer, so it
+            // only reaches a guest who still has this tab open (backgrounded
+            // or not — a real OS push notification needs a secure (HTTPS)
+            // context and a registered subscription, neither of which this
+            // deliberately HTTP-only portal has). It's still worth doing: the
+            // countdown card is small and easy to stop noticing once a guest
+            // is absorbed in something else.
+            if (!this.warnedTenMinutes && totalSeconds > 0 && totalSeconds <= 600) {
+                this.warnedTenMinutes = true;
+                this.warnTenMinutesLeft();
+            }
 
             if (totalSeconds <= 0) {
                 this.remainingLabel = "Time's Up";
@@ -366,6 +381,33 @@ document.addEventListener('alpine:init', () => {
             if (previousLabel !== '—' && this.remainingLabel !== previousLabel) {
                 this.tickPulse = true;
                 setTimeout(() => { this.tickPulse = false; }, 500);
+            }
+        },
+
+        warnTenMinutesLeft() {
+            // A centered, must-dismiss dialog rather than a toast — a toast
+            // is exactly the kind of thing this warning exists to cut
+            // through, since guests already have one showing the countdown
+            // itself and have evidently stopped registering it.
+            Swal.fire({
+                icon: 'warning',
+                title: '10 Minutes Left',
+                text: "Your Wi-Fi session is about to expire. Wrap up what you're doing, or check the Status tab to see how much time remains.",
+                confirmButtonText: 'Got it',
+                background: '#FFF8E1',
+                color: '#5D4037',
+                iconColor: '#F59E0B',
+                customClass: {
+                    popup: 'rounded-[2rem] border-t-8 border-amber-500 shadow-2xl',
+                    confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs bg-[#3E2723]',
+                },
+            });
+
+            // Best-effort haptic nudge for a guest who isn't looking at the
+            // screen right now but has it in hand — silently ignored on
+            // browsers/devices without vibration support.
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
             }
         }
     }));

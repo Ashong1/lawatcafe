@@ -10,7 +10,16 @@ the history was rewritten.
 ---
 
 ## 1.11.0 — One-click site blocking
-*builds 127–134*
+*builds 127–135*
+
+- Guests get a 10-minutes-left warning: a centered dialog plus a haptic
+  buzz (`navigator.vibrate`, silently skipped where unsupported) fires once
+  from the status page's existing countdown timer. Deliberately best-effort
+  — it only reaches a guest who still has the status page open, since a
+  real OS push notification needs a secure (HTTPS) context and a registered
+  subscription, and this portal is deliberately HTTP-only (see
+  docs/INFRASTRUCTURE.md). Still worth having: the countdown card is small
+  and easy to stop noticing once a guest is absorbed in something else.
 
 - **The actual fix for "only one device can connect at a time."** Every
   guest voucher redemption authorized its device on OPNsense under the

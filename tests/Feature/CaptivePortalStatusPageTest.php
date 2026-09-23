@@ -58,6 +58,43 @@ class CaptivePortalStatusPageTest extends TestCase
     }
 
     /**
+     * The 10-minutes-left warning is best-effort client-side JS (no push
+     * notification is possible on this deliberately HTTP-only portal) — this
+     * just locks in that the threshold and the one-shot guard are actually
+     * present in the rendered page, since nothing else exercises this path.
+     */
+    public function test_status_page_carries_the_ten_minute_expiry_warning_script(): void
+    {
+        $voucher = Voucher::create([
+            'code' => 'LAWA-WARN',
+            'duration_minutes' => 60,
+            'tier' => 'free',
+            'is_used' => true,
+            'used_at' => now(),
+            'ip_address' => '192.168.2.50',
+            'mac_address' => 'AA:BB:CC:DD:EE:FF',
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) use ($voucher) {
+            $mock->shouldReceive('resolveMacForIp')->andReturn('AA:BB:CC:DD:EE:FF');
+            $mock->shouldReceive('listSessions')->andReturn([[
+                'sessionId' => 'sess-1',
+                'ipAddress' => '192.168.2.50/32',
+                'macAddress' => 'AA:BB:CC:DD:EE:FF',
+                'startTime' => now()->timestamp,
+                'userName' => $voucher->code,
+            ]]);
+        });
+
+        $response = $this->withServerVariables(['REMOTE_ADDR' => '192.168.2.50'])->get(route('portal.index'));
+
+        $response->assertOk()->assertViewIs('portal.status');
+        $response->assertSee('warnedTenMinutes', false);
+        $response->assertSee('totalSeconds <= 600', false);
+        $response->assertSee('10 Minutes Left', false);
+    }
+
+    /**
      * A redeemed-but-not-yet-activated voucher, i.e. exactly the state
      * authenticate() now leaves the guest in.
      */
