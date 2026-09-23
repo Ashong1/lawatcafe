@@ -55,6 +55,26 @@ Acts as the LAN's router/firewall/DHCP server and the captive-portal enforcement
 - **Traffic shaping**: dummynet pipes plus Shaper rules (`upsertShaperPipe`, `upsertShaperRule`, `reconfigureShaper`) — a per-device fair-use ceiling. Free/premium tiers are recorded but cannot be enforced on this build. See *Bandwidth shaping* below
 - **Monitoring**: gateway status and interface stats (`getGatewayStatus`, `getInterfaceStats`) surfaced on the admin network dashboard
 
+**Captive portal zone: `concurrentlogins` must stay `0` (unlimited).** Found
+set to `1` on 2026-09-23 — a live misconfiguration, not something this app
+ever wrote (`OpnSenseService` has no method that touches this field). Every
+guest authorizes through the *same* shared local-database identity
+(`authorizeDevice()` posts `config('services.opnsense.guest_user')` for every
+voucher, not a per-guest account), so a concurrent-login cap of 1 meant only
+one guest could ever be connected at a time — a second device authorizing (or
+even a stale session still holding the slot) would force OPNsense to boot
+whoever else was using that identity. Symptom reported: a guest's Wi-Fi
+connection would redirect to the portal, then disconnect within a minute and
+be unable to reconnect, even before entering a voucher — consistent with two
+real devices fighting over the one slot. Fixed live via
+`captiveportal/settings/set_zone` (`{"zone":{"concurrentlogins":"0"}}`, same
+partial-update pattern as `modifyZoneListField()`) followed by
+`reconfigureCaptivePortal()`. `idletimeout` and `hardtimeout` were already
+`0` — `concurrentlogins` was the only non-zero (i.e. restrictive) value of
+the three. Per-guest access is already fully enforced at the app layer
+(vouchers, MAC binding, session duration), so OPNsense's own login-count cap
+serves no purpose here beyond breaking multi-guest Wi-Fi.
+
 ## Nginx Proxy Manager (.5)
 
 Sits in front of the app as the actual internet/LAN-facing entry point — this is what memory across the team should call "real traffic," as opposed to hitting the app box directly. It's openresty-based (confirmed by its `Server` header) and forwards to `192.168.2.100:80`. TLS termination and any public-facing domain routing happen here, not on the app box itself.

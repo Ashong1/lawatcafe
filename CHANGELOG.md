@@ -10,7 +10,20 @@ the history was rewritten.
 ---
 
 ## 1.11.0 — One-click site blocking
-*builds 127–129*
+*builds 127–130*
+
+- Fixed a live OPNsense misconfiguration causing real guest disconnects: the
+  captive portal zone's `concurrentlogins` was `1` (while `idletimeout` and
+  `hardtimeout` were both `0`, i.e. no limit) — and every guest authenticates
+  through the same shared identity (`OpnSenseService::authorizeDevice()`
+  posts one configured guest_user for every voucher, not a per-guest
+  account), so only one guest could ever be connected to the Wi-Fi at once.
+  A second device authorizing (or a stale session still holding the slot)
+  would force OPNsense to boot whoever else was using it — reported as
+  "the portal disconnects and then can't reconnect, even before entering a
+  voucher." Fixed live by setting `concurrentlogins` to `0`; documented in
+  docs/INFRASTRUCTURE.md since it's a live config fact this app doesn't
+  manage in any reconcile loop, not a code change.
 
 - A second full-codebase review (resources/views/, routes/, config/) found 5
   more real bugs, fixed here: the dashboard's AI Insights modal had a stray
