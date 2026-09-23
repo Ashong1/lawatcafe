@@ -10,7 +10,21 @@ the history was rewritten.
 ---
 
 ## 1.11.0 — One-click site blocking
-*builds 127–130*
+*builds 127–131*
+
+- Guests no longer have to re-type a still-valid voucher after losing their
+  Wi-Fi session for a reason outside their control (an AP/network-layer
+  disconnect — see the concurrentlogins entry above; live testing showed
+  the underlying network-layer cause is broader than that single fix).
+  The portal's auto-recovery, previously restricted to a redemption that was
+  *never* activated (so a guest's own deliberate Disconnect couldn't be
+  silently undone), now recovers any voucher with time remaining, activated
+  or not: the safety bar is time remaining and not being banned, not
+  activation history — a stale voucher already fails the time check, and an
+  impostor riding the guest's IP can't match it at all since recovery keys
+  off the MAC-address blind index, not the IP. This is a deliberate reversal
+  of a prior product decision (see the updated test's docblock in
+  CaptivePortalActivationTest), not a bug fix in the usual sense.
 
 - Fixed a live OPNsense misconfiguration causing real guest disconnects: the
   captive portal zone's `concurrentlogins` was `1` (while `idletimeout` and

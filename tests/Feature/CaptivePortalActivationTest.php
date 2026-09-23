@@ -134,13 +134,19 @@ class CaptivePortalActivationTest extends TestCase
     }
 
     /**
-     * The reason activated_at exists rather than just "is_used and no live
-     * session". A guest who deliberately hits Disconnect still has paid-for
-     * minutes left, and auto-recovery must not drag them straight back online.
+     * Originally activated_at gated recovery specifically so a guest who
+     * deliberately hit Disconnect wouldn't be dragged straight back online.
+     * Reversed 2026-09-23: guests were being dropped by the network layer
+     * (AP/OPNsense session loss, no Voucher-row trace of why — see
+     * docs/INFRASTRUCTURE.md and the concurrentlogins fix in the same batch)
+     * with no way to tell that apart from an intentional disconnect, and
+     * making a guest re-type a code they'd already paid for read as "the
+     * portal is broken." The real safety bar is time remaining and not being
+     * banned — see index()'s recovery block.
      */
-    public function test_recovery_never_reconnects_a_guest_who_deliberately_disconnected(): void
+    public function test_recovery_reconnects_a_guest_with_time_remaining_even_after_a_deliberate_disconnect(): void
     {
-        Voucher::create([
+        $voucher = Voucher::create([
             'code' => 'LAWA-DISC',
             'duration_minutes' => 60,
             'tier' => 'free',
@@ -152,13 +158,25 @@ class CaptivePortalActivationTest extends TestCase
             'mac_address' => self::MAC,
         ]);
 
-        $this->mock(OpnSenseService::class, function ($mock) {
+        $this->mock(OpnSenseService::class, function ($mock) use ($voucher) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
-            $mock->shouldReceive('listSessions')->andReturn([]);
-            $mock->shouldNotReceive('authorizeDevice');
+            $mock->shouldReceive('authorizeDevice')->once()->with(self::IP, $voucher->code)->andReturn(true);
+            // Empty before authorization, live after — see the matching
+            // comment on test_portal_recovers_a_redemption_that_was_never_activated.
+            $mock->shouldReceive('listSessions')->andReturn([], [[
+                'sessionId' => 'sess-1',
+                'ipAddress' => self::IP.'/32',
+                'macAddress' => self::MAC,
+                'startTime' => now()->timestamp,
+                'userName' => $voucher->code,
+            ]]);
         });
 
-        $this->fromGuestDevice()->get(route('portal.index'))->assertViewIs('portal.index');
+        $this->mock(TrafficShapingService::class, function ($mock) {
+            $mock->shouldReceive('assignTier')->once();
+        });
+
+        $this->fromGuestDevice()->get(route('portal.index'))->assertOk()->assertViewIs('portal.status');
     }
 
     public function test_activating_an_expired_voucher_is_refused(): void

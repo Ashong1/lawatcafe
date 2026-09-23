@@ -303,18 +303,27 @@ class CaptivePortalController extends Controller
         // 2. Check if already connected
         $activeSession = $this->liveSessionFor($ip, $mac, $opnsense);
 
-        // Recover an abandoned redemption. Since authenticate() now claims the
-        // voucher without opening the firewall, a guest whose sign-in window
-        // died before they tapped through would otherwise be left holding a
-        // spent code and no internet. activated_at is what makes this safe to
-        // do automatically: it is only null for a voucher that has never been
-        // let through, so this cannot re-open a session the guest deliberately
-        // disconnected or that EnforceSessionLimits reaped.
+        // Recover any live session the guest still has time left on, whether
+        // it was never activated (sign-in window died before they tapped
+        // through) or was activated and later lost its OPNsense session for
+        // a reason outside the guest's control (a network blip, an AP
+        // roaming event, anything that isn't this guest's own voucher
+        // expiring). Originally this only covered the unactivated case —
+        // activated_at was used as the safety gate on the theory that a
+        // once-activated session going missing meant something intentionally
+        // ended it (the guest's own disconnect, or a security kick). In
+        // practice guests were being dropped by the network layer with no
+        // Voucher-row trace of why, and re-typing a code they'd already paid
+        // for reads as "the portal is broken" — so the real safety bar is
+        // time remaining and not being banned, not activation history: a
+        // stale voucher won't pass secondsRemainingOn(), and an impostor
+        // riding the guest's IP can't pass this at all since it matches on
+        // the MAC-address blind index, not the IP.
         if (! $activeSession) {
             $pending = $this->activeVoucherFor($ip, $mac);
 
-            if ($pending && ! $pending->activated_at && $this->secondsRemainingOn($pending) && ! $this->isMacBanned($mac)) {
-                Log::info("Portal: recovering unactivated voucher {$pending->code} for {$ip}.");
+            if ($pending && $this->secondsRemainingOn($pending) && ! $this->isMacBanned($mac)) {
+                Log::info("Portal: recovering voucher {$pending->code} for {$ip} (activated: ".($pending->activated_at ? 'yes' : 'no').').');
 
                 if ($this->grantAccess($pending, $ip, $opnsense, $shaping)) {
                     $activeSession = $this->liveSessionFor($ip, $mac, $opnsense);
