@@ -157,7 +157,7 @@
                                                         text: 'Are you sure you want to void this transaction? This is recorded for auditing.',
                                                         icon: 'warning',
                                                         confirmText: 'Yes, Void It',
-                                                        callback: () => document.getElementById('void-form-{{ $sale->id }}').submit()
+                                                        callback: () => { formSubmitting = true; document.getElementById('void-form-{{ $sale->id }}').submit(); }
                                                     })"
                                                     class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed" title="Void Transaction" aria-label="Void Transaction">
                                                 <template x-if="!formSubmitting"><x-lucide-slash class="w-4 h-4" /></template>

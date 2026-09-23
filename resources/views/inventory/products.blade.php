@@ -109,7 +109,7 @@
                             </td>
                             <td class="py-4 text-right">
                                 <div class="flex justify-end gap-2">
-                                    <button type="button" @click="openEditModal({{ $product->load('ingredients') }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit" aria-label="Edit">
+                                    <button type="button" @click="openEditModal({{ $product }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit" aria-label="Edit">
                                         <x-lucide-pencil class="w-4 h-4" />
                                     </button>
                                     

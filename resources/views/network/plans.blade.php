@@ -50,7 +50,7 @@
                     <p class="text-xs text-[#6D4C41] mt-1 font-medium italic">Manage how much customers pay for specific Wi-Fi durations.</p>
                 </div>
                 
-                <button type="button" @click="openModalForAdd()" 
+                <button type="button" @click="openAddModal()"
                         class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition shadow-lg active:scale-95 flex items-center gap-3">
                     <x-lucide-plus class="w-4 h-4" />
                     Add New Tier

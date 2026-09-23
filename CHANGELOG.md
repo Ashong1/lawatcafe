@@ -10,7 +10,26 @@ the history was rewritten.
 ---
 
 ## 1.11.0 — One-click site blocking
-*builds 127–128*
+*builds 127–129*
+
+- A second full-codebase review (resources/views/, routes/, config/) found 5
+  more real bugs, fixed here: the dashboard's AI Insights modal had a stray
+  `</div>` closing its results container early, so Strategic Advice and
+  Hot/Cold Items rendered unconditionally outside the loading/error guard;
+  the Wi-Fi Plans "Add New Tier" button called a method (`openModalForAdd`)
+  that doesn't exist — only `openAddModal` does, so the button silently did
+  nothing; the admin sidebar's "Verification Logs" link 404'd, left over from
+  the e-wallet feature's removal; the Products page's edit button re-queried
+  a product's ingredients with `->load()` even though the controller already
+  eager-loads them, issuing one redundant query per product per page load;
+  and the void-transaction button's `formSubmitting` flag never flipped
+  because `Element.submit()` (used by the confirm-dialog callback) doesn't
+  fire a `submit` event — fixed by setting the flag directly in the callback.
+  routes/ and config/ were read in full and found clean. One finding was
+  investigated and reverted: a "dead" cookie-persistence mechanism in
+  layouts/staff.blade.php turned out to be intentional (confirmed by
+  SidebarMenuStateTest and its docblock — staff has no visual dropdowns yet
+  but the sticky-state plumbing is deliberately kept in parity with admin's).
 
 - A high-effort code review of the new site-blocking feature (build 127)
   found 4 real bugs, fixed here: `upsertDomain()` fabricated an "Added via
