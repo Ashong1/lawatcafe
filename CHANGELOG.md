@@ -10,7 +10,22 @@ the history was rewritten.
 ---
 
 ## 1.11.0 — One-click site blocking
-*builds 127–132*
+*builds 127–133*
+
+- `network:keepalive-guests` now writes a heartbeat
+  (`keepalive_guests_last_run`), surfaced through `GetScheduledJobHealthTool`
+  alongside the other scheduled jobs — it produces no other artifact on a
+  normal run, so without this there was no way to tell "running fine" from
+  "the cron entry silently stopped."
+- Found and fixed live (no code involved) a second, deeper cause behind the
+  concurrent-login problem the earlier `concurrentlogins` fix (build 124)
+  didn't fully solve: OPNsense's captive portal daemon was still enforcing
+  the *old* single-session limit at runtime even after `concurrentlogins`
+  was saved as `0` and the zone was reconfigured — `service/reconfigure`
+  wasn't enough to clear it. A full `service/restart` was required. Still
+  being monitored — session behavior between two real devices remained
+  inconsistent immediately after the restart, so this may not be the full
+  story yet.
 
 - New `network:keepalive-guests` command (every minute, looping internally
   for ~55s so the ~25s shortest drop observed live stays covered) pings

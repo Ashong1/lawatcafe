@@ -106,6 +106,7 @@ class SuperAdminSystemToolsTest extends TestCase
     {
         Cache::forget('agent_analyze_last_run');
         Cache::put('enforce_sessions_last_run', now()->timestamp, 3600);
+        Cache::put('keepalive_guests_last_run', now()->timestamp, 3600);
         Cache::put('ai_learn_last_run', now()->timestamp, 3600);
         Cache::put('barista_forecast_deep', ['x' => 1], 3600);
 

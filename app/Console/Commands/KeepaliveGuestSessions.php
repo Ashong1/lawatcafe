@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\OpnSenseService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Guest captive-portal sessions were observed vanishing from OPNsense with
@@ -41,6 +42,12 @@ class KeepaliveGuestSessions extends Command
 
     public function handle(OpnSenseService $opnsense): int
     {
+        // Heartbeat for GetScheduledJobHealthTool / the super_admin dashboard
+        // panel — same pattern as EnforceSessionLimits, and worth having here
+        // specifically since this command produces no other artifact on a
+        // normal run (nothing logged unless a ping call itself errors).
+        Cache::put('keepalive_guests_last_run', now()->timestamp, 300);
+
         $deadline = microtime(true) + self::LOOP_SECONDS;
 
         do {

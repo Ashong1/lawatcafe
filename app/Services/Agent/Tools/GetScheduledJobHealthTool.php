@@ -50,6 +50,7 @@ class GetScheduledJobHealthTool implements AgentTool
         $heartbeats = [
             'agent:analyze' => ['key' => 'agent_analyze_last_run', 'every' => 'every 15 minutes'],
             'network:enforce-sessions' => ['key' => 'enforce_sessions_last_run', 'every' => 'every minute'],
+            'network:keepalive-guests' => ['key' => 'keepalive_guests_last_run', 'every' => 'every minute'],
             'ai:learn' => ['key' => 'ai_learn_last_run', 'every' => 'hourly'],
         ];
 
