@@ -3,6 +3,15 @@
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('network:enforce-sessions')->everyMinute();
+
+// Guest sessions were observed vanishing from OPNsense with zero
+// application-side trigger, in as little as ~25 seconds when a device sat
+// idle. This loops internally for ~55s (see KeepaliveGuestSessions) rather
+// than relying on schedule granularity, since a once-a-minute ping would
+// still leave that ~25s window uncovered. withoutOverlapping is defensive —
+// the internal loop is hard-capped under 60s so a normal run should never
+// still be going when the next minute's invocation starts.
+Schedule::command('network:keepalive-guests')->everyMinute()->withoutOverlapping();
 Schedule::command('agent:analyze')->everyFifteenMinutes();
 
 // Runs at half the forecast's own 1h freshness window so the cache is topped

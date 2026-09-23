@@ -10,7 +10,32 @@ the history was rewritten.
 ---
 
 ## 1.11.0 — One-click site blocking
-*builds 127–131*
+*builds 127–132*
+
+- New `network:keepalive-guests` command (every minute, looping internally
+  for ~55s so the ~25s shortest drop observed live stays covered) pings
+  every authenticated guest device every few seconds. Verified live: an idle
+  guest device that previously lost its session in as little as ~25 seconds
+  held it for 5+ minutes straight once pinged regularly. This is a
+  mitigation, not a fix — the actual cause of guest sessions vanishing with
+  zero application-side trigger (confirmed: no `disconnectDevice()` call
+  anywhere in this codebase fires in the windows observed) is still
+  unidentified, most likely the access point itself or an OPNsense-internal
+  liveness/state-timeout mechanism outside this app's API visibility.
+- Bandwidth caps raised: free tier 3↓/1.5↑ → 5↓/3↑ Mbit, premium 10↓/2.5↑ →
+  15↓/6↑ Mbit (`bw_free_down`/`bw_free_up`/`bw_premium_down`/`bw_premium_up`
+  settings, pushed live via the pipe UUIDs `shaper:provision` already
+  manages). The free tier's 1.5 Mbit upload cap was a plausible contributor
+  to guest reports of images failing to send and video apps reading as
+  "unstable" — both symptoms consistent with a slow/interrupted upload
+  rather than a hard block. `shaper:provision --apply` itself still fails
+  past the pipe-update step on this OPNsense build (a pre-existing,
+  documented limitation — its own error message explains why: this build's
+  Shaper-table rules only accept "any" for source/destination, so they can
+  never match a tier alias; real per-tier steering runs through a
+  separately-configured filter rule instead), so all four pipes were pushed
+  directly via `OpnSenseService::upsertShaperPipe()` + `reconfigureShaper()`
+  rather than through that command.
 
 - Guests no longer have to re-type a still-valid voucher after losing their
   Wi-Fi session for a reason outside their control (an AP/network-layer
