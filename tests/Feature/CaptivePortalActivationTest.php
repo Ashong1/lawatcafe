@@ -134,25 +134,20 @@ class CaptivePortalActivationTest extends TestCase
     }
 
     /**
-     * Originally activated_at gated recovery specifically so a guest who
-     * deliberately hit Disconnect wouldn't be dragged straight back online.
-     * Reversed 2026-09-23: guests were being dropped by the network layer
-     * (AP/OPNsense session loss, no Voucher-row trace of why — see
-     * docs/INFRASTRUCTURE.md and the concurrentlogins fix in the same batch)
-     * with no way to tell that apart from an intentional disconnect, and
-     * making a guest re-type a code they'd already paid for read as "the
-     * portal is broken." The real safety bar is time remaining and not being
-     * banned — see index()'s recovery block.
+     * A guest dropped by the network layer (AP/OPNsense session loss, no
+     * Voucher-row trace of why) is recovered even though they were already
+     * online once — making them re-type a code they'd already paid for read
+     * as "the portal is broken." Only their own Disconnect is exempt; see
+     * test_disconnect_is_not_undone_by_the_redirect_back_to_the_portal.
      */
-    public function test_recovery_reconnects_a_guest_with_time_remaining_even_after_a_deliberate_disconnect(): void
+    public function test_recovery_reconnects_an_activated_guest_whose_session_was_lost(): void
     {
         $voucher = Voucher::create([
-            'code' => 'LAWA-DISC',
+            'code' => 'LAWA-DROP',
             'duration_minutes' => 60,
             'tier' => 'free',
             'is_used' => true,
             'used_at' => now()->subMinutes(5),
-            // Already been online once — that is what disconnecting implies.
             'activated_at' => now()->subMinutes(5),
             'ip_address' => self::IP,
             'mac_address' => self::MAC,
@@ -177,6 +172,85 @@ class CaptivePortalActivationTest extends TestCase
         });
 
         $this->fromGuestDevice()->get(route('portal.index'))->assertOk()->assertViewIs('portal.status');
+    }
+
+    /**
+     * Regression: disconnect() redirects to portal.index, and the recovery
+     * path there re-authorized the device on the very next request — the
+     * guest saw "Successfully disconnected" but stayed online, as a fresh
+     * OPNsense session (usage counters reset, clock kept running).
+     */
+    public function test_disconnect_is_not_undone_by_the_redirect_back_to_the_portal(): void
+    {
+        $voucher = Voucher::create([
+            'code' => 'LAWA-DISC',
+            'duration_minutes' => 60,
+            'tier' => 'free',
+            'is_used' => true,
+            'used_at' => now()->subMinutes(5),
+            'activated_at' => now()->subMinutes(5),
+            'ip_address' => self::IP,
+            'mac_address' => self::MAC,
+        ]);
+
+        $live = [[
+            'sessionId' => 'sess-1',
+            'ipAddress' => self::IP.'/32',
+            'macAddress' => self::MAC,
+            'startTime' => now()->timestamp,
+            'userName' => $voucher->code,
+        ]];
+
+        $this->mock(OpnSenseService::class, function ($mock) use ($live) {
+            $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
+            // Live for disconnect()'s ownership check, gone afterwards.
+            $mock->shouldReceive('listSessions')->andReturn($live, []);
+            $mock->shouldReceive('disconnectDevice')->once()->with('sess-1');
+            $mock->shouldReceive('authorizeDevice')->never();
+        });
+
+        $this->mock(TrafficShapingService::class, function ($mock) {
+            $mock->shouldReceive('releaseIp')->once();
+            $mock->shouldReceive('assignTier')->never();
+        });
+
+        $this->fromGuestDevice()
+            ->followingRedirects()
+            ->post(route('portal.disconnect'), ['session_id' => 'sess-1'])
+            ->assertOk()
+            ->assertViewIs('portal.index');
+
+        $this->assertNotNull($voucher->fresh()->disconnected_at);
+    }
+
+    public function test_a_disconnected_guest_can_come_back_by_re_entering_their_code(): void
+    {
+        $voucher = Voucher::create([
+            'code' => 'LAWA-BACK',
+            'duration_minutes' => 60,
+            'tier' => 'free',
+            'is_used' => true,
+            'used_at' => now()->subMinutes(5),
+            'activated_at' => now()->subMinutes(5),
+            'disconnected_at' => now()->subMinute(),
+            'ip_address' => self::IP,
+            'mac_address' => self::MAC,
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) use ($voucher) {
+            $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
+            $mock->shouldReceive('authorizeDevice')->once()->with(self::IP, $voucher->code)->andReturn(true);
+        });
+
+        $this->mock(TrafficShapingService::class, function ($mock) {
+            $mock->shouldReceive('assignTier')->once();
+        });
+
+        $this->fromGuestDevice()->post(route('portal.authenticate'), ['passcode' => 'LAWA-BACK'])
+            ->assertRedirect(route('portal.success'));
+        $this->fromGuestDevice()->post(route('portal.activate'));
+
+        $this->assertNull($voucher->fresh()->disconnected_at);
     }
 
     public function test_activating_an_expired_voucher_is_refused(): void

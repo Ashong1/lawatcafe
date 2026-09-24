@@ -319,10 +319,15 @@ class CaptivePortalController extends Controller
         // stale voucher won't pass secondsRemainingOn(), and an impostor
         // riding the guest's IP can't pass this at all since it matches on
         // the MAC-address blind index, not the IP.
+        //
+        // The one exception is the guest's own Disconnect button, which is
+        // recorded explicitly (disconnected_at) — disconnect() redirects back
+        // here, so recovering that case put the device straight back online.
+        // Re-entering the code and tapping through clears it (grantAccess()).
         if (! $activeSession) {
             $pending = $this->activeVoucherFor($ip, $mac);
 
-            if ($pending && $this->secondsRemainingOn($pending) && ! $this->isMacBanned($mac)) {
+            if ($pending && ! $pending->disconnected_at && $this->secondsRemainingOn($pending) && ! $this->isMacBanned($mac)) {
                 Log::info("Portal: recovering voucher {$pending->code} for {$ip} (activated: ".($pending->activated_at ? 'yes' : 'no').').');
 
                 if ($this->grantAccess($pending, $ip, $opnsense, $shaping)) {
@@ -386,6 +391,10 @@ class CaptivePortalController extends Controller
             });
 
             if ($ownsSession) {
+                // Mark it first so the redirect below can't race index()'s
+                // recovery path into re-authorizing the device.
+                $this->activeVoucherFor($ip, $mac)?->update(['disconnected_at' => now()]);
+
                 $opnsense->disconnectDevice($sessionId);
                 $shaping->releaseIp($ip, $opnsense);
             } else {
@@ -572,7 +581,7 @@ class CaptivePortalController extends Controller
             return false;
         }
 
-        $voucher->update(['activated_at' => now()]);
+        $voucher->update(['activated_at' => now(), 'disconnected_at' => null]);
         $shaping->assignTier($voucher, $ip, $opnsense);
 
         return true;

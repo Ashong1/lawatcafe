@@ -17,6 +17,7 @@ class Voucher extends Model
         'is_used',
         'used_at',
         'activated_at',
+        'disconnected_at',
         'ip_address',
         'mac_address',
         'sale_id',
@@ -25,6 +26,7 @@ class Voucher extends Model
     protected $casts = [
         'used_at' => 'datetime',
         'activated_at' => 'datetime',
+        'disconnected_at' => 'datetime',
         'is_used' => 'boolean',
         'mac_address' => 'encrypted',
     ];
