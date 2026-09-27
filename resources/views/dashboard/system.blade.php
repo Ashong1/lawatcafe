@@ -23,22 +23,22 @@
                      running off the edge. Desktop sizes are untouched. --}}
                 <h2 class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#3E2723]">
                     <span class="text-2xl sm:text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                    <span class="text-sm sm:text-lg md:text-xl font-bold tracking-[0.15em] sm:tracking-[0.2em] uppercase sm:mt-2">System Control</span>
+                    <span class="text-sm sm:text-lg md:text-xl font-bold tracking-wide sm:tracking-wide uppercase sm:mt-2">System Control</span>
                 </h2>
-                <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Infrastructure, network and AI stack health.</p>
+                <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Infrastructure, network and AI stack health.</p>
             </div>
             <div class="flex flex-col items-start md:items-end gap-3 min-w-0">
                 <div class="flex flex-wrap items-center gap-2 md:justify-end">
-                    <a href="{{ route('admin.settings.network') }}" class="bg-[#3E2723] text-white px-5 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-[#271815] transition-all shadow-lg active:scale-95">
+                    <a href="{{ route('admin.settings.network') }}" class="bg-[#3E2723] text-white px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wide flex items-center gap-2 hover:bg-[#271815] transition-all shadow-lg active:scale-95">
                         <x-lucide-server-cog class="w-4 h-4" />
                         Network Settings
                     </a>
-                    <a href="{{ route('admin.analytics') }}" class="bg-white border-2 border-[#E6D5C3] text-[#6D4C41] px-5 py-2.5 rounded-full font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:border-[#8D6E63] transition-all active:scale-95">
+                    <a href="{{ route('admin.analytics') }}" class="bg-white border-2 border-[#E6D5C3] text-[#6D4C41] px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-wide flex items-center gap-2 hover:border-[#8D6E63] transition-all active:scale-95">
                         <x-lucide-line-chart class="w-4 h-4" />
                         Business Analytics
                     </a>
                 </div>
-                <p class="text-xs font-bold uppercase tracking-widest text-[#6D4C41]">{{ now()->format('l, F jS') }}</p>
+                <p class="text-xs font-bold uppercase tracking-wide text-[#6D4C41]">{{ now()->format('l, F jS') }}</p>
             </div>
         </div>
 
@@ -88,10 +88,10 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col h-full justify-center">
                 <div class="flex justify-between items-center w-full mb-6">
-                    <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap">Application Host</h3>
+                    <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide whitespace-nowrap">Application Host</h3>
                     <div class="flex items-center gap-2">
                         <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Live</span>
+                        <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">Live</span>
                     </div>
                 </div>
 
@@ -115,10 +115,10 @@
                                 <path class="{{ $diskUsage > 90 ? 'text-red-500' : 'text-slate-500' }}" stroke-dasharray="{{ $diskUsage }}, 100" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             </svg>
                             <div class="absolute inset-0 flex items-center justify-center">
-                                <span class="text-[9px] font-black {{ $diskUsage > 90 ? 'text-red-700' : 'text-slate-700' }}">{{ number_format($diskUsage, 0) }}%</span>
+                                <span class="text-xs font-bold {{ $diskUsage > 90 ? 'text-red-700' : 'text-slate-700' }}">{{ number_format($diskUsage, 0) }}%</span>
                             </div>
                         </div>
-                        <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">Disk<br>Usage</span>
+                        <span class="text-xs font-bold uppercase tracking-wide text-[#4A3B32] leading-tight">Disk<br>Usage</span>
                     </div>
                 </div>
             </div>
@@ -127,17 +127,17 @@
                 <div class="absolute -right-4 -top-4 w-20 h-20 bg-blue-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
                 <div class="relative z-10 w-full h-full flex flex-col">
                     <div class="flex justify-between items-center w-full mb-6">
-                        <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em]">Network Throughput</h3>
+                        <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Network Throughput</h3>
                         <div class="flex items-center gap-2 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100">
                             @forelse($gateways ?? [] as $gw)
                                 <div class="flex items-center gap-1.5" title="{{ $gw['name'] }}: {{ $gw['status'] }}">
                                     <div class="w-1.5 h-1.5 rounded-full {{ in_array($gw['status'], ['none', 'online'], true) ? 'bg-green-500' : 'bg-red-500' }}"></div>
-                                    <span class="text-[7px] font-black uppercase text-slate-400">{{ substr($gw['name'], 0, 4) }}</span>
+                                    <span class="text-xs font-bold uppercase text-slate-400">{{ substr($gw['name'], 0, 4) }}</span>
                                 </div>
                             @empty
                                 <div class="flex items-center gap-2 opacity-80">
                                     <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                    <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Live Monitoring</span>
+                                    <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">Live Monitoring</span>
                                 </div>
                             @endforelse
                         </div>
@@ -151,31 +151,31 @@
                         <div class="flex flex-col items-center">
                             <div class="flex items-baseline gap-1 mb-1">
                                 <x-skeleton x-show="!liveData.hasRate" variant="block" size="h-6" class="w-16" />
-                                <span x-show="liveData.hasRate" x-cloak class="text-xl font-black text-[#1565C0]" x-text="liveData.bandwidthDown.toFixed(2)"></span>
-                                <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Mbps</span>
+                                <span x-show="liveData.hasRate" x-cloak class="text-xl font-bold text-[#1565C0]" x-text="liveData.bandwidthDown.toFixed(2)"></span>
+                                <span class="text-xs font-bold text-[#6D4C41] uppercase">Mbps</span>
                             </div>
-                            <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Download</span>
+                            <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">Download</span>
                         </div>
                         <div class="flex flex-col items-center">
                             <div class="flex items-baseline gap-1 mb-1">
                                 <x-skeleton x-show="!liveData.hasRate" variant="block" size="h-6" class="w-16" />
-                                <span x-show="liveData.hasRate" x-cloak class="text-xl font-black text-[#059669]" x-text="liveData.bandwidthUp.toFixed(2)"></span>
-                                <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Mbps</span>
+                                <span x-show="liveData.hasRate" x-cloak class="text-xl font-bold text-[#059669]" x-text="liveData.bandwidthUp.toFixed(2)"></span>
+                                <span class="text-xs font-bold text-[#6D4C41] uppercase">Mbps</span>
                             </div>
-                            <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Upload</span>
+                            <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">Upload</span>
                         </div>
                         <div class="flex flex-col items-center">
                             <div class="flex items-baseline gap-1 mb-1">
-                                <span class="text-xl font-black text-[#3E2723]" x-text="liveData.activeGuests">{{ $activeGuests ?? 0 }}</span>
-                                <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Live</span>
+                                <span class="text-xl font-bold text-[#3E2723]" x-text="liveData.activeGuests">{{ $activeGuests ?? 0 }}</span>
+                                <span class="text-xs font-bold text-[#6D4C41] uppercase">Live</span>
                             </div>
-                            <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Paying Guests</span>
+                            <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">Paying Guests</span>
                         </div>
                         <div class="flex flex-col items-center">
                             <div class="flex items-baseline gap-1 mb-1">
-                                <span class="text-xl font-black text-[#6D4C41]">{{ $systemNodes ?? 0 }}</span>
+                                <span class="text-xl font-bold text-[#6D4C41]">{{ $systemNodes ?? 0 }}</span>
                             </div>
-                            <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Infra Nodes</span>
+                            <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">Infra Nodes</span>
                         </div>
                     </div>
                 </div>
@@ -186,8 +186,8 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
                 <div class="flex justify-between items-center mb-5">
-                    <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em]">Scheduled Jobs</h3>
-                    <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">cron &rarr; schedule:run</span>
+                    <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Scheduled Jobs</h3>
+                    <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">cron &rarr; schedule:run</span>
                 </div>
 
                 {{-- Worth stating outright: there is no queue worker on this
@@ -207,11 +207,11 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-baseline justify-between gap-2 flex-wrap">
-                                    <p class="text-xs font-black text-[#3E2723]">{{ $job['name'] }}</p>
-                                    <span class="text-[9px] font-bold uppercase tracking-widest text-[#8D6E63]">{{ $job['every'] }}</span>
+                                    <p class="text-xs font-bold text-[#3E2723]">{{ $job['name'] }}</p>
+                                    <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">{{ $job['every'] }}</span>
                                 </div>
-                                <p class="font-mono text-[10px] text-[#8D6E63] mt-0.5">{{ $job['command'] }}</p>
-                                <p class="text-[11px] font-medium mt-1 {{ $job['healthy'] ? 'text-[#6D4C41]' : 'text-red-700 font-bold' }}">{{ $job['detail'] }}</p>
+                                <p class="font-mono text-xs text-[#795548] mt-0.5">{{ $job['command'] }}</p>
+                                <p class="text-xs font-medium mt-1 {{ $job['healthy'] ? 'text-[#6D4C41]' : 'text-red-700 font-bold' }}">{{ $job['detail'] }}</p>
                             </div>
                         </div>
                     @endforeach
@@ -220,8 +220,8 @@
 
             <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
                 <div class="flex justify-between items-center mb-5">
-                    <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em]">AI Provider Health</h3>
-                    <a href="{{ route('admin.settings.ai-providers') }}" class="text-[9px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-900 transition">Manage &rarr;</a>
+                    <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">AI Provider Health</h3>
+                    <a href="{{ route('admin.settings.ai-providers') }}" class="min-h-[44px] inline-flex items-center px-2 -mx-2 text-sm font-bold text-amber-800 hover:text-amber-900 transition">Manage &rarr;</a>
                 </div>
 
                 <div class="space-y-3">
@@ -232,17 +232,17 @@
                         @endphp
                         <div class="p-4 rounded-2xl border {{ ! $provider['configured'] ? 'bg-gray-50 border-gray-200' : ($provider['circuit']['open'] ? 'bg-red-50 border-red-200' : 'bg-[#FDF8F5] border-[#F0E6D2]') }}">
                             <div class="flex items-center justify-between gap-2 flex-wrap">
-                                <p class="text-xs font-black text-[#3E2723]">{{ $provider['label'] }}</p>
+                                <p class="text-xs font-bold text-[#3E2723]">{{ $provider['label'] }}</p>
                                 @if(! $provider['configured'])
-                                    <span class="px-2 py-0.5 rounded-lg bg-gray-200 text-gray-600 text-[9px] font-black uppercase tracking-widest">No API Key</span>
+                                    <span class="px-2 py-0.5 rounded-lg bg-gray-200 text-gray-600 text-xs font-bold uppercase tracking-wide">No API Key</span>
                                 @elseif($provider['circuit']['open'])
-                                    <span class="px-2 py-0.5 rounded-lg bg-red-200 text-red-800 text-[9px] font-black uppercase tracking-widest">Circuit Open</span>
+                                    <span class="px-2 py-0.5 rounded-lg bg-red-200 text-red-800 text-xs font-bold uppercase tracking-wide">Circuit Open</span>
                                 @else
-                                    <span class="px-2 py-0.5 rounded-lg bg-green-100 text-green-800 text-[9px] font-black uppercase tracking-widest">Healthy</span>
+                                    <span class="px-2 py-0.5 rounded-lg bg-green-100 text-green-800 text-xs font-bold uppercase tracking-wide">Healthy</span>
                                 @endif
                             </div>
                             @if($provider['configured'])
-                                <p class="text-[11px] font-medium text-[#6D4C41] mt-1">
+                                <p class="text-xs font-medium text-[#6D4C41] mt-1">
                                     {{ $total - $failing }} of {{ $total }} models usable{{ $provider['circuit']['failure_count'] > 0 ? ' · '.$provider['circuit']['failure_count'].' recent failures' : '' }}
                                 </p>
                             @endif
@@ -256,8 +256,8 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
                 <div class="flex justify-between items-center mb-5">
-                    <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em]">Captive Portal Posture</h3>
-                    <a href="{{ route('network.vouchers.index') }}" class="text-[9px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-900 transition">Vouchers &rarr;</a>
+                    <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Captive Portal Posture</h3>
+                    <a href="{{ route('network.vouchers.index') }}" class="min-h-[44px] inline-flex items-center px-2 -mx-2 text-sm font-bold text-amber-800 hover:text-amber-900 transition">Vouchers &rarr;</a>
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -275,15 +275,15 @@
 
             <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
                 <div class="flex justify-between items-center mb-5">
-                    <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em]">Accounts</h3>
-                    <a href="{{ route('accounts.index') }}" class="text-[9px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-900 transition">Manage &rarr;</a>
+                    <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Accounts</h3>
+                    <a href="{{ route('accounts.index') }}" class="min-h-[44px] inline-flex items-center px-2 -mx-2 text-sm font-bold text-amber-800 hover:text-amber-900 transition">Manage &rarr;</a>
                 </div>
 
                 <div class="space-y-2">
                     @foreach(['super_admin' => 'Super Admin', 'admin' => 'Admin', 'staff' => 'Staff'] as $role => $label)
                         <div class="flex items-center justify-between p-3 rounded-xl bg-[#FDF8F5] border border-[#F0E6D2]">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-[#6D4C41]">{{ $label }}</span>
-                            <span class="text-lg font-black text-[#3E2723]">{{ $usersByRole[$role] ?? 0 }}</span>
+                            <span class="text-xs font-bold uppercase tracking-wide text-[#6D4C41]">{{ $label }}</span>
+                            <span class="text-lg font-bold text-[#3E2723]">{{ $usersByRole[$role] ?? 0 }}</span>
                         </div>
                     @endforeach
                 </div>
@@ -293,9 +293,9 @@
         {{-- Row 5: what the agent has been finding --}}
         <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] mb-8">
             <div class="flex justify-between items-center mb-5">
-                <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em]">Agent Findings</h3>
+                <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Agent Findings</h3>
                 @if($latestAiRun)
-                    <span class="text-[9px] font-black uppercase tracking-widest text-[#8D6E63]">Last analysis {{ $latestAiRun->created_at->diffForHumans() }}</span>
+                    <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">Last analysis {{ $latestAiRun->created_at->diffForHumans() }}</span>
                 @endif
             </div>
 
@@ -305,11 +305,11 @@
                         <div class="w-2 h-2 rounded-full mt-1.5 shrink-0 {{ $finding->severity === 'critical' ? 'bg-red-500' : ($finding->severity === 'warning' ? 'bg-amber-500' : 'bg-blue-500') }}"></div>
                         <div class="min-w-0 flex-1">
                             <p class="text-xs font-medium text-[#4A3B32] leading-relaxed">{{ $finding->summary }}</p>
-                            <p class="text-[9px] font-black uppercase tracking-widest text-[#8D6E63] mt-1">{{ $finding->severity }} · {{ $finding->created_at->diffForHumans() }}</p>
+                            <p class="text-xs font-bold uppercase tracking-wide text-[#795548] mt-1">{{ $finding->severity }} · {{ $finding->created_at->diffForHumans() }}</p>
                         </div>
                     </div>
                 @empty
-                    <p class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-widest opacity-50 py-6">No findings yet — the agent runs every 15 minutes.</p>
+                    <p class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide opacity-50 py-6">No findings yet — the agent runs every 15 minutes.</p>
                 @endforelse
             </div>
         </div>

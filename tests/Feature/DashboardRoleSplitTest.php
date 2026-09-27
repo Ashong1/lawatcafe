@@ -160,4 +160,26 @@ class DashboardRoleSplitTest extends TestCase
             ->get(route('dashboard'))
             ->assertRedirect(route('staff.dashboard'));
     }
+
+    /** Design critique: 8-11px labels on all three dashboards. 12px is the floor now, as on the portal. */
+    public function test_no_dashboard_text_is_smaller_than_12px(): void
+    {
+        foreach (['dashboard', 'dashboard/system', 'staff/dashboard'] as $view) {
+            $markup = preg_replace('/\{\{--.*?--\}\}/s', '', file_get_contents(resource_path("views/{$view}.blade.php")));
+
+            $this->assertDoesNotMatchRegularExpression('/text-\[(?:[0-9]|1[01])px\]/', $markup, "{$view} has text below 12px");
+        }
+    }
+
+    /**
+     * v1.11.1.153 shipped the new staff top row AND the old one below it (a
+     * replace whose end marker came before its start). Exactly one of each now.
+     */
+    public function test_staff_dashboard_top_row_appears_once(): void
+    {
+        $html = $this->actingAs(User::factory()->create(['role' => 'staff']))->get(route('staff.dashboard'))->assertOk()->getContent();
+
+        $this->assertSame(1, substr_count($html, 'Open Register'));
+        $this->assertSame(1, substr_count($html, 'Guest Wi-Fi'));
+    }
 }
