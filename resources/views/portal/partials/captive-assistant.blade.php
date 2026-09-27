@@ -18,7 +18,10 @@
         // Android WebView tags itself "; wv)". Its UA otherwise still contains
         // both Chrome and Safari — which is why checking for the absence of
         // those (the old test) never matched a single Android device.
-        const android = /Android/.test(ua) && /;\s*wv\)/.test(ua);
+        // Xiaomi's sign-in window drops "; wv)" but keeps "Build/", which real
+        // browsers stopped sending; the named ones that still send it are excluded.
+        const android = /Android/.test(ua) && (/;\s*wv\)/.test(ua)
+            || (/\bBuild\//.test(ua) && !/MiuiBrowser|XiaoMi\/|SamsungBrowser|HuaweiBrowser|HeyTapBrowser|VivoBrowser|UCBrowser|OPR\/|Opera|EdgA|Firefox|YaBrowser|Brave|DuckDuckGo/i.test(ua)));
 
         return ios || android || /CaptiveNetworkSupport/.test(ua);
     };

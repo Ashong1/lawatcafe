@@ -116,11 +116,22 @@ class CaptivePortalController extends Controller
      * portal/partials/captive-assistant.blade.php for the same detection
      * client-side, and why the old Chrome/Safari test never matched.
      */
+    /** Browsers that still send "Build/" in their user agent — not sign-in windows. */
+    private const NAMED_ANDROID_BROWSERS = '/MiuiBrowser|XiaoMi\\/|SamsungBrowser|HuaweiBrowser|HeyTapBrowser|VivoBrowser|UCBrowser|OPR\\/|Opera|EdgA|Firefox|YaBrowser|Brave|DuckDuckGo/i';
+
     private function isAndroidAssistant(Request $request): bool
     {
         $ua = (string) $request->userAgent();
 
-        return preg_match('/Android/i', $ua) === 1 && preg_match('/;\s*wv\)/i', $ua) === 1;
+        if (preg_match('/Android/i', $ua) !== 1) {
+            return false;
+        }
+
+        // Some sign-in windows (Xiaomi's) drop the "; wv)" tag but keep the
+        // "Build/" token that real browsers stopped sending; named browsers
+        // that still send it are excluded.
+        return preg_match('/;\s*wv\)/i', $ua) === 1
+            || (preg_match('/\bBuild\//', $ua) === 1 && preg_match(self::NAMED_ANDROID_BROWSERS, $ua) !== 1);
     }
 
     /**

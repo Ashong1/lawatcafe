@@ -38,9 +38,7 @@
 
     <p>
         You're online.<br>Opening your browser&hellip;
-        {{-- Visible only if both the intent and the fallback somehow fail to
-             navigate, which would otherwise leave a blank-looking page. --}}
-        <noscript><br><a href="{{ $statusUrl }}">Tap here to see your remaining time</a></noscript>
+<br><a href="{{ $statusUrl }}">Tap here to see your time left</a>
     </p>
 
     <script>
@@ -80,6 +78,14 @@
                     window.location.replace(fallback);
                 }
             }, 1200);
+
+            // The probe is an empty reply: it closes a sign-in window but leaves
+            // anything else on this page. Still here? Show the time left.
+            setTimeout(function () {
+                if (!handedOver) {
+                    window.location.replace(status);
+                }
+            }, 5000);
         })();
     </script>
 

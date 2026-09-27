@@ -166,8 +166,15 @@ class CaptivePortalStatusPageTest extends TestCase
 
         $content = $this->getSuccessPage()->getContent();
 
-        // No client-side navigation of any kind.
-        $this->assertStringNotContainsString('window.location.href', $content);
+        // The only client-side navigation is the post-connect fallback to the
+        // guest's own time-left page, and it is armed only after the activate
+        // form has been submitted.
+        $this->assertSame(1, substr_count($content, 'window.location.href'));
+        $this->assertLessThan(
+            strpos($content, 'window.location.href'),
+            strpos($content, 'activateForm.submit()'),
+        );
+        $this->assertMatchesRegularExpression('#window\.location\.href = [^;]*lawatkape\.lab\\\\?/portal[\'"]\)?;#', $content);
         $this->assertStringNotContainsString('neverssl', $content);
 
         // Going online always goes through the activate form...

@@ -126,6 +126,10 @@
                             if (this.submitting) return;
                             this.submitting = true;
                             this.$refs.activateForm.submit();
+                            // Connecting ends on the phone's connectivity check, an
+                            // empty reply that closes a sign-in window but leaves a
+                            // normal browser sitting here. Still here? Show the time left.
+                            setTimeout(() => { window.location.href = @js(route('portal.index')); }, 4000);
                         }
                      }">
                     <form method="POST" action="{{ route('portal.activate') }}" x-ref="activateForm">

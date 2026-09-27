@@ -10,7 +10,12 @@ the history was rewritten.
 ---
 
 ## 1.12.1 — Network pages made easier
-*builds 168–169*
+*builds 168–170*
+
+- Xiaomi's sign-in window is recognised (it omits Android's "; wv)" tag),
+  so guests get the "Open in my browser" button there.
+- "Connecting…" no longer hangs in a normal browser: after connecting, a
+  page still on screen moves on to the guest's time left.
 
 - Portal menu and AI chat can be scrolled back up on phones whose sign-in
   window or browser wraps the page in a pull-to-refresh layer (Xiaomi).

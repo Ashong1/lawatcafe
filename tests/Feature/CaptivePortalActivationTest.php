@@ -293,7 +293,8 @@ class CaptivePortalActivationTest extends TestCase
             // test_android_activation_goes_through_the_browser_handoff. An
             // ordinary Android browser still goes straight to the probe.
             'android browser' => [
-                'Mozilla/5.0 (Linux; Android 13; Pixel 7 Build/TQ3A) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117 Mobile Safari/537.36',
+                // Chrome's real (reduced) Android UA: no model, no "Build/".
+                'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Mobile Safari/537.36',
                 'http://connectivitycheck.gstatic.com/generate_204',
             ],
             'ios' => [
@@ -552,6 +553,23 @@ class CaptivePortalActivationTest extends TestCase
             ->assertRedirect('http://connectivitycheck.gstatic.com/generate_204');
     }
 
+    /** Xiaomi's sign-in window drops "; wv)" but still sends "Build/"; real browsers don't. */
+    public function test_a_sign_in_window_without_the_wv_tag_is_still_recognised(): void
+    {
+        $xiaomiWindow = 'Mozilla/5.0 (Linux; Android 16; 2410DPN6CC Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.79 Mobile Safari/537.36';
+        $brave = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Mobile Safari/537.36';
+        $miBrowser = 'Mozilla/5.0 (Linux; U; Android 13; en-us; 2201117TG Build/TKQ1.221114.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/112.0 Mobile Safari/537.36 XiaoMi/MiuiBrowser/14.5';
+
+        $this->readyToActivate();
+        $this->fromGuestDevice()->withHeaders(['User-Agent' => $xiaomiWindow])
+            ->post(route('portal.activate'))->assertRedirect(route('portal.handoff'));
+
+        foreach ([$brave, $miBrowser] as $browser) {
+            $this->fromGuestDevice()->withHeaders(['User-Agent' => $browser])
+                ->post(route('portal.activate'))->assertRedirect('http://connectivitycheck.gstatic.com/generate_204');
+        }
+    }
+
     public function test_the_handoff_page_attempts_the_intent_and_keeps_a_fallback(): void
     {
         $response = $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (Linux; Android 13; Pixel 7; wv) Chrome/117 Mobile Safari/537.36'])
@@ -566,8 +584,10 @@ class CaptivePortalActivationTest extends TestCase
         // WebView ignores the scheme outright.
         $this->assertStringContainsString('generate_204', $content);
         $this->assertStringContainsString('window.location.replace(fallback)', $content);
-        // And a no-JS route out, so the page is never a dead end.
-        $this->assertStringContainsString('<noscript>', $content);
+        // A tap link out, and a last jump to the time-left page for a normal
+        // browser left sitting on the probe's empty reply.
+        $this->assertStringContainsString('Tap here to see your time left', $content);
+        $this->assertStringContainsString('window.location.replace(status)', $content);
     }
 
     private function readyToActivate(): void
