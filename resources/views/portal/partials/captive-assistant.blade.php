@@ -35,3 +35,20 @@
     html.is-cna .cna-only { display: block; }
     html.is-cna .browser-only { display: none; }
 </style>
+<script>
+    // Some phones (Xiaomi's sign-in window and browser among them) wrap the
+    // page in a native pull-to-refresh layer that takes every downward swipe
+    // while the PAGE is at its top. It can't see that the menu or chat panel
+    // inside is scrolled down, so the guest can scroll down but never back up.
+    // Keeping the page itself 1px below its top lets those swipes reach the panel.
+    (function () {
+        var root = document.documentElement;
+        root.style.minHeight = 'calc(100vh + 1px)';
+        function nudge() {
+            var page = document.scrollingElement || root;
+            if (page.scrollTop < 1) window.scrollTo(0, 1);
+        }
+        window.addEventListener('load', nudge);
+        window.addEventListener('touchstart', nudge, { passive: true });
+    })();
+</script>

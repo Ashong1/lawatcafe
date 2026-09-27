@@ -10,7 +10,12 @@ the history was rewritten.
 ---
 
 ## 1.12.1 — Network pages made easier
-*build 168*
+*builds 168–169*
+
+- Portal menu and AI chat can be scrolled back up on phones whose sign-in
+  window or browser wraps the page in a pull-to-refresh layer (Xiaomi).
+  The chat no longer pulls a guest back to the bottom while a reply streams
+  in if they have scrolled up to re-read.
 
 - Active Sessions: **Find a device** by IP, MAC, hostname or voucher code,
   with one-click **Block** and **Trust** buttons on the result and on every

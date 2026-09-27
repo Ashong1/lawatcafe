@@ -875,7 +875,7 @@ document.addEventListener('alpine:init', () => {
                             }
                             this.toolStatusLabel = null;
                             assistantEntry.content += event.text;
-                            this.scrollToBottom();
+                            this.scrollToBottom(true);
                         } else if (event.type === 'meta') {
                             if (this.historyEnabled && event.conversation_id) {
                                 this.conversationId = event.conversation_id;
@@ -1136,13 +1136,21 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        scrollToBottom() {
+        // Scrolls only the chat's own box: scrollIntoView would also move the
+        // page, and on the portal that re-arms the phone's pull-to-refresh
+        // layer. With onlyIfNearBottom (streamed replies), a guest who has
+        // scrolled up to re-read something is left where they are.
+        scrollToBottom(onlyIfNearBottom = false) {
             this.$nextTick(() => {
                 setTimeout(() => {
                     const anchor = document.getElementById('{{ $anchorId }}-chat-anchor');
-                    if (anchor) {
-                        anchor.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    let box = anchor?.parentElement;
+                    while (box && !(/(auto|scroll)/.test(getComputedStyle(box).overflowY) && box.scrollHeight > box.clientHeight)) {
+                        box = box.parentElement;
                     }
+                    if (!box || box === document.body || box === document.documentElement) return;
+                    if (onlyIfNearBottom && box.scrollHeight - box.scrollTop - box.clientHeight > 150) return;
+                    box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
                 }, 50);
             });
         },
