@@ -469,12 +469,21 @@ class AIService
      */
     private function noteDailyQuota($response): bool
     {
-        if ($response->status() !== 429 || ! str_contains($response->body(), 'free-models-per-day')) {
+        if ($response->status() !== 429) {
             return false;
         }
 
-        $resetMs = (int) ($response->json('error.metadata.headers.X-RateLimit-Reset') ?? 0);
-        $until = $resetMs > 0 ? Carbon::createFromTimestampMs($resetMs) : now()->addDay()->startOfDay();
+        // Read the body ONCE: on the streaming path it is a non-seekable
+        // stream, so a second body()/json() comes back empty — that silently
+        // lost the reset time on the first live run.
+        $body = (string) $response->body();
+        if (! str_contains($body, 'free-models-per-day')) {
+            return false;
+        }
+
+        $resetMs = (int) data_get(json_decode($body, true), 'error.metadata.headers.X-RateLimit-Reset', 0);
+        // OpenRouter's day rolls over at midnight UTC (8:00 AM in Manila).
+        $until = $resetMs > 0 ? Carbon::createFromTimestampMs($resetMs) : now('UTC')->addDay()->startOfDay();
 
         Cache::put(self::QUOTA_CACHE_KEY, $until->timestamp, $until);
         Log::warning('OpenRouter free-model daily allowance used up; AI paused until '.$until->toDateTimeString().' UTC.');

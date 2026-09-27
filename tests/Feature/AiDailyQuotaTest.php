@@ -134,4 +134,15 @@ class AiDailyQuotaTest extends TestCase
 
         $this->artisan('ai:warm-forecast')->expectsOutputToContain('Skipped')->assertSuccessful();
     }
+
+    /** No reset time in the error: fall back to OpenRouter's rollover, midnight UTC — not local midnight. */
+    public function test_missing_reset_time_falls_back_to_utc_midnight(): void
+    {
+        $this->travelTo(Carbon::parse('2026-09-27 17:38:00', 'UTC'));
+        Http::fake(['openrouter.ai/api/v1/chat/completions' => Http::response(['error' => ['message' => 'Rate limit exceeded: free-models-per-day']], 429)]);
+
+        app(AIService::class)->chatWithToolsStreaming([['role' => 'user', 'content' => 'hi']], [], fn () => null);
+
+        $this->assertSame('2026-09-28 00:00:00', AIService::quotaExhaustedUntil()->setTimezone('UTC')->toDateTimeString());
+    }
 }
