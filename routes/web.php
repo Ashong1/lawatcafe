@@ -22,6 +22,7 @@ use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\RootRedirectController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SiteBlockingController;
@@ -39,10 +40,10 @@ use Illuminate\Support\Facades\Route;
 // ==========================================
 // PUBLIC CAPTIVE PORTAL ROUTES
 // ==========================================
-// Initial Redirect - Send guests to the login page by default.
-// Uses Route::redirect() (not a closure) so this route stays compatible with
-// `php artisan route:cache` — closure-based route actions can't be cached.
-Route::redirect('/', '/login');
+// Initial Redirect - the guest hostname goes to the portal, everything else
+// to staff login. A controller (not a closure) so this route stays compatible
+// with `php artisan route:cache` — see RootRedirectController.
+Route::get('/', RootRedirectController::class);
 
 Route::prefix('portal')->name('portal.')->group(function () {
     Route::get('/', [CaptivePortalController::class, 'index'])->name('index');

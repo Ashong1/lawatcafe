@@ -234,4 +234,36 @@ class CaptivePortalStatusPageTest extends TestCase
 
         $this->assertStringNotContainsString('neverssl', $this->getSuccessPage()->getContent());
     }
+
+    /**
+     * The sign-in window can't open the real browser on its own — the
+     * automatic intent:// handoff was confirmed blocked on a real Huawei
+     * tablet. The success page must give the guest a tappable target=_blank
+     * link (the gesture some windows honour) and the address to type.
+     */
+    public function test_success_page_offers_a_tap_to_open_browser_link_and_the_address(): void
+    {
+        $this->redeemPendingVoucher();
+        $this->mockIdentityOnly();
+
+        $html = $this->withServerVariables(['REMOTE_ADDR' => '192.168.2.50', 'HTTP_HOST' => 'wifi.lawatkape.lab'])
+            ->get('http://wifi.lawatkape.lab/portal/success')
+            ->assertOk()
+            ->getContent();
+
+        $this->assertMatchesRegularExpression('#<a href="http://wifi\.lawatkape\.lab/portal" target="_blank"#', $html);
+        $this->assertStringContainsString('Open in my browser', $html);
+        $this->assertStringContainsString('>wifi.lawatkape.lab</span>', $html);
+    }
+
+    /** The address guests are told to type must not land them on staff login. */
+    public function test_root_of_the_guest_host_opens_the_portal(): void
+    {
+        $this->get('http://wifi.lawatkape.lab/')->assertRedirect('http://wifi.lawatkape.lab/portal');
+    }
+
+    public function test_root_of_the_staff_host_still_goes_to_login(): void
+    {
+        $this->get('http://lawatkape.lab/')->assertRedirect('http://lawatkape.lab/login');
+    }
 }

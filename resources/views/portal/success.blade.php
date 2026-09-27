@@ -172,9 +172,33 @@
                         <x-lucide-timer class="w-4 h-4 lg:w-5 lg:h-5" />
                     </a>
 
-                    <p class="cna-only text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.2em] leading-relaxed">
-                        This window closes once you're online
-                    </p>
+                    {{-- The sign-in window is about to be destroyed, and no page can
+                         open the real browser on its own — /portal/handoff's
+                         automatic intent:// is blocked by most sign-in windows
+                         (confirmed on a Huawei tablet) because it has no user
+                         gesture behind it. A real tap on a target=_blank link is
+                         the one thing some of them do hand to the browser; where
+                         it isn't, the page just opens in this window, and the
+                         portal's auto-reconnect keeps the guest online either
+                         way. The typed address is the path that always works.
+                         .cna-only goes on the wrapper: its display:block would
+                         flatten the link's flex layout. --}}
+                    <div class="cna-only">
+                        <div class="rounded-2xl border-2 border-dashed border-[#E6D5C3] bg-white/70 px-4 py-4 text-center space-y-3">
+                            <p class="text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.2em] leading-relaxed">
+                                This window closes once you're online
+                            </p>
+                            <p class="text-xs text-[#4A3B32] leading-relaxed">
+                                To check your time left later, open your browser and go to
+                                <span class="block mt-1 font-black text-sm text-[#3E2723] select-all">{{ request()->getHost() }}</span>
+                            </p>
+                            <a href="{{ route('portal.index') }}" target="_blank" rel="noopener"
+                               class="w-full bg-[#FFF8E1] border-2 border-[#FFE082] text-[#6D4C41] py-3 rounded-xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-[10px]">
+                                <span>Open in my browser</span>
+                                <x-lucide-external-link class="w-4 h-4" />
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
             </div>
