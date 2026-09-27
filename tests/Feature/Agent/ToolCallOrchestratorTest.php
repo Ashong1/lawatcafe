@@ -207,7 +207,12 @@ class ToolCallOrchestratorTest extends TestCase
         $ingredient = Ingredient::create(['name' => 'Milk', 'current_stock' => 50, 'unit' => 'ml', 'low_stock_threshold' => 500, 'status' => 'Low Stock']);
 
         Http::fake([
-            'openrouter.ai/*' => Http::sequence()
+            // Guest requests look up the free-model catalog first
+            // (AIService::freeModelsOnly). Laravel runs every matching stub, so
+            // a wildcard sequence would lose its first item to that lookup —
+            // script the chat endpoint only.
+            'openrouter.ai/api/v1/models' => Http::response(['data' => []]),
+            'openrouter.ai/api/v1/chat/completions' => Http::sequence()
                 ->push($this->openAiFunctionCallResponse('restockIngredient', ['ingredient_id' => $ingredient->id, 'added_amount' => 999]), 200)
                 ->push($this->openAiTextResponse("I can't do that here."), 200),
         ]);
