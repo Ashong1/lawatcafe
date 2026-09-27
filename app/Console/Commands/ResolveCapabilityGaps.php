@@ -11,6 +11,7 @@ use App\Services\Agent\CapabilityGap;
 use App\Services\Agent\LessonLibrary;
 use App\Services\Agent\PageCatalog;
 use App\Services\Agent\ToolRegistry;
+use App\Services\AiBudget;
 use App\Services\AIService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Notification;
@@ -50,6 +51,13 @@ class ResolveCapabilityGaps extends Command
     {
         if ($this->option('backfill')) {
             $this->info($this->backfill().' past gap(s) recovered from conversations.');
+        }
+
+        if (! app(AiBudget::class)->backgroundMaySpend()) {
+            // Leave the day's last free AI requests for people — see AiBudget::BACKGROUND_RESERVE.
+            $this->warn('Skipped: AI allowance is low or used up for today; gaps stay for the next run.');
+
+            return self::SUCCESS;
         }
 
         $gaps = AiFeedback::undistilled()

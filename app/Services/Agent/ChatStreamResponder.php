@@ -4,6 +4,7 @@ namespace App\Services\Agent;
 
 use App\Models\AiConversation;
 use App\Models\User;
+use App\Services\AIService;
 use App\Support\AgentActivityEntry;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -57,7 +58,7 @@ class ChatStreamResponder
 
             $result = $this->orchestrator->run($messages, $audience, $actor, $context, $onTextDelta, $onToolStart);
 
-            $reply = $result['reply'] ?? $fallbackReply;
+            $reply = $result['reply'] ?? $this->quotaReply($audience) ?? $fallbackReply;
 
             if ($conversation && $conversations) {
                 $conversations->append($conversation, $userMessage, $reply, $result['executed'] ?? [], $result['pending'] ?? []);
@@ -86,6 +87,27 @@ class ChatStreamResponder
             'Cache-Control' => 'no-cache',
             'X-Accel-Buffering' => 'no',
         ]);
+    }
+
+    /**
+     * The daily free-model allowance is used up (see AIService::noteDailyQuota).
+     * Said plainly, with when it comes back — "trouble connecting" sent the
+     * owner looking for a network fault that didn't exist. Only staff and up
+     * hear about credit; a guest just learns the helper is resting.
+     */
+    private function quotaReply(string $audience): ?string
+    {
+        $until = AIService::quotaExhaustedUntil();
+        if (! $until) {
+            return null;
+        }
+
+        $when = $until->copy()->setTimezone(config('app.timezone'))->format('g:i A');
+
+        return $audience === ToolRegistry::AUDIENCE_GUEST
+            ? "☕ Our AI helper is taking a break until {$when}. Our staff at the counter are happy to help in the meantime!"
+            : "☕ Barista AI has used up today's free AI allowance, so it can't answer right now. It comes back at {$when}. "
+                .'To stop this happening, add $5 of credit to the shop\'s OpenRouter account — that raises the daily limit from 50 to 1,000 requests.';
     }
 
     private function emit(array $payload): void

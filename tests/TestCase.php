@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Services\AiBudget;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 // Standard: Feature tests use RefreshDatabase (per-class, not enforced here), not
@@ -22,6 +23,19 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Never read the real OpenRouter account's allowance from a test: the
+        // .env key is live, and its count would make scheduled-job tests pass
+        // or fail with the time of day. "Unknown" never blocks a job; the
+        // quota flag in the cache still applies. AiDailyQuotaTest exercises
+        // the real AiBudget against a faked endpoint.
+        $this->app->instance(AiBudget::class, new class extends AiBudget
+        {
+            public function dailyRequestsRemaining(): ?int
+            {
+                return null;
+            }
+        });
 
         $connection = config('database.default');
         $database = config("database.connections.{$connection}.database");

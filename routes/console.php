@@ -17,10 +17,11 @@ Schedule::command('network:keepalive-guests')->everyMinute()->withoutOverlapping
 Schedule::command('network:watch-adult-sites')->everyMinute()->withoutOverlapping();
 Schedule::command('agent:analyze')->everyFifteenMinutes();
 
-// Runs at half the forecast's own 1h freshness window so the cache is topped
-// up well before it expires, and the dashboard only ever reads cache.
+// Every 3 hours (was every 30 min = 48 AI calls a day, most of the 50-a-day
+// free OpenRouter allowance by itself). The forecast is "fresh" for 4h (see
+// BaristaForecastService::FRESH_TTL) and the dashboard only ever reads cache.
 // withoutOverlapping: a slow AI cascade must not stack runs on top of itself.
-Schedule::command('ai:warm-forecast')->everyThirtyMinutes()->withoutOverlapping();
+Schedule::command('ai:warm-forecast')->everyThreeHours()->withoutOverlapping();
 
 // The learning loop. Hourly rather than continuous on purpose: lessons are
 // generalisations, and generalising from the last four minutes of traffic

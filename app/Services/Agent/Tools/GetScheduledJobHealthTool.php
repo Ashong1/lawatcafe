@@ -68,7 +68,7 @@ class GetScheduledJobHealthTool implements AgentTool
         // heartbeat, so its own output IS the honest signal here.
         $jobs[] = [
             'command' => 'ai:warm-forecast',
-            'schedule' => 'every 30 minutes',
+            'schedule' => 'every 3 hours',
             'healthy' => Cache::has('barista_forecast_deep'),
             'last_run' => Cache::has('barista_forecast_deep')
                 ? 'forecast cache is warm'

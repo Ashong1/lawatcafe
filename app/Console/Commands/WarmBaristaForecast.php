@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\AiBudget;
 use App\Services\AIService;
 use App\Services\BaristaForecastService;
 use Illuminate\Console\Command;
@@ -29,6 +30,13 @@ class WarmBaristaForecast extends Command
 
     public function handle(AIService $ai, BaristaForecastService $forecast): int
     {
+        if (! app(AiBudget::class)->backgroundMaySpend()) {
+            // Leave the day's last free AI requests for people — see AiBudget::BACKGROUND_RESERVE.
+            $this->warn('Skipped: AI allowance is low or used up for today; the cached forecast stays.');
+
+            return self::SUCCESS;
+        }
+
         $started = microtime(true);
 
         $result = $forecast->getForecast($ai, force: true);

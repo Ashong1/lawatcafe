@@ -436,7 +436,7 @@ class AIService
             $models = $this->imageCapableModels($models);
         }
 
-        if ($this->openRouterKey && ! $this->providerIsOpen('openrouter')) {
+        if ($this->openRouterKey && ! $this->providerIsOpen('openrouter') && ! self::quotaExhaustedUntil()) {
             $response = $this->streamOpenAiCompatibleLoop(
                 $models,
                 'https://openrouter.ai/api/v1/chat/completions',
@@ -454,6 +454,40 @@ class AIService
         }
 
         return null;
+    }
+
+    public const QUOTA_CACHE_KEY = 'openrouter_daily_quota_exhausted_until';
+
+    /**
+     * OpenRouter's free models are capped per ACCOUNT per day (50 without
+     * credit, 1,000 with $5+). On 2026-09-28 the scheduled jobs used all 50
+     * before anyone chatted, and every model then returned 429 — shown to the
+     * owner as "trouble connecting", with each chat still trying all models.
+     * Remember the exhaustion until the reset time OpenRouter gives.
+     *
+     * @return bool whether this response was the daily-allowance 429
+     */
+    private function noteDailyQuota($response): bool
+    {
+        if ($response->status() !== 429 || ! str_contains($response->body(), 'free-models-per-day')) {
+            return false;
+        }
+
+        $resetMs = (int) ($response->json('error.metadata.headers.X-RateLimit-Reset') ?? 0);
+        $until = $resetMs > 0 ? Carbon::createFromTimestampMs($resetMs) : now()->addDay()->startOfDay();
+
+        Cache::put(self::QUOTA_CACHE_KEY, $until->timestamp, $until);
+        Log::warning('OpenRouter free-model daily allowance used up; AI paused until '.$until->toDateTimeString().' UTC.');
+
+        return true;
+    }
+
+    /** When the daily allowance comes back, or null if it isn't used up. */
+    public static function quotaExhaustedUntil(): ?Carbon
+    {
+        $ts = Cache::get(self::QUOTA_CACHE_KEY);
+
+        return $ts && $ts > now()->timestamp ? Carbon::createFromTimestamp($ts) : null;
     }
 
     /**
@@ -581,7 +615,7 @@ class AIService
 
                 if (! $response->successful()) {
                     $this->recordModelResult($provider, $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
-                    if ($response->status() === 401) {
+                    if ($response->status() === 401 || $this->noteDailyQuota($response)) {
                         break;
                     }
 
@@ -681,6 +715,10 @@ class AIService
 
     private function callOpenRouterLoop($messages, array $tools = [], bool $fast = false)
     {
+        if (self::quotaExhaustedUntil()) {
+            return null;
+        }
+
         $models = $this->activeModels('openrouter');
         $first = array_shift($models);
         shuffle($models);
@@ -705,7 +743,9 @@ class AIService
                     return $this->normalizeOpenAiResponse($response->json());
                 }
                 $this->recordModelResult('openrouter', $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
-                if ($response->status() === 401) {
+                // 401, or the account's daily allowance is gone: every other
+                // model would fail the same way, and each try is wasted.
+                if ($response->status() === 401 || $this->noteDailyQuota($response)) {
                     break;
                 }
             } catch (\Exception $e) {

@@ -2,14 +2,16 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\SystemAlert;
 use App\Services\AdaptiveBandwidthService;
 use App\Services\Agent\ToolCallOrchestrator;
 use App\Services\Agent\ToolRegistry;
+use App\Services\AiBudget;
+use App\Services\GuestSessionService;
 use App\Services\LinkCapacityLearner;
 use App\Services\OpnSenseService;
-use App\Services\GuestSessionService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
@@ -76,7 +78,7 @@ class AdaptFairUseCeiling extends Command
         }
 
         $guestCount = $guests->activeGuestCount();
-        $learner->record($rate['down'], $rate['up'], $guestCount, (float) \App\Models\Setting::get('bw_fair_use_mbps', '20'));
+        $learner->record($rate['down'], $rate['up'], $guestCount, (float) Setting::get('bw_fair_use_mbps', '20'));
         $learner->prune();
 
         $this->line(sprintf(
@@ -105,6 +107,13 @@ class AdaptFairUseCeiling extends Command
 
         if ($assessment['target'] === null) {
             $this->comment('Holding: '.($assessment['blocked_by'] ?? 'nothing to act on yet.'));
+
+            return self::SUCCESS;
+        }
+
+        if (! app(AiBudget::class)->backgroundMaySpend()) {
+            // Leave the day's last free AI requests for people — see AiBudget::BACKGROUND_RESERVE.
+            $this->warn('Skipped: AI allowance is low or used up for today; ceiling left as it is.');
 
             return self::SUCCESS;
         }
@@ -186,10 +195,10 @@ class AdaptFairUseCeiling extends Command
                     .'share at that rate, but they all share one internet connection, so when many guests are '
                     ."online a high ceiling lets one heavy user crowd out the rest.\n\n"
                     .'A target has already been calculated arithmetically from the learned line speed and the '
-                    ."number of guests online. Do not recalculate it — your job is to decide whether acting on it "
+                    .'number of guests online. Do not recalculate it — your job is to decide whether acting on it '
                     ."right now is sensible, and to say why in one sentence the shop owner will read.\n\n"
                     .'Call adjustFairUseCeiling with the target if the change is warranted. Decline by replying '
-                    ."with a short reason and calling nothing if it is not — for example if a single device is "
+                    .'with a short reason and calling nothing if it is not — for example if a single device is '
                     .'saturating the line while almost nobody is online, which is not the shared-contention '
                     .'problem this ceiling addresses, or if lowering the cap would hurt more than the contention '
                     .'does. The cap also applies to the shop\'s own till and kitchen display.',

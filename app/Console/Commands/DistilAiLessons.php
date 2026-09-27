@@ -8,6 +8,7 @@ use App\Models\AiFeedback;
 use App\Models\AiLesson;
 use App\Models\Setting;
 use App\Services\Agent\LessonLibrary;
+use App\Services\AiBudget;
 use App\Services\AIService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
@@ -62,6 +63,13 @@ class DistilAiLessons extends Command
     public function handle(AIService $ai): int
     {
         Cache::put('ai_learn_last_run', now()->timestamp, 7200);
+
+        if (! app(AiBudget::class)->backgroundMaySpend()) {
+            // Leave the day's last free AI requests for people — see AiBudget::BACKGROUND_RESERVE.
+            $this->warn('Skipped: AI allowance is low or used up for today; evidence stays for the next run.');
+
+            return self::SUCCESS;
+        }
 
         $evidence = AiFeedback::undistilled()
             // Capability gaps belong to ai:resolve-gaps; marking them distilled

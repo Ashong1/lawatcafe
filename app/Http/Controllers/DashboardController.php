@@ -210,9 +210,10 @@ class DashboardController extends Controller
             [
                 'name' => 'Barista forecast warm-up',
                 'command' => 'ai:warm-forecast',
-                'every' => 'Every 30 minutes',
-                // The fresh key expires after an hour; if it is gone the warmer
-                // has missed at least two runs.
+                'every' => 'Every 3 hours',
+                // The fresh key lasts 4h and the warmer runs every 3h; if it is
+                // gone the warmer missed a run (or skipped it to save the AI
+                // allowance — see AiBudget::backgroundMaySpend).
                 'healthy' => Cache::has('barista_forecast_deep'),
                 'detail' => Cache::has('barista_forecast_deep')
                     ? 'Forecast cache is warm.'

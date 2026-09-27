@@ -9,6 +9,7 @@ use App\Notifications\SystemAlert;
 use App\Services\Agent\CrossDomainCorrelationService;
 use App\Services\Agent\ToolCallOrchestrator;
 use App\Services\Agent\ToolRegistry;
+use App\Services\AiBudget;
 use App\Services\AIService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
@@ -19,6 +20,9 @@ class RunAgentAnalysis extends Command
     protected $signature = 'agent:analyze';
 
     protected $description = 'Run cross-domain POS + network correlation and let Barista AI narrate/act on any signals found.';
+
+    /** Signals last reviewed; a day's TTL so a persisting issue is re-raised daily, not never. */
+    public const FINGERPRINT_KEY = 'agent_analyze_last_fingerprint';
 
     public function handle(CrossDomainCorrelationService $correlation, AIService $ai, ToolCallOrchestrator $orchestrator): int
     {
@@ -34,6 +38,28 @@ class RunAgentAnalysis extends Command
 
         if (empty($signals)) {
             $this->info('No signals detected.');
+
+            return self::SUCCESS;
+        }
+
+        // The same warning used to be re-reviewed every 15 minutes — two AI
+        // calls and an admin notification each time, ~96 times a day for a
+        // warning that stayed up all week, which alone emptied the 50-a-day
+        // free allowance. Only a CHANGE in what's flagged is worth a review;
+        // numbers inside a summary ("up 100%" vs "up 120%") don't count.
+        $fingerprint = sha1(collect($signals)
+            ->map(fn ($s) => ($s['type'] ?? '').'|'.preg_replace('/\d+(?:\.\d+)?/', '#', (string) ($s['summary'] ?? '')))
+            ->sort()->implode("\n"));
+
+        if (Cache::get(self::FINGERPRINT_KEY) === $fingerprint) {
+            $this->info(count($signals).' signal(s), unchanged since the last review — not asking Barista AI again.');
+
+            return self::SUCCESS;
+        }
+
+        if (! app(AiBudget::class)->backgroundMaySpend()) {
+            // Leave the day's last free AI requests for people — see AiBudget::BACKGROUND_RESERVE.
+            $this->warn('Skipped: AI allowance is low or used up for today; will review on a later run.');
 
             return self::SUCCESS;
         }
@@ -85,6 +111,12 @@ class RunAgentAnalysis extends Command
             count($result['executed']),
             count($result['pending']),
         ));
+
+        // Only a review that actually happened counts: if the AI was
+        // unreachable, the same signals get another try next run.
+        if ($interpretation !== null) {
+            Cache::put(self::FINGERPRINT_KEY, $fingerprint, now()->addDay());
+        }
 
         return self::SUCCESS;
     }
