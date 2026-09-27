@@ -50,7 +50,7 @@
             
             <div class="flex items-center gap-3 px-5 py-2.5 bg-[#E8F5E9] border border-green-200 rounded-full shadow-sm">
                 <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-                <span class="text-xs font-bold text-[#2E7D32] uppercase tracking-wide">Live Monitoring</span>
+                <span class="text-xs font-bold text-[#2E7D32] uppercase tracking-wide">Live</span>
             </div>
         </div>
 

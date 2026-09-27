@@ -34,7 +34,8 @@
                         @foreach ($tools as $tool)
                             <div class="py-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
                                 <div>
-                                    <p class="text-sm font-bold text-[#3E2723]">{{ $tool['name'] }}</p>
+                                    <p class="text-sm font-bold text-[#3E2723]">{{ \App\Support\AgentActivityEntry::actionName($tool['name']) }}</p>
+                                    <p class="text-xs text-[#6D4C41] font-mono">{{ $tool['name'] }}</p>
                                     <p class="text-xs text-[#795548]">{{ $tool['description'] }}</p>
                                 </div>
                                 @if ($tool['configurable'])

@@ -25,8 +25,8 @@
             </div>
             <div class="text-xs text-blue-900 font-medium leading-relaxed">
                 <p class="font-bold uppercase tracking-wide text-xs mb-1">How this learns</p>
-                <p>Every rating, correction and failed tool call is recorded. Once an hour <span class="font-mono">ai:learn</span> reads what is new and proposes lessons below. Approved lessons are added to the assistant's instructions, and approved worked examples are retrieved when a similar question comes in. The underlying model is not retrained &mdash; the assistant improves by accumulating reviewed experience.</p>
-                <p class="mt-2">When it tells staff or an admin it <em>can't</em> do something, <span class="font-mono">ai:resolve-gaps</span> works out how it could have: a <span class="font-bold">skill</span> (steps using tools it already has) or a pointer to the right page is applied automatically &mdash; revoke it here if it's wrong &mdash; and anything genuinely missing becomes a <span class="font-bold">tool_request</span> for the developer. It never writes or runs code itself.</p>
+                <p>Every rating, correction and failed tool call is recorded. Once an hour the assistant reads what is new and proposes lessons below. Approved lessons are added to the assistant's instructions, and approved worked examples are retrieved when a similar question comes in. The underlying model is not retrained &mdash; the assistant improves by accumulating reviewed experience.</p>
+                <p class="mt-2">When it tells staff or an admin it <em>can't</em> do something, it works out how it could have: a <span class="font-bold">skill</span> (steps using tools it already has) or a pointer to the right page is applied automatically &mdash; revoke it here if it's wrong &mdash; and anything genuinely missing becomes a <span class="font-bold">tool request</span> for the developer. It never writes or runs code itself.</p>
             </div>
         </div>
 
@@ -118,8 +118,8 @@
             <div class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-5 mb-8 flex items-start gap-3">
                 <x-lucide-triangle-alert class="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
                 <p class="text-xs font-bold text-amber-900 leading-relaxed">
-                    Auto-apply is ON &mdash; lessons go live as soon as they are distilled, without review. Turn off the
-                    <span class="font-mono">ai_learning_auto_apply</span> setting to restore the approval gate.
+                    Automatic approval is on &mdash; new lessons go live without anyone reviewing them. Ask your
+                    developer to turn it off if you want to approve each lesson first.
                 </p>
             </div>
         @endif

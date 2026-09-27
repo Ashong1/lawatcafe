@@ -18,7 +18,7 @@
             <div class="flex items-center gap-4 bg-white px-4 py-2 rounded-xl border border-[#F0E6D2] shadow-sm">
                 <div class="flex items-center gap-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Live Monitoring</span>
+                    <span class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Live</span>
                 </div>
                 <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
                 <div class="flex items-center gap-3">
@@ -211,8 +211,8 @@
                     The agent can never leave these bounds, whatever it decides &mdash; a request outside them is
                     applied at the nearest one. Every change is logged to
                     <a href="{{ route('admin.ai.actions.index') }}" class="font-bold text-amber-700 hover:text-amber-900 underline">Agent Activity</a>
-                    and sends you a notification. To approve each change by hand instead, move
-                    <span class="font-mono">adjustFairUseCeiling</span> to "requires confirmation" on the Agent Permissions page.
+                    and sends you a notification. To approve each change by hand instead, set
+                    "Adjust the Wi-Fi speed limit" to "Requires confirmation" on the Agent Permissions page.
                 </p>
 
                 <button type="submit" class="w-full py-4 bg-white border-2 border-[#3E2723] hover:bg-[#FDF8F5] text-[#3E2723] rounded-xl font-bold text-xs uppercase tracking-wide transition-all active:scale-[0.98]">

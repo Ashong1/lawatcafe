@@ -108,6 +108,23 @@ class AgentActivityEntry
         return $proposed && $entry[1] ? $entry[1] : $entry[0];
     }
 
+    /**
+     * The action as a command, for settings pages ("Block websites for
+     * guests"), where past tense ("Blocked…") would read as a log entry.
+     */
+    public static function actionName(string $tool): string
+    {
+        $entry = self::TOOLS[$tool] ?? null;
+        if (! $entry) {
+            return Str::headline($tool);
+        }
+        if ($entry[1]) {
+            return Str::ucfirst(Str::after($entry[1], 'Wants to '));
+        }
+
+        return preg_replace(['/^Checked /', '/^Looked up /', '/^Summarised /'], ['Check ', 'Look up ', 'Summarise '], $entry[0]);
+    }
+
     public function __construct(public readonly AiActionAudit $audit) {}
 
     public function isRoutine(): bool

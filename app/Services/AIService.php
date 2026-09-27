@@ -1158,7 +1158,7 @@ OPERATIONAL GUIDELINES:
 
         $data = $this->callAI($messages, false, [], true);
 
-        return $data['choices'][0]['message']['content'] ?? "☕ I'm having trouble connecting to our business intelligence stack right now.";
+        return $data['choices'][0]['message']['content'] ?? "Barista AI can't be reached right now. Please try again in a minute.";
     }
 
     public function staffChat($message, $history = [])
@@ -1171,7 +1171,7 @@ OPERATIONAL GUIDELINES:
 
         $data = $this->callAI($messages, false, [], true);
 
-        return $data['choices'][0]['message']['content'] ?? '☕ Staff AI stack offline.';
+        return $data['choices'][0]['message']['content'] ?? "Barista AI can't be reached right now. Please try again in a minute.";
     }
 
     public function analyzeSalesTrends($historicalSales, $productPerformance, $wastageData = [], $daysOfData = 0, $recentPerformance = [])
@@ -1644,19 +1644,17 @@ Return ONLY a JSON array, at most 5 items:
         $lowerMsg = strtolower($message);
         $list = $this->getBestSellersContext() ?: 'Tapsilog and Spanish Latte';
         if (str_contains($lowerMsg, 'hi') || str_contains($lowerMsg, 'hello')) {
-            return "Hey! ☕ Barista AI here. I'm busy, but can help with Wi-Fi, menu, or suggest {$list}!";
+            return "Hi! Barista AI here. I'm a little busy right now, but I can help with Wi-Fi or the menu — guests love the {$list}.";
         }
         if (str_contains($lowerMsg, 'best') || str_contains($lowerMsg, 'recommend')) {
-            return "☕ Best-sellers: {$list}!";
+            return "Our best-sellers right now: {$list}.";
         }
         if (str_contains($lowerMsg, 'wifi')) {
-            // Point at our own portal, not a third-party page. This used to
-            // send guests to neverssl.com — a captive-portal-triggering trick
-            // that predates the shop having a real portal hostname, and which
-            // reads to a customer as the Wi-Fi being broken.
-            return '📶 Connect at '.route('portal.index').' — enter the code printed on your receipt.';
+            // Our own portal, never a third-party "trigger the login" page — to a
+            // customer that reads as the Wi-Fi being broken.
+            return 'Open '.route('portal.index').' and enter the code from your voucher slip.';
         }
 
-        return '☕ Serving guests! Check Menu or Wi-Fi tabs!';
+        return "I'm serving other guests right now — the Menu and Connect tabs have what you need.";
     }
 }

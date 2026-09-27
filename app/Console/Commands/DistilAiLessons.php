@@ -269,7 +269,7 @@ class DistilAiLessons extends Command
             'evidence_count' => $evidence->count(),
             'status' => $autoApply ? AiLesson::STATUS_APPROVED : AiLesson::STATUS_PROPOSED,
             'reviewed_at' => $autoApply ? now() : null,
-            'review_note' => $autoApply ? 'Auto-applied (ai_learning_auto_apply is on).' : null,
+            'review_note' => $autoApply ? 'Applied automatically (automatic approval is on).' : null,
             'fingerprint' => $fingerprint,
         ]);
 

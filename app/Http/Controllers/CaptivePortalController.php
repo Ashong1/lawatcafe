@@ -668,7 +668,7 @@ class CaptivePortalController extends Controller
             null,
             $context,
             $request->message,
-            '☕ Serving guests! Check Menu or Wi-Fi tabs!',
+            "I'm serving other guests right now — the Menu and Connect tabs have what you need.",
         );
     }
 

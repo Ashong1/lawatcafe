@@ -12,7 +12,7 @@
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">AI Insights</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Predictive business intelligence powered by Barista AI.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Sales trends and forecasts from Barista AI.</p>
         </div>
         <div class="flex items-center gap-2 px-4 py-2 bg-[#3E2723] rounded-xl shadow-lg shadow-amber-900/10">
             <x-lucide-sparkles class="w-4 h-4 text-amber-500 animate-pulse" />

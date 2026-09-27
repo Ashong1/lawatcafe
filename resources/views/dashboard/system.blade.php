@@ -137,7 +137,7 @@
                             @empty
                                 <div class="flex items-center gap-2 opacity-80">
                                     <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                    <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">Live Monitoring</span>
+                                    <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">Live</span>
                                 </div>
                             @endforelse
                         </div>

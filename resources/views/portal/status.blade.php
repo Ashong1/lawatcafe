@@ -115,7 +115,7 @@
                             <x-lucide-shield-check class="w-5 h-5 sm:w-8 sm:h-8 text-green-600" stroke-width="2.5" />
                         </div>
                         <h2 class="text-xl sm:text-3xl lg:text-5xl font-bold text-[#3E2723] mb-1 sm:mb-3 tracking-tight">You're Online</h2>
-                        <p class="hidden sm:block text-xs lg:text-base text-[#795548] font-medium max-w-md mx-auto px-4">Your device is authenticated. Enjoy your premium stay at Lawa't Kape!</p>
+                        <p class="hidden sm:block text-xs lg:text-base text-[#795548] font-medium max-w-md mx-auto px-4">You're connected. Enjoy your time at Lawa't Kape!</p>
                     </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-10 max-w-4xl mx-auto w-full px-2">
@@ -205,7 +205,7 @@
                             <x-lucide-message-circle class="w-5 h-5 sm:w-8 sm:h-8 text-amber-800" stroke-width="2.5" />
                         </div>
                         <h2 class="text-xl sm:text-3xl lg:text-5xl font-bold text-[#3E2723] mb-0 sm:mb-2 tracking-tight">Barista AI</h2>
-                        <p class="hidden sm:block text-xs text-[#795548] font-bold uppercase tracking-wide">Your Digital Concierge</p>
+                        <p class="hidden sm:block text-xs text-[#795548] font-bold uppercase tracking-wide">Ask about the menu or Wi-Fi</p>
                     </div>
 
                     {{-- min-h-0, not min-h-[300px]: a 300px floor is the same bug

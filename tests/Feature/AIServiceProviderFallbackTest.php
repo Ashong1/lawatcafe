@@ -68,7 +68,7 @@ class AIServiceProviderFallbackTest extends TestCase
 
         $reply = app(AIService::class)->chat('four');
 
-        $this->assertStringContainsString('Serving guests', $reply, 'Circuit should be open, forcing the local fallback rather than a real request.');
+        $this->assertStringContainsString('serving other guests', $reply, 'Circuit should be open, forcing the local fallback rather than a real request.');
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'openrouter.ai'));
     }
 }

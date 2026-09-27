@@ -113,7 +113,7 @@
          class="p-3 rounded-xl border flex flex-col gap-2 transition-all" :class="grandTotal >= freeWifiMinAmount ? 'bg-[#F3F9FF] border-[#E3F2FD]' : 'bg-[#FAFAFA] border-[#F0E6D2]'" style="display: none;">
         <div class="flex justify-between items-center">
             <p class="text-xs font-bold uppercase tracking-wide" :class="grandTotal >= freeWifiMinAmount ? 'text-[#1565C0]' : 'text-[#795548]'">
-                <span x-show="grandTotal >= freeWifiMinAmount"><x-lucide-wifi class="w-3 h-3 inline-block mr-1 -mt-0.5"/> Free Wi-Fi Unlocked!</span>
+                <span x-show="grandTotal >= freeWifiMinAmount"><x-lucide-wifi class="w-3 h-3 inline-block mr-1 -mt-0.5"/> Free Wi-Fi included</span>
                 <span x-show="grandTotal < freeWifiMinAmount">Free Wi-Fi Promo</span>
             </p>
             <p class="text-xs font-bold" :class="grandTotal >= freeWifiMinAmount ? 'text-[#1565C0]' : 'text-[#795548]'" x-text="Math.min(100, Math.round((grandTotal / freeWifiMinAmount) * 100)) + '%'"></p>

@@ -278,7 +278,7 @@
                 <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" @if($initialTab !== 'help') style="display: none;" @endif class="flex flex-col flex-1 min-h-0">
                     <div class="text-center mb-4 shrink-0 flex flex-col items-center">
                         <h2 class="text-xl font-bold text-[#3E2723] mb-1 tracking-tight">Barista AI</h2>
-                        <p class="text-xs text-[#795548] font-bold uppercase tracking-wide mb-2">Digital Concierge</p>
+                        <p class="text-xs text-[#795548] font-bold uppercase tracking-wide mb-2">Ask about the menu or Wi-Fi</p>
                         {{-- No "System Online" pill here: a green pulse beside the header's
                              connection status gave two contradictory signals at once. --}}
                     </div>

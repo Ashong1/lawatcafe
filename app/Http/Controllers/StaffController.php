@@ -175,7 +175,7 @@ class StaffController extends Controller
             $request->user(),
             [],
             ChatImage::historyText($text, $image),
-            '☕ Staff AI stack offline.',
+            "Barista AI can't be reached right now. Please try again in a minute.",
             $conversation,
             $conversations,
         );

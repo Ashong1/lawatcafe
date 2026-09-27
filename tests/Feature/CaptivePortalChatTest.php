@@ -48,7 +48,7 @@ class CaptivePortalChatTest extends TestCase
             ->postJson(route('portal.chat'), ['message' => 'hi']);
 
         $response->assertOk();
-        $this->assertStringContainsString('Serving guests', $response->streamedContent());
+        $this->assertStringContainsString('serving other guests', $response->streamedContent());
     }
 
     /**

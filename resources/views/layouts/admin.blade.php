@@ -119,7 +119,7 @@
     <x-agent-chat
         :endpoint="route('admin.ai.chat')"
         title="Barista AI"
-        subtitle="Business Intelligence"
+        subtitle="Your shop assistant"
         greeting="Hello Admin! I am Barista AI. I've analyzed today's data and I'm ready to help you optimize Lawa't Kape. How can I assist you today?"
         anchor-id="admin"
         mode="floating"

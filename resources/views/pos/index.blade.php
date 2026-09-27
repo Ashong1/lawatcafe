@@ -200,7 +200,7 @@
                         
                         <div x-show="filteredProducts.length === 0" class="col-span-full flex flex-col items-center justify-center py-20 text-[#6D4C41]">
                             <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                                <span class="text-3xl opacity-50">🔍</span>
+                                <x-lucide-search class="w-8 h-8 text-[#795548]" />
                             </div>
                             <p class="font-bold text-sm">No items found.</p>
                             <p class="text-xs mt-1">Try searching for something else.</p>

@@ -105,8 +105,8 @@ class ChatStreamResponder
         $when = $until->copy()->setTimezone(config('app.timezone'))->format('g:i A');
 
         return $audience === ToolRegistry::AUDIENCE_GUEST
-            ? "☕ Our AI helper is taking a break until {$when}. Our staff at the counter are happy to help in the meantime!"
-            : "☕ Barista AI has used up today's free AI allowance, so it can't answer right now. It comes back at {$when}. "
+            ? "Our AI helper is taking a break until {$when}. Our staff at the counter are happy to help in the meantime!"
+            : "Barista AI has used up today's free AI allowance, so it can't answer right now. It comes back at {$when}. "
                 .'To stop this happening, add $5 of credit to the shop\'s OpenRouter account — that raises the daily limit from 50 to 1,000 requests.';
     }
 

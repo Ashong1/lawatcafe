@@ -536,7 +536,7 @@ class DashboardController extends Controller
             $request->user(),
             [],
             ChatImage::historyText($text, $image),
-            "☕ I'm having trouble connecting to our business intelligence stack right now.",
+            "Barista AI can't be reached right now. Please try again in a minute.",
             $conversation,
             $conversations,
         );
