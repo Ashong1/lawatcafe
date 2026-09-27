@@ -12,6 +12,9 @@ Schedule::command('network:enforce-sessions')->everyMinute();
 // the internal loop is hard-capped under 60s so a normal run should never
 // still be going when the next minute's invocation starts.
 Schedule::command('network:keepalive-guests')->everyMinute()->withoutOverlapping();
+// Adult-site alerts read Pi-hole's query log; see WatchAdultSites. A minute is
+// as close to "when they opened it" as the scheduler gets.
+Schedule::command('network:watch-adult-sites')->everyMinute()->withoutOverlapping();
 Schedule::command('agent:analyze')->everyFifteenMinutes();
 
 // Runs at half the forecast's own 1h freshness window so the cache is topped

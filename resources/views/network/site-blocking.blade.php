@@ -74,7 +74,8 @@
 
             <form action="{{ route('network.site-blocking.store') }}" method="POST" class="flex gap-2 w-full md:w-auto">
                 @csrf
-                <input type="text" name="domain" required placeholder="example.com"
+                {{-- ?domain= pre-fills from an adult-site alert (WatchAdultSites), so blocking what it found is one tap. --}}
+                <input type="text" name="domain" required placeholder="example.com" value="{{ old('domain', request('domain')) }}"
                        class="flex-1 md:w-56 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                 <x-submit-button label="Block" />
             </form>

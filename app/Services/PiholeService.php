@@ -140,6 +140,45 @@ class PiholeService
      * already there but was previously toggled off — one call covers both
      * so the "block" button never has to know which state a domain is in.
      */
+    /**
+     * DNS lookups Pi-hole answered since $fromTimestamp, oldest first.
+     *
+     * Feeds the adult-site watch (WatchAdultSites). Returns [] when Pi-hole is
+     * unreachable, so a missed run just catches up on the next one rather than
+     * throwing inside the scheduler.
+     *
+     * @return array<int, array{time: int, domain: string, client: string, status: string}>
+     */
+    public function queriesSince(int $fromTimestamp, int $limit = 5000): array
+    {
+        try {
+            $response = $this->withSession(fn ($client) => $client->timeout(15)->get('/api/queries', [
+                'from' => $fromTimestamp,
+                'length' => $limit,
+            ]));
+
+            if (! $response || ! $response->successful()) {
+                return [];
+            }
+
+            return collect($response->json('queries') ?? [])
+                ->map(fn ($q) => [
+                    'time' => (int) ($q['time'] ?? 0),
+                    'domain' => strtolower((string) ($q['domain'] ?? '')),
+                    'client' => (string) ($q['client']['ip'] ?? ''),
+                    'status' => (string) ($q['status'] ?? ''),
+                ])
+                ->filter(fn ($q) => $q['domain'] !== '' && $q['client'] !== '')
+                ->sortBy('time')
+                ->values()
+                ->all();
+        } catch (\Exception $e) {
+            Log::error('Pi-hole: exception reading the query log: '.$e->getMessage());
+
+            return [];
+        }
+    }
+
     public function blockDomain(string $domain, ?string $comment = null): bool
     {
         return $this->upsertDomain($domain, true, $comment);

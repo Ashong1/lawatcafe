@@ -13,7 +13,7 @@ class SiteBlockingController extends Controller
      * just saves typing for the sites a cafe network is most often asked to
      * restrict, without hiding the ability to block anything else by domain.
      */
-    protected const PRESETS = [
+    public const PRESETS = [
         'Social Media' => [
             'facebook.com' => 'Facebook',
             'instagram.com' => 'Instagram',
