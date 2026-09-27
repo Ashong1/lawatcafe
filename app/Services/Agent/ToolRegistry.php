@@ -5,6 +5,7 @@ namespace App\Services\Agent;
 use App\Services\Agent\Contracts\AgentTool;
 use App\Services\Agent\Tools\AdjustFairUseCeilingTool;
 use App\Services\Agent\Tools\BlockDeviceTool;
+use App\Services\Agent\Tools\BlockSitesTool;
 use App\Services\Agent\Tools\CheckMySessionTool;
 use App\Services\Agent\Tools\CheckStockLevelsTool;
 use App\Services\Agent\Tools\DraftSupplierPoTool;
@@ -18,6 +19,7 @@ use App\Services\Agent\Tools\GetSalesSummaryTool;
 use App\Services\Agent\Tools\GetScheduledJobHealthTool;
 use App\Services\Agent\Tools\GetSystemHealthTool;
 use App\Services\Agent\Tools\GetTrafficStatsTool;
+use App\Services\Agent\Tools\ListBlockedSitesTool;
 use App\Services\Agent\Tools\ListSupplierPoDraftsTool;
 use App\Services\Agent\Tools\ListUserAccountsTool;
 use App\Services\Agent\Tools\LookupVoucherTool;
@@ -27,6 +29,7 @@ use App\Services\Agent\Tools\SetSessionBandwidthTierTool;
 use App\Services\Agent\Tools\ShiftHandoffSummaryTool;
 use App\Services\Agent\Tools\SuggestCategoryContentTool;
 use App\Services\Agent\Tools\UnblockDeviceTool;
+use App\Services\Agent\Tools\UnblockSitesTool;
 use App\Services\Agent\Tools\VoidSaleTool;
 
 /**
@@ -95,6 +98,9 @@ class ToolRegistry
             ...$this->staffToolClasses(),
             BlockDeviceTool::class,
             UnblockDeviceTool::class,
+            BlockSitesTool::class,
+            UnblockSitesTool::class,
+            ListBlockedSitesTool::class,
             SetSessionBandwidthTierTool::class,
             // Admin and above only, and never guest or staff: this one moves the
             // ceiling for every device in the shop at once, where

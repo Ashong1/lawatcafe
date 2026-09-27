@@ -41,7 +41,7 @@ class SiteBlockingController extends Controller
      * PiholeService from either endpoint, not just the one that happens to
      * accept free-text input.
      */
-    protected const DOMAIN_REGEX = '/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})+$/';
+    public const DOMAIN_REGEX = '/^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})+$/';
 
     public function index(PiholeService $pihole)
     {
