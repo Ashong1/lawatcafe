@@ -239,7 +239,7 @@
                                  the single thing most likely to make the OS honour
                                  it. See CaptivePortalController::handoff(). --}}
                             <span class="cna-only ml-auto shrink-0">
-                                <a href="{{ route('portal.handoff') }}"
+                                <a href="{{ $safariUrl ?? route('portal.handoff') }}"
                                    class="inline-flex items-center gap-1.5 bg-[#3E2723] text-white px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] active:scale-95 transition">
                                     <x-lucide-external-link class="w-3 h-3" />
                                     Open in Browser

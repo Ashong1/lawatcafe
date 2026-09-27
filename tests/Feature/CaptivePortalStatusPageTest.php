@@ -251,7 +251,7 @@ class CaptivePortalStatusPageTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertMatchesRegularExpression('#<a href="http://wifi\.lawatkape\.lab/portal" target="_blank"#', $html);
+        $this->assertMatchesRegularExpression('#<a href="http://wifi\.lawatkape\.lab/portal"\s+target="_blank"#', $html);
         $this->assertStringContainsString('Open in my browser', $html);
         $this->assertStringContainsString('>wifi.lawatkape.lab</span>', $html);
     }
@@ -265,5 +265,38 @@ class CaptivePortalStatusPageTest extends TestCase
     public function test_root_of_the_staff_host_still_goes_to_login(): void
     {
         $this->get('http://lawatkape.lab/')->assertRedirect('http://lawatkape.lab/login');
+    }
+
+    /**
+     * iOS has no intent: and no automatic way out of its sign-in sheet; the
+     * x-safari- scheme is the tap-to-Safari route there. Android keeps the
+     * plain target=_blank link.
+     */
+    public function test_iphones_get_an_open_in_safari_link(): void
+    {
+        $this->redeemPendingVoucher();
+        $this->mockIdentityOnly();
+
+        $html = $this->withServerVariables([
+            'REMOTE_ADDR' => '192.168.2.50',
+            'HTTP_USER_AGENT' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+        ])->get('http://wifi.lawatkape.lab/portal/success')->assertOk()->getContent();
+
+        $this->assertStringContainsString('href="x-safari-http://wifi.lawatkape.lab/portal"', $html);
+        $this->assertStringContainsString('Open in Safari', $html);
+    }
+
+    public function test_android_keeps_the_target_blank_link(): void
+    {
+        $this->redeemPendingVoucher();
+        $this->mockIdentityOnly();
+
+        $html = $this->withServerVariables([
+            'REMOTE_ADDR' => '192.168.2.50',
+            'HTTP_USER_AGENT' => 'Mozilla/5.0 (Linux; Android 14; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/120.0 Mobile Safari/537.36',
+        ])->get('http://wifi.lawatkape.lab/portal/success')->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('x-safari-', $html);
+        $this->assertStringContainsString('Open in my browser', $html);
     }
 }

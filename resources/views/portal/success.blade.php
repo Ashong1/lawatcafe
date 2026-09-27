@@ -192,9 +192,11 @@
                                 To check your time left later, open your browser and go to
                                 <span class="block mt-1 font-black text-sm text-[#3E2723] select-all">{{ request()->getHost() }}</span>
                             </p>
-                            <a href="{{ route('portal.index') }}" target="_blank" rel="noopener"
+                            {{-- Apple: x-safari- scheme (see safariUrl()); elsewhere a
+                                 target=_blank tap. --}}
+                            <a href="{{ $safariUrl ?? route('portal.index') }}" @unless($safariUrl) target="_blank" rel="noopener" @endunless
                                class="w-full bg-[#FFF8E1] border-2 border-[#FFE082] text-[#6D4C41] py-3 rounded-xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-[10px]">
-                                <span>Open in my browser</span>
+                                <span>{{ $safariUrl ? 'Open in Safari' : 'Open in my browser' }}</span>
                                 <x-lucide-external-link class="w-4 h-4" />
                             </a>
                         </div>

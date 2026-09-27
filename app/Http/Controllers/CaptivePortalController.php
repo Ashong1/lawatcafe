@@ -88,15 +88,33 @@ class CaptivePortalController extends Controller
             return $configured;
         }
 
-        $ua = (string) $request->userAgent();
-
-        if (preg_match('/iPhone|iPad|iPod|Macintosh/i', $ua)) {
+        if ($this->isAppleDevice($request)) {
             return 'http://captive.apple.com/hotspot-detect.html';
         }
 
         // Android's probe, and a reasonable default for anything else: it is the
         // most widely mirrored of the two and returns 204 No Content.
         return 'http://connectivitycheck.gstatic.com/generate_204';
+    }
+
+    private function isAppleDevice(Request $request): bool
+    {
+        return (bool) preg_match('/iPhone|iPad|iPod|Macintosh/i', (string) $request->userAgent());
+    }
+
+    /**
+     * A tap-to-open-in-Safari link for Apple devices, or null elsewhere.
+     *
+     * iOS gives the sign-in sheet no automatic way out — no intent:, and the
+     * sheet waits for the guest to tap Done. iOS 17+ registers the
+     * x-safari-http(s):// schemes that apps use to hand a page to Safari; the
+     * sign-in sheet may or may not honour it (unverifiable server-side), and on
+     * a device that refuses, the tap does nothing and the typed address shown
+     * beside it still works.
+     */
+    private function safariUrl(Request $request): ?string
+    {
+        return $this->isAppleDevice($request) ? 'x-safari-'.route('portal.index') : null;
     }
 
     /**
@@ -356,6 +374,7 @@ class CaptivePortalController extends Controller
                 }
 
                 return view('portal.status', [
+                    'safariUrl' => $this->safariUrl($request),
                     'session' => $activeSession,
                     'startTime' => Carbon::createFromTimestamp($activeSession['startTime']),
                     'expirationTime' => $expirationTime,
@@ -764,6 +783,7 @@ class CaptivePortalController extends Controller
             'durationMinutes' => $voucher->duration_minutes,
             'expiresAt' => $voucher->used_at->copy()->addMinutes($voucher->duration_minutes),
             'alreadyActive' => $voucher->activated_at !== null,
+            'safariUrl' => $this->safariUrl($request),
         ]);
     }
 }
