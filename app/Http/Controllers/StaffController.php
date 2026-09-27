@@ -14,6 +14,7 @@ use App\Services\Agent\ConversationHistoryService;
 use App\Services\Agent\LessonLibrary;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
+use App\Services\GuestSessionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -29,6 +30,10 @@ class StaffController extends Controller
         $pendingOrdersCount = $this->getPendingOrdersCount();
         $unusedVouchers = $this->getUnusedVouchersCount();
         $aiFindings = $this->getAiFindings();
+        // Not fetched here: it's a firewall round-trip, and the page must
+        // never wait on OPNsense to paint. The first live poll (fired
+        // immediately on load) fills it in.
+        $guestsOnline = null;
 
         return view('staff.dashboard', compact(
             'activeShift',
@@ -36,7 +41,8 @@ class StaffController extends Controller
             'shiftNotes',
             'pendingOrdersCount',
             'unusedVouchers',
-            'aiFindings'
+            'aiFindings',
+            'guestsOnline'
         ));
     }
 
@@ -71,9 +77,26 @@ class StaffController extends Controller
             'shiftNotes' => $this->getShiftNotes(),
             'pendingOrdersCount' => $this->getPendingOrdersCount(),
             'unusedVouchers' => $this->getUnusedVouchersCount(),
+            'guestsOnline' => $this->getGuestsOnline(),
             'aiFindings' => $aiFindings,
             'currentTime' => now()->format('l, F jS - h:i A'),
         ]);
+    }
+
+    /**
+     * Paying guests on the Wi-Fi, by the same definition the admin dashboard
+     * uses (GuestSessionService). Null when the firewall can't be reached —
+     * the card shows a dash rather than the dashboard failing to load.
+     */
+    private function getGuestsOnline(): ?int
+    {
+        try {
+            return app(GuestSessionService::class)->activeGuestCount();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return null;
+        }
     }
 
     private function getActiveShift(): ?Shift

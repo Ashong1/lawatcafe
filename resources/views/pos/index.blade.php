@@ -358,7 +358,10 @@
     function posSystem() {
         return {
             searchQuery: '',
-            selectedCategory: 'All',
+            // ?category= opens the register on one category — the staff
+            // dashboard's "Sell Wi-Fi" card links to ?category=Wi-Fi. Only a
+            // real category name is honoured; anything else falls back to All.
+            selectedCategory: @js(collect($categories)->pluck('name')->contains(request('category')) ? request('category') : 'All'),
             categories: @js($categories),
             products: @js($products),
             cart: [],

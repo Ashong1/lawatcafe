@@ -13,9 +13,64 @@
             </h2>
             <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Welcome back! Here is your shift overview.</p>
         </div>
-        <div class="flex items-center gap-3">
-            <p class="text-xs font-bold uppercase tracking-widest text-[#6D4C41]" x-text="currentTime">{{ now()->format('l, F jS - h:i A') }}</p>
+        <div class="flex items-center gap-4">
+            <a href="{{ route('pos.history') }}" class="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-xl border border-[#F0E6D2] bg-white text-sm font-bold text-[#3E2723] hover:border-[#3E2723] transition">
+                <x-lucide-history class="w-4 h-4 text-[#795548]" /> Order history
+            </a>
+            <p class="text-sm font-medium text-[#6D4C41]" x-text="currentTime">{{ now()->format('l, F jS - h:i A') }}</p>
         </div>
+    </div>
+
+    <!-- Quick Action / Essential Metrics -->
+    {{-- Top row, from the 2026-09-28 design critique: staff sell Wi-Fi at the
+         counter, but the dashboard only showed a voucher count on the notice
+         board. The Wi-Fi card opens the register on its Wi-Fi items (staff
+         sell plans through the POS; generating batches is admin-only). The
+         kitchen card is now a link, and Order History moved to the header as
+         a real link — it was a card whose click area was an empty <a>. --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+        <div class="md:col-span-2">
+            <a href="{{ route('pos') }}" class="h-full min-h-[160px] bg-[#3E2723] hover:bg-[#271815] text-white p-8 rounded-2xl shadow-sm transition-all duration-300 flex items-center justify-between group relative overflow-hidden">
+                <div class="relative z-10">
+                    <h3 class="text-2xl font-bold uppercase tracking-wide mb-2">Open Register</h3>
+                    <p class="text-amber-400 text-sm font-medium">Ring up customers.</p>
+                </div>
+                <div class="relative z-10 w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center text-[#3E2723] group-hover:scale-110 transition duration-300 shadow-lg">
+                    <x-lucide-shopping-cart class="w-10 h-10 ml-[-2px]" />
+                </div>
+                <div class="absolute -right-12 -top-12 w-48 h-48 bg-white/5 rounded-full z-0 group-hover:scale-110 transition duration-500"></div>
+            </a>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col">
+            <h3 class="text-sm font-bold text-[#3E2723] flex items-center gap-2 mb-4">
+                <x-lucide-wifi class="w-4 h-4 text-[#1565C0]" /> Guest Wi-Fi
+            </h3>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <a href="{{ route('network.sessions') }}" class="rounded-xl hover:bg-[#FDF8F5] -m-1 p-1 transition">
+                    <span class="block text-3xl font-bold text-[#1565C0]" x-text="guestsOnline ?? '—'" aria-live="polite">{{ $guestsOnline ?? '—' }}</span>
+                    <span class="text-xs font-medium text-[#6D4C41]">online now &rarr;</span>
+                </a>
+                <div>
+                    <span class="block text-3xl font-bold text-[#3E2723]" x-text="unusedVouchers">{{ $unusedVouchers }}</span>
+                    <span class="text-xs font-medium text-[#6D4C41]">codes available</span>
+                </div>
+            </div>
+            <a href="{{ route('pos', ['category' => 'Wi-Fi']) }}" class="mt-auto min-h-[44px] bg-[#1565C0] hover:bg-[#0D47A1] text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition active:scale-95">
+                <x-lucide-ticket class="w-4 h-4" /> Sell Wi-Fi
+            </a>
+        </div>
+
+        <a href="{{ route('kds.index') }}" class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col hover:border-[#3E2723]/40 hover:shadow-md transition-all relative">
+            <h3 class="text-sm font-bold text-[#3E2723] flex items-center gap-2 mb-4">
+                <x-lucide-clock class="w-4 h-4 text-[#795548]" /> Kitchen queue
+            </h3>
+            <span class="text-5xl font-bold transition-colors duration-500"
+                  :class="pendingOrdersCount > 5 ? 'text-red-600' : (pendingOrdersCount > 0 ? 'text-amber-700' : 'text-green-700')"
+                  x-text="pendingOrdersCount" aria-live="polite" aria-atomic="true">{{ $pendingOrdersCount }}</span>
+            <span class="text-xs font-medium text-[#6D4C41] mt-1">orders waiting &middot; open kitchen display &rarr;</span>
+            <div x-show="pendingOrdersCount > 5" class="absolute top-5 right-5 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+        </a>
     </div>
 
     <!-- Quick Action / Essential Metrics -->
@@ -160,13 +215,6 @@
                     <p class="text-sm font-medium text-[#4A3B32] leading-relaxed italic whitespace-pre-wrap" x-text="`\"${shiftNotes}\"`"></p>
                 </div>
 
-                <div class="mt-4 pt-4 border-t border-amber-200/50 flex justify-between items-center">
-                    <div class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#8D6E63]">
-                        <x-lucide-ticket class="w-3 h-3" />
-                        Available Vouchers
-                    </div>
-                    <span class="text-sm font-black text-[#3E2723]" x-text="unusedVouchers"></span>
-                </div>
             </div>
         </div>
 
@@ -214,6 +262,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('staffDashboard', () => ({
         pendingOrdersCount: @js($pendingOrdersCount),
         unusedVouchers: @js($unusedVouchers),
+        guestsOnline: @js($guestsOnline),
         shiftNotes: @js($shiftNotes),
         eightySixList: @js($eightySixList->map(fn($i) => ['name' => $i->name, 'current_stock' => $i->current_stock, 'unit' => $i->unit, 'is_sold_out' => $i->current_stock <= 0])),
         activeShift: @js($activeShift ? [
@@ -226,7 +275,9 @@ document.addEventListener('alpine:init', () => {
         currentTime: @js(now()->format('l, F jS - h:i A')),
 
         init() {
-            // Poll every 10 seconds for realtime updates
+            // Once now — the guest count is only fetched here, never on page
+            // render (see StaffController::index) — then every 10 seconds.
+            this.fetchLiveData();
             setInterval(() => this.fetchLiveData(), 10000);
         },
 
@@ -238,6 +289,7 @@ document.addEventListener('alpine:init', () => {
                 
                 this.pendingOrdersCount = data.pendingOrdersCount;
                 this.unusedVouchers = data.unusedVouchers;
+                this.guestsOnline = data.guestsOnline;
                 this.shiftNotes = data.shiftNotes;
                 this.eightySixList = data.eightySixList;
                 this.activeShift = data.shift;
