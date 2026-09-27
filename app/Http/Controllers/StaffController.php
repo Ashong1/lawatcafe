@@ -8,6 +8,7 @@ use App\Models\Sale;
 use App\Models\Setting;
 use App\Models\Shift;
 use App\Models\Voucher;
+use App\Services\Agent\ChatImage;
 use App\Services\Agent\ChatStreamResponder;
 use App\Services\Agent\ConversationHistoryService;
 use App\Services\Agent\LessonLibrary;
@@ -113,7 +114,8 @@ class StaffController extends Controller
         // history.*.role restricted to user/assistant — see the matching
         // fix (and full reasoning) on CaptivePortalController::chat().
         $request->validate([
-            'message' => 'required|string|max:1000',
+            // Text, a photo, or both — see ChatImage.
+            ...ChatImage::rules(),
             // A generous DoS backstop, not a conversation-length limit — see
             // the matching comment on DashboardController::adminChat().
             'history' => 'nullable|array|max:200',
@@ -126,6 +128,9 @@ class StaffController extends Controller
             'conversation_id' => 'nullable|integer',
         ]);
 
+        $text = (string) $request->input('message', '');
+        $image = ChatImage::fromRequest($request);
+
         $conversation = $conversations->resolve($request->integer('conversation_id') ?: null, $request->user()->id, 'staff');
 
         // Worked examples are retrieved per message rather than baked into the
@@ -133,20 +138,20 @@ class StaffController extends Controller
         // on what was just asked — see LessonLibrary::exemplarsFor(). Appended
         // to the system turn so it keeps the same trust level as the rest of the
         // approved guidance, rather than arriving as user-role text.
-        $messages = [['role' => 'system', 'content' => $ai->buildStaffSystemPrompt($request->user()).app(LessonLibrary::class)->exemplarBlockFor('staff', $request->message)]];
+        $messages = [['role' => 'system', 'content' => $ai->buildStaffSystemPrompt($request->user()).app(LessonLibrary::class)->exemplarBlockFor('staff', $text).ChatImage::systemNote($image)]];
         foreach ($conversations->slidingWindow($request->history ?? []) as $msg) {
             if (! empty($msg['content'])) {
                 $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
             }
         }
-        $messages[] = ['role' => 'user', 'content' => $request->message];
+        $messages[] = ['role' => 'user', 'content' => ChatImage::userContent($text, $image)];
 
         return $responder->stream(
             $messages,
             ToolRegistry::AUDIENCE_STAFF,
             $request->user(),
             [],
-            $request->message,
+            ChatImage::historyText($text, $image),
             '☕ Staff AI stack offline.',
             $conversation,
             $conversations,

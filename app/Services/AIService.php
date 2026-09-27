@@ -428,9 +428,17 @@ class AIService
         // each attempt.
         $deadline = microtime(true) + self::STREAM_TIMEOUT;
 
+        // A photo sent to a text-only model either 400s or is silently
+        // ignored, so a turn carrying one only cascades through models that
+        // accept images.
+        $models = $this->activeModels('openrouter');
+        if (self::hasImage($messages)) {
+            $models = $this->imageCapableModels($models);
+        }
+
         if ($this->openRouterKey && ! $this->providerIsOpen('openrouter')) {
             $response = $this->streamOpenAiCompatibleLoop(
-                $this->activeModels('openrouter'),
+                $models,
                 'https://openrouter.ai/api/v1/chat/completions',
                 ['Authorization' => 'Bearer '.$this->openRouterKey, 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')],
                 $messages,
@@ -446,6 +454,76 @@ class AIService
         }
 
         return null;
+    }
+
+    /**
+     * Free OpenRouter models verified live to read an image (2026-09-27: the
+     * nemotron omni model read a test delivery receipt correctly), used when
+     * the catalog can't be read and always offered alongside the admin's own
+     * list for a photo turn.
+     */
+    public const IMAGE_MODELS_FALLBACK = [
+        'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+        'google/gemma-4-26b-a4b-it:free',
+        'google/gemma-4-31b-it:free',
+    ];
+
+    /**
+     * Listed as image-capable but must never receive a photo. openrouter/free
+     * routed a test receipt to a safety classifier and returned "User Safety:
+     * safe" as the answer; content-safety models do the same by design.
+     */
+    private const IMAGE_MODEL_EXCLUDE = ['openrouter/free', 'content-safety'];
+
+    public static function hasImage(array $messages): bool
+    {
+        foreach ($messages as $message) {
+            if (is_array($message['content'] ?? null)) {
+                foreach ($message['content'] as $part) {
+                    if (($part['type'] ?? null) === 'image_url') {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The subset of $models that accepts images, per OpenRouter's own catalog
+     * (cached a day — capabilities don't change mid-shift). Keeps the admin's
+     * order. If none of the active models can see images, the known image
+     * models are used instead rather than failing the photo outright.
+     */
+    public function imageCapableModels(array $models): array
+    {
+        $catalog = Cache::remember('openrouter_image_models', 86400, function () {
+            try {
+                $response = Http::timeout(5)->get('https://openrouter.ai/api/v1/models');
+
+                return $response->successful()
+                    ? collect($response->json('data') ?? [])
+                        ->filter(fn ($m) => in_array('image', $m['architecture']['input_modalities'] ?? [], true))
+                        ->pluck('id')->values()->all()
+                    : null;
+            } catch (\Exception $e) {
+                Log::warning('OpenRouter model catalog unreachable: '.$e->getMessage());
+
+                return null;
+            }
+        }) ?: self::IMAGE_MODELS_FALLBACK;
+
+        $usable = fn ($m) => in_array($m, $catalog, true) && ! Str::contains($m, self::IMAGE_MODEL_EXCLUDE);
+
+        // The admin's order first, then the known-good image models they
+        // haven't listed — there are few enough that trying all is cheap.
+        $candidates = array_values(array_unique(array_merge(
+            array_filter($models, $usable),
+            array_filter(self::IMAGE_MODELS_FALLBACK, $usable),
+        )));
+
+        return $candidates ?: self::IMAGE_MODELS_FALLBACK;
     }
 
     /**
@@ -478,7 +556,12 @@ class AIService
     {
         $modelsList = $this->healthyModelsFirst($provider, $models);
         $budget = $this->fastPathBudget();
-        $modelsList = array_slice($modelsList, 0, max(1, $budget['modelLimit']));
+        // A photo turn already runs on a short, image-only list (see
+        // imageCapableModels()); capping it at the fast-path limit left it on
+        // two models, both rate-limited in testing, when a third worked.
+        if (! self::hasImage($messages)) {
+            $modelsList = array_slice($modelsList, 0, max(1, $budget['modelLimit']));
+        }
 
         foreach ($modelsList as $model) {
             // Bounded by what's actually left of the *shared* cascade deadline,

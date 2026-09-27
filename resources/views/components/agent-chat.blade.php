@@ -237,6 +237,11 @@
                         <div class="flex flex-col" :class="msg.role === 'user' ? 'items-end' : 'items-start'">
                             <div class="max-w-[85%] p-4 rounded-2xl text-xs font-medium leading-relaxed shadow-sm"
                                  :class="msg.role === 'user' ? 'bg-[#3E2723] text-white rounded-tr-none' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] rounded-tl-none'">
+                                {{-- A small thumbnail only: the full photo is sent once
+                                     and never kept, so sessionStorage stays tiny. --}}
+                                <template x-if="msg.imageThumb">
+                                    <img :src="msg.imageThumb" alt="Attached photo" class="rounded-xl max-h-40 w-auto" :class="msg.content ? 'mb-2' : ''">
+                                </template>
                                 <span x-html="formatMarkdown(msg.content)"></span>
                                 {{-- Still-writing caret — see the note on the
                                      same element in the floating variant. --}}
@@ -304,16 +309,39 @@
         </div>
 
         <!-- Input Area -->
-        <div class="p-4 bg-white border-t border-[#F0E6D2] flex gap-2">
-            <input type="text" x-model="message" @keydown.enter="send()"
-                   placeholder="Ask a question or request an action..."
-                   class="flex-1 bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-[#3E2723] transition-all"
-                   :disabled="streaming">
-            <button @click="send()"
-                    class="bg-[#3E2723] text-white p-3 rounded-xl hover:bg-[#271815] transition shadow-lg active:scale-90 disabled:opacity-50"
-                    :disabled="streaming || !message.trim()">
-                <x-lucide-send class="w-5 h-5" />
-            </button>
+        {{-- Photo attach is staff/admin/super_admin only: this floating variant is
+             never used on the guest portal, and the guest endpoint ignores the
+             field anyway. See App\Services\Agent\ChatImage. --}}
+        <div class="p-4 bg-white border-t border-[#F0E6D2] space-y-2">
+            <div x-show="imageThumb || imageError" style="display: none;" class="flex items-center gap-2">
+                <template x-if="imageThumb">
+                    <div class="relative">
+                        <img :src="imageThumb" alt="Photo to send" class="h-14 w-14 object-cover rounded-lg border border-[#F0E6D2]">
+                        <button type="button" @click="clearImage()" aria-label="Remove photo"
+                                class="absolute -top-1.5 -right-1.5 bg-[#3E2723] text-white rounded-full p-0.5 shadow">
+                            <x-lucide-x class="w-3 h-3" />
+                        </button>
+                    </div>
+                </template>
+                <span x-show="imageError" x-text="imageError" class="text-[10px] font-bold text-red-600"></span>
+            </div>
+            <div class="flex gap-2">
+                <label class="shrink-0 bg-[#FAFAFA] border-2 border-[#F0E6D2] text-[#6D4C41] p-3 rounded-xl hover:border-[#3E2723] transition cursor-pointer flex items-center"
+                       :class="streaming ? 'opacity-50 pointer-events-none' : ''" title="Attach a photo">
+                    <x-lucide-camera class="w-5 h-5" />
+                    <span class="sr-only">Attach a photo</span>
+                    <input type="file" accept="image/*" class="hidden" x-ref="imageInput" @change="attachImage($event)">
+                </label>
+                <input type="text" x-model="message" @keydown.enter="send()"
+                       :placeholder="imageThumb ? 'Say what to do with this photo...' : 'Ask a question or request an action...'"
+                       class="flex-1 min-w-0 bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-[#3E2723] transition-all"
+                       :disabled="streaming">
+                <button @click="send()"
+                        class="bg-[#3E2723] text-white p-3 rounded-xl hover:bg-[#271815] transition shadow-lg active:scale-90 disabled:opacity-50"
+                        :disabled="streaming || (!message.trim() && !image)">
+                    <x-lucide-send class="w-5 h-5" />
+                </button>
+            </div>
         </div>
     </div>
 
@@ -441,6 +469,11 @@ document.addEventListener('alpine:init', () => {
 
         open: false,
         message: '',
+        // Attached photo: the full downscaled data URL (sent once, never
+        // saved) and a small thumbnail (shown in the bubble, saved in history).
+        image: null,
+        imageThumb: null,
+        imageError: null,
         thinking: false,
 
         // True for the whole request, where `thinking` is only true until the
@@ -631,10 +664,52 @@ document.addEventListener('alpine:init', () => {
             this.$nextTick(() => this.send());
         },
 
+        /**
+         * Downscale a picked photo in the browser before it is ever sent. A
+         * phone photo is 3-8MB; nginx refuses bodies over 1MB, and the model
+         * reads a 1280px image just as well. Also makes the bubble thumbnail.
+         */
+        async attachImage(event) {
+            const file = event.target.files && event.target.files[0];
+            event.target.value = '';
+            this.imageError = null;
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                this.imageError = 'That file is not a photo.';
+                return;
+            }
+            try {
+                const bitmap = await createImageBitmap(file);
+                const render = (maxSide, quality) => {
+                    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.round(bitmap.width * scale);
+                    canvas.height = Math.round(bitmap.height * scale);
+                    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                    return canvas.toDataURL('image/jpeg', quality);
+                };
+                let full = render(1280, 0.82);
+                if (full.length > 950000) full = render(1024, 0.7);
+                this.image = full;
+                this.imageThumb = render(240, 0.7);
+            } catch (e) {
+                this.clearImage();
+                this.imageError = 'Could not read that photo — try another one.';
+            }
+        },
+
+        clearImage() {
+            this.image = null;
+            this.imageThumb = null;
+            this.imageError = null;
+        },
+
         async send() {
-            if (!this.message.trim() || this.thinking || this.streaming) return;
+            if ((!this.message.trim() && !this.image) || this.thinking || this.streaming) return;
 
             const userMsg = this.message;
+            const image = this.image;
+            const imageThumb = this.imageThumb;
             // Captured before pushing the new turn below, so this never has to
             // guess which entries are "real" — no positional slicing needed,
             // which matters once history can also be a server-loaded past
@@ -650,12 +725,14 @@ document.addEventListener('alpine:init', () => {
             // this is a size optimization, not the actual safety boundary,
             // since the server never trusts the client to have done it.
             const historyForRequest = this.history
-                .filter(m => m.kind === 'text' && !m.isGreeting && m.content)
-                .map(m => ({ role: m.role, content: m.content }))
+                .filter(m => m.kind === 'text' && !m.isGreeting && (m.content || m.imageThumb))
+                // Earlier photos aren't re-sent; the marker tells the model one existed.
+                .map(m => ({ role: m.role, content: m.imageThumb ? ('📷 [photo attached] ' + (m.content || '')).trim() : m.content }))
                 .slice(-30);
 
-            this.history.push({ kind: 'text', role: 'user', content: userMsg });
+            this.history.push({ kind: 'text', role: 'user', content: userMsg, imageThumb });
             this.message = '';
+            this.clearImage();
             this.thinking = true;
             this.streaming = true;
             this.toolStatusLabel = null;
@@ -719,6 +796,7 @@ document.addEventListener('alpine:init', () => {
                     signal: controller.signal,
                     body: JSON.stringify({
                         message: userMsg,
+                        image: image || undefined,
                         // Only replay plain conversational turns as history — executed/pending
                         // entries aren't natural-language turns and would confuse the model.
                         history: historyForRequest,

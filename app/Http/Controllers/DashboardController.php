@@ -14,6 +14,7 @@ use App\Models\SaleItem;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Services\Agent\ChatImage;
 use App\Services\Agent\ChatStreamResponder;
 use App\Services\Agent\ConversationHistoryService;
 use App\Services\Agent\LessonLibrary;
@@ -472,7 +473,8 @@ class DashboardController extends Controller
         // instruction ahead of the real system prompt. See the matching fix
         // (and full reasoning) on CaptivePortalController::chat().
         $request->validate([
-            'message' => 'required|string|max:1000',
+            // Text, a photo, or both — see ChatImage.
+            ...ChatImage::rules(),
             // A generous DoS backstop, not a conversation-length limit — the
             // client sends its whole in-memory history unsliced every request,
             // so a real ceiling here would 422 a legitimately long
@@ -487,6 +489,9 @@ class DashboardController extends Controller
             'history.*.content' => 'nullable|string|max:4000',
             'conversation_id' => 'nullable|integer',
         ]);
+
+        $text = (string) $request->input('message', '');
+        $image = ChatImage::fromRequest($request);
 
         $conversation = $conversations->resolve($request->integer('conversation_id') ?: null, $request->user()->id, 'admin');
 
@@ -512,24 +517,24 @@ class DashboardController extends Controller
         // exemplars on top — worked examples of estate questions — and those
         // never appear for a plain admin.
         $library = app(LessonLibrary::class);
-        $exemplarBlock = $library->exemplarBlockFor('admin', $request->message);
+        $exemplarBlock = $library->exemplarBlockFor('admin', $text);
         if ($isSuperAdmin) {
-            $exemplarBlock .= $library->exemplarBlockFor('super_admin', $request->message);
+            $exemplarBlock .= $library->exemplarBlockFor('super_admin', $text);
         }
-        $messages = [['role' => 'system', 'content' => $systemPrompt.$exemplarBlock]];
+        $messages = [['role' => 'system', 'content' => $systemPrompt.$exemplarBlock.ChatImage::systemNote($image)]];
         foreach ($conversations->slidingWindow($request->history ?? []) as $msg) {
             if (! empty($msg['content'])) {
                 $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
             }
         }
-        $messages[] = ['role' => 'user', 'content' => $request->message];
+        $messages[] = ['role' => 'user', 'content' => ChatImage::userContent($text, $image)];
 
         return $responder->stream(
             $messages,
             $audience,
             $request->user(),
             [],
-            $request->message,
+            ChatImage::historyText($text, $image),
             "☕ I'm having trouble connecting to our business intelligence stack right now.",
             $conversation,
             $conversations,
