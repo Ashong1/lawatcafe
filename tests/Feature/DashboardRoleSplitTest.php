@@ -182,4 +182,23 @@ class DashboardRoleSplitTest extends TestCase
         $this->assertSame(1, substr_count($html, 'Open Register'));
         $this->assertSame(1, substr_count($html, 'Guest Wi-Fi'));
     }
+
+    /**
+     * The app runs on the shop LAN alone. A CDN-hosted Chart.js left the
+     * dashboard's charts blank whenever the internet link was down.
+     */
+    public function test_no_view_loads_scripts_from_a_cdn(): void
+    {
+        $views = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(resource_path('views')));
+
+        foreach ($views as $file) {
+            if (str_ends_with($file->getFilename(), '.blade.php')) {
+                $this->assertDoesNotMatchRegularExpression(
+                    '#<script[^>]+src="https?://(?:cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|unpkg\.com)#',
+                    file_get_contents($file->getPathname()),
+                    $file->getPathname().' loads a script from a CDN'
+                );
+            }
+        }
+    }
 }

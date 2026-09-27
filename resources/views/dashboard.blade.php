@@ -3,7 +3,7 @@
 @section('title', 'System Dashboard')
 
 @section('content')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@vite('resources/js/charts.js')
 
 <div x-data="dashboardManager()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
@@ -641,7 +641,10 @@ document.addEventListener('alpine:init', () => {
             // Start polling for live stats every 3 seconds
             setInterval(() => this.fetchLiveStats(), 3000);
 
-            this.initCharts();
+            // resources/js/charts.js loads after Alpine has started — see there.
+            window.Chart
+                ? this.initCharts()
+                : window.addEventListener('charts:ready', () => this.initCharts(), { once: true });
             setInterval(() => this.fetchBusinessData(), 20000);
         },
 

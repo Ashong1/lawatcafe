@@ -112,7 +112,7 @@
 </div>
 
 <!-- Include Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@vite('resources/js/charts.js')
 
 <!-- Chart Initialization -->
 <script>
