@@ -127,11 +127,12 @@ class CaptivePortalAuthenticateTest extends TestCase
         $html = $this->get(route('portal.index'))->assertOk()->getContent();
 
         $this->assertStringNotContainsString('generate_204', $html);
-        $this->assertMatchesRegularExpression('#href="'.preg_quote(route('portal.index'), '#').'"\s+target="_blank"[^>]*>Open in Browser#', $html);
+        // By IP: the browser it opens may use a vendor cloud DNS that can't find .lab names.
+        $this->assertMatchesRegularExpression('#href="http://192\.168\.2\.100/portal"\s+target="_blank"[^>]*>Open in Browser#', $html);
 
         $iphone = $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148'])
             ->get(route('portal.index'))->getContent();
-        $this->assertStringContainsString('href="x-safari-'.route('portal.index').'"', $iphone);
+        $this->assertStringContainsString('href="x-safari-http://192.168.2.100/portal"', $iphone);
     }
 
     /** The portal renders the flash as a toast; without this the message is invisible. */

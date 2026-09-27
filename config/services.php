@@ -78,6 +78,7 @@ return [
     // The guest login page's hostname (plain HTTP, straight to nginx).
     'portal' => [
         'host' => env('PORTAL_HOST', 'wifi.lawatkape.lab'),
+        'ip' => env('PORTAL_IP', '192.168.2.100'),
     ],
 
     // Readable names for infrastructure addresses on the Network Health page

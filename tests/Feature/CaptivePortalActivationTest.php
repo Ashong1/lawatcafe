@@ -553,18 +553,19 @@ class CaptivePortalActivationTest extends TestCase
             ->assertRedirect('http://connectivitycheck.gstatic.com/generate_204');
     }
 
-    /** Xiaomi's sign-in window drops "; wv)" but still sends "Build/"; real browsers don't. */
-    public function test_a_sign_in_window_without_the_wv_tag_is_still_recognised(): void
+    /**
+     * Xiaomi's sign-in window has no "; wv)" tag. Sending it through the
+     * intent: handoff opened Xiaomi's own browser, whose cloud DNS can't find
+     * the .lab name, so it gets the plain probe like any browser.
+     */
+    public function test_a_sign_in_window_without_the_wv_tag_skips_the_handoff(): void
     {
         $xiaomiWindow = 'Mozilla/5.0 (Linux; Android 16; 2410DPN6CC Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.7049.79 Mobile Safari/537.36';
         $brave = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Mobile Safari/537.36';
         $miBrowser = 'Mozilla/5.0 (Linux; U; Android 13; en-us; 2201117TG Build/TKQ1.221114.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/112.0 Mobile Safari/537.36 XiaoMi/MiuiBrowser/14.5';
 
         $this->readyToActivate();
-        $this->fromGuestDevice()->withHeaders(['User-Agent' => $xiaomiWindow])
-            ->post(route('portal.activate'))->assertRedirect(route('portal.handoff'));
-
-        foreach ([$brave, $miBrowser] as $browser) {
+        foreach ([$xiaomiWindow, $brave, $miBrowser] as $browser) {
             $this->fromGuestDevice()->withHeaders(['User-Agent' => $browser])
                 ->post(route('portal.activate'))->assertRedirect('http://connectivitycheck.gstatic.com/generate_204');
         }

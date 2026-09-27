@@ -91,9 +91,6 @@ class CaptivePortalController extends Controller
         return (bool) preg_match('/iPhone|iPad|iPod|Macintosh/i', (string) $request->userAgent());
     }
 
-    /** Browsers that still send "Build/" in their user agent — not sign-in windows. */
-    private const NAMED_ANDROID_BROWSERS = '/MiuiBrowser|XiaoMi\\/|SamsungBrowser|HuaweiBrowser|HeyTapBrowser|VivoBrowser|UCBrowser|OPR\\/|Opera|EdgA|Firefox|YaBrowser|Brave|DuckDuckGo/i';
-
     /**
      * A tap-to-open-in-Safari link for Apple devices, or null elsewhere.
      *
@@ -106,7 +103,17 @@ class CaptivePortalController extends Controller
      */
     private function safariUrl(Request $request): ?string
     {
-        return $this->isAppleDevice($request) ? 'x-safari-'.route('portal.index') : null;
+        return $this->isAppleDevice($request) ? 'x-safari-'.self::browserPortalUrl() : null;
+    }
+
+    /**
+     * The portal by IP, for links that hand off to another browser. That
+     * browser may resolve names through its vendor's cloud DNS (Xiaomi's,
+     * Huawei's), which can't find the local .lab name.
+     */
+    public static function browserPortalUrl(): string
+    {
+        return 'http://'.config('services.portal.ip').'/portal';
     }
 
     /**
@@ -123,15 +130,10 @@ class CaptivePortalController extends Controller
     {
         $ua = (string) $request->userAgent();
 
-        if (preg_match('/Android/i', $ua) !== 1) {
-            return false;
-        }
-
-        // Some sign-in windows (Xiaomi's) drop the "; wv)" tag but keep the
-        // "Build/" token that real browsers stopped sending; named browsers
-        // that still send it are excluded.
-        return preg_match('/;\s*wv\)/i', $ua) === 1
-            || (preg_match('/\bBuild\//', $ua) === 1 && preg_match(self::NAMED_ANDROID_BROWSERS, $ua) !== 1);
+        // Only the "; wv)" tag. Xiaomi's window lacks it and must NOT get the
+        // intent: handoff: it opens Xiaomi's own browser, whose cloud DNS
+        // can't find the portal's .lab name.
+        return preg_match('/Android/i', $ua) === 1 && preg_match('/;\s*wv\)/i', $ua) === 1;
     }
 
     /**
@@ -145,7 +147,7 @@ class CaptivePortalController extends Controller
     public function handoff(Request $request)
     {
         return view('portal.handoff', [
-            'statusUrl' => route('portal.index'),
+            'statusUrl' => self::browserPortalUrl(),
             'fallbackUrl' => $this->captiveHandoffUrl($request),
         ]);
     }

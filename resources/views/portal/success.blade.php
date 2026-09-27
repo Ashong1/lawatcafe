@@ -186,7 +186,7 @@
                         @endif
 
                         <div class="cna-only">
-                            <a href="{{ $safariUrl ?? route('portal.index') }}" @unless($safariUrl) target="_blank" rel="noopener" @endunless
+                            <a href="{{ $safariUrl ?? \App\Http\Controllers\CaptivePortalController::browserPortalUrl() }}" @unless($safariUrl) target="_blank" rel="noopener" @endunless
                                class="w-full min-h-[44px] bg-[#FFF8E1] border-2 border-[#FFE082] text-[#6D4C41] py-3 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm">
                                 <span>{{ $safariUrl ? 'Open in Safari' : 'Open in my browser' }}</span>
                                 <x-lucide-external-link class="w-4 h-4" />

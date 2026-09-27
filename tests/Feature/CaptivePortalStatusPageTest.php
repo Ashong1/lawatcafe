@@ -261,7 +261,7 @@ class CaptivePortalStatusPageTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertMatchesRegularExpression('#<a href="http://wifi\.lawatkape\.lab/portal"\s+target="_blank"#', $html);
+        $this->assertMatchesRegularExpression('#<a href="http://192\.168\.2\.100/portal"\s+target="_blank"#', $html);
         $this->assertStringContainsString('Open in my browser', $html);
         $this->assertStringContainsString('>wifi.lawatkape.lab</span>', $html);
     }
@@ -292,7 +292,7 @@ class CaptivePortalStatusPageTest extends TestCase
             'HTTP_USER_AGENT' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
         ])->get('http://wifi.lawatkape.lab/portal/success')->assertOk()->getContent();
 
-        $this->assertStringContainsString('href="x-safari-http://wifi.lawatkape.lab/portal"', $html);
+        $this->assertStringContainsString('href="x-safari-http://192.168.2.100/portal"', $html);
         $this->assertStringContainsString('Open in Safari', $html);
     }
 

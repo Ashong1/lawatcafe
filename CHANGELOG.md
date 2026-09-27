@@ -10,7 +10,11 @@ the history was rewritten.
 ---
 
 ## 1.12.1 — Network pages made easier
-*builds 168–171*
+*builds 168–172*
+
+- Xiaomi's sign-in window no longer gets the automatic browser handoff after
+  a code (it opened Xiaomi's own browser, which can't resolve .lab names).
+  "Open in browser" links use the portal's IP for the same reason.
 
 - The sign-in window's "Open in Browser" bar opens the portal instead of an
   outside address that is blocked before sign-in.
