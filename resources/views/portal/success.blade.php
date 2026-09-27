@@ -52,7 +52,7 @@
 
                 <div class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-green-500/20 border border-green-500/30 backdrop-blur-md shadow-inner">
                     <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
-                    <span class="text-xs font-bold text-white uppercase tracking-wide">Connected</span>
+                    <span class="text-xs font-bold text-white uppercase tracking-wide">{{ $alreadyActive ? 'Connected' : 'Code accepted' }}</span>
                 </div>
             </div>
             
@@ -69,41 +69,25 @@
             
             <div class="flex-1 overflow-y-auto px-6 py-10 lg:px-16 lg:py-10 no-scrollbar relative z-10 flex flex-col justify-center">
                 
-                <div class="text-center mb-10">
-                    <div class="w-24 h-24 lg:w-28 lg:h-28 bg-green-50 border-2 border-green-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner transition-transform hover:scale-110 duration-500 check-pop-in">
-                        <x-lucide-check class="w-12 h-12 lg:w-16 lg:h-16 text-green-600" stroke-width="3" />
+                {{-- Design critique: this page lives for ~6 seconds before the
+                     window moves on, so it leads with the one fact that matters
+                     (time bought) and says "check your time" exactly once. It
+                     used to open with a 96px check and "SUCCESS! You are now
+                     connected" — before activation, i.e. before that was true. --}}
+                <div class="text-center mb-6">
+                    <div class="w-14 h-14 bg-green-50 border-2 border-green-100 rounded-full flex items-center justify-center mx-auto mb-4 check-pop-in">
+                        <x-lucide-check class="w-7 h-7 text-green-600" stroke-width="3" />
                     </div>
-                    <h2 class="text-4xl lg:text-6xl font-bold text-[#3E2723] mb-4 tracking-tighter uppercase anim-pop-in [animation-delay:250ms]">Success!</h2>
-                    <p class="text-xs lg:text-lg text-[#795548] font-medium leading-relaxed max-w-sm mx-auto anim-pop-in [animation-delay:350ms]">You are now connected to our premium high-speed network. Enjoy your stay!</p>
+                    <h2 class="text-2xl lg:text-4xl font-bold text-[#3E2723] tracking-tight anim-pop-in [animation-delay:150ms]">Code accepted</h2>
+                    <p class="text-sm text-[#795548] font-medium mt-1 anim-pop-in [animation-delay:250ms]">{{ $alreadyActive ? "You're connected." : "We'll connect you in a moment." }}</p>
                 </div>
 
-                <div class="bg-amber-50 border-2 border-amber-200/50 rounded-[2rem] p-8 mb-8 text-center relative overflow-hidden shadow-sm max-w-md mx-auto w-full">
+                <div class="bg-amber-50 border-2 border-amber-200/50 rounded-[2rem] px-6 py-6 mb-6 text-center relative overflow-hidden shadow-sm max-w-md mx-auto w-full">
                     <div class="absolute top-0 left-0 w-full h-1 bg-amber-500/30"></div>
-                    <span class="block text-xs font-bold text-amber-800 uppercase tracking-wide mb-3">Voucher Accepted</span>
-
-                    <p class="text-4xl lg:text-5xl font-bold text-[#3E2723] tracking-tighter mb-1">
-                        {{ $durationMinutes >= 60 ? rtrim(rtrim(number_format($durationMinutes / 60, 1), '0'), '.') : $durationMinutes }}<span class="text-lg lg:text-2xl ml-1">{{ $durationMinutes >= 60 ? 'hr' : 'min' }}</span>
+                    <p class="text-5xl lg:text-6xl font-bold text-[#3E2723] tracking-tighter mb-1">
+                        {{ $durationMinutes >= 60 ? rtrim(rtrim(number_format($durationMinutes / 60, 1), '0'), '.') : $durationMinutes }}<span class="text-xl lg:text-2xl ml-1">{{ $durationMinutes >= 60 ? 'hr' : 'min' }}</span>
                     </p>
-                    <p class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-5">of Wi-Fi &mdash; until {{ $expiresAt->format('g:i A') }}</p>
-
-                    {{-- The address is the one thing that has to survive this page.
-                         Shown to every guest, not just the sign-in assistant: once
-                         the firewall opens, an assistant window is destroyed by the
-                         OS without warning, and even a real browser tab gets closed.
-                         This is where they come back to watch the clock. --}}
-                    <p class="text-xs lg:text-sm text-[#3E2723] font-bold mb-3">To check your remaining time later, scan the code on your voucher slip &mdash; or open this address:</p>
-
-                    {{-- Also shown here so a companion device can scan it, and so
-                         the guest recognises the same code on their slip. The
-                         phone reading this page cannot scan its own screen, which
-                         is exactly why the slip carries it too. --}}
-                    @if(!empty($portalQr))
-                        <div class="flex justify-center mb-3">
-                            <div class="bg-white p-2 rounded-xl border border-amber-200">{!! $portalQr !!}</div>
-                        </div>
-                    @endif
-
-                    <p class="font-mono text-xs lg:text-sm font-bold text-[#3E2723] bg-white/70 border border-amber-200 rounded-xl py-3 px-4 select-all break-all">{{ route('portal.index') }}</p>
+                    <p class="text-sm font-bold text-[#795548]">of Wi-Fi &mdash; until {{ $expiresAt->format('g:i A') }}</p>
                 </div>
 
                 {{-- activate() redirects back here when OPNsense is unreachable, so
@@ -169,37 +153,50 @@
                         </p>
                     @endunless
 
-                    <a href="{{ route('portal.index') }}" class="w-full bg-white border-2 border-[#E6D5C3] text-[#6D4C41] py-4 rounded-2xl lg:rounded-3xl font-bold uppercase tracking-wide transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-xs lg:text-xs hover:border-[#8D6E63]">
-                        <span>View My Session</span>
-                        <x-lucide-timer class="w-4 h-4 lg:w-5 lg:h-5" />
-                    </a>
+                    {{-- The one "check your time" block, for everyone. The address
+                         has to survive this page: once the firewall opens, a sign-in
+                         window is destroyed by the OS, and even a browser tab gets
+                         closed.
 
-                    {{-- The sign-in window is about to be destroyed, and no page can
-                         open the real browser on its own — /portal/handoff's
-                         automatic intent:// is blocked by most sign-in windows
-                         (confirmed on a Huawei tablet) because it has no user
-                         gesture behind it. A real tap on a target=_blank link is
-                         the one thing some of them do hand to the browser; where
-                         it isn't, the page just opens in this window, and the
-                         portal's auto-reconnect keeps the guest online either
-                         way. The typed address is the path that always works.
-                         .cna-only goes on the wrapper: its display:block would
-                         flatten the link's flex layout. --}}
-                    <div class="cna-only">
-                        <div class="rounded-2xl border-2 border-dashed border-[#E6D5C3] bg-white/70 px-4 py-4 text-center space-y-3">
-                            <p class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide leading-relaxed">
-                                This window closes once you're online
-                            </p>
-                            <p class="text-xs text-[#4A3B32] leading-relaxed">
-                                To check your time left later, open your browser and go to
-                                <span class="block mt-1 font-bold text-sm text-[#3E2723] select-all">{{ request()->getHost() }}</span>
-                            </p>
-                            {{-- Apple: x-safari- scheme (see safariUrl()); elsewhere a
-                                 target=_blank tap. --}}
+                         Sign-in window: no page can open the real browser on its
+                         own — /portal/handoff's automatic intent:// is blocked by
+                         most (confirmed on a Huawei tablet) because no user gesture
+                         is behind it. A real tap on a target=_blank link is what
+                         some honour; Apple gets the x-safari- scheme (safariUrl()).
+                         Where neither works the page opens in this window, and
+                         auto-reconnect keeps the guest online either way.
+
+                         .cna-only/.browser-only go on wrappers: their display:block
+                         would flatten the links' flex layout. --}}
+                    <div class="rounded-2xl border-2 border-dashed border-[#E6D5C3] bg-white/70 px-4 py-4 text-center space-y-3">
+                        <p class="text-sm text-[#4A3B32] leading-relaxed">
+                            Check your time left anytime at
+                            <span class="block mt-1 font-bold text-base text-[#3E2723] select-all">{{ request()->getHost() }}</span>
+                            <span class="block mt-1 text-xs text-[#795548]">or scan the code on your voucher slip.</span>
+                        </p>
+
+                        {{-- A second device (a laptop beside the phone) can scan this;
+                             the phone showing it can't scan its own screen, so it is
+                             left off small screens. --}}
+                        @if(!empty($portalQr))
+                            <div class="hidden md:flex justify-center">
+                                <div class="bg-white p-2 rounded-xl border border-amber-200">{!! $portalQr !!}</div>
+                            </div>
+                        @endif
+
+                        <div class="cna-only">
                             <a href="{{ $safariUrl ?? route('portal.index') }}" @unless($safariUrl) target="_blank" rel="noopener" @endunless
-                               class="w-full bg-[#FFF8E1] border-2 border-[#FFE082] text-[#6D4C41] py-3 rounded-xl font-bold uppercase tracking-wide transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-xs">
+                               class="w-full min-h-[44px] bg-[#FFF8E1] border-2 border-[#FFE082] text-[#6D4C41] py-3 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm">
                                 <span>{{ $safariUrl ? 'Open in Safari' : 'Open in my browser' }}</span>
                                 <x-lucide-external-link class="w-4 h-4" />
+                            </a>
+                            <p class="text-xs text-[#795548] mt-2">This window closes once you're online.</p>
+                        </div>
+                        <div class="browser-only">
+                            <a href="{{ route('portal.index') }}"
+                               class="w-full min-h-[44px] bg-white border-2 border-[#E6D5C3] text-[#6D4C41] py-3 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm hover:border-[#8D6E63]">
+                                <span>View my time left</span>
+                                <x-lucide-timer class="w-4 h-4" />
                             </a>
                         </div>
                     </div>

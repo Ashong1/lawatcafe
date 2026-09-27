@@ -140,9 +140,12 @@ class CaptivePortalStatusPageTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('2', false);          // 120 minutes rendered as hours
-        $response->assertSee('Voucher Accepted', false);
-        $response->assertSee('To check your remaining time later', false);
+        $response->assertSee('Code accepted', false);
+        $response->assertSee('Check your time left anytime at', false);
         $response->assertSee(route('portal.index'), false);
+        // Not yet activated, so it must not claim the guest is online.
+        $response->assertDontSee('now connected', false);
+        $response->assertSee("We'll connect you in a moment.");
     }
 
     /**
