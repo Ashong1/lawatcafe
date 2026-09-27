@@ -36,28 +36,30 @@ class AIService
     // just runs over OpenRouter's model list alone instead of cascading
     // across three providers first.
 
-    // Verified 2026-07-27 against OpenRouter's real /models pricing data
-    // (pricing.prompt === pricing.completion === "0", not just a ":free"
-    // suffix) AND each model's actual chat-completions + tool-calling
-    // behavior. Excluded: nvidia/nemotron-3.5-content-safety:free (a safety
-    // classifier, not chat) and google/lyria-3-*:free (music generation, not
-    // chat) — both free but not usable here. A few other free entries
-    // (poolside/laguna-s-2.1:free, google/gemma-4-31b-it:free,
-    // nvidia/nemotron-3-ultra-550b-a55b:free, poolside/laguna-m.1:free,
-    // nvidia/nemotron-nano-12b-v2-vl:free) were 429/timing-out at test time —
-    // may be worth retrying later, left out for now rather than risk
-    // wasting a fail-over slot on a currently-flaky model.
+    // Re-verified 2026-09-28. Four models from the 2026-07-27 list had been
+    // delisted by OpenRouter (openai/gpt-oss-20b:free,
+    // inclusionai/ling-3.0-flash:free, nvidia/nemotron-3-nano-30b-a3b:free,
+    // nvidia/nemotron-nano-9b-v2:free) — every request to one was a wasted
+    // cascade attempt. Replacements were tested with the real admin system
+    // prompt and full tool list on questions that need a specific tool call;
+    // dots-3-note-preview and nemotron-3-ultra were the only models to pick
+    // the right tool on every run, so they lead the list — the fast path
+    // (fast_path_model_limit) only tries the first two healthy models.
+    // Tried and left out: qwen/qwen3.8-27b:free (429, then answered in text
+    // instead of calling the tool), nvidia/nemotron-3.5-lightning:free (400 /
+    // timeout), thinkingmachines/inkling*:free (403, restricted access),
+    // stealth/* (temporary, and stealth models typically log prompts — ours
+    // carry sales and network data). Still excluded as before: the
+    // content-safety classifier and the lyria music models.
     protected $openRouterModels = [
+        'dots-studio/dots-3-note-preview:free',
+        'nvidia/nemotron-3-ultra-550b-a55b:free',
         'openrouter/free',
-        'openai/gpt-oss-20b:free',
-        'inclusionai/ling-3.0-flash:free',
-        'poolside/laguna-xs-2.1:free',
+        'nvidia/nemotron-3-super-120b-a12b:free',
         'cohere/north-mini-code:free',
         'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
         'google/gemma-4-26b-a4b-it:free',
-        'nvidia/nemotron-3-super-120b-a12b:free',
-        'nvidia/nemotron-3-nano-30b-a3b:free',
-        'nvidia/nemotron-nano-9b-v2:free',
+        'poolside/laguna-xs-2.1:free',
     ];
 
     // Other genuinely free (pricing=0) models seen on OpenRouter that aren't
@@ -72,11 +74,9 @@ class AIService
     // them would just set an admin up to pick something that can't work.
     protected $additionalFreeModelsCatalog = [
         'openrouter' => [
-            'poolside/laguna-s-2.1:free',
             'google/gemma-4-31b-it:free',
-            'nvidia/nemotron-3-ultra-550b-a55b:free',
-            'poolside/laguna-m.1:free',
-            'nvidia/nemotron-nano-12b-v2-vl:free',
+            'poolside/laguna-s-2.1:free',
+            'qwen/qwen3.8-27b:free',
         ],
     ];
 
