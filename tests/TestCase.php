@@ -4,6 +4,7 @@ namespace Tests;
 
 use App\Services\AiBudget;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Cache;
 
 // Standard: Feature tests use RefreshDatabase (per-class, not enforced here), not
 // DatabaseTransactions — phpunit.xml runs against an in-memory sqlite connection,
@@ -23,6 +24,12 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Start with OpenRouter's model catalog "unknown" (cached empty), so
+        // no test fetches it by accident: a catalog request would also eat
+        // the first item of any wildcard Http::sequence() a test scripts.
+        // Discovery tests Cache::flush() and fake /models on purpose.
+        Cache::put('openrouter_catalog', [], 86400);
 
         // Never read the real OpenRouter account's allowance from a test: the
         // .env key is live, and its count would make scheduled-job tests pass

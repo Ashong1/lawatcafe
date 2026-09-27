@@ -209,6 +209,16 @@ class AIService
      * for the admin status page, and by healthyModelsFirst() below to keep the
      * cascade from wasting a fast-path slot retrying a model that just failed.
      */
+    /** 403 means the model isn't available to this account — cascadeModels() drops it for a week. */
+    private function failureReason(int $status): string
+    {
+        return match ($status) {
+            401 => 'unauthorized',
+            403 => 'forbidden',
+            default => "http_{$status}",
+        };
+    }
+
     private function recordModelResult(string $provider, string $model, bool $success, ?string $reason = null): void
     {
         Cache::put($this->modelStatusCacheKey($provider, $model), [
@@ -431,7 +441,7 @@ class AIService
         // A photo sent to a text-only model either 400s or is silently
         // ignored, so a turn carrying one only cascades through models that
         // accept images.
-        $models = $this->activeModels('openrouter');
+        $models = $this->cascadeModels();
         if (self::hasImage($messages)) {
             $models = $this->imageCapableModels($models);
         }
@@ -533,25 +543,90 @@ class AIService
      */
     public function freeModelIds(): ?array
     {
-        return Cache::remember('openrouter_free_model_ids', 86400, function () {
+        $catalog = $this->openRouterCatalog();
+
+        return $catalog === null ? null : array_column(array_filter($catalog, fn ($m) => $m['free']), 'id');
+    }
+
+    /**
+     * OpenRouter's live model catalog, reduced to what the cascade needs.
+     * Cached a day; null when it can't be read.
+     *
+     * @return array<int, array{id: string, free: bool, tools: bool, image: bool, text_out: bool, ctx: int}>|null
+     */
+    public function openRouterCatalog(): ?array
+    {
+        return Cache::remember('openrouter_catalog', 86400, function () {
             try {
                 $response = Http::timeout(5)->get('https://openrouter.ai/api/v1/models');
+                if (! $response->successful()) {
+                    return null;
+                }
 
-                return $response->successful()
-                    ? collect($response->json('data') ?? [])
-                        // Numeric compare: "0" and "0.0" are both free; a
-                        // missing price is treated as NOT free.
-                        ->filter(fn ($m) => isset($m['pricing']['prompt'], $m['pricing']['completion'])
-                            && is_numeric($m['pricing']['prompt']) && is_numeric($m['pricing']['completion'])
-                            && (float) $m['pricing']['prompt'] == 0.0 && (float) $m['pricing']['completion'] == 0.0)
-                        ->pluck('id')->values()->all()
-                    : null;
+                return collect($response->json('data') ?? [])->map(fn ($m) => [
+                    'id' => (string) ($m['id'] ?? ''),
+                    // Numeric compare: "0" and "0.0" are both free; a missing
+                    // price is treated as NOT free.
+                    'free' => isset($m['pricing']['prompt'], $m['pricing']['completion'])
+                        && is_numeric($m['pricing']['prompt']) && is_numeric($m['pricing']['completion'])
+                        && (float) $m['pricing']['prompt'] == 0.0 && (float) $m['pricing']['completion'] == 0.0,
+                    'tools' => in_array('tools', $m['supported_parameters'] ?? [], true),
+                    'image' => in_array('image', $m['architecture']['input_modalities'] ?? [], true),
+                    'text_out' => ($m['architecture']['output_modalities'] ?? ['text']) === ['text'],
+                    'ctx' => (int) ($m['context_length'] ?? 0),
+                ])->filter(fn ($m) => $m['id'] !== '')->values()->all();
             } catch (\Exception $e) {
                 Log::warning('OpenRouter model catalog unreachable: '.$e->getMessage());
 
                 return null;
             }
         }) ?: null;
+    }
+
+    /**
+     * Never auto-added: classifiers that answer "User Safety: safe" instead of
+     * the question, and stealth/* test models (temporary, and they typically
+     * log prompts — ours carry guest and sales data).
+     */
+    private const AUTO_EXCLUDE = ['content-safety', 'stealth/'];
+
+    /**
+     * Every free, tool-capable, text-answering model OpenRouter lists that
+     * isn't already in the admin's list — so a model that's busy or retired
+     * has more free stand-ins, and new free models join without a code
+     * change. Largest context first, so the tiny ones are last resorts.
+     */
+    public function discoveredFreeModels(array $exclude = []): array
+    {
+        return collect($this->openRouterCatalog() ?? [])
+            ->filter(fn ($m) => $m['free'] && $m['tools'] && $m['text_out']
+                && ! in_array($m['id'], $exclude, true)
+                && ! Str::contains($m['id'], self::AUTO_EXCLUDE))
+            ->sortByDesc('ctx')
+            ->pluck('id')->values()->all();
+    }
+
+    /**
+     * What a request actually cascades through: the admin's list first (their
+     * order is a choice), then every discovered free model — minus any this
+     * account was refused (403) in the last week, e.g. models OpenRouter
+     * restricts to some accounts.
+     *
+     * Adding models does NOT add attempts per message: the fast path still
+     * tries the first two HEALTHY models (healthyModelsFirst moves recent
+     * failures to the back). It adds stand-ins, which matters because each
+     * attempt counts against the account's daily allowance.
+     */
+    public function cascadeModels(): array
+    {
+        $active = $this->activeModels('openrouter');
+        $all = array_values(array_unique(array_merge($active, $this->discoveredFreeModels($active))));
+
+        return array_values(array_filter($all, function ($model) {
+            $status = Cache::get($this->modelStatusCacheKey('openrouter', $model));
+
+            return ($status['reason'] ?? null) !== 'forbidden';
+        })) ?: $active;
     }
 
     /**
@@ -684,7 +759,7 @@ class AIService
                 $response = Http::timeout((int) ceil($timeout))->withOptions(['stream' => true])->withHeaders($headers)->post($url, $payload);
 
                 if (! $response->successful()) {
-                    $this->recordModelResult($provider, $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
+                    $this->recordModelResult($provider, $model, false, $this->failureReason($response->status()));
                     if ($response->status() === 401 || $this->noteDailyQuota($response)) {
                         break;
                     }
@@ -789,7 +864,7 @@ class AIService
             return null;
         }
 
-        $models = $this->activeModels('openrouter');
+        $models = $this->cascadeModels();
         $first = array_shift($models);
         shuffle($models);
         $models = $this->healthyModelsFirst('openrouter', $models);
@@ -812,7 +887,7 @@ class AIService
 
                     return $this->normalizeOpenAiResponse($response->json());
                 }
-                $this->recordModelResult('openrouter', $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
+                $this->recordModelResult('openrouter', $model, false, $this->failureReason($response->status()));
                 // 401, or the account's daily allowance is gone: every other
                 // model would fail the same way, and each try is wasted.
                 if ($response->status() === 401 || $this->noteDailyQuota($response)) {

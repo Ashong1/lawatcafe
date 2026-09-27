@@ -48,7 +48,7 @@ class GuestFreeModelsOnlyTest extends TestCase
 
     private function completionRequests(): array
     {
-        return Http::recorded(fn ($r) => str_contains($r->url(), '/chat/completions'))->map(fn ($pair) => $pair[0])->all();
+        return Http::recorded(fn ($r) => str_contains($r->url(), '/chat/completions'))->map(fn ($pair) => $pair[0])->values()->all();
     }
 
     public function test_guest_chat_never_tries_a_paid_model_and_caps_the_price_at_zero(): void

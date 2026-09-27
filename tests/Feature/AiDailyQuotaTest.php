@@ -49,12 +49,12 @@ class AiDailyQuotaTest extends TestCase
         $this->assertNull(app(AIService::class)->chatWithToolsStreaming([['role' => 'user', 'content' => 'hi']], [], fn () => null));
 
         // One model tried, not the whole list: the rest would fail identically.
-        Http::assertSentCount(1);
+        $this->assertCount(1, Http::recorded(fn ($r) => str_contains($r->url(), '/chat/completions')));
         $this->assertSame(1790553600, AIService::quotaExhaustedUntil()?->timestamp);
 
         // Paused: the next call doesn't even reach OpenRouter.
         app(AIService::class)->chatWithToolsStreaming([['role' => 'user', 'content' => 'again']], [], fn () => null);
-        Http::assertSentCount(1);
+        $this->assertCount(1, Http::recorded(fn ($r) => str_contains($r->url(), '/chat/completions')));
     }
 
     public function test_an_ordinary_429_does_not_pause_ai(): void
