@@ -160,6 +160,7 @@
          x-transition:leave-end="opacity-0 scale-90 translate-y-10"
          class="absolute bottom-full left-0 mb-4 w-full origin-bottom bg-white rounded-[2rem] shadow-2xl border border-[#F0E6D2] overflow-hidden flex flex-col shadow-amber-900/10"
          :style="`height: ${chatHeight()}px`"
+         @dragover.prevent @drop.prevent="dropImage($event)"
          style="display: none;">
 
         <!-- Header (Draggable Handle) -->
@@ -329,12 +330,12 @@
             </div>
             <div class="flex gap-2">
                 <label class="shrink-0 bg-[#FAFAFA] border-2 border-[#F0E6D2] text-[#6D4C41] p-3 rounded-xl hover:border-[#3E2723] transition cursor-pointer flex items-center"
-                       :class="streaming ? 'opacity-50 pointer-events-none' : ''" title="Attach a photo">
+                       :class="streaming ? 'opacity-50 pointer-events-none' : ''" title="Attach a photo — or paste one (Ctrl+V) or drag it here">
                     <x-lucide-camera class="w-5 h-5" />
                     <span class="sr-only">Attach a photo</span>
                     <input type="file" accept="image/*" class="hidden" x-ref="imageInput" @change="attachImage($event)">
                 </label>
-                <input type="text" x-model="message" @keydown.enter="send()"
+                <input type="text" x-model="message" @keydown.enter="send()" @paste="pasteImage($event)"
                        :placeholder="imageThumb ? 'Say what to do with this photo...' : 'Ask a question or request an action...'"
                        class="flex-1 min-w-0 bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-[#3E2723] transition-all"
                        :disabled="streaming">
@@ -674,6 +675,27 @@ document.addEventListener('alpine:init', () => {
         async attachImage(event) {
             const file = event.target.files && event.target.files[0];
             event.target.value = '';
+            await this.attachFile(file);
+        },
+
+        // Ctrl+V / Cmd+V of a screenshot or copied image. Text pastes are left
+        // alone: only an image item in the clipboard is intercepted. Without
+        // this the only way in was the camera button's file picker.
+        async pasteImage(event) {
+            const items = (event.clipboardData && event.clipboardData.items) || [];
+            const item = Array.from(items).find(i => i.kind === 'file' && i.type.startsWith('image/'));
+            if (!item) return;
+            event.preventDefault();
+            await this.attachFile(item.getAsFile());
+        },
+
+        // An image file dragged onto the chat window.
+        async dropImage(event) {
+            const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+            await this.attachFile(file);
+        },
+
+        async attachFile(file) {
             this.imageError = null;
             if (!file) return;
             if (!file.type.startsWith('image/')) {

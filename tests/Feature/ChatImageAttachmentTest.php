@@ -133,4 +133,23 @@ class ChatImageAttachmentTest extends TestCase
         $this->assertTrue(AIService::hasImage([['role' => 'user', 'content' => ChatImage::userContent('x', 'data:image/jpeg;base64,xx')]]));
         $this->assertFalse(AIService::hasImage([['role' => 'user', 'content' => 'x']]));
     }
+
+    /**
+     * Ctrl+V of an image did nothing — photos could only come in through the
+     * camera button's file picker. Staff/admin chat takes paste and drop;
+     * the guest portal chat must stay text-only.
+     */
+    public function test_staff_and_admin_chat_accept_pasted_images_but_the_portal_does_not(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $html = $this->actingAs($admin)->get(route('admin.ai.lessons.index'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('@paste="pasteImage($event)"', $html);
+        $this->assertStringContainsString('@drop.prevent="dropImage($event)"', $html);
+
+        auth()->logout();
+        $portal = $this->get(route('portal.index', ['tab' => 'help']))->assertOk()->getContent();
+        $this->assertStringNotContainsString('pasteImage($event)', $portal);
+        $this->assertStringNotContainsString('dropImage($event)', $portal);
+    }
 }
