@@ -28,17 +28,17 @@
             <div class="p-6 border-b flex justify-between items-start {{ $urgencyClass }} transition-colors">
                 <div>
                     <div class="flex items-center gap-2 mb-1">
-                        <h3 class="font-black text-[#3E2723] text-xl">#{{ substr($order->transaction_number, -4) }}</h3>
-                        <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm {{ $order->order_type === 'takeaway' ? 'bg-amber-500 text-white' : 'bg-blue-600 text-white' }}">
+                        <h3 class="font-bold text-[#3E2723] text-xl">#{{ substr($order->transaction_number, -4) }}</h3>
+                        <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm {{ $order->order_type === 'takeaway' ? 'bg-amber-500 text-white' : 'bg-blue-600 text-white' }}">
                             {{ $order->order_type === 'takeaway' ? 'TAKE AWAY' : 'DINE IN' }}
                         </span>
                     </div>
-                    <p class="text-[10px] font-black uppercase tracking-widest {{ $waitMinutes >= 10 ? 'text-red-600' : ($waitMinutes >= 5 ? 'text-amber-700' : 'text-[#6D4C41]') }}">
+                    <p class="text-xs font-bold uppercase tracking-wide {{ $waitMinutes >= 10 ? 'text-red-600' : ($waitMinutes >= 5 ? 'text-amber-700' : 'text-[#6D4C41]') }}">
                         <x-lucide-clock class="w-3 h-3 inline mr-0.5 -mt-0.5" />
                         {{ $order->created_at->diffForHumans() }}
                     </p>
                 </div>
-                <span class="flex items-center gap-1 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-colors duration-500 {{ $order->status === 'pending' ? 'bg-white/60 text-[#3E2723] border border-[#3E2723]/10' : 'bg-amber-500 text-white shadow-sm' }}">
+                <span class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide transition-colors duration-500 {{ $order->status === 'pending' ? 'bg-white/60 text-[#3E2723] border border-[#3E2723]/10' : 'bg-amber-500 text-white shadow-sm' }}">
                     @if($order->status === 'pending')
                         <x-lucide-clock class="w-3 h-3" />
                     @else
@@ -54,7 +54,7 @@
                     <div>
                         <div class="flex items-center gap-2 mb-3 opacity-60">
                             <x-lucide-coffee class="w-3.5 h-3.5" />
-                            <span class="text-[9px] font-black uppercase tracking-[0.2em]">Barista / Drinks</span>
+                            <span class="text-xs font-bold uppercase tracking-wide">Barista / Drinks</span>
                             <div class="flex-1 h-[1px] bg-[#F0E6D2]"></div>
                         </div>
                         <ul class="space-y-3">
@@ -70,7 +70,7 @@
                     <div>
                         <div class="flex items-center gap-2 mb-3 opacity-60">
                             <x-lucide-utensils class="w-3.5 h-3.5" />
-                            <span class="text-[9px] font-black uppercase tracking-[0.2em]">Kitchen / Food</span>
+                            <span class="text-xs font-bold uppercase tracking-wide">Kitchen / Food</span>
                             <div class="flex-1 h-[1px] bg-[#F0E6D2]"></div>
                         </div>
                         <ul class="space-y-3">
@@ -89,7 +89,7 @@
                         <input type="hidden" name="status" value="preparing">
                         <button type="submit" class="w-full py-4 bg-[#3E2723] text-white rounded-2xl font-bold transition flex items-center justify-center gap-2 hover:bg-[#271815] shadow-lg shadow-[#3E2723]/20 active:scale-95" title="Start Preparing">
                             <x-lucide-play class="w-4 h-4 fill-current" />
-                            <span class="text-xs uppercase tracking-widest">Start</span>
+                            <span class="text-xs uppercase tracking-wide">Start</span>
                         </button>
                     </form>
                 @endif
@@ -99,7 +99,7 @@
                     <input type="hidden" name="status" value="completed">
                     <button type="submit" class="w-full py-4 bg-green-600 text-white rounded-2xl font-bold transition flex items-center justify-center gap-2 hover:bg-green-700 shadow-lg shadow-green-600/20 active:scale-95" title="Mark as Done">
                         <x-lucide-check-circle class="w-5 h-5" />
-                        <span class="text-xs uppercase tracking-widest">Done</span>
+                        <span class="text-xs uppercase tracking-wide">Done</span>
                     </button>
                 </form>
 
@@ -107,7 +107,7 @@
                     <form action="{{ route('kds.update', $order->id) }}" method="POST" class="col-span-2" @submit.prevent="updateStatus('{{ route('kds.update', $order->id) }}', 'pending', $event)">
                         @csrf
                         <input type="hidden" name="status" value="pending">
-                        <button type="submit" class="w-full py-3 text-[#8D6E63] font-bold transition flex items-center justify-center gap-2 hover:text-[#3E2723] text-[10px] uppercase tracking-widest">
+                        <button type="submit" class="w-full py-3 text-[#795548] font-bold transition flex items-center justify-center gap-2 hover:text-[#3E2723] text-xs uppercase tracking-wide">
                             <x-lucide-undo-2 class="w-3.5 h-3.5" />
                             <span>Wait / Back to Pending</span>
                         </button>
@@ -119,8 +119,8 @@
         <div class="col-span-full py-32 text-center bg-white rounded-[3rem] border border-dashed border-[#F0E6D2]">
             <div class="flex flex-col items-center opacity-30">
                 <x-lucide-clipboard-check class="w-20 h-20 mb-6 text-green-600" />
-                <p class="text-2xl font-black text-[#3E2723] uppercase tracking-widest">All caught up!</p>
-                <p class="text-sm font-medium text-[#8D6E63] mt-2">New orders will appear here automatically.</p>
+                <p class="text-2xl font-bold text-[#3E2723] uppercase tracking-wide">All caught up!</p>
+                <p class="text-sm font-medium text-[#795548] mt-2">New orders will appear here automatically.</p>
             </div>
         </div>
     @endforelse

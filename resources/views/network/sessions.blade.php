@@ -9,9 +9,9 @@
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Active Sessions</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Active Sessions</span>
             </h2>
-            <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Monitor and manage live customer network connections.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Monitor and manage live customer network connections.</p>
         </div>
     </div>
 
@@ -44,13 +44,13 @@
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Network Traffic Control</h3>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Network Traffic Control</h3>
                 <p class="text-xs text-[#6D4C41] mt-1 font-medium">Monitoring both active revenue-generating users and pending connections.</p>
             </div>
             
             <div class="flex items-center gap-3 px-5 py-2.5 bg-[#E8F5E9] border border-green-200 rounded-full shadow-sm">
                 <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
-                <span class="text-[10px] font-bold text-[#2E7D32] uppercase tracking-widest">Live Monitoring</span>
+                <span class="text-xs font-bold text-[#2E7D32] uppercase tracking-wide">Live Monitoring</span>
             </div>
         </div>
 

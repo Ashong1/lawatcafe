@@ -19,7 +19,7 @@ $variantClass = match ($variant) {
      leave this stuck permanently disabled without an actual submission happening. --}}
 <button type="submit"
         :disabled="{{ $state }}"
-        {{ $attributes->merge(['class' => "flex-1 py-4 {$variantClass} rounded-2xl font-black transition shadow-lg text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"]) }}>
+        {{ $attributes->merge(['class' => "flex-1 py-4 {$variantClass} rounded-2xl font-bold transition shadow-lg text-xs uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"]) }}>
     <svg x-show="{{ $state }}" x-cloak class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>

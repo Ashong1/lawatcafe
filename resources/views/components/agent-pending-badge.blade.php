@@ -13,10 +13,10 @@
     $initialPendingCount = $initialPendingQuery->count();
 @endphp
 <div x-data="agentPendingBadge({ isAdmin: @js($isAdmin), initialCount: {{ $initialPendingCount }} })" x-init="init()" class="relative">
-    <button @click="toggle()" aria-label="Pending AI actions" class="p-2 text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-full transition relative focus:outline-none">
+    <button @click="toggle()" aria-label="Pending AI actions" class="p-2 text-[#795548] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-full transition relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3E2723]/40">
         <x-lucide-bot class="w-6 h-6" />
         <template x-if="count > 0">
-            <span class="absolute top-1 right-1 w-4 h-4 bg-amber-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white" x-text="count"></span>
+            <span class="absolute top-1 right-1 w-4 h-4 bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white" x-text="count"></span>
         </template>
     </button>
 
@@ -32,8 +32,8 @@
          class="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-[#F0E6D2] overflow-hidden z-50">
 
         <div class="bg-[#FDF8F5] p-4 border-b border-[#F0E6D2]">
-            <h3 class="text-xs font-black text-[#3E2723] uppercase tracking-widest">Pending AI Actions</h3>
-            <p class="text-[10px] text-[#6D4C41] font-medium mt-0.5" x-text="isAdmin ? 'Awaiting confirmation, org-wide' : 'Your own proposals awaiting confirmation'"></p>
+            <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Pending AI Actions</h3>
+            <p class="text-xs text-[#6D4C41] font-medium mt-0.5" x-text="isAdmin ? 'Awaiting confirmation, org-wide' : 'Your own proposals awaiting confirmation'"></p>
         </div>
 
         <div class="max-h-[360px] overflow-y-auto custom-scrollbar">
@@ -47,8 +47,8 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-xs font-bold text-[#3E2723]" x-text="item.label || item.tool_name"></p>
-                            <p class="text-[11px] text-[#8D6E63] font-medium mt-0.5" x-text="item.actor ? 'Proposed by ' + item.actor.name : 'Proposed by scheduled agent run'"></p>
-                            <p class="text-[9px] text-[#6D4C41] font-bold uppercase tracking-tighter mt-2" x-text="formatDate(item.created_at)"></p>
+                            <p class="text-xs text-[#795548] font-medium mt-0.5" x-text="item.actor ? 'Proposed by ' + item.actor.name : 'Proposed by scheduled agent run'"></p>
+                            <p class="text-xs text-[#6D4C41] font-bold uppercase tracking-tighter mt-2" x-text="formatDate(item.created_at)"></p>
                         </div>
                     </div>
                 </div>
@@ -71,13 +71,13 @@
             <template x-if="loaded && items.length === 0">
                 <div class="py-12 text-center flex flex-col items-center opacity-30">
                     <x-lucide-check-circle-2 class="w-8 h-8 mb-2" />
-                    <p class="text-xs font-bold uppercase tracking-widest text-[#6D4C41]">Nothing pending</p>
+                    <p class="text-xs font-bold uppercase tracking-wide text-[#6D4C41]">Nothing pending</p>
                 </div>
             </template>
         </div>
 
         <div x-show="isAdmin && items.length > 0" class="p-3 bg-[#FDF8F5] text-center border-t border-[#F0E6D2]">
-            <a href="{{ route('admin.ai.actions.index') }}" class="text-[10px] font-black text-[#3E2723] uppercase tracking-widest hover:text-amber-800 transition">View Agent Activity</a>
+            <a href="{{ route('admin.ai.actions.index') }}" class="text-xs font-bold text-[#3E2723] uppercase tracking-wide hover:text-amber-800 transition">View Agent Activity</a>
         </div>
     </div>
 </div>

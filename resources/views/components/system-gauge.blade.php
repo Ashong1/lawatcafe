@@ -35,8 +35,8 @@
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
         </svg>
         <div class="absolute inset-0 flex items-center justify-center">
-            <span class="text-[9px] font-black {{ $text }}" x-text="{{ $valueExpr }}">{{ $fallback }}</span>
+            <span class="text-xs font-bold {{ $text }}" x-text="{{ $valueExpr }}">{{ $fallback }}</span>
         </div>
     </div>
-    <span class="text-[8px] font-bold uppercase tracking-widest text-[#4A3B32] leading-tight">{{ $labelTop }}<br>{{ $labelBottom }}</span>
+    <span class="text-xs font-bold uppercase tracking-wide text-[#4A3B32] leading-tight">{{ $labelTop }}<br>{{ $labelBottom }}</span>
 </div>

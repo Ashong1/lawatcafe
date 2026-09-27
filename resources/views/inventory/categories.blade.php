@@ -9,9 +9,9 @@
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Menu Categories</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Menu Categories</span>
             </h2>
-            <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Organize your products into logical groups for better management.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Organize your products into logical groups for better management.</p>
         </div>
     </div>
 
@@ -19,10 +19,10 @@
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Available Categories</h3>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Available Categories</h3>
             </div>
             
-            <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
+            <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                 <x-lucide-plus class="w-4 h-4" />
                 <span>New Category</span>
             </button>
@@ -31,12 +31,12 @@
         <div class="overflow-x-auto pr-2">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-black w-10"></th>
-                        <th class="pb-4 font-black">Category</th>
-                        <th class="pb-4 font-black hidden md:table-cell">Products</th>
-                        <th class="pb-4 font-black hidden md:table-cell">Description</th>
-                        <th class="pb-4 font-black text-right">Actions</th>
+                    <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
+                        <th class="pb-4 font-bold w-10"></th>
+                        <th class="pb-4 font-bold">Category</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Products</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Description</th>
+                        <th class="pb-4 font-bold text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
@@ -55,8 +55,8 @@
                                 </div>
                                 <div>
                                     <span class="font-bold text-[#3E2723] text-base block">{{ $category->name }}</span>
-                                    <span class="text-[10px] text-[#8D6E63] font-mono uppercase tracking-widest">{{ $category->slug }}</span>
-                                    <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-[9px] font-bold bg-[#FDF8F5] text-amber-900 border border-amber-100 md:hidden">
+                                    <span class="text-xs text-[#795548] font-mono uppercase tracking-widest">{{ $category->slug }}</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-xs font-bold bg-[#FDF8F5] text-amber-900 border border-amber-100 md:hidden">
                                         {{ $category->products_count ?? 0 }} Items
                                     </span>
                                 </div>
@@ -67,10 +67,10 @@
                                 {{ $category->products_count ?? 0 }} Items
                             </span>
                         </td>
-                        <td class="py-4 text-[#8D6E63] font-medium max-w-[200px] truncate hidden md:table-cell">{{ $category->description ?: 'No description provided.' }}</td>
+                        <td class="py-4 text-[#795548] font-medium max-w-[200px] truncate hidden md:table-cell">{{ $category->description ?: 'No description provided.' }}</td>
                         <td class="py-4 text-right">
                             <div class="flex justify-end gap-2">
-                                <button @click="openEditModal({{ $category }})" class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit" aria-label="Edit">
+                                <button @click="openEditModal({{ $category }})" class="p-2 text-[#795548] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit" aria-label="Edit">
                                     <x-lucide-pencil class="w-4 h-4" />
                                 </button>
                                 
@@ -109,8 +109,8 @@
 
     <x-modal-shell show="isModalOpen" max-width="xl" panel-class="border-t-8 border-[#3E2723]" labelled-by="category-modal-title">
             <div class="px-8 py-6 border-b border-[#FDF8F5]">
-                <h2 id="category-modal-title" class="text-xl font-black text-[#3E2723] uppercase tracking-widest" x-text="modalTitle"></h2>
-                <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter">Organize products into logical groups.</p>
+                <h2 id="category-modal-title" class="text-xl font-bold text-[#3E2723] uppercase tracking-wide" x-text="modalTitle"></h2>
+                <p class="text-xs text-[#795548] font-medium mt-1 uppercase tracking-tighter">Organize products into logical groups.</p>
             </div>
 
             <form :action="formAction" method="POST" @submit="submitting = true">
@@ -121,12 +121,12 @@
 
                 <div class="p-8 space-y-6">
                     <div>
-                        <label for="category-name" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Category Name</label>
+                        <label for="category-name" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Category Name</label>
                         <input type="text" id="category-name" name="name" x-model="formData.name" required class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all font-bold text-sm" placeholder="e.g. Cold Brews">
                     </div>
 
                     <button type="button" @click="suggestWithAi()" :disabled="!formData.name || suggesting"
-                            class="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/50 text-amber-800 hover:bg-amber-50 hover:border-amber-400 transition text-[10px] font-black uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed">
+                            class="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/50 text-amber-800 hover:bg-amber-50 hover:border-amber-400 transition text-xs font-bold uppercase tracking-wide disabled:opacity-40 disabled:cursor-not-allowed">
                         <x-lucide-loader-2 x-show="suggesting" class="w-4 h-4 animate-spin" />
                         <x-lucide-sparkles x-show="!suggesting" class="w-4 h-4" />
                         <span x-text="suggesting ? 'Generating…' : 'Generate description & icon with AI'"></span>
@@ -134,30 +134,30 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="category-icon" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Icon</label>
+                            <label for="category-icon" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Icon</label>
                             <div class="relative">
                                 <select id="category-icon" name="icon" x-model="formData.icon" class="w-full p-3 pl-10 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all appearance-none text-xs font-bold">
                                     @foreach(\App\Models\Category::AVAILABLE_ICONS as $iconOption)
                                         <option value="{{ $iconOption }}">{{ ucwords(str_replace('-', ' ', $iconOption)) }}</option>
                                     @endforeach
                                 </select>
-                                <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#8D6E63]">
+                                <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#795548]">
                                     <x-lucide-search class="w-4 h-4" />
                                 </div>
                             </div>
                         </div>
 
                         <div>
-                            <label for="category-color" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Color</label>
+                            <label for="category-color" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Color</label>
                             <div class="flex gap-2">
                                 <input type="color" id="category-color" name="color" x-model="formData.color" class="h-10 w-12 p-1 border-2 border-[#F0E6D2] rounded-xl bg-white cursor-pointer">
-                                <input type="text" x-model="formData.color" class="flex-1 p-2 border-2 border-[#F0E6D2] rounded-xl text-[10px] font-mono uppercase focus:outline-none bg-[#FAFAFA]" readonly>
+                                <input type="text" x-model="formData.color" class="flex-1 p-2 border-2 border-[#F0E6D2] rounded-xl text-xs font-mono uppercase focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3E2723]/40 bg-[#FAFAFA]" readonly>
                             </div>
                         </div>
                     </div>
 
                     <div>
-                        <label for="category-description" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Description (Optional)</label>
+                        <label for="category-description" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Description (Optional)</label>
                         <textarea id="category-description" name="description" x-model="formData.description" rows="2" class="w-full p-3 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] transition-all text-xs font-medium" placeholder="Brief description of this group..."></textarea>
                     </div>
 
@@ -174,15 +174,15 @@
                             <input type="hidden" name="is_food" value="0">
                             <input type="checkbox" id="category-is-food" name="is_food" value="1" x-model="formData.is_food" class="mt-0.5 w-4 h-4 rounded border-2 border-[#D7CCC8] text-[#3E2723] focus:ring-[#3E2723]">
                             <span>
-                                <span class="block text-[10px] font-black text-[#3E2723] uppercase tracking-widest">This is food, not a drink</span>
-                                <span class="block text-[10px] text-[#6D4C41] font-medium mt-0.5">Tick for pastries and snacks. The POS suggests food with drinks, and drinks with food.</span>
+                                <span class="block text-xs font-bold text-[#3E2723] uppercase tracking-wide">This is food, not a drink</span>
+                                <span class="block text-xs text-[#6D4C41] font-medium mt-0.5">Tick for pastries and snacks. The POS suggests food with drinks, and drinks with food.</span>
                             </span>
                         </label>
                     </div>
                 </div>
 
                 <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
-                    <button type="button" @click="closeModal()" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-[#FDF8F5] font-black transition text-[10px] uppercase tracking-widest whitespace-nowrap">Cancel</button>
+                    <button type="button" @click="closeModal()" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#795548] hover:bg-[#FDF8F5] font-bold transition text-xs uppercase tracking-wide whitespace-nowrap">Cancel</button>
                     <x-submit-button label="Save Category" />
                 </div>
             </form>

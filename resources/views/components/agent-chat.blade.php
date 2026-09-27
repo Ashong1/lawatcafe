@@ -78,7 +78,7 @@
                     @include('components.partials.agent-chat-rating')
 
                     <template x-if="msg.kind === 'executed'">
-                        <div class="flex items-start gap-2 max-w-[90%] p-3 rounded-xl text-[11px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 mx-1">
+                        <div class="flex items-start gap-2 max-w-[90%] p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 mx-1">
                             <x-lucide-check-circle-2 class="w-4 h-4 shrink-0 mt-0.5" />
                             <span><span class="font-bold" x-text="msg.label || msg.tool"></span>: <span x-text="msg.message"></span></span>
                         </div>
@@ -86,12 +86,12 @@
 
                     <template x-if="msg.kind === 'pending'">
                         <div class="max-w-[90%] p-4 rounded-xl bg-amber-50 border border-amber-300 space-y-2 mx-1">
-                            <div class="flex items-center gap-2 text-[11px] font-black text-amber-800 uppercase tracking-tighter">
+                            <div class="flex items-center gap-2 text-xs font-bold text-amber-800 uppercase tracking-tighter">
                                 <x-lucide-clock class="w-4 h-4 shrink-0" />
                                 <span x-text="msg.label || msg.tool"></span>
                             </div>
                             {{-- break-words: a long domain list was one unbreakable line that pushed the card off the panel. --}}
-                            <p class="text-[11px] text-amber-700 font-medium break-words [overflow-wrap:anywhere]" x-text="formatArgs(msg.arguments)"></p>
+                            <p class="text-xs text-amber-700 font-medium break-words [overflow-wrap:anywhere]" x-text="formatArgs(msg.arguments)"></p>
                         </div>
                     </template>
                 </div>
@@ -102,7 +102,7 @@
                     <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
                     <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                 </div>
-                <span x-show="toolStatusLabel" x-text="toolStatusLabel" class="text-[10px] font-bold text-amber-700"></span>
+                <span x-show="toolStatusLabel" x-text="toolStatusLabel" class="text-xs font-bold text-amber-700"></span>
             </div>
             <div id="{{ $anchorId }}-chat-anchor" class="h-1 w-full"></div>
         </div>
@@ -171,9 +171,9 @@
                     <x-lucide-bot class="w-6 h-6 text-[#3E2723]" />
                 </div>
                 <div>
-                    <h3 class="text-sm font-black uppercase tracking-widest">{{ $title }}</h3>
+                    <h3 class="text-sm font-bold uppercase tracking-wide">{{ $title }}</h3>
                     @if($subtitle)
-                        <p class="text-[9px] font-bold text-amber-200 uppercase tracking-tighter">{{ $subtitle }}</p>
+                        <p class="text-xs font-bold text-amber-200 uppercase tracking-tighter">{{ $subtitle }}</p>
                     @endif
                 </div>
             </div>
@@ -209,7 +209,7 @@
                     </div>
                 @endfor
             </div>
-            <div x-show="!loadingHistory && conversationList.length === 0" class="p-4 text-center text-[10px] font-black uppercase tracking-widest text-[#6D4C41]">No past conversations yet.</div>
+            <div x-show="!loadingHistory && conversationList.length === 0" class="p-4 text-center text-xs font-bold uppercase tracking-wide text-[#6D4C41]">No past conversations yet.</div>
             <template x-for="conv in loadingHistory ? [] : conversationList" :key="conv.id">
                 <div @click="openConversation(conv.id)"
                      tabindex="0" role="button" @keydown.enter="openConversation(conv.id)" @keydown.space.prevent="openConversation(conv.id)"
@@ -217,7 +217,7 @@
                      :class="conv.id === conversationId ? 'bg-amber-50' : ''">
                     <div class="min-w-0">
                         <p class="text-xs font-bold text-[#3E2723] truncate" x-text="conv.title || 'Conversation'"></p>
-                        <p class="text-[9px] font-black uppercase tracking-widest text-[#6D4C41] mt-0.5" x-text="formatRelativeTime(conv.last_message_at)"></p>
+                        <p class="text-xs font-bold uppercase tracking-wide text-[#6D4C41] mt-0.5" x-text="formatRelativeTime(conv.last_message_at)"></p>
                     </div>
                     <button @click.stop="deleteConversation(conv.id)" title="Delete" aria-label="Delete conversation" class="shrink-0 opacity-0 group-hover:opacity-100 text-[#D7CCC8] hover:text-red-600 transition p-1">
                         <x-lucide-trash-2 class="w-3.5 h-3.5" />
@@ -250,7 +250,7 @@
                                 <span x-show="msg.streaming" aria-hidden="true"
                                       class="inline-block w-1.5 h-3 ml-0.5 -mb-0.5 bg-amber-500 rounded-sm animate-pulse"></span>
                             </div>
-                            <span class="text-[8px] font-black uppercase tracking-widest text-[#6D4C41] mt-1.5 mx-1" x-text="msg.role === 'user' ? 'You' : @js($title)"></span>
+                            <span class="text-xs font-bold uppercase tracking-wide text-[#6D4C41] mt-1.5 mx-1" x-text="msg.role === 'user' ? 'You' : @js($title)"></span>
                         </div>
                     </template>
 
@@ -258,7 +258,7 @@
 
                     <!-- Executed tool action -->
                     <template x-if="msg.kind === 'executed'">
-                        <div class="flex items-start gap-2 max-w-[90%] p-3 rounded-xl text-[11px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-800">
+                        <div class="flex items-start gap-2 max-w-[90%] p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800">
                             <x-lucide-check-circle-2 class="w-4 h-4 shrink-0 mt-0.5" />
                             <span><span class="font-bold" x-text="msg.label || msg.tool"></span>: <span x-text="msg.message"></span></span>
                         </div>
@@ -267,29 +267,29 @@
                     <!-- Pending confirmation -->
                     <template x-if="msg.kind === 'pending'">
                         <div class="max-w-[90%] p-4 rounded-xl bg-amber-50 border border-amber-300 space-y-2">
-                            <div class="flex items-center gap-2 text-[11px] font-black text-amber-800 uppercase tracking-tighter">
+                            <div class="flex items-center gap-2 text-xs font-bold text-amber-800 uppercase tracking-tighter">
                                 <x-lucide-clock class="w-4 h-4 shrink-0" />
                                 <span x-text="msg.label || msg.tool"></span>
-                                <span class="text-[9px] font-bold text-amber-600">needs your OK</span>
+                                <span class="text-xs font-bold text-amber-600">needs your OK</span>
                             </div>
                             {{-- break-words: a long domain list was one unbreakable line that pushed the card off the panel. --}}
-                            <p class="text-[11px] text-amber-700 font-medium break-words [overflow-wrap:anywhere]" x-text="formatArgs(msg.arguments)"></p>
+                            <p class="text-xs text-amber-700 font-medium break-words [overflow-wrap:anywhere]" x-text="formatArgs(msg.arguments)"></p>
 
                             <template x-if="!msg.resolved">
                                 <div class="flex gap-2 pt-1">
                                     <button @click="confirmAction(msg)" :disabled="resolvingId === msg.audit_id"
-                                            class="flex-1 flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg transition disabled:opacity-50">
+                                            class="flex-1 flex items-center justify-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wide px-3 py-2 rounded-lg transition disabled:opacity-50">
                                         <template x-if="resolvingId === msg.audit_id"><x-lucide-loader-2 class="w-3 h-3 animate-spin" /></template>
                                         <span>Approve</span>
                                     </button>
                                     <button @click="rejectAction(msg)" :disabled="resolvingId === msg.audit_id"
-                                            class="flex-1 bg-white hover:bg-red-50 border border-amber-300 text-amber-800 hover:text-red-700 text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg transition disabled:opacity-50">
+                                            class="flex-1 bg-white hover:bg-red-50 border border-amber-300 text-amber-800 hover:text-red-700 text-xs font-bold uppercase tracking-wide px-3 py-2 rounded-lg transition disabled:opacity-50">
                                         Reject
                                     </button>
                                 </div>
                             </template>
                             <template x-if="msg.resolved">
-                                <p class="text-[10px] font-black uppercase tracking-widest"
+                                <p class="text-xs font-bold uppercase tracking-wide"
                                    :class="msg.resolution === 'approved' ? 'text-emerald-700' : 'text-red-600'"
                                    x-text="msg.resolution === 'approved' ? '✓ Approved and executed' : (msg.resolution === 'rejected' ? '✗ Rejected' : '✗ Failed: ' + (msg.resolutionMessage || ''))"></p>
                             </template>
@@ -305,7 +305,7 @@
                         <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
                         <div class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
                     </div>
-                    <span x-show="toolStatusLabel" x-text="toolStatusLabel" class="text-[11px] font-bold text-amber-700"></span>
+                    <span x-show="toolStatusLabel" x-text="toolStatusLabel" class="text-xs font-bold text-amber-700"></span>
                 </div>
             </div>
             <div id="{{ $anchorId }}-chat-anchor" class="h-px w-full"></div>
@@ -326,7 +326,7 @@
                         </button>
                     </div>
                 </template>
-                <span x-show="imageError" x-text="imageError" class="text-[10px] font-bold text-red-600"></span>
+                <span x-show="imageError" x-text="imageError" class="text-xs font-bold text-red-600"></span>
             </div>
             <div class="flex gap-2">
                 <label class="shrink-0 bg-[#FAFAFA] border-2 border-[#F0E6D2] text-[#6D4C41] p-3 rounded-xl hover:border-[#3E2723] transition cursor-pointer flex items-center"

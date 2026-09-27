@@ -9,9 +9,9 @@
             <div>
                 <h2 class="flex items-center gap-3 text-[#3E2723]">
                     <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                    <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">AI Agent Permissions</span>
+                    <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">AI Agent Permissions</span>
                 </h2>
-                <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Control which actions Barista AI can take on its own vs. propose for your approval.</p>
+                <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Control which actions Barista AI can take on its own vs. propose for your approval.</p>
             </div>
         </div>
 
@@ -25,8 +25,8 @@
                             <x-lucide-shield-check class="w-6 h-6" />
                         </div>
                         <div>
-                            <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">Tool Permission Tiers</h3>
-                            <p class="text-[10px] text-[#6D4C41] font-medium italic">Auto = runs immediately. Confirm = staged for your approval. Admin Only = staff can never trigger it, even indirectly.</p>
+                            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Tool Permission Tiers</h3>
+                            <p class="text-xs text-[#6D4C41] font-medium italic">Auto = runs immediately. Confirm = staged for your approval. Admin Only = staff can never trigger it, even indirectly.</p>
                         </div>
                     </div>
 
@@ -34,8 +34,8 @@
                         @foreach ($tools as $tool)
                             <div class="py-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
                                 <div>
-                                    <p class="text-sm font-black text-[#3E2723]">{{ $tool['name'] }}</p>
-                                    <p class="text-xs text-[#8D6E63]">{{ $tool['description'] }}</p>
+                                    <p class="text-sm font-bold text-[#3E2723]">{{ $tool['name'] }}</p>
+                                    <p class="text-xs text-[#795548]">{{ $tool['description'] }}</p>
                                 </div>
                                 @if ($tool['configurable'])
                                     <select name="tiers[{{ $tool['name'] }}]" class="bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
@@ -44,7 +44,7 @@
                                         <option value="admin_only" {{ $tool['tier'] === 'admin_only' ? 'selected' : '' }}>Admin only</option>
                                     </select>
                                 @else
-                                    <span class="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#6D4C41] bg-[#FDF8F5] rounded-xl border-2 border-[#F0E6D2]" title="This action has direct financial/network-access consequences and is locked to Admin Only.">
+                                    <span class="px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#6D4C41] bg-[#FDF8F5] rounded-xl border-2 border-[#F0E6D2]" title="This action has direct financial/network-access consequences and is locked to Admin Only.">
                                         Admin Only (locked)
                                     </span>
                                 @endif
@@ -52,13 +52,13 @@
                         @endforeach
                     </div>
 
-                    <p class="text-[10px] text-[#8D6E63] mt-6 italic leading-relaxed border-t border-[#F0E6D2] pt-4">
+                    <p class="text-xs text-[#795548] mt-6 italic leading-relaxed border-t border-[#F0E6D2] pt-4">
                         Note: staff accounts can never auto-execute a tool regardless of this setting — this only controls how much friction admin-triggered actions have.
                     </p>
                 </div>
 
                 <div class="pt-2">
-                    <button type="submit" class="w-full py-5 bg-[#3E2723] hover:bg-[#271815] text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-amber-900/20 active:scale-[0.98] flex items-center justify-center gap-3">
+                    <button type="submit" class="w-full py-5 bg-[#3E2723] hover:bg-[#271815] text-white rounded-2xl font-bold text-xs uppercase tracking-wide transition-all shadow-xl shadow-amber-900/20 active:scale-[0.98] flex items-center justify-center gap-3">
                         <x-lucide-save class="w-5 h-5" />
                         <span>Save Permissions</span>
                     </button>

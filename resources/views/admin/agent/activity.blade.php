@@ -14,7 +14,7 @@
     <div class="mb-6 border-b border-[#E6D5C3] pb-5">
         <h2 class="flex items-center gap-3 text-[#3E2723]">
             <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-            <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Agent Activity</span>
+            <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Agent Activity</span>
         </h2>
         <p class="text-sm text-[#795548] mt-1 font-medium">Everything Barista AI has done for you, and anything waiting for your OK.</p>
     </div>

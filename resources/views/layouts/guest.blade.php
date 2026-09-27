@@ -79,7 +79,7 @@
                     
                     <div class="flex items-center gap-4 mt-2">
                         <div class="h-[1px] w-8 bg-[#A1887F]"></div>
-                        <h2 class="text-xl sm:text-2xl tracking-[0.4em] font-semibold text-white uppercase" style="font-family: 'Montserrat', sans-serif;">Kape</h2>
+                        <h2 class="text-xl sm:text-2xl tracking-wide font-semibold text-white uppercase" style="font-family: 'Montserrat', sans-serif;">Kape</h2>
                         <div class="h-[1px] w-8 bg-[#A1887F]"></div>
                     </div>
                 </div>

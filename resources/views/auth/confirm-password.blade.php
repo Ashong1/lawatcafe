@@ -9,7 +9,7 @@
 
         <!-- Password -->
         <div x-data="{ show: false }">
-            <label for="password" class="block text-[10px] font-black text-white/80 uppercase tracking-widest mb-2 ml-1">Password</label>
+            <label for="password" class="block text-xs font-bold text-white/80 uppercase tracking-wide mb-2 ml-1">Password</label>
             <div class="relative">
                 <input id="password" :type="show ? 'text' : 'password'" name="password" required autocomplete="current-password"
                     class="w-full bg-white/10 text-white border-white/20 focus:border-white focus:ring-0 rounded-xl px-4 py-3.5 placeholder-white/30 transition shadow-inner text-sm pr-12"
@@ -23,7 +23,7 @@
         </div>
 
         <div class="pt-6 text-center">
-            <button type="submit" class="w-full sm:w-5/6 mx-auto flex justify-center py-4 px-6 rounded-full shadow-2xl text-sm font-black text-[#3E2723] bg-[#FDF8F5] hover:bg-white hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-[0.2em]">
+            <button type="submit" class="w-full sm:w-5/6 mx-auto flex justify-center py-4 px-6 rounded-full shadow-2xl text-sm font-bold text-[#3E2723] bg-[#FDF8F5] hover:bg-white hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-wide">
                 Confirm
             </button>
         </div>

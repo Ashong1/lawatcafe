@@ -2,18 +2,18 @@
 <div class="mb-12">
     <div class="flex items-center gap-2 mb-4">
         <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Active Customer Sessions</h3>
+        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Active Customer Sessions</h3>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
-                <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
-                    <th class="pb-4 font-black">Device</th>
-                    <th class="pb-4 font-black">Voucher Code</th>
-                    <th class="pb-4 font-black hidden md:table-cell">Usage & Speed</th>
-                    <th class="pb-4 font-black hidden md:table-cell">Connected</th>
-                    <th class="pb-4 font-black">Time Left</th>
-                    <th class="pb-4 font-black text-right">Actions</th>
+                <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
+                    <th class="pb-4 font-bold">Device</th>
+                    <th class="pb-4 font-bold">Voucher Code</th>
+                    <th class="pb-4 font-bold hidden md:table-cell">Usage & Speed</th>
+                    <th class="pb-4 font-bold hidden md:table-cell">Connected</th>
+                    <th class="pb-4 font-bold">Time Left</th>
+                    <th class="pb-4 font-bold text-right">Actions</th>
                 </tr>
             </thead>
             <tbody class="text-sm">
@@ -34,22 +34,22 @@
                                     </span>
                                 @endif
                             </span>
-                            <span class="text-[10px] text-[#6D4C41] font-mono tracking-tighter mt-0.5">{{ $session->ip_address }}</span>
+                            <span class="text-xs text-[#6D4C41] font-mono tracking-tighter mt-0.5">{{ $session->ip_address }}</span>
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-[10px] text-[#6D4C41] font-mono tracking-tighter">{{ $session->mac_address }}</span>
+                                <span class="text-xs text-[#6D4C41] font-mono tracking-tighter">{{ $session->mac_address }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
-                                    <span class="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
+                                    <span class="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
                             </div>
                             <div class="flex items-center gap-2 mt-1 md:hidden">
-                                <span class="text-[9px] font-bold text-blue-600 font-mono">&uarr;{{ $session->speed_in }}</span>
-                                <span class="text-[9px] font-bold text-green-600 font-mono">&darr;{{ $session->speed_out }}</span>
+                                <span class="text-xs font-bold text-blue-600 font-mono">&uarr;{{ $session->speed_in }}</span>
+                                <span class="text-xs font-bold text-green-600 font-mono">&darr;{{ $session->speed_out }}</span>
                             </div>
                         </div>
                     </td>
                     <td class="py-4">
                         @if($session->is_orphaned ?? false)
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 border-red-100 rounded-lg font-bold text-xs tracking-widest border" title="Voucher record missing (likely purged while still connected) — no way to compute real time-left. Safe to disconnect.">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 border-red-100 rounded-lg font-bold text-xs tracking-wide border" title="Voucher record missing (likely purged while still connected) — no way to compute real time-left. Safe to disconnect.">
                                 <x-lucide-alert-triangle class="w-3 h-3" />
                                 ORPHANED
                             </span>
@@ -58,7 +58,7 @@
                                 {{ $session->code }}
                             </span>
                             @if($session->tier ?? null)
-                                <span class="inline-block mt-1 px-2 py-0.5 {{ $session->tier === 'premium' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600' }} text-[9px] font-bold uppercase tracking-wider rounded-full">
+                                <span class="inline-block mt-1 px-2 py-0.5 {{ $session->tier === 'premium' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600' }} text-xs font-bold uppercase tracking-wider rounded-full">
                                     {{ $session->tier }}
                                 </span>
                             @endif
@@ -67,18 +67,18 @@
                     <td class="py-4 hidden md:table-cell">
                         <div class="flex flex-col gap-1.5">
                             <div class="flex items-center justify-between min-w-[120px]">
-                                <div class="flex items-center gap-1.5 text-[9px] font-black text-[#8D6E63] uppercase">
+                                <div class="flex items-center gap-1.5 text-xs font-bold text-[#795548] uppercase">
                                     <x-lucide-arrow-up class="w-3 h-3 text-blue-500" />
                                     <span>{{ $session->bytes_in }}</span>
                                 </div>
-                                <span class="text-[9px] font-bold text-blue-600 font-mono">{{ $session->speed_in }}</span>
+                                <span class="text-xs font-bold text-blue-600 font-mono">{{ $session->speed_in }}</span>
                             </div>
                             <div class="flex items-center justify-between min-w-[120px]">
-                                <div class="flex items-center gap-1.5 text-[9px] font-black text-[#8D6E63] uppercase">
+                                <div class="flex items-center gap-1.5 text-xs font-bold text-[#795548] uppercase">
                                     <x-lucide-arrow-down class="w-3 h-3 text-green-500" />
                                     <span>{{ $session->bytes_out }}</span>
                                 </div>
-                                <span class="text-[9px] font-bold text-green-600 font-mono">{{ $session->speed_out }}</span>
+                                <span class="text-xs font-bold text-green-600 font-mono">{{ $session->speed_out }}</span>
                             </div>
                         </div>
                     </td>
@@ -98,7 +98,7 @@
                                 </span>
                             </div>
                         @endif
-                        <span class="text-[10px] text-[#6D4C41] font-medium md:hidden">{{ $session->connected_at }}</span>
+                        <span class="text-xs text-[#6D4C41] font-medium md:hidden">{{ $session->connected_at }}</span>
                     </td>
                     <td class="py-4 text-right">
                         <div class="flex items-center justify-end gap-1">
@@ -156,7 +156,7 @@
                 @empty
                 <tr>
                     <td colspan="6" class="py-12 text-center opacity-30">
-                        <p class="text-[#6D4C41] text-xs font-bold uppercase tracking-widest">No active customers.</p>
+                        <p class="text-[#6D4C41] text-xs font-bold uppercase tracking-wide">No active customers.</p>
                     </td>
                 </tr>
                 @endforelse
@@ -169,15 +169,15 @@
 <div class="mb-12">
     <div class="flex items-center gap-2 mb-4">
         <x-lucide-server class="w-4 h-4 text-blue-500" />
-        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-widest">Network Infrastructure</h3>
+        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Network Infrastructure</h3>
     </div>
     <div class="bg-slate-50 rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
         <table class="w-full text-left border-collapse">
             <thead>
-                <tr class="text-slate-500 text-[9px] uppercase tracking-[0.2em] border-b border-slate-200 bg-slate-100/50">
-                    <th class="py-3 px-6 font-black">Device Node</th>
-                    <th class="py-3 px-6 font-black">Role / Status</th>
-                    <th class="py-3 px-6 font-black text-right">Real-time Throughput</th>
+                <tr class="text-slate-500 text-xs uppercase tracking-wide border-b border-slate-200 bg-slate-100/50">
+                    <th class="py-3 px-6 font-bold">Device Node</th>
+                    <th class="py-3 px-6 font-bold">Role / Status</th>
+                    <th class="py-3 px-6 font-bold text-right">Real-time Throughput</th>
                 </tr>
             </thead>
             <tbody class="text-xs">
@@ -191,32 +191,32 @@
                                     <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0"></span>
                                 @endif
                             </span>
-                            <span class="text-[10px] text-slate-500 font-mono mt-0.5">{{ $session->ip_address }}</span>
+                            <span class="text-xs text-slate-500 font-mono mt-0.5">{{ $session->ip_address }}</span>
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-[10px] text-slate-500 font-mono">{{ $session->mac_address }}</span>
+                                <span class="text-xs text-slate-500 font-mono">{{ $session->mac_address }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
-                                    <span class="text-[9px] px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
+                                    <span class="text-xs px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
                             </div>
                         </div>
                     </td>
                     <td class="py-4 px-6">
-                        <span class="px-3 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded-lg font-bold text-[10px] tracking-widest uppercase">
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded-lg font-bold text-xs tracking-wide uppercase">
                             System VIP / Infrastructure
                         </span>
                     </td>
                     <td class="py-4 px-6 text-right">
                         <div class="flex flex-col items-end gap-1">
                             <div class="flex items-center gap-2">
-                                <span class="text-[9px] font-bold text-blue-500 font-mono">{{ $session->speed_in }}</span>
-                                <div class="flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase">
+                                <span class="text-xs font-bold text-blue-500 font-mono">{{ $session->speed_in }}</span>
+                                <div class="flex items-center gap-1 text-xs font-bold text-slate-400 uppercase">
                                     <x-lucide-arrow-up class="w-2.5 h-2.5" />
                                     <span>{{ $session->bytes_in }}</span>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-[9px] font-bold text-green-500 font-mono">{{ $session->speed_out }}</span>
-                                <div class="flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase">
+                                <span class="text-xs font-bold text-green-500 font-mono">{{ $session->speed_out }}</span>
+                                <div class="flex items-center gap-1 text-xs font-bold text-slate-400 uppercase">
                                     <x-lucide-arrow-down class="w-2.5 h-2.5" />
                                     <span>{{ $session->bytes_out }}</span>
                                 </div>
@@ -226,7 +226,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="3" class="py-8 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                    <td colspan="3" class="py-8 text-center text-slate-400 text-xs font-bold uppercase tracking-wide">
                         No infrastructure devices detected.
                     </td>
                 </tr>
@@ -240,16 +240,16 @@
 <div class="mt-12 pt-8 border-t border-[#F0E6D2]">
     <div class="flex items-center gap-2 mb-4">
         <x-lucide-shield-alert class="w-4 h-4 text-amber-500" />
-        <h3 class="text-sm font-bold text-[#8D6E63] uppercase tracking-widest">Pending Authentication (Idle Devices)</h3>
+        <h3 class="text-sm font-bold text-[#795548] uppercase tracking-wide">Pending Authentication (Idle Devices)</h3>
     </div>
     
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
-                <tr class="text-[#6D4C41] text-[9px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]/50">
-                    <th class="pb-3 font-black">Device Info</th>
-                    <th class="pb-3 font-black">Firewall Status</th>
-                    <th class="pb-3 font-black text-right">Last Seen</th>
+                <tr class="text-[#6D4C41] text-xs uppercase tracking-wide border-b border-[#F0E6D2]/50">
+                    <th class="pb-3 font-bold">Device Info</th>
+                    <th class="pb-3 font-bold">Firewall Status</th>
+                    <th class="pb-3 font-bold text-right">Last Seen</th>
                 </tr>
             </thead>
             <tbody class="text-xs">
@@ -258,17 +258,17 @@
                     <td class="py-3">
                         <div class="flex flex-col">
                             <span class="font-bold text-[#4A3B32]">{{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unknown Device' }}</span>
-                            <span class="text-[9px] text-[#6D4C41] font-mono mt-0.5">{{ $session->ip_address }}</span>
+                            <span class="text-xs text-[#6D4C41] font-mono mt-0.5">{{ $session->ip_address }}</span>
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-[9px] text-[#6D4C41] font-mono">{{ $session->mac_address }}</span>
+                                <span class="text-xs text-[#6D4C41] font-mono">{{ $session->mac_address }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
-                                    <span class="text-[8px] px-1 py-0.5 bg-gray-200 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
+                                    <span class="text-xs px-1 py-0.5 bg-gray-200 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
                             </div>
                         </div>
                     </td>
                     <td class="py-3">
-                        <span class="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100 font-bold text-[9px] uppercase tracking-wider">
+                        <span class="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100 font-bold text-xs uppercase tracking-wider">
                             Blocked by Firewall
                         </span>
                     </td>
@@ -279,7 +279,7 @@
                 @empty
                 <tr>
                     <td colspan="3" class="py-8 text-center opacity-30">
-                        <p class="text-[#6D4C41] text-[10px] font-bold uppercase tracking-widest">No pending devices.</p>
+                        <p class="text-[#6D4C41] text-xs font-bold uppercase tracking-wide">No pending devices.</p>
                     </td>
                 </tr>
                 @endforelse
@@ -292,17 +292,17 @@
 <div class="mt-12 pt-8 border-t border-[#F0E6D2]">
     <div class="flex items-center gap-2 mb-4">
         <x-lucide-ghost class="w-4 h-4 text-red-500" />
-        <h3 class="text-sm font-bold text-[#8D6E63] uppercase tracking-widest">Ghost Devices</h3>
+        <h3 class="text-sm font-bold text-[#795548] uppercase tracking-wide">Ghost Devices</h3>
     </div>
     <p class="text-xs text-[#6D4C41] mb-4 -mt-2">On the LAN (seen in the ARP table or a DHCP lease) but the captive portal has no session record for them at all — never authenticated, never even pending.</p>
 
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
-                <tr class="text-[#6D4C41] text-[9px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]/50">
-                    <th class="pb-3 font-black">Device Info</th>
-                    <th class="pb-3 font-black">Seen Via</th>
-                    <th class="pb-3 font-black text-right">Status</th>
+                <tr class="text-[#6D4C41] text-xs uppercase tracking-wide border-b border-[#F0E6D2]/50">
+                    <th class="pb-3 font-bold">Device Info</th>
+                    <th class="pb-3 font-bold">Seen Via</th>
+                    <th class="pb-3 font-bold text-right">Status</th>
                 </tr>
             </thead>
             <tbody class="text-xs">
@@ -311,11 +311,11 @@
                     <td class="py-3">
                         <div class="flex flex-col">
                             <span class="font-bold text-[#4A3B32]">{{ $ghost['hostname'] ?: 'Unknown Device' }}</span>
-                            <span class="text-[9px] text-[#6D4C41] font-mono mt-0.5">{{ $ghost['ip_address'] ?: 'N/A' }}</span>
+                            <span class="text-xs text-[#6D4C41] font-mono mt-0.5">{{ $ghost['ip_address'] ?: 'N/A' }}</span>
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-[9px] text-[#6D4C41] font-mono">{{ $ghost['mac_address'] }}</span>
+                                <span class="text-xs text-[#6D4C41] font-mono">{{ $ghost['mac_address'] }}</span>
                                 @if($ghost['manufacturer'])
-                                    <span class="text-[8px] px-1 py-0.5 bg-gray-200 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $ghost['manufacturer'] }}</span>
+                                    <span class="text-xs px-1 py-0.5 bg-gray-200 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $ghost['manufacturer'] }}</span>
                                 @endif
                             </div>
                         </div>
@@ -323,7 +323,7 @@
                     <td class="py-3">
                         <div class="flex items-center gap-1">
                             @foreach($ghost['seen_via'] as $source)
-                                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full border border-slate-200 font-bold text-[9px] uppercase tracking-wider">
+                                <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full border border-slate-200 font-bold text-xs uppercase tracking-wider">
                                     {{ strtoupper($source) }}
                                 </span>
                             @endforeach
@@ -331,12 +331,12 @@
                     </td>
                     <td class="py-3 text-right">
                         @if($ghost['is_banned'])
-                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-100 text-red-700 rounded-full border border-red-200 font-bold text-[9px] uppercase tracking-wider">
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-100 text-red-700 rounded-full border border-red-200 font-bold text-xs uppercase tracking-wider">
                                 <x-lucide-shield-off class="w-3 h-3" />
                                 Banned, still on LAN
                             </span>
                         @else
-                            <span class="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100 font-bold text-[9px] uppercase tracking-wider">
+                            <span class="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100 font-bold text-xs uppercase tracking-wider">
                                 Unrecognized
                             </span>
                         @endif
@@ -345,7 +345,7 @@
                 @empty
                 <tr>
                     <td colspan="3" class="py-8 text-center opacity-30">
-                        <p class="text-[#6D4C41] text-[10px] font-bold uppercase tracking-widest">No ghost devices detected.</p>
+                        <p class="text-[#6D4C41] text-xs font-bold uppercase tracking-wide">No ghost devices detected.</p>
                     </td>
                 </tr>
                 @endforelse

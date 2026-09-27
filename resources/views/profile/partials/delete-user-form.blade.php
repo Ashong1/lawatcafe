@@ -1,6 +1,6 @@
 <section class="space-y-6">
     <header>
-        <h2 class="text-lg font-bold text-red-700 uppercase tracking-widest">
+        <h2 class="text-lg font-bold text-red-700 uppercase tracking-wide">
             {{ __('Delete Account') }}
         </h2>
 
@@ -20,11 +20,11 @@
             @csrf
             @method('delete')
 
-            <h2 class="text-lg font-bold text-[#3E2723] uppercase tracking-widest">
+            <h2 class="text-lg font-bold text-[#3E2723] uppercase tracking-wide">
                 {{ __('Are you sure you want to delete your account?') }}
             </h2>
 
-            <p class="mt-1 text-sm text-[#8D6E63] font-medium">
+            <p class="mt-1 text-sm text-[#795548] font-medium">
                 {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
             </p>
 
@@ -41,7 +41,7 @@
             </div>
 
             <div class="mt-6 flex justify-end">
-                <button type="button" x-on:click="$dispatch('close')" class="py-3 px-6 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#8D6E63] hover:bg-[#FDF8F5] font-bold transition text-sm tracking-wide mr-3">
+                <button type="button" x-on:click="$dispatch('close')" class="py-3 px-6 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#795548] hover:bg-[#FDF8F5] font-bold transition text-sm tracking-wide mr-3">
                     {{ __('Cancel') }}
                 </button>
 

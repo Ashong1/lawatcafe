@@ -53,12 +53,12 @@
             <div class="absolute inset-0 border-4 border-[#F0E6D2] rounded-full"></div>
             <div class="absolute inset-0 border-4 border-[#3E2723] rounded-full border-t-transparent animate-spin"></div>
             <div class="absolute inset-0 flex items-center justify-center">
-                <x-lucide-wifi class="w-8 h-8 text-[#8D6E63] animate-pulse" />
+                <x-lucide-wifi class="w-8 h-8 text-[#795548] animate-pulse" />
             </div>
         </div>
 
-        <h2 class="text-3xl font-black text-[#3E2723] mb-4 tracking-tight">Authenticating<span x-show="secondsLeft > 0" x-text="'... (' + secondsLeft + ')'"></span></h2>
-        <p class="text-base text-[#8D6E63] font-medium leading-relaxed max-w-md mx-auto">Verifying voucher and configuring firewall access for your device. Please do not close this window.</p>
+        <h2 class="text-3xl font-bold text-[#3E2723] mb-4 tracking-tight">Authenticating<span x-show="secondsLeft > 0" x-text="'... (' + secondsLeft + ')'"></span></h2>
+        <p class="text-base text-[#795548] font-medium leading-relaxed max-w-md mx-auto">Verifying voucher and configuring firewall access for your device. Please do not close this window.</p>
 
         {{-- Fills the dead stretch between the countdown ending and the 8s "taking too
              long" fallback appearing — that middle window (when the real network wait
@@ -69,14 +69,14 @@
 
         <template x-if="showManualButton">
             <button type="button" @click="document.getElementById('unlock-form').submit()"
-                    class="mt-8 mx-auto inline-flex items-center gap-2 px-6 py-3.5 bg-[#3E2723] hover:bg-[#271815] text-white rounded-full font-black uppercase tracking-widest text-[10px] transition active:scale-95">
+                    class="mt-8 mx-auto inline-flex items-center gap-2 px-6 py-3.5 bg-[#3E2723] hover:bg-[#271815] text-white rounded-full font-bold uppercase tracking-wide text-xs transition active:scale-95">
                 <x-lucide-refresh-cw class="w-4 h-4" />
                 Taking too long? Tap to retry
             </button>
         </template>
 
         <div class="mt-12 pt-8 border-t border-[#F0E6D2] opacity-50">
-            <p class="text-[10px] font-black uppercase tracking-[0.4em]">Directing to Lawa't Core Gateway</p>
+            <p class="text-xs font-bold uppercase tracking-wide">Directing to Lawa't Core Gateway</p>
         </div>
     </div>
 

@@ -10,13 +10,13 @@
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Sales Reports</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Sales Reports</span>
             </h2>
-            <p class="text-sm text-[#8D6E63] mt-2 font-medium">Track your daily revenue and transaction history.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium">Track your daily revenue and transaction history.</p>
         </div>
         <!-- Date Display -->
         <div class="text-right">
-            <p class="text-xs font-bold uppercase tracking-widest text-[#6D4C41]">{{ now()->format('l, F jS') }}</p>
+            <p class="text-xs font-bold uppercase tracking-wide text-[#6D4C41]">{{ now()->format('l, F jS') }}</p>
         </div>
     </div>
 
@@ -28,8 +28,8 @@
             <div class="absolute -right-4 -top-4 w-16 h-16 bg-green-50 rounded-full z-0 group-hover:scale-150 transition duration-500"></div>
             <div class="relative z-10 flex justify-between items-center">
                 <div>
-                    <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em] mb-1">Today's Revenue</h3>
-                    <p class="text-4xl font-black text-[#2E7D32]">₱{{ number_format($todaysRevenue ?? 0, 2) }}</p>
+                    <h3 class="text-[#795548] text-xs font-bold uppercase tracking-wide mb-1">Today's Revenue</h3>
+                    <p class="text-4xl font-bold text-[#2E7D32]">₱{{ number_format($todaysRevenue ?? 0, 2) }}</p>
                 </div>
                 <!-- Sparkline Canvas -->
                 <div class="w-24 h-12 relative z-10 ml-4">
@@ -43,8 +43,8 @@
             <div class="absolute -right-4 -top-4 w-16 h-16 bg-amber-50 rounded-full z-0 group-hover:scale-150 transition duration-500"></div>
             <div class="relative z-10 flex justify-between items-center">
                 <div>
-                    <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em] mb-1">Total Lifetime Sales</h3>
-                    <p class="text-4xl font-black text-[#3E2723]">₱{{ number_format($totalRevenue ?? 0, 2) }}</p>
+                    <h3 class="text-[#795548] text-xs font-bold uppercase tracking-wide mb-1">Total Lifetime Sales</h3>
+                    <p class="text-4xl font-bold text-[#3E2723]">₱{{ number_format($totalRevenue ?? 0, 2) }}</p>
                 </div>
                 <!-- Sparkline Canvas -->
                 <div class="w-24 h-12 relative z-10 ml-4">
@@ -56,7 +56,7 @@
 
     <!-- Weekly Revenue Graph -->
     <div class="bg-white p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
-        <h3 class="text-lg font-black text-[#3E2723] uppercase tracking-widest mb-6 pb-4 border-b border-[#FDF8F5]">Weekly Revenue Trend</h3>
+        <h3 class="text-lg font-bold text-[#3E2723] uppercase tracking-wide mb-6 pb-4 border-b border-[#FDF8F5]">Weekly Revenue Trend</h3>
         <div class="relative h-72 w-full">
             <canvas id="salesChart"></canvas>
         </div>
@@ -64,32 +64,32 @@
 
     <!-- Transactions Table -->
     <div class="bg-white p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
-        <h3 class="text-lg font-black text-[#3E2723] uppercase tracking-widest mb-6 pb-4 border-b border-[#FDF8F5]">Transaction History</h3>
+        <h3 class="text-lg font-bold text-[#3E2723] uppercase tracking-wide mb-6 pb-4 border-b border-[#FDF8F5]">Transaction History</h3>
         
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-black">Ref Number</th>
-                        <th class="pb-4 font-black">Date & Time</th>
-                        <th class="pb-4 font-black">Method</th>
-                        <th class="pb-4 font-black text-right">Amount</th>
+                    <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
+                        <th class="pb-4 font-bold">Ref Number</th>
+                        <th class="pb-4 font-bold">Date & Time</th>
+                        <th class="pb-4 font-bold">Method</th>
+                        <th class="pb-4 font-bold text-right">Amount</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
                     @forelse($sales ?? [] as $sale)
                         <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                             <td class="py-4 font-bold text-[#3E2723] uppercase tracking-tighter group-hover:text-amber-700 transition-colors">{{ $sale->transaction_number }}</td>
-                            <td class="py-4 text-[#8D6E63]">
+                            <td class="py-4 text-[#795548]">
                                 <span class="font-bold">{{ $sale->created_at->format('M d, Y') }}</span>
-                                <span class="block text-[10px] opacity-70">{{ $sale->created_at->format('h:i A') }}</span>
+                                <span class="block text-xs opacity-70">{{ $sale->created_at->format('h:i A') }}</span>
                             </td>
                             <td class="py-4">
-                                <span class="px-2 py-1 bg-[#FDF8F5] border border-[#E6D5C3] text-[10px] font-black uppercase rounded text-[#8D6E63]">
+                                <span class="px-2 py-1 bg-[#FDF8F5] border border-[#E6D5C3] text-xs font-bold uppercase rounded text-[#795548]">
                                     {{ $sale->payment_method }}
                                 </span>
                             </td>
-                            <td class="py-4 text-right font-black text-[#2E7D32]">₱{{ number_format($sale->total_amount, 2) }}</td>
+                            <td class="py-4 text-right font-bold text-[#2E7D32]">₱{{ number_format($sale->total_amount, 2) }}</td>
                         </tr>
                     @empty
                         <tr>

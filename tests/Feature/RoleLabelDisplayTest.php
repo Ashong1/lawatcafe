@@ -71,7 +71,7 @@ class RoleLabelDisplayTest extends TestCase
         // "Barista" also appears as the AI widget's name, and "Admin" matches
         // half the sidebar, so a bare assertSee/assertDontSee proves nothing.
         preg_match_all(
-            '/rounded-lg text-\[10px\] font-black uppercase tracking-widest border[^"]*">\s*([^<\s][^<]*?)\s*</',
+            '/rounded-lg text-xs font-bold uppercase tracking-wide border[^"]*">\s*([^<\s][^<]*?)\s*</',
             $response->getContent(),
             $matches
         );

@@ -9,9 +9,9 @@
             <div>
                 <h2 class="flex items-center gap-3 text-[#3E2723]">
                     <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                    <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Store Preferences</span>
+                    <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Store Preferences</span>
                 </h2>
-                <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Configure threshold alerts and default guest access.</p>
+                <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Configure threshold alerts and default guest access.</p>
             </div>
         </div>
 
@@ -34,8 +34,8 @@
                                 <x-lucide-package-search class="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 class="text-sm font-black text-[#3E2723] uppercase tracking-widest">Stock Alerts</h3>
-                                <p class="text-[10px] text-[#6D4C41] font-medium italic">Set per ingredient, in its own unit.</p>
+                                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Stock Alerts</h3>
+                                <p class="text-xs text-[#6D4C41] font-medium italic">Set per ingredient, in its own unit.</p>
                             </div>
                         </div>
 
@@ -46,7 +46,7 @@
                             all read from there.
                         </p>
 
-                        <a href="{{ route('inventory.ingredients.index') }}" class="inline-flex items-center gap-2 px-5 py-3 bg-[#FDF8F5] border-2 border-[#F0E6D2] hover:border-[#3E2723] rounded-xl text-[10px] font-black uppercase tracking-widest text-[#3E2723] transition active:scale-95">
+                        <a href="{{ route('inventory.ingredients.index') }}" class="inline-flex items-center gap-2 px-5 py-3 bg-[#FDF8F5] border-2 border-[#F0E6D2] hover:border-[#3E2723] rounded-xl text-xs font-bold uppercase tracking-wide text-[#3E2723] transition active:scale-95">
                             <x-lucide-package class="w-4 h-4" />
                             Manage Ingredient Thresholds
                         </a>
@@ -61,32 +61,32 @@
                                 <x-lucide-clock class="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 class="text-sm font-black uppercase tracking-widest">Store Operations</h3>
-                                <p class="text-[10px] text-amber-200 font-medium italic">Configure business hours and receipt details.</p>
+                                <h3 class="text-sm font-bold uppercase tracking-wide">Store Operations</h3>
+                                <p class="text-xs text-amber-200 font-medium italic">Configure business hours and receipt details.</p>
                             </div>
                         </div>
 
                         <div class="space-y-6">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label for="store-open-time" class="block text-[10px] font-black text-amber-200 uppercase mb-2 tracking-widest">Opening Time</label>
+                                    <label for="store-open-time" class="block text-xs font-bold text-amber-200 uppercase mb-2 tracking-wide">Opening Time</label>
                                     <input id="store-open-time" type="time" name="store_open_time" value="{{ $settings['store_open_time'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
                                 </div>
                                 <div>
-                                    <label for="store-close-time" class="block text-[10px] font-black text-amber-200 uppercase mb-2 tracking-widest">Closing Time</label>
+                                    <label for="store-close-time" class="block text-xs font-bold text-amber-200 uppercase mb-2 tracking-wide">Closing Time</label>
                                     <input id="store-close-time" type="time" name="store_close_time" value="{{ $settings['store_close_time'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
                                 </div>
                             </div>
 
                             <div>
-                                <label for="receipt-header" class="block text-[10px] font-black text-amber-200 uppercase mb-2 tracking-widest">Receipt Header Text</label>
+                                <label for="receipt-header" class="block text-xs font-bold text-amber-200 uppercase mb-2 tracking-wide">Receipt Header Text</label>
                                 <input id="receipt-header" type="text" name="receipt_header" value="{{ $settings['receipt_header'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white placeholder-white/30" placeholder="Thank you for visiting!">
                             </div>
                         </div>
 
                         <div class="mt-8 flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/10">
                             <x-lucide-info class="w-5 h-5 text-amber-400 shrink-0" />
-                            <p class="text-[10px] leading-relaxed text-amber-100/70 font-medium italic">
+                            <p class="text-xs leading-relaxed text-amber-100/70 font-medium italic">
                                 Operating hours can be used for automated system tasks, such as clearing active guest sessions after business hours.
                             </p>
                         </div>
@@ -110,7 +110,7 @@
                         <x-lucide-printer class="w-5 h-5" />
                     </div>
                     <div>
-                        <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em]">Receipt Printing &mdash; BIR Compliance</h3>
+                        <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Receipt Printing &mdash; BIR Compliance</h3>
                         <p class="text-xs text-[#6D4C41] font-medium mt-2 leading-relaxed max-w-2xl">
                             A point-of-sale machine that issues printed receipts or invoices to customers must be
                             registered and accredited with the BIR before it may do so. While this is off, the POS
@@ -126,7 +126,7 @@
                 <div class="flex flex-wrap items-center gap-4 p-4 rounded-2xl {{ $receiptPrintingEnabled ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200' }}">
                     <div class="flex items-center gap-2">
                         <div class="w-2 h-2 rounded-full {{ $receiptPrintingEnabled ? 'bg-green-500' : 'bg-amber-500' }}"></div>
-                        <span class="text-[10px] font-black uppercase tracking-widest {{ $receiptPrintingEnabled ? 'text-green-800' : 'text-amber-800' }}">
+                        <span class="text-xs font-bold uppercase tracking-wide {{ $receiptPrintingEnabled ? 'text-green-800' : 'text-amber-800' }}">
                             Currently {{ $receiptPrintingEnabled ? 'Enabled' : 'Disabled' }}
                         </span>
                     </div>
@@ -144,7 +144,7 @@
                                     confirmText: {{ $receiptPrintingEnabled ? "'Yes, Turn Off'" : "'Yes, Turn On'" }},
                                     callback: () => $el.closest('form').submit()
                                 })"
-                                class="px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition active:scale-95 disabled:opacity-60 {{ $receiptPrintingEnabled ? 'bg-white border-2 border-[#E6D5C3] text-[#6D4C41] hover:border-red-300 hover:text-red-700' : 'bg-[#2E7D32] hover:bg-[#1B5E20] text-white shadow-md' }}">
+                                class="px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wide transition active:scale-95 disabled:opacity-60 {{ $receiptPrintingEnabled ? 'bg-white border-2 border-[#E6D5C3] text-[#6D4C41] hover:border-red-300 hover:text-red-700' : 'bg-[#2E7D32] hover:bg-[#1B5E20] text-white shadow-md' }}">
                             {{ $receiptPrintingEnabled ? 'Turn Printing Off' : 'Enable Receipt Printing' }}
                         </button>
                     </form>

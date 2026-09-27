@@ -9,9 +9,9 @@
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Inventory Receiving</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Inventory Receiving</span>
             </h2>
-            <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Record new supplies from vendors and automatically restock ingredients.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Record new supplies from vendors and automatically restock ingredients.</p>
         </div>
     </div>
 
@@ -19,11 +19,11 @@
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Delivery Records</h3>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Delivery Records</h3>
                 <p class="text-xs text-[#6D4C41] mt-1 font-medium">History of all stock replenishments.</p>
             </div>
             
-            <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
+            <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                 <x-lucide-truck class="w-4 h-4" />
                 <span>Receive Delivery</span>
             </button>
@@ -32,14 +32,14 @@
         <div class="overflow-x-auto pr-2">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-black">Date</th>
-                        <th class="pb-4 font-black">Supplier</th>
-                        <th class="pb-4 font-black hidden md:table-cell">Ref #</th>
-                        <th class="pb-4 font-black hidden md:table-cell">Items</th>
-                        <th class="pb-4 font-black">Total Cost</th>
-                        <th class="pb-4 font-black">Status</th>
-                        <th class="pb-4 font-black text-right">Actions</th>
+                    <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
+                        <th class="pb-4 font-bold">Date</th>
+                        <th class="pb-4 font-bold">Supplier</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Ref #</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Items</th>
+                        <th class="pb-4 font-bold">Total Cost</th>
+                        <th class="pb-4 font-bold">Status</th>
+                        <th class="pb-4 font-bold text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
@@ -47,43 +47,43 @@
                     <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                         <td class="py-4">
                             <span class="font-bold text-[#3E2723] block">{{ $delivery->delivery_date->format('M d, Y') }}</span>
-                            <span class="text-[10px] text-[#6D4C41] font-medium uppercase tracking-widest">{{ $delivery->delivery_date->format('h:i A') }}</span>
-                            <span class="text-[10px] text-[#6D4C41] font-mono font-bold block md:hidden">Ref: {{ $delivery->reference_number ?: 'N/A' }}</span>
+                            <span class="text-xs text-[#6D4C41] font-medium uppercase tracking-wide">{{ $delivery->delivery_date->format('h:i A') }}</span>
+                            <span class="text-xs text-[#6D4C41] font-mono font-bold block md:hidden">Ref: {{ $delivery->reference_number ?: 'N/A' }}</span>
                         </td>
                         <td class="py-4">
                             <span class="font-bold text-[#4A3B32]">{{ $delivery->supplier_name }}</span>
                             @if($delivery->user)
-                                <span class="text-[9px] text-[#6D4C41] font-bold uppercase tracking-widest block">by {{ $delivery->user->name }}</span>
+                                <span class="text-xs text-[#6D4C41] font-bold uppercase tracking-wide block">by {{ $delivery->user->name }}</span>
                             @endif
                         </td>
                         <td class="py-4 hidden md:table-cell">
-                            <span class="text-xs font-mono font-bold text-[#8D6E63]">{{ $delivery->reference_number ?: 'N/A' }}</span>
+                            <span class="text-xs font-mono font-bold text-[#795548]">{{ $delivery->reference_number ?: 'N/A' }}</span>
                         </td>
                         <td class="py-4 hidden md:table-cell">
                             <div class="flex flex-col gap-0.5">
                                 @foreach($delivery->items->take(2) as $item)
-                                    <span class="text-[10px] font-bold text-[#3E2723]">
+                                    <span class="text-xs font-bold text-[#3E2723]">
                                         • {{ $item->ingredient->name }} ({{ number_format($item->quantity) }}{{ $item->ingredient->unit }})
                                     </span>
                                 @endforeach
                                 @if($delivery->items->count() > 2)
-                                    <span class="text-[9px] text-[#6D4C41] font-black italic ml-2">+ {{ $delivery->items->count() - 2 }} more...</span>
+                                    <span class="text-xs text-[#6D4C41] font-bold italic ml-2">+ {{ $delivery->items->count() - 2 }} more...</span>
                                 @endif
                             </div>
                         </td>
                         <td class="py-4">
                             <span class="font-extrabold text-[#3E2723]">₱{{ number_format($delivery->total_cost, 2) }}</span>
-                            <span class="text-[10px] text-[#6D4C41] font-bold block md:hidden">{{ $delivery->items->count() }} item{{ $delivery->items->count() === 1 ? '' : 's' }}</span>
+                            <span class="text-xs text-[#6D4C41] font-bold block md:hidden">{{ $delivery->items->count() }} item{{ $delivery->items->count() === 1 ? '' : 's' }}</span>
                         </td>
                         <td class="py-4">
                             @if($delivery->status === 'confirmed' && $delivery->auto_confirmed)
-                                <span class="text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full whitespace-nowrap">Auto-Confirmed</span>
+                                <span class="text-xs font-bold uppercase tracking-wide text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full whitespace-nowrap">Auto-Confirmed</span>
                             @elseif($delivery->status === 'confirmed')
-                                <span class="text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full whitespace-nowrap">Confirmed</span>
+                                <span class="text-xs font-bold uppercase tracking-wide text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-full whitespace-nowrap">Confirmed</span>
                             @elseif($delivery->status === 'pending_review')
-                                <span class="text-[9px] font-black uppercase tracking-widest text-amber-700 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full whitespace-nowrap">Pending Review</span>
+                                <span class="text-xs font-bold uppercase tracking-wide text-amber-700 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-full whitespace-nowrap">Pending Review</span>
                             @else
-                                <span class="text-[9px] font-black uppercase tracking-widest text-red-700 bg-red-50 border border-red-100 px-3 py-1.5 rounded-full whitespace-nowrap">Rejected</span>
+                                <span class="text-xs font-bold uppercase tracking-wide text-red-700 bg-red-50 border border-red-100 px-3 py-1.5 rounded-full whitespace-nowrap">Rejected</span>
                             @endif
                         </td>
                         <td class="py-4 text-right">
@@ -91,13 +91,13 @@
                                 @if($delivery->status === 'pending_review')
                                     <form action="{{ route('inventory.deliveries.confirm', $delivery->id) }}" method="POST" class="inline">
                                         @csrf
-                                        <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-green-700 bg-green-50 hover:bg-green-100 border border-green-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">
+                                        <button type="submit" class="text-xs font-bold uppercase tracking-wide text-green-700 bg-green-50 hover:bg-green-100 border border-green-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">
                                             Confirm
                                         </button>
                                     </form>
                                     <form action="{{ route('inventory.deliveries.reject', $delivery->id) }}" method="POST" class="inline">
                                         @csrf
-                                        <button type="submit" class="text-[9px] font-black uppercase tracking-widest text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">
+                                        <button type="submit" class="text-xs font-bold uppercase tracking-wide text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">
                                             Reject
                                         </button>
                                     </form>
@@ -125,7 +125,7 @@
                         <td colspan="7" class="py-20 text-center">
                             <div class="flex flex-col items-center opacity-30">
                                 <x-lucide-receipt class="w-12 h-12 mb-4" />
-                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-widest">No delivery records found.</p>
+                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-wide">No delivery records found.</p>
                             </div>
                         </td>
                     </tr>
@@ -143,8 +143,8 @@
     <x-modal-shell show="isModalOpen" max-width="2xl" panel-class="border-t-8 border-[#3E2723]" labelled-by="receive-delivery-heading">
 
             <div class="px-8 py-6 border-b border-[#FDF8F5]">
-                <h2 id="receive-delivery-heading" class="text-xl font-black text-[#3E2723] uppercase tracking-widest">Receive Supplies</h2>
-                <p class="text-[10px] text-[#8D6E63] font-medium mt-1 uppercase tracking-tighter">Input vendor details to update inventory.</p>
+                <h2 id="receive-delivery-heading" class="text-xl font-bold text-[#3E2723] uppercase tracking-wide">Receive Supplies</h2>
+                <p class="text-xs text-[#795548] font-medium mt-1 uppercase tracking-tighter">Input vendor details to update inventory.</p>
             </div>
 
             <form action="{{ route('inventory.deliveries.store') }}" method="POST" @submit="submitting = true">
@@ -152,23 +152,23 @@
                 <div class="p-8 space-y-6">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
-                            <label for="delivery-supplier-name" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest ml-1">Supplier Name</label>
+                            <label for="delivery-supplier-name" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Supplier Name</label>
                             <input type="text" id="delivery-supplier-name" name="supplier_name" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                         </div>
                         <div>
-                            <label for="delivery-date" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest ml-1">Delivery Date</label>
+                            <label for="delivery-date" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Delivery Date</label>
                             <input type="date" id="delivery-date" name="delivery_date" value="{{ date('Y-m-d') }}" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                         </div>
                         <div>
-                            <label for="delivery-reference-number" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2 tracking-widest ml-1">Ref / Invoice #</label>
+                            <label for="delivery-reference-number" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Ref / Invoice #</label>
                             <input type="text" id="delivery-reference-number" name="reference_number" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                         </div>
                     </div>
 
                     <div class="space-y-4">
                         <div class="flex justify-between items-center">
-                            <h4 class="text-[10px] font-black text-[#8D6E63] uppercase tracking-widest">Items Received</h4>
-                            <button type="button" @click="addItemRow()" class="text-[9px] font-black text-blue-700 uppercase bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 transition-all flex items-center gap-1.5">
+                            <h4 class="text-xs font-bold text-[#795548] uppercase tracking-wide">Items Received</h4>
+                            <button type="button" @click="addItemRow()" class="text-xs font-bold text-blue-700 uppercase bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 hover:bg-blue-100 transition-all flex items-center gap-1.5">
                                 <x-lucide-plus class="w-3 h-3" />
                                 <span>Add Item</span>
                             </button>
@@ -179,8 +179,8 @@
                                 <div class="bg-[#FDF8F5] p-4 rounded-xl border border-[#F0E6D2] group relative space-y-3">
                                     <div class="flex gap-3">
                                         <div class="flex-[3]">
-                                            <label :for="'delivery-item-'+index+'-ingredient'" class="block text-[9px] text-[#6D4C41] font-black uppercase mb-1">Ingredient</label>
-                                            <select :id="'delivery-item-'+index+'-ingredient'" :name="'items['+index+'][ingredient_id]'" x-model="item.ingredient_id" @change="item.use_packs = getIngredient(item.ingredient_id)?.packaging_unit ? true : false" required class="w-full p-2 border border-[#F0E6D2] rounded-lg text-[11px] bg-white font-bold text-[#3E2723] focus:border-[#3E2723] outline-none">
+                                            <label :for="'delivery-item-'+index+'-ingredient'" class="block text-xs text-[#6D4C41] font-bold uppercase mb-1">Ingredient</label>
+                                            <select :id="'delivery-item-'+index+'-ingredient'" :name="'items['+index+'][ingredient_id]'" x-model="item.ingredient_id" @change="item.use_packs = getIngredient(item.ingredient_id)?.packaging_unit ? true : false" required class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs bg-white font-bold text-[#3E2723] focus:border-[#3E2723] outline-none">
                                                 <option value="">Select...</option>
                                                 <template x-for="ing in ingredients" :key="ing.id">
                                                     <option :value="ing.id" x-text="ing.name"></option>
@@ -197,7 +197,7 @@
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                                         <!-- Pack Input (Conditional) -->
                                         <div x-show="getIngredient(item.ingredient_id)?.packaging_unit" class="flex flex-col">
-                                            <label :for="'delivery-item-'+index+'-packs'" class="block text-[9px] text-[#6D4C41] font-black uppercase mb-1">
+                                            <label :for="'delivery-item-'+index+'-packs'" class="block text-xs text-[#6D4C41] font-bold uppercase mb-1">
                                                 <span x-text="'# of ' + getIngredient(item.ingredient_id)?.packaging_unit + 's'"></span>
                                             </label>
                                             <input type="number" :id="'delivery-item-'+index+'-packs'" step="0.1" x-model="item.packs" @input="updateFromPacks(index)" class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723] bg-white">
@@ -205,7 +205,7 @@
 
                                         <!-- Total Quantity -->
                                         <div class="flex flex-col">
-                                            <label :for="'delivery-item-'+index+'-quantity'" class="block text-[9px] text-[#6D4C41] font-black uppercase mb-1">
+                                            <label :for="'delivery-item-'+index+'-quantity'" class="block text-xs text-[#6D4C41] font-bold uppercase mb-1">
                                                 Total Qty (<span x-text="getIngredient(item.ingredient_id)?.unit || '...'"></span>)
                                             </label>
                                             <input type="number" step="0.01" :id="'delivery-item-'+index+'-quantity'" :name="'items['+index+'][quantity]'" x-model="item.quantity" @input="updateFromQty(index)" required class="w-full p-2 border border-[#F0E6D2] rounded-lg text-xs font-bold text-[#3E2723] bg-white">
@@ -213,16 +213,16 @@
 
                         <!-- Cost -->
                                         <div class="flex flex-col">
-                                            <label :for="'delivery-item-'+index+'-cost'" class="block text-[9px] text-[#6D4C41] font-black uppercase mb-1">Unit Cost</label>
+                                            <label :for="'delivery-item-'+index+'-cost'" class="block text-xs text-[#6D4C41] font-bold uppercase mb-1">Unit Cost</label>
                                             <div class="flex items-center gap-1 w-full border border-[#F0E6D2] rounded-lg bg-white pl-2 focus-within:border-[#3E2723] transition-all">
-                                                <span class="shrink-0 text-[9px] font-bold text-[#D7CCC8]">₱</span>
+                                                <span class="shrink-0 text-xs font-bold text-[#D7CCC8]">₱</span>
                                                 <input type="number" step="0.01" :id="'delivery-item-'+index+'-cost'" :name="'items['+index+'][cost_per_unit]'" x-model="item.cost_per_unit" required class="flex-1 min-w-0 py-2 pr-2 border-0 bg-transparent focus:outline-none focus:ring-0 text-xs font-bold text-[#3E2723]">
                                             </div>
                                         </div>
                                     </div>
                                     
                                     <!-- Conversion Helper Text -->
-                                    <div x-show="getIngredient(item.ingredient_id)?.packaging_unit" class="text-[8px] font-black text-amber-800 uppercase tracking-tighter italic">
+                                    <div x-show="getIngredient(item.ingredient_id)?.packaging_unit" class="text-xs font-bold text-amber-800 uppercase tracking-tighter italic">
                                         Note: 1 <span x-text="getIngredient(item.ingredient_id)?.packaging_unit"></span> = <span x-text="getIngredient(item.ingredient_id)?.capacity_per_pack"></span> <span x-text="getIngredient(item.ingredient_id)?.unit"></span>
                                     </div>
                                 </div>
@@ -230,14 +230,14 @@
                         </div>
 
                         <div class="flex justify-between items-center pt-4 border-t border-[#FDF8F5]">
-                            <span class="text-[10px] font-black text-[#6D4C41] uppercase tracking-widest">Total Valuation</span>
-                            <span class="text-lg font-black text-[#3E2723]" x-text="'₱' + calculateTotal().toLocaleString(undefined, { minimumFractionDigits: 2 })"></span>
+                            <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">Total Valuation</span>
+                            <span class="text-lg font-bold text-[#3E2723]" x-text="'₱' + calculateTotal().toLocaleString(undefined, { minimumFractionDigits: 2 })"></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
-                    <button type="button" @click="closeModal()" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#8D6E63] hover:bg-[#FDF8F5] font-black transition text-[10px] uppercase tracking-widest whitespace-nowrap">Cancel</button>
+                    <button type="button" @click="closeModal()" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#795548] hover:bg-[#FDF8F5] font-bold transition text-xs uppercase tracking-wide whitespace-nowrap">Cancel</button>
                     <x-submit-button label="Record Delivery" />
                 </div>
             </form>

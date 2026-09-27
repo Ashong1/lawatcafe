@@ -9,16 +9,16 @@
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Voucher Management</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Voucher Management</span>
             </h2>
-            <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Manage, generate, and track the status of all your network access codes.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Manage, generate, and track the status of all your network access codes.</p>
         </div>
     </div>
 
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
         <form action="{{ route('network.vouchers.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="md:col-span-2">
-                <label for="search" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Search Code</label>
+                <label for="search" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Search Code</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6D4C41]">
                         <x-lucide-search class="w-4 h-4" />
@@ -27,7 +27,7 @@
                 </div>
             </div>
             <div>
-                <label for="status" class="block text-[10px] font-black text-[#8D6E63] uppercase tracking-widest mb-2 ml-1">Status</label>
+                <label for="status" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Status</label>
                 <select id="status" name="status" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                     <option value="">All Vouchers</option>
                     <option value="available" {{ request('status') === 'available' ? 'selected' : '' }}>Available</option>
@@ -35,7 +35,7 @@
                 </select>
             </div>
             <div class="flex items-end">
-                <button type="submit" class="w-full bg-[#3E2723] text-white py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-[#271815] transition shadow-md">Filter</button>
+                <button type="submit" class="w-full bg-[#3E2723] text-white py-3 rounded-xl font-bold uppercase tracking-wide text-xs hover:bg-[#271815] transition shadow-md">Filter</button>
             </div>
         </form>
     </div>
@@ -44,7 +44,7 @@
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Generated Vouchers</h3>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Generated Vouchers</h3>
                 <p class="text-xs text-[#6D4C41] mt-1 font-medium">Manage and track the status of all WiFi access codes.</p>
             </div>
             
@@ -52,7 +52,7 @@
                 <!-- Batch Print -->
                 <button @click="printSelected()" 
                         x-show="selectedVouchers.length > 0"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-blue-600/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-blue-600/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2"
                         style="display: none;">
                     <x-lucide-printer class="w-3.5 h-3.5" />
                     <span x-text="'Print (' + selectedVouchers.length + ')'"></span>
@@ -63,7 +63,7 @@
                 <button @click="deleteSelected()"
                         x-show="selectedVouchers.length > 0"
                         aria-label="Delete selected vouchers"
-                        class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-red-500/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2"
+                        class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-red-500/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2"
                         style="display: none;">
                     <x-lucide-trash-2 class="w-3.5 h-3.5" />
                 </button>
@@ -79,7 +79,7 @@
                                 confirmText: 'Yes, Purge Now',
                                 callback: () => document.getElementById('purge-form').submit()
                             })"
-                            class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
+                            class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                         <x-lucide-trash-2 class="w-3.5 h-3.5" />
                         Purge Used
                     </button>
@@ -88,7 +88,7 @@
 
                 <x-ask-ai-button prompt="Generate a new voucher batch." label="Ask AI to generate" />
 
-                <button @click="submitting = false; isModalOpen = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-widest uppercase active:scale-95 flex items-center gap-2">
+                <button @click="submitting = false; isModalOpen = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                     <x-lucide-plus class="w-4 h-4" />
                     <span>Generate Vouchers</span>
                 </button>
@@ -98,18 +98,18 @@
         <div class="overflow-x-auto pr-2">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
+                    <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                         @if(auth()->user()->isAdminOrAbove())
                         <th class="pb-4 w-10">
                             <input type="checkbox" @change="toggleAll()" :checked="allSelected" class="rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
                         </th>
                         @endif
-                        <th class="pb-4 font-black">Voucher Code</th>
-                        <th class="pb-4 font-black hidden md:table-cell">Duration</th>
-                        <th class="pb-4 font-black hidden md:table-cell">Tier</th>
-                        <th class="pb-4 font-black text-center">Status</th>
-                        <th class="pb-4 font-black hidden md:table-cell">Created At</th>
-                        <th class="pb-4 font-black text-right">Actions</th>
+                        <th class="pb-4 font-bold">Voucher Code</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Duration</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Tier</th>
+                        <th class="pb-4 font-bold text-center">Status</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Created At</th>
+                        <th class="pb-4 font-bold text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
@@ -122,36 +122,36 @@
                             @endif
                             <td class="py-4 font-extrabold text-amber-700 text-base tracking-widest font-mono">
                                 {{ $voucher->code }}
-                                <span class="block text-[10px] text-[#6D4C41] font-medium tracking-normal md:hidden">{{ $voucher->duration_minutes }} Mins</span>
+                                <span class="block text-xs text-[#6D4C41] font-medium tracking-normal md:hidden">{{ $voucher->duration_minutes }} Mins</span>
                             </td>
-                            <td class="py-4 text-[#8D6E63] font-bold hidden md:table-cell">
+                            <td class="py-4 text-[#795548] font-bold hidden md:table-cell">
                                 {{ $voucher->duration_minutes }} Mins
                             </td>
                             <td class="py-4 hidden md:table-cell">
                                 @if($voucher->tier === 'premium')
-                                    <span class="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-100 text-[10px] font-bold uppercase tracking-wider rounded-full">Premium</span>
+                                    <span class="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-100 text-xs font-bold uppercase tracking-wider rounded-full">Premium</span>
                                 @else
-                                    <span class="px-3 py-1 bg-gray-50 text-gray-600 border border-gray-100 text-[10px] font-bold uppercase tracking-wider rounded-full">Free</span>
+                                    <span class="px-3 py-1 bg-gray-50 text-gray-600 border border-gray-100 text-xs font-bold uppercase tracking-wider rounded-full">Free</span>
                                 @endif
                             </td>
                             <td class="py-4 text-center">
                                 @if($voucher->is_used)
-                                    <span class="px-4 py-1.5 bg-gray-100 text-gray-500 text-[10px] font-bold uppercase tracking-wider rounded-full">Used</span>
+                                    <span class="px-4 py-1.5 bg-gray-100 text-gray-500 text-xs font-bold uppercase tracking-wider rounded-full">Used</span>
                                 @else
-                                    <span class="px-4 py-1.5 bg-[#FFF3E0] text-[#E65100] text-[10px] font-bold uppercase tracking-wider rounded-full">Available</span>
+                                    <span class="px-4 py-1.5 bg-[#FFF3E0] text-[#E65100] text-xs font-bold uppercase tracking-wider rounded-full">Available</span>
                                 @endif
-                                <span class="block text-[10px] text-[#6D4C41] font-medium mt-1 md:hidden">{{ $voucher->created_at->format('M d, Y') }}</span>
+                                <span class="block text-xs text-[#6D4C41] font-medium mt-1 md:hidden">{{ $voucher->created_at->format('M d, Y') }}</span>
                             </td>
-                            <td class="py-4 text-[#8D6E63] text-xs font-medium hidden md:table-cell">
+                            <td class="py-4 text-[#795548] text-xs font-medium hidden md:table-cell">
                                 {{ $voucher->created_at->format('M d, Y') }}
-                                <span class="block text-[10px] text-[#6D4C41]">{{ $voucher->created_at->format('h:i A') }}</span>
+                                <span class="block text-xs text-[#6D4C41]">{{ $voucher->created_at->format('h:i A') }}</span>
                             </td>
                             <td class="py-4 text-right">
                                 <div class="flex justify-end gap-2">
                                     
                                     <a href="{{ route('network.vouchers.print', $voucher->id) }}"
                                        target="_blank"
-                                       class="p-2 text-[#8D6E63] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition"
+                                       class="p-2 text-[#795548] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition"
                                        title="Print" aria-label="Print">
                                         <x-lucide-printer class="w-4 h-4" />
                                     </a>
@@ -207,18 +207,18 @@
 
     <!-- Generation Modal -->
     <x-modal-shell show="isModalOpen" max-width="xl" panel-class="rounded-2xl p-5 sm:p-8 border-t-8 border-[#3E2723]" labelled-by="generate-vouchers-heading">
-            <h2 id="generate-vouchers-heading" class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-widest">Generate Vouchers</h2>
+            <h2 id="generate-vouchers-heading" class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-wide">Generate Vouchers</h2>
 
             <form action="{{ route('network.vouchers.generate') }}" method="POST" @submit="submitting = true">
                 @csrf
                 <div class="mb-4">
-                    <label for="quantity" class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Quantity (Max 100)</label>
+                    <label for="quantity" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2">Quantity (Max 100)</label>
                     <input type="number" id="quantity" name="quantity" required min="1" max="100" value="5" class="w-full p-3 border @error('quantity') border-red-500 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all">
                     <x-field-error name="quantity" />
                 </div>
 
                 <div class="mb-8">
-                    <label for="duration_minutes" class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Voucher Duration</label>
+                    <label for="duration_minutes" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2">Voucher Duration</label>
                     {{-- The presets stay a plain named select, so this still works
                          with no JS at all; "custom" is the only branch that needs
                          Alpine, and it reveals a second field rather than trying to
@@ -232,7 +232,7 @@
                     <x-field-error name="duration_minutes" />
 
                     <div x-show="durationChoice === 'custom'" x-cloak class="mt-3">
-                        <label for="custom_duration_minutes" class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Minutes</label>
+                        <label for="custom_duration_minutes" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2">Minutes</label>
                         <input type="number" id="custom_duration_minutes" name="custom_duration_minutes"
                                min="1" max="43200" step="1"
                                value="{{ old('custom_duration_minutes') }}"
@@ -242,13 +242,13 @@
                                     cannot scroll to, which would deadlock the presets. --}}
                                x-bind:required="durationChoice === 'custom'"
                                class="w-full p-3 border @error('custom_duration_minutes') border-red-500 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
-                        <p class="mt-2 text-[10px] text-[#8D6E63] font-medium">Anything from 1 minute up to 30 days (43,200 minutes).</p>
+                        <p class="mt-2 text-xs text-[#795548] font-medium">Anything from 1 minute up to 30 days (43,200 minutes).</p>
                         <x-field-error name="custom_duration_minutes" />
                     </div>
                 </div>
 
                 <div class="mb-8">
-                    <label for="tier" class="block text-[11px] font-bold text-[#8D6E63] uppercase tracking-widest mb-2">Bandwidth Tier</label>
+                    <label for="tier" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2">Bandwidth Tier</label>
                     <select id="tier" name="tier" required class="w-full p-3 border @error('tier') border-red-500 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
                         <option value="free">Free</option>
                         <option value="premium">Premium</option>
@@ -257,7 +257,7 @@
                 </div>
 
                 <div class="flex gap-4">
-                    <button type="button" @click="isModalOpen = false" class="flex-1 py-3.5 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#8D6E63] hover:bg-[#FDF8F5] font-bold transition text-sm tracking-wide">Cancel</button>
+                    <button type="button" @click="isModalOpen = false" class="flex-1 py-3.5 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#795548] hover:bg-[#FDF8F5] font-bold transition text-sm tracking-wide">Cancel</button>
                     <x-submit-button label="Generate Now" />
                 </div>
             </form>

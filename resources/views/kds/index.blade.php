@@ -8,19 +8,19 @@
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">KDS</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">KDS</span>
             </h2>
-            <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Live kitchen display for order preparation and management.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Live kitchen display for order preparation and management.</p>
         </div>
 
         <div class="flex items-center gap-4">
-            <button @click="showRecall = true" class="flex items-center gap-2 px-5 py-2.5 bg-white border border-[#F0E6D2] text-[#3E2723] rounded-full shadow-sm hover:bg-[#FDF8F5] transition font-bold text-[10px] uppercase tracking-widest">
+            <button @click="showRecall = true" class="flex items-center gap-2 px-5 py-2.5 bg-white border border-[#F0E6D2] text-[#3E2723] rounded-full shadow-sm hover:bg-[#FDF8F5] transition font-bold text-xs uppercase tracking-wide">
                 <x-lucide-history class="w-4 h-4" />
                 <span>Recall</span>
             </button>
             <div class="flex items-center gap-3 px-5 py-2.5 bg-[#E8F5E9] border border-green-200 rounded-full shadow-sm">
                 <span class="w-2.5 h-2.5 rounded-full animate-pulse" :class="refreshing ? 'bg-amber-500' : 'bg-green-500'"></span>
-                <span class="text-[10px] font-bold uppercase tracking-widest" :class="refreshing ? 'text-amber-700' : 'text-[#2E7D32]'" x-text="refreshing ? 'Updating...' : 'Live Updates'"></span>
+                <span class="text-xs font-bold uppercase tracking-wide" :class="refreshing ? 'text-amber-700' : 'text-[#2E7D32]'" x-text="refreshing ? 'Updating...' : 'Live Updates'"></span>
             </div>
         </div>
     </div>
@@ -33,11 +33,11 @@
     <x-modal-shell show="showRecall" max-width="2xl" panel-class="border-t-8 border-[#3E2723] flex flex-col max-h-[80vh]" labelled-by="recall-modal-title">
             <div class="p-8 border-b border-[#FDF8F5] flex justify-between items-center bg-[#FAFAFA]">
                 <div>
-                    <h3 id="recall-modal-title" class="text-2xl font-black text-[#3E2723] uppercase tracking-widest">Recently Completed</h3>
-                    <p class="text-xs text-[#8D6E63] font-bold uppercase tracking-widest">Recall orders back to the queue</p>
+                    <h3 id="recall-modal-title" class="text-2xl font-bold text-[#3E2723] uppercase tracking-wide">Recently Completed</h3>
+                    <p class="text-xs text-[#795548] font-bold uppercase tracking-wide">Recall orders back to the queue</p>
                 </div>
                 <button @click="showRecall = false" aria-label="Close dialog" class="p-3 hover:bg-gray-100 rounded-full transition">
-                    <x-lucide-x class="w-6 h-6 text-[#8D6E63]" />
+                    <x-lucide-x class="w-6 h-6 text-[#795548]" />
                 </button>
             </div>
 
@@ -45,18 +45,18 @@
                 @forelse($recentlyCompleted as $comp)
                     <div class="flex justify-between items-center p-6 bg-[#FAFAFA] rounded-2xl border border-[#F0E6D2] hover:border-amber-500 transition-colors group" data-recall-row>
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-black text-[#3E2723] shadow-sm border border-[#FDF8F5]">
+                            <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-bold text-[#3E2723] shadow-sm border border-[#FDF8F5]">
                                 #{{ substr($comp->transaction_number, -4) }}
                             </div>
                             <div>
-                                <p class="text-sm font-black text-[#3E2723]">{{ $comp->items->count() }} Items</p>
-                                <p class="text-[10px] font-bold text-[#6D4C41] uppercase tracking-widest">Done {{ $comp->updated_at->diffForHumans() }}</p>
+                                <p class="text-sm font-bold text-[#3E2723]">{{ $comp->items->count() }} Items</p>
+                                <p class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">Done {{ $comp->updated_at->diffForHumans() }}</p>
                             </div>
                         </div>
                         <form action="{{ route('kds.update', $comp->id) }}" method="POST" @submit.prevent="recall('{{ route('kds.update', $comp->id) }}', $event)">
                             @csrf
                             <input type="hidden" name="status" value="pending">
-                            <button type="submit" class="flex items-center gap-2 px-6 py-3 bg-[#3E2723] text-white rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#271815] transition shadow-lg shadow-[#3E2723]/20 active:scale-95">
+                            <button type="submit" class="flex items-center gap-2 px-6 py-3 bg-[#3E2723] text-white rounded-full font-bold text-xs uppercase tracking-wide hover:bg-[#271815] transition shadow-lg shadow-[#3E2723]/20 active:scale-95">
                                 <x-lucide-undo-2 class="w-4 h-4" />
                                 <span>Recall</span>
                             </button>

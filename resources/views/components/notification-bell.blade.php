@@ -7,10 +7,10 @@
     $initialUnreadCount = auth()->user()->unreadNotifications->count();
 @endphp
 <div x-data="notificationBell({{ $initialUnreadCount }})" x-init="init()" class="relative">
-    <button @click="toggle()" aria-label="Notifications" class="p-2 text-[#8D6E63] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-full transition relative focus:outline-none">
+    <button @click="toggle()" aria-label="Notifications" class="p-2 text-[#795548] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-full transition relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3E2723]/40">
         <x-lucide-bell class="w-6 h-6" />
         <template x-if="unreadCount > 0">
-            <span class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white" x-text="unreadCount"></span>
+            <span class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white" x-text="unreadCount"></span>
         </template>
     </button>
 
@@ -27,8 +27,8 @@
          class="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-[#F0E6D2] overflow-hidden z-50">
         
         <div class="bg-[#FDF8F5] p-4 border-b border-[#F0E6D2] flex justify-between items-center">
-            <h3 class="text-xs font-black text-[#3E2723] uppercase tracking-widest">Notifications</h3>
-            <button @click="markAllAsRead()" x-show="unreadCount > 0" class="text-[10px] font-bold text-amber-700 hover:text-amber-800 uppercase tracking-tighter">Mark all as read</button>
+            <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Notifications</h3>
+            <button @click="markAllAsRead()" x-show="unreadCount > 0" class="text-xs font-bold text-amber-700 hover:text-amber-800 uppercase tracking-tighter">Mark all as read</button>
         </div>
 
         <div class="max-h-[400px] overflow-y-auto custom-scrollbar">
@@ -55,8 +55,8 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-xs font-bold text-[#3E2723]" x-text="notif.data.title"></p>
-                            <p class="text-[11px] text-[#8D6E63] font-medium leading-relaxed mt-0.5" x-text="notif.data.message"></p>
-                            <p class="text-[9px] text-[#6D4C41] font-bold uppercase tracking-tighter mt-2" x-text="formatDate(notif.created_at)"></p>
+                            <p class="text-xs text-[#795548] font-medium leading-relaxed mt-0.5" x-text="notif.data.message"></p>
+                            <p class="text-xs text-[#6D4C41] font-bold uppercase tracking-tighter mt-2" x-text="formatDate(notif.created_at)"></p>
                         </div>
                         <div class="flex items-start gap-2 shrink-0">
                             <template x-if="!notif.read_at">
@@ -97,7 +97,7 @@
             <template x-if="loaded && notifications.length === 0">
                 <div class="py-12 text-center flex flex-col items-center opacity-30">
                     <x-lucide-bell-off class="w-8 h-8 mb-2" />
-                    <p class="text-xs font-bold uppercase tracking-widest text-[#6D4C41]">No notifications</p>
+                    <p class="text-xs font-bold uppercase tracking-wide text-[#6D4C41]">No notifications</p>
                 </div>
             </template>
         </div>
@@ -108,7 +108,7 @@
              a list that only ever grows is why nobody scrolls it. --}}
         <div x-show="hasRead" x-cloak class="p-3 bg-[#FDF8F5] text-center border-t border-[#F0E6D2]">
             <button @click="clearRead()"
-                    class="text-[10px] font-black text-[#6D4C41] uppercase tracking-widest hover:text-red-700 transition focus:outline-none">
+                    class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide hover:text-red-700 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3E2723]/40">
                 Clear read notifications
             </button>
         </div>

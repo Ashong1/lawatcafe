@@ -50,7 +50,7 @@
         </div>
 
         <div class="pt-6">
-            <button type="submit" class="w-full sm:w-3/4 mx-auto flex justify-center py-3 px-4 border border-transparent rounded-full shadow-lg text-sm font-bold text-[#3E2723] bg-[#FDF8F5] hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#A1887F] transition uppercase tracking-widest">
+            <button type="submit" class="w-full sm:w-3/4 mx-auto flex justify-center py-3 px-4 border border-transparent rounded-full shadow-lg text-sm font-bold text-[#3E2723] bg-[#FDF8F5] hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#A1887F] transition uppercase tracking-wide">
                 Reset Password
             </button>
         </div>

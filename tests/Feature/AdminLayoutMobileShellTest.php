@@ -101,7 +101,7 @@ class AdminLayoutMobileShellTest extends TestCase
         $this->assertStringContainsString("'lg:w-64': sidebarOpen", $html);
         $this->assertStringContainsString("'lg:w-20': ! sidebarOpen", $html);
         $this->assertStringNotContainsString(
-            ":class=\"[mobileNavOpen",
+            ':class="[mobileNavOpen',
             $html,
             'Back on the array class binding — the collapse toggle will silently stop changing the width.'
         );
@@ -135,7 +135,7 @@ class AdminLayoutMobileShellTest extends TestCase
 
         // A drawer that reopens itself on every page load is a drawer in the way.
         $this->assertStringContainsString('mobileNavOpen: false', $html);
-        $this->assertStringNotContainsString("\$persist(", $html);
+        $this->assertStringNotContainsString('$persist(', $html);
     }
 
     public function test_viewport_meta_opts_into_the_safe_area(): void
@@ -170,7 +170,7 @@ class AdminLayoutMobileShellTest extends TestCase
         // "3 / 3" contains spaces and broke at them in a narrow tile, rendering
         // one glyph per line.
         $this->assertMatchesRegularExpression(
-            '/text-xl sm:text-2xl md:text-3xl font-black tracking-tighter whitespace-nowrap/',
+            '/text-xl sm:text-2xl md:text-3xl font-bold tracking-tighter whitespace-nowrap/',
             $html
         );
     }

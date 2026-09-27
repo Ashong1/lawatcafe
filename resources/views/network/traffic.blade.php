@@ -9,16 +9,16 @@
             <div>
                 <h2 class="flex items-center gap-3 text-[#3E2723]">
                     <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                    <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Traffic Shaping</span>
+                    <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Traffic Shaping</span>
                 </h2>
-                <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Live throughput across the guest network.</p>
+                <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Live throughput across the guest network.</p>
             </div>
             
             <!-- Live Indicator -->
             <div class="flex items-center gap-4 bg-white px-4 py-2 rounded-xl border border-[#F0E6D2] shadow-sm">
                 <div class="flex items-center gap-2">
                     <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span class="text-[10px] font-black text-[#3E2723] uppercase tracking-widest">Live Monitoring</span>
+                    <span class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Live Monitoring</span>
                 </div>
                 <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
                 <div class="flex items-center gap-3">
@@ -29,12 +29,12 @@
                          The skeleton is the same width as the figure it
                          becomes, so nothing shifts when it lands. --}}
                     <div class="flex flex-col">
-                        <span class="text-[8px] font-black text-[#6D4C41] uppercase tracking-tighter">Down</span>
+                        <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-tighter">Down</span>
                         <x-skeleton x-show="!hasRate" variant="block" size="h-4" class="w-16 mt-0.5" />
                         <span x-show="hasRate" x-cloak class="text-xs font-bold text-[#3E2723]" x-text="downSpeed"></span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-[8px] font-black text-[#6D4C41] uppercase tracking-tighter">Up</span>
+                        <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-tighter">Up</span>
                         <x-skeleton x-show="!hasRate" variant="block" size="h-4" class="w-16 mt-0.5" />
                         <span x-show="hasRate" x-cloak class="text-xs font-bold text-[#3E2723]" x-text="upSpeed"></span>
                     </div>
@@ -63,13 +63,13 @@
                 @csrf
 
                 <div>
-                    <h4 class="text-xs font-black text-green-800 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <h4 class="text-xs font-bold text-green-800 uppercase tracking-wide mb-2 flex items-center gap-2">
                         <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
                         Fair-Use Ceiling &mdash; In Force
                     </h4>
-                    <p class="text-[10px] text-[#6D4C41] font-medium leading-relaxed">
+                    <p class="text-xs text-[#6D4C41] font-medium leading-relaxed">
                         Every device on the guest network is capped at this rate each way, so no single
-                        guest can saturate the line. It is a ceiling <span class="font-black">per device</span>,
+                        guest can saturate the line. It is a ceiling <span class="font-bold">per device</span>,
                         not a total shared between them.
                     </p>
                 </div>
@@ -78,8 +78,8 @@
                      bound to `lan`, which carries the shop's own equipment too. --}}
                 <div class="p-4 bg-white border border-green-200 rounded-2xl flex items-start gap-3">
                     <x-lucide-triangle-alert class="w-4 h-4 text-green-700 shrink-0 mt-0.5" />
-                    <p class="text-[10px] text-[#6D4C41] font-medium leading-relaxed">
-                        <span class="font-black uppercase tracking-widest text-green-800">Applies to the whole interface.</span><br>
+                    <p class="text-xs text-[#6D4C41] font-medium leading-relaxed">
+                        <span class="font-bold uppercase tracking-wide text-green-800">Applies to the whole interface.</span><br>
                         The POS, the kitchen display and this server sit on the same interface as the
                         guests, so this cap holds them too. Keep it well above what they need &mdash;
                         set it low and orders start crawling along with the streaming.
@@ -87,7 +87,7 @@
                 </div>
 
                 <div>
-                    <label for="bw-fair-use" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Ceiling per device (Mbps, each way)</label>
+                    <label for="bw-fair-use" class="block text-xs font-bold text-[#3E2723] uppercase mb-2">Ceiling per device (Mbps, each way)</label>
                     <input type="number" id="bw-fair-use" name="bw_fair_use_mbps"
                            step="0.5" min="5" max="1000" required
                            value="{{ old('bw_fair_use_mbps', $settings['bw_fair_use_mbps']) }}"
@@ -106,7 +106,7 @@
                             confirmText: 'Yes, apply it',
                             callback: () => document.getElementById('fair-use-form').submit()
                         })"
-                        class="w-full py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-lg active:scale-[0.98]">
+                        class="w-full py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg active:scale-[0.98]">
                     Apply Fair-Use Ceiling
                 </button>
             </form>
@@ -124,8 +124,8 @@
                         <x-lucide-bot class="w-6 h-6" />
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Adaptive Ceiling</h3>
-                        <p class="text-[10px] text-[#6D4C41] font-medium leading-relaxed mt-1">
+                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Adaptive Ceiling</h3>
+                        <p class="text-xs text-[#6D4C41] font-medium leading-relaxed mt-1">
                             Barista AI lowers the cap as the room fills so no one device crowds the others out,
                             and raises it again when the shop is quiet. It learns the line speed and the busy
                             hours from what it measures &mdash; nothing to configure but the bounds.
@@ -137,29 +137,29 @@
                      is on, because sampling runs either way and this is how an
                      owner judges whether it knows enough to be trusted yet. --}}
                 <div class="p-4 bg-[#FDF8F5] border border-[#F0E6D2] rounded-2xl space-y-3">
-                    <p class="text-[9px] font-black uppercase tracking-widest text-[#8D6E63]">What it has learned</p>
+                    <p class="text-xs font-bold uppercase tracking-wide text-[#795548]">What it has learned</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <p class="text-[9px] font-black uppercase tracking-widest text-[#8D6E63]">Line speed</p>
+                            <p class="text-xs font-bold uppercase tracking-wide text-[#795548]">Line speed</p>
                             @if($learned['capacity']['learned'])
-                                <p class="text-sm font-black text-[#3E2723] whitespace-nowrap">{{ $learned['capacity']['down'] }} Mbps down</p>
-                                <p class="text-[9px] text-[#6D4C41] font-medium">{{ $learned['capacity']['up'] }} Mbps up · from {{ $learned['capacity']['informative'] }} usable samples</p>
+                                <p class="text-sm font-bold text-[#3E2723] whitespace-nowrap">{{ $learned['capacity']['down'] }} Mbps down</p>
+                                <p class="text-xs text-[#6D4C41] font-medium">{{ $learned['capacity']['up'] }} Mbps up · from {{ $learned['capacity']['informative'] }} usable samples</p>
                             @else
-                                <p class="text-sm font-black text-[#8D6E63]">Still measuring</p>
-                                <p class="text-[9px] text-[#6D4C41] font-medium">{{ $learned['capacity']['informative'] }} usable of {{ $learned['capacity']['samples'] }} samples &mdash; needs 12</p>
+                                <p class="text-sm font-bold text-[#795548]">Still measuring</p>
+                                <p class="text-xs text-[#6D4C41] font-medium">{{ $learned['capacity']['informative'] }} usable of {{ $learned['capacity']['samples'] }} samples &mdash; needs 12</p>
                             @endif
                         </div>
                         <div>
-                            <p class="text-[9px] font-black uppercase tracking-widest text-[#8D6E63]">Busy hours</p>
+                            <p class="text-xs font-bold uppercase tracking-wide text-[#795548]">Busy hours</p>
                             @if(count($learned['peak_hours']))
-                                <p class="text-sm font-black text-[#3E2723]">
+                                <p class="text-sm font-bold text-[#3E2723]">
                                     {{ collect($learned['peak_hours'])->map(fn ($h) => sprintf('%02d:00', $h))->join(', ') }}
                                 </p>
-                                <p class="text-[9px] text-[#6D4C41] font-medium">Shared strictly during these; more generous outside them</p>
+                                <p class="text-xs text-[#6D4C41] font-medium">Shared strictly during these; more generous outside them</p>
                             @else
-                                <p class="text-sm font-black text-[#8D6E63]">Not yet known</p>
-                                <p class="text-[9px] text-[#6D4C41] font-medium">Learned from guest counts by hour of day</p>
+                                <p class="text-sm font-bold text-[#795548]">Not yet known</p>
+                                <p class="text-xs text-[#6D4C41] font-medium">Learned from guest counts by hour of day</p>
                             @endif
                         </div>
                     </div>
@@ -168,14 +168,14 @@
                          deciding not to disturb the shop, and saying why. --}}
                     @if($learned['last_decision'])
                         <div class="pt-3 border-t border-[#F0E6D2]">
-                            <p class="text-[9px] font-black uppercase tracking-widest text-[#8D6E63] mb-1">
+                            <p class="text-xs font-bold uppercase tracking-wide text-[#795548] mb-1">
                                 Last decision &mdash;
                                 <span class="{{ $learned['last_decision']['decision'] === 'applied' ? 'text-green-700' : ($learned['last_decision']['decision'] === 'failed' ? 'text-red-700' : 'text-amber-700') }}">
                                     {{ $learned['last_decision']['decision'] }}
                                 </span>
                             </p>
-                            <p class="text-[11px] text-[#4A3B32] font-medium leading-relaxed">{{ $learned['last_decision']['reason'] }}</p>
-                            <p class="text-[9px] text-[#8D6E63] font-medium mt-1">
+                            <p class="text-xs text-[#4A3B32] font-medium leading-relaxed">{{ $learned['last_decision']['reason'] }}</p>
+                            <p class="text-xs text-[#795548] font-medium mt-1">
                                 {{ $learned['last_decision']['guests'] }} guest(s) online ·
                                 {{ \Illuminate\Support\Carbon::parse($learned['last_decision']['at'])->diffForHumans() }}
                             </p>
@@ -187,19 +187,19 @@
                     <input type="checkbox" id="bw-adaptive-enabled" name="bw_adaptive_enabled" value="1"
                            @checked(old('bw_adaptive_enabled', $settings['bw_adaptive_enabled']) === '1' || old('bw_adaptive_enabled') === '1')
                            class="w-5 h-5 rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
-                    <span class="text-[11px] font-black text-[#3E2723] uppercase tracking-widest">Let Barista AI adjust the ceiling</span>
+                    <span class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Let Barista AI adjust the ceiling</span>
                 </label>
 
                 <div class="grid grid-cols-2 gap-4 md:gap-6">
                     <div>
-                        <label for="bw-adaptive-min" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Never below (Mbps)</label>
+                        <label for="bw-adaptive-min" class="block text-xs font-bold text-[#3E2723] uppercase mb-2">Never below (Mbps)</label>
                         <input type="number" id="bw-adaptive-min" name="bw_adaptive_min" step="0.5" min="5" max="1000"
                                value="{{ old('bw_adaptive_min', $settings['bw_adaptive_min']) }}"
                                class="w-full bg-white border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
                         <x-field-error name="bw_adaptive_min" />
                     </div>
                     <div>
-                        <label for="bw-adaptive-max" class="block text-[10px] font-black text-[#3E2723] uppercase mb-2">Never above (Mbps)</label>
+                        <label for="bw-adaptive-max" class="block text-xs font-bold text-[#3E2723] uppercase mb-2">Never above (Mbps)</label>
                         <input type="number" id="bw-adaptive-max" name="bw_adaptive_max" step="0.5" min="5" max="1000"
                                value="{{ old('bw_adaptive_max', $settings['bw_adaptive_max']) }}"
                                class="w-full bg-white border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
@@ -207,24 +207,24 @@
                     </div>
                 </div>
 
-                <p class="text-[10px] text-[#6D4C41] font-medium leading-relaxed">
+                <p class="text-xs text-[#6D4C41] font-medium leading-relaxed">
                     The agent can never leave these bounds, whatever it decides &mdash; a request outside them is
                     applied at the nearest one. Every change is logged to
-                    <a href="{{ route('admin.ai.actions.index') }}" class="font-black text-amber-700 hover:text-amber-900 underline">Agent Activity</a>
+                    <a href="{{ route('admin.ai.actions.index') }}" class="font-bold text-amber-700 hover:text-amber-900 underline">Agent Activity</a>
                     and sends you a notification. To approve each change by hand instead, move
                     <span class="font-mono">adjustFairUseCeiling</span> to "requires confirmation" on the Agent Permissions page.
                 </p>
 
-                <button type="submit" class="w-full py-4 bg-white border-2 border-[#3E2723] hover:bg-[#FDF8F5] text-[#3E2723] rounded-xl font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-[0.98]">
+                <button type="submit" class="w-full py-4 bg-white border-2 border-[#3E2723] hover:bg-[#FDF8F5] text-[#3E2723] rounded-xl font-bold text-xs uppercase tracking-wide transition-all active:scale-[0.98]">
                     Save Adaptive Settings
                 </button>
             </form>
 
             <div class="bg-white p-6 rounded-2xl border border-[#F0E6D2] shadow-sm">
-                <h4 class="text-[10px] font-black text-[#3E2723] uppercase tracking-widest mb-4">Real-time Network Impact</h4>
+                <h4 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-4">Real-time Network Impact</h4>
                 <div class="space-y-6">
                     <div>
-                        <div class="flex justify-between text-[10px] font-bold text-[#8D6E63] uppercase mb-2">
+                        <div class="flex justify-between text-xs font-bold text-[#795548] uppercase mb-2">
                             <span>Throughput vs Per-Device Ceiling</span>
                             <x-skeleton x-show="!hasRate" variant="block" size="h-3" class="w-10" />
                             <span x-show="hasRate" x-cloak x-text="utilization + '%'"></span>
@@ -235,17 +235,17 @@
                     </div>
                     <div class="grid grid-cols-2 gap-4 mt-4">
                         <div class="p-3 bg-[#FDF8F5] rounded-xl border border-[#F0E6D2]/50 text-center">
-                            <p class="text-[8px] font-black text-[#8D6E63] uppercase tracking-widest mb-1">Total Downloaded</p>
+                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-1">Total Downloaded</p>
                             <x-skeleton x-show="!hasTotals" variant="block" size="h-4" class="w-20 mx-auto" />
                                 <p x-show="hasTotals" x-cloak class="text-sm font-bold text-[#3E2723]" x-text="totalIn"></p>
                         </div>
                         <div class="p-3 bg-[#FDF8F5] rounded-xl border border-[#F0E6D2]/50 text-center">
-                            <p class="text-[8px] font-black text-[#8D6E63] uppercase tracking-widest mb-1">Total Uploaded</p>
+                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-1">Total Uploaded</p>
                             <x-skeleton x-show="!hasTotals" variant="block" size="h-4" class="w-20 mx-auto" />
                                 <p x-show="hasTotals" x-cloak class="text-sm font-bold text-[#3E2723]" x-text="totalOut"></p>
                         </div>
                     </div>
-                    <p class="text-[10px] text-[#6D4C41] font-medium italic leading-relaxed">
+                    <p class="text-xs text-[#6D4C41] font-medium italic leading-relaxed">
                         The ceiling keeps a "bandwidth hog" from crowding out the POS and KDS, so orders
                         keep going through while the room is busy.
                     </p>

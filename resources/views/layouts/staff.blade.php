@@ -151,7 +151,7 @@
             <x-lucide-coffee class="lk-brand-mark w-8 h-8 text-amber-500 mr-2 shrink-0 absolute left-6" />
             <div class="flex items-baseline whitespace-nowrap ml-10 transition-opacity duration-300" :class="navLabelsVisible ? 'opacity-100' : 'opacity-0 invisible'">
                 <span class="text-3xl font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-xs font-bold tracking-[0.2em] uppercase opacity-90">Kape</span>
+                <span class="text-xs font-bold tracking-wide uppercase opacity-90">Kape</span>
             </div>
             {{-- Discoverable way out of the drawer — backdrop-tap and Escape are not. --}}
             <button @click="mobileNavOpen = false" aria-label="Close menu"
@@ -268,8 +268,8 @@
             </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="navLabelsVisible" class="text-[10px] text-[#8D6E63] font-bold tracking-widest uppercase">Lawa't Kape v{{ config('app.version') }}</span>
-            <span x-show="!navLabelsVisible" class="text-[9px] text-[#8D6E63] font-bold">v1</span>
+            <span x-show="navLabelsVisible" class="text-xs text-[#795548] font-bold tracking-wide uppercase">Lawa't Kape v{{ config('app.version') }}</span>
+            <span x-show="!navLabelsVisible" class="text-xs text-[#795548] font-bold">v1</span>
         </div>
     </aside>
 
@@ -283,10 +283,10 @@
         <header class="min-h-14 h-auto py-2 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center justify-between gap-3 px-4 sm:px-6 z-10 shrink-0 [view-transition-name:app-header]">
 
             {{-- Below lg this opens the drawer; from lg it collapses the column. --}}
-            <button @click="mobileNavOpen = ! mobileNavOpen" :aria-expanded="mobileNavOpen ? 'true' : 'false'" aria-label="Toggle menu" class="lg:hidden text-[#3E2723] hover:bg-[#FDF8F5] p-2 -ml-2 rounded-lg transition focus:outline-none flex items-center justify-center shrink-0">
+            <button @click="mobileNavOpen = ! mobileNavOpen" :aria-expanded="mobileNavOpen ? 'true' : 'false'" aria-label="Toggle menu" class="lg:hidden text-[#3E2723] hover:bg-[#FDF8F5] p-2 -ml-2 rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3E2723]/40 flex items-center justify-center shrink-0">
                 <x-lucide-menu class="w-6 h-6" />
             </button>
-            <button @click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar" class="hidden lg:flex text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none items-center justify-center">
+            <button @click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar" class="hidden lg:flex text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3E2723]/40 items-center justify-center">
                 <x-lucide-menu class="w-6 h-6" />
             </button>
 
@@ -299,7 +299,7 @@
                 <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group cursor-pointer min-w-0">
                     {{-- Reads the user's actual role — see admin.blade.php's
                          matching header and User::roleLabel(). --}}
-                    <span class="hidden lg:inline text-[11px] uppercase tracking-widest text-[#6D4C41] group-hover:text-[#3E2723] transition font-bold">{{ Auth::user()->roleLabel() }}:</span>
+                    <span class="hidden lg:inline text-xs uppercase tracking-wide text-[#6D4C41] group-hover:text-[#3E2723] transition font-bold">{{ Auth::user()->roleLabel() }}:</span>
                     {{-- The one thing here that can grow without limit, so the
                          one thing allowed to truncate. --}}
                     <span class="text-sm font-bold text-[#3E2723] group-hover:text-amber-700 transition truncate max-w-[7rem] sm:max-w-[12rem] lg:max-w-none">{{ Auth::user()->name }}</span>
@@ -313,7 +313,7 @@
                     {{-- Word on desktop, icon on a phone — the label is what
                          made this row wrap. --}}
                     <button type="submit" aria-label="Log out" class="text-red-500 hover:text-red-700 transition flex items-center shrink-0 p-2 -mr-2 sm:p-0 sm:mr-0">
-                        <span class="hidden sm:inline text-xs font-bold tracking-widest uppercase">Logout</span>
+                        <span class="hidden sm:inline text-xs font-bold tracking-wide uppercase">Logout</span>
                         <x-lucide-log-out class="sm:hidden w-5 h-5" />
                     </button>
                 </form>
@@ -344,8 +344,8 @@
                 color: '#3E2723',
                 customClass: {
                     popup: 'rounded-[2rem] border-t-8 border-[#3E2723] shadow-2xl',
-                    confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs',
-                    cancelButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs'
+                    confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-wide text-xs',
+                    cancelButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-wide text-xs'
                 }
             }).then((result) => {
                 if (result.isConfirmed && options.callback) {

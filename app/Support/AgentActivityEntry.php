@@ -80,6 +80,12 @@ class AgentActivityEntry
         'mbps' => 'Speed (Mbps)',
     ];
 
+    /** A warning's plain meaning, e.g. for Findings History ("low_stock_high_demand" -> "a popular item's ingredient is running low"). */
+    public static function signalLabel(string $type): string
+    {
+        return Str::ucfirst(self::SIGNALS[$type] ?? str_replace('_', ' ', $type));
+    }
+
     /** @return string[] tool names that only read data */
     public static function routineTools(): array
     {
