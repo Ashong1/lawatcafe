@@ -86,7 +86,9 @@ class ToolCallOrchestrator
                 break;
             }
 
-            $response = $this->ai->chatWithToolsStreaming($messages, $canonicalTools, $onTextDelta);
+            // The guest portal is anonymous traffic: free models only, and a
+            // $0 price cap on the request (AIService::freeModelsOnly()).
+            $response = $this->ai->chatWithToolsStreaming($messages, $canonicalTools, $onTextDelta, $audience === ToolRegistry::AUDIENCE_GUEST);
 
             if (! $response) {
                 return ['reply' => null, 'pending' => $pending, 'executed' => $executed];

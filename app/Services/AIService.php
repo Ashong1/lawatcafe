@@ -413,7 +413,7 @@ class AIService
      * "stream only the final answer" scope: intermediate tool-resolution
      * rounds show the caller nothing but a static "thinking" state).
      */
-    public function chatWithToolsStreaming(array $messages, array $tools, callable $onTextDelta): ?array
+    public function chatWithToolsStreaming(array $messages, array $tools, callable $onTextDelta, bool $freeOnly = false): ?array
     {
         // One deadline shared across the *entire* cascade (every candidate
         // model), not a fresh budget per attempt. Each per-model
@@ -435,6 +435,11 @@ class AIService
         if (self::hasImage($messages)) {
             $models = $this->imageCapableModels($models);
         }
+        // Guest portal: free models only, however the admin has edited the
+        // list — see freeModelsOnly(). max_price below is the second lock.
+        if ($freeOnly) {
+            $models = $this->freeModelsOnly($models);
+        }
 
         if ($this->openRouterKey && ! $this->providerIsOpen('openrouter') && ! self::quotaExhaustedUntil()) {
             $response = $this->streamOpenAiCompatibleLoop(
@@ -445,7 +450,8 @@ class AIService
                 $tools,
                 $onTextDelta,
                 'openrouter',
-                $deadline
+                $deadline,
+                $freeOnly,
             );
             $this->recordProviderResult('openrouter', (bool) $response);
             if ($response) {
@@ -517,6 +523,55 @@ class AIService
      * safe" as the answer; content-safety models do the same by design.
      */
     private const IMAGE_MODEL_EXCLUDE = ['openrouter/free', 'content-safety'];
+
+    /** OpenRouter's router that only ever picks free models. */
+    public const FREE_ROUTER = 'openrouter/free';
+
+    /**
+     * Ids of models OpenRouter prices at $0 for both input and output, from
+     * its live catalog (cached a day). Null when the catalog can't be read.
+     */
+    public function freeModelIds(): ?array
+    {
+        return Cache::remember('openrouter_free_model_ids', 86400, function () {
+            try {
+                $response = Http::timeout(5)->get('https://openrouter.ai/api/v1/models');
+
+                return $response->successful()
+                    ? collect($response->json('data') ?? [])
+                        // Numeric compare: "0" and "0.0" are both free; a
+                        // missing price is treated as NOT free.
+                        ->filter(fn ($m) => isset($m['pricing']['prompt'], $m['pricing']['completion'])
+                            && is_numeric($m['pricing']['prompt']) && is_numeric($m['pricing']['completion'])
+                            && (float) $m['pricing']['prompt'] == 0.0 && (float) $m['pricing']['completion'] == 0.0)
+                        ->pluck('id')->values()->all()
+                    : null;
+            } catch (\Exception $e) {
+                Log::warning('OpenRouter model catalog unreachable: '.$e->getMessage());
+
+                return null;
+            }
+        }) ?: null;
+    }
+
+    /**
+     * The subset of $models that costs nothing — what the guest portal may
+     * use. The list is admin-editable (AI Providers page), and once credit is
+     * on the account a paid model there would bill for anonymous guest
+     * traffic. Checked against the live catalog's pricing; if that can't be
+     * read, only ":free" variants and the free router count. Never empty:
+     * falls back to the free router.
+     */
+    public function freeModelsOnly(array $models): array
+    {
+        $catalog = $this->freeModelIds();
+
+        $free = array_values(array_filter($models, fn ($m) => $catalog !== null
+            ? in_array($m, $catalog, true)
+            : (str_ends_with($m, ':free') || $m === self::FREE_ROUTER)));
+
+        return $free ?: [self::FREE_ROUTER];
+    }
 
     public static function hasImage(array $messages): bool
     {
@@ -595,7 +650,7 @@ class AIService
      * of the few fast-path slots ahead of an admin-ranked-lower but
      * currently-healthy one.
      */
-    private function streamOpenAiCompatibleLoop(array $models, string $url, array $headers, array $messages, array $tools, callable $onTextDelta, string $provider, float $deadline): ?array
+    private function streamOpenAiCompatibleLoop(array $models, string $url, array $headers, array $messages, array $tools, callable $onTextDelta, string $provider, float $deadline, bool $freeOnly = false): ?array
     {
         $modelsList = $this->healthyModelsFirst($provider, $models);
         $budget = $this->fastPathBudget();
@@ -616,6 +671,12 @@ class AIService
 
             try {
                 $payload = ['model' => $model, 'messages' => $messages, 'stream' => true];
+                // Second lock for free-only requests: OpenRouter itself refuses
+                // to route to any endpoint that would cost money, even if a
+                // paid model got past freeModelsOnly().
+                if ($freeOnly) {
+                    $payload['provider'] = ['max_price' => ['prompt' => 0, 'completion' => 0]];
+                }
                 if (! empty($tools)) {
                     $payload['tools'] = $this->toOpenAiTools($tools);
                 }
