@@ -13,18 +13,18 @@
         <template x-if="rated[index] === undefined">
             <div class="flex items-center gap-1.5">
                 <button type="button" x-on:click="rate(index, 1)" aria-label="This answer was helpful"
-                        class="p-1 rounded-lg text-[#B0A69C] hover:text-green-600 hover:bg-green-50 transition">
+                        class="p-1 rounded-lg text-[#877A6E] hover:text-green-600 hover:bg-green-50 transition">
                     <x-lucide-thumbs-up class="w-3.5 h-3.5" />
                 </button>
                 <button type="button" x-on:click="rate(index, -1)" aria-label="This answer was not helpful"
-                        class="p-1 rounded-lg text-[#B0A69C] hover:text-red-600 hover:bg-red-50 transition">
+                        class="p-1 rounded-lg text-[#877A6E] hover:text-red-600 hover:bg-red-50 transition">
                     <x-lucide-thumbs-down class="w-3.5 h-3.5" />
                 </button>
             </div>
         </template>
 
         <template x-if="rated[index] !== undefined">
-            <span class="text-[9px] font-black uppercase tracking-widest text-[#B0A69C]"
+            <span class="text-[9px] font-black uppercase tracking-widest text-[#877A6E]"
                   x-text="rated[index] === 1 ? 'Thanks!' : 'Noted — thanks'"></span>
         </template>
 

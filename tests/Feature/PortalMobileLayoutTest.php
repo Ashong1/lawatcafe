@@ -241,4 +241,17 @@ class PortalMobileLayoutTest extends TestCase
         $this->assertStringNotContainsString('Disconnected', $html);
         $this->assertStringContainsString('Connect to Wi-Fi', $html);
     }
+
+    /**
+     * Design critique: 8-11px uppercase letter-spaced labels read as texture on
+     * a phone, not words. 12px (text-xs) is the portal's floor now.
+     */
+    public function test_portal_text_is_never_smaller_than_12px(): void
+    {
+        foreach (['index', 'success', 'status', 'menu'] as $page) {
+            $markup = preg_replace('/\{\{--.*?--\}\}/s', '', file_get_contents(resource_path("views/portal/{$page}.blade.php")));
+
+            $this->assertDoesNotMatchRegularExpression('/text-\[(?:[0-9]|1[01])px\]/', $markup, "{$page}.blade.php has text below 12px");
+        }
+    }
 }

@@ -66,18 +66,18 @@
                     <h1 class="text-7xl font-bold text-white drop-shadow-md leading-none" style="font-family: 'Dancing Script', cursive;">Lawa't</h1>
                     <div class="flex items-center justify-center gap-3">
                         <div class="h-[1px] w-8 bg-amber-500/50"></div>
-                        <p class="text-amber-500 text-[11px] font-black tracking-[0.5em] uppercase">Kape</p>
+                        <p class="text-amber-500 text-xs font-bold tracking-wide uppercase">Kape</p>
                         <div class="h-[1px] w-8 bg-amber-500/50"></div>
                     </div>
                 </div>
 
                 <div class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-green-500/20 border border-green-500/30 backdrop-blur-md shadow-inner">
                     <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
-                    <span class="text-[9px] font-black text-white uppercase tracking-[0.2em]">Active Session</span>
+                    <span class="text-xs font-bold text-white uppercase tracking-wide">Active Session</span>
                 </div>
                 
                 <div class="mt-14">
-                    <a href="{{ route('portal.menu') }}" class="group relative inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 hover:bg-amber-500 text-white hover:text-[#3E2723] border border-white/10 hover:border-amber-400 transition-all duration-300 text-[11px] font-black uppercase tracking-widest overflow-hidden">
+                    <a href="{{ route('portal.menu') }}" class="group relative inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 hover:bg-amber-500 text-white hover:text-[#3E2723] border border-white/10 hover:border-amber-400 transition-all duration-300 text-xs font-bold uppercase tracking-wide overflow-hidden">
                         <div class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                         <x-lucide-coffee class="w-5 h-5 group-hover:scale-110 transition-transform relative z-10" stroke-width="2.5" />
                         <span class="relative z-10">Explore Menu</span>
@@ -114,8 +114,8 @@
                         <div class="inline-block p-2 sm:p-4 rounded-full bg-green-50 border border-green-100 mb-2 sm:mb-6 shadow-sm">
                             <x-lucide-shield-check class="w-5 h-5 sm:w-8 sm:h-8 text-green-600" stroke-width="2.5" />
                         </div>
-                        <h2 class="text-xl sm:text-3xl lg:text-5xl font-black text-[#3E2723] mb-1 sm:mb-3 tracking-tight">You're Online</h2>
-                        <p class="hidden sm:block text-xs lg:text-base text-[#8D6E63] font-medium max-w-md mx-auto px-4">Your device is authenticated. Enjoy your premium stay at Lawa't Kape!</p>
+                        <h2 class="text-xl sm:text-3xl lg:text-5xl font-bold text-[#3E2723] mb-1 sm:mb-3 tracking-tight">You're Online</h2>
+                        <p class="hidden sm:block text-xs lg:text-base text-[#795548] font-medium max-w-md mx-auto px-4">Your device is authenticated. Enjoy your premium stay at Lawa't Kape!</p>
                     </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-10 max-w-4xl mx-auto w-full px-2">
@@ -127,25 +127,25 @@
                         <div class="bg-amber-50 border-2 border-amber-200/50 rounded-3xl p-4 sm:p-6 shadow-sm col-span-2 flex flex-col items-center justify-center transition-all hover:bg-amber-100/50 group"
                              role="timer" aria-live="off"
                              :aria-label="`Time remaining: ${remainingLabel} ${remainingUnit}`">
-                            <span class="text-[10px] font-black text-amber-800 uppercase tracking-widest mb-2 group-hover:scale-110 transition-transform" aria-hidden="true">Time Remaining</span>
-                            <span class="text-4xl lg:text-5xl font-black text-[#3E2723] tabular-nums tracking-tighter inline-block" aria-hidden="true" x-text="remainingLabel" :class="tickPulse ? 'tick-pulse' : ''"></span>
-                            <span class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mt-1" aria-hidden="true" x-text="remainingUnit"></span>
+                            <span class="text-xs font-bold text-amber-800 uppercase tracking-wide mb-2 group-hover:scale-110 transition-transform" aria-hidden="true">Time Remaining</span>
+                            <span class="text-4xl lg:text-5xl font-bold text-[#3E2723] tabular-nums tracking-tighter inline-block" aria-hidden="true" x-text="remainingLabel" :class="tickPulse ? 'tick-pulse' : ''"></span>
+                            <span class="text-xs font-bold text-amber-800 uppercase tracking-wide mt-1" aria-hidden="true" x-text="remainingUnit"></span>
                         </div>
                         
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">
-                            <x-lucide-download class="w-6 h-6 text-[#8D6E63] mb-3" stroke-width="2.5" />
-                            <span class="text-[10px] font-black text-[#6D4C41] uppercase tracking-widest mb-1">Data</span>
+                            <x-lucide-download class="w-6 h-6 text-[#795548] mb-3" stroke-width="2.5" />
+                            <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide mb-1">Data</span>
                             {{-- Defaulted, not assumed: OPNsense does not always
                                  include a counter on a freshly-created session,
                                  and an undefined key here is a 500 on the one
                                  page a paying guest is most likely to be on. --}}
-                            <span class="text-lg font-black text-[#3E2723] tabular-nums">{{ number_format(($session['bytes_received'] ?? 0) / (1024 * 1024), 1) }} MB</span>
+                            <span class="text-lg font-bold text-[#3E2723] tabular-nums">{{ number_format(($session['bytes_received'] ?? 0) / (1024 * 1024), 1) }} MB</span>
                         </div>
 
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">
-                            <x-lucide-user class="w-6 h-6 text-[#8D6E63] mb-3" stroke-width="2.5" />
-                            <span class="text-[10px] font-black text-[#6D4C41] uppercase tracking-widest mb-1">Device</span>
-                            <span class="text-base font-black text-[#3E2723] truncate w-full text-center px-1">{{ $userName }}</span>
+                            <x-lucide-user class="w-6 h-6 text-[#795548] mb-3" stroke-width="2.5" />
+                            <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide mb-1">Device</span>
+                            <span class="text-base font-bold text-[#3E2723] truncate w-full text-center px-1">{{ $userName }}</span>
                         </div>
                     </div>
 
@@ -156,9 +156,9 @@
                          else needs the address to reopen it in a real browser. --}}
                     <div class="max-w-md mx-auto w-full px-2 mb-6">
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-5 text-center shadow-sm">
-                            <span class="block text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.25em] mb-2">Check Back Any Time</span>
-                            <p class="font-mono text-xs font-black text-[#3E2723] bg-[#FAF7F2] border border-[#F0E6D2] rounded-xl py-2.5 px-3 select-all break-all">{{ route('portal.index') }}</p>
-                            <p class="text-[10px] text-[#8D6E63] font-bold mt-2.5 leading-relaxed">Bookmark this to see your remaining time later.</p>
+                            <span class="block text-xs font-bold text-[#6D4C41] uppercase tracking-wide mb-2">Check Back Any Time</span>
+                            <p class="font-mono text-xs font-bold text-[#3E2723] bg-[#FAF7F2] border border-[#F0E6D2] rounded-xl py-2.5 px-3 select-all break-all">{{ route('portal.index') }}</p>
+                            <p class="text-xs text-[#795548] font-bold mt-2.5 leading-relaxed">Bookmark this to see your remaining time later.</p>
                         </div>
                     </div>
 
@@ -168,7 +168,7 @@
                              and a "Continue Browsing" button that reloads the page the
                              guest is already looking at is worse than no button. --}}
                         @if($browseUrl !== route('portal.index'))
-                            <a href="{{ $browseUrl }}" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-[11px] lg:text-sm">
+                            <a href="{{ $browseUrl }}" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl lg:rounded-3xl font-bold uppercase tracking-wide transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-xs lg:text-sm">
                                 Continue Browsing
                                 <x-lucide-external-link class="w-5 h-5" />
                             </a>
@@ -176,7 +176,7 @@
                         <form action="{{ route('portal.disconnect') }}" method="POST" x-data="{ disconnecting: false }" @submit="disconnecting = true">
                             @csrf
                             <input type="hidden" name="session_id" value="{{ $session['sessionId'] }}">
-                            <button type="submit" :disabled="disconnecting" class="w-full bg-white/60 hover:bg-white text-[#C62828] border-2 border-[#F0E6D2] py-4 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-[10px] shadow-sm disabled:opacity-70 disabled:cursor-not-allowed">
+                            <button type="submit" :disabled="disconnecting" class="w-full bg-white/60 hover:bg-white text-[#C62828] border-2 border-[#F0E6D2] py-4 rounded-2xl lg:rounded-3xl font-bold uppercase tracking-wide transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-xs shadow-sm disabled:opacity-70 disabled:cursor-not-allowed">
                                 <x-lucide-log-out x-show="!disconnecting" class="w-4 h-4" />
                                 <x-lucide-loader-2 x-show="disconnecting" x-cloak class="w-4 h-4 animate-spin" />
                                 <span x-text="disconnecting ? 'Disconnecting…' : 'Disconnect Session'"></span>
@@ -204,8 +204,8 @@
                         <div class="inline-block p-2 sm:p-4 rounded-full bg-amber-50 border border-amber-100 mb-2 sm:mb-6 shadow-sm">
                             <x-lucide-message-circle class="w-5 h-5 sm:w-8 sm:h-8 text-amber-800" stroke-width="2.5" />
                         </div>
-                        <h2 class="text-xl sm:text-3xl lg:text-5xl font-black text-[#3E2723] mb-0 sm:mb-2 tracking-tight">Barista AI</h2>
-                        <p class="hidden sm:block text-[11px] text-[#8D6E63] font-bold uppercase tracking-[0.3em]">Your Digital Concierge</p>
+                        <h2 class="text-xl sm:text-3xl lg:text-5xl font-bold text-[#3E2723] mb-0 sm:mb-2 tracking-tight">Barista AI</h2>
+                        <p class="hidden sm:block text-xs text-[#795548] font-bold uppercase tracking-wide">Your Digital Concierge</p>
                     </div>
 
                     {{-- min-h-0, not min-h-[300px]: a 300px floor is the same bug
@@ -227,7 +227,7 @@
                         <div class="shrink-0 relative z-10 mb-4 flex items-center gap-2">
                             <div class="flex items-center gap-2.5 bg-[#FAF7F2] px-4 py-1.5 rounded-full border border-[#F0E6D2] shadow-sm" x-bind:class="aiCue ? 'animate-bounce' : ''">
                                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                <span class="text-[9px] font-black uppercase tracking-[0.2em] text-[#3E2723]">AI Agent Active</span>
+                                <span class="text-xs font-bold uppercase tracking-wide text-[#3E2723]">AI Agent Active</span>
                             </div>
 
                             {{-- Only inside the phone's sign-in window, which is the
@@ -242,7 +242,7 @@
                                  it. See CaptivePortalController::handoff(). --}}
                             <span class="cna-only ml-auto shrink-0">
                                 <a href="{{ $safariUrl ?? route('portal.handoff') }}"
-                                   class="inline-flex items-center gap-1.5 bg-[#3E2723] text-white px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] active:scale-95 transition">
+                                   class="inline-flex items-center gap-1.5 bg-[#3E2723] text-white px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide active:scale-95 transition">
                                     <x-lucide-external-link class="w-3 h-3" />
                                     Open in Browser
                                 </a>
@@ -268,15 +268,15 @@
                  to anything other than zero. --}}
             <div class="bg-white lg:bg-transparent pt-3 sm:pt-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-8 lg:pb-12 px-4 sm:px-8 lg:px-20 flex justify-center gap-4 lg:gap-6 shrink-0 border-t border-[#F0E6D2]/50 lg:border-none relative z-20">
                 <button x-on:click="activeTab = 'status'" 
-                        class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex flex-col items-center gap-2.5 group"
+                        class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-xs font-bold uppercase tracking-wide transition-all duration-300 flex flex-col items-center gap-2.5 group"
                         :class="activeTab === 'status' ? 'text-white bg-[#3E2723] shadow-2xl shadow-amber-900/30 -translate-y-1' : 'text-[#6D4C41] hover:bg-white hover:shadow-md hover:border-[#F0E6D2] border border-transparent'">
-                    <x-lucide-wifi class="w-5 h-5 lg:w-6 lg:h-6 transition-colors" x-bind:class="activeTab === 'status' ? 'text-amber-500' : 'text-[#D7CCC8] group-hover:text-[#8D6E63]'" stroke-width="2.5" />
+                    <x-lucide-wifi class="w-5 h-5 lg:w-6 lg:h-6 transition-colors" x-bind:class="activeTab === 'status' ? 'text-amber-500' : 'text-[#D7CCC8] group-hover:text-[#795548]'" stroke-width="2.5" />
                     <span>Status</span>
                 </button>
                 <button x-on:click="activeTab = 'help'"
-                        class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 flex flex-col items-center gap-2.5 group"
+                        class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-xs font-bold uppercase tracking-wide transition-all duration-300 flex flex-col items-center gap-2.5 group"
                         :class="activeTab === 'help' ? 'text-white bg-[#3E2723] shadow-2xl shadow-amber-900/30 -translate-y-1' : 'text-[#6D4C41] hover:bg-white hover:shadow-md hover:border-[#F0E6D2] border border-transparent'">
-                    <x-lucide-message-square class="w-5 h-5 lg:w-6 lg:h-6 transition-colors" x-bind:class="activeTab === 'help' ? 'text-amber-500' : 'text-[#D7CCC8] group-hover:text-[#8D6E63]'" stroke-width="2.5" />
+                    <x-lucide-message-square class="w-5 h-5 lg:w-6 lg:h-6 transition-colors" x-bind:class="activeTab === 'help' ? 'text-amber-500' : 'text-[#D7CCC8] group-hover:text-[#795548]'" stroke-width="2.5" />
                     <span>AI Chat</span>
                 </button>
             </div>
@@ -401,7 +401,7 @@ document.addEventListener('alpine:init', () => {
                 iconColor: '#F59E0B',
                 customClass: {
                     popup: 'rounded-[2rem] border-t-8 border-amber-500 shadow-2xl',
-                    confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs bg-[#3E2723]',
+                    confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-wide text-xs bg-[#3E2723]',
                 },
             });
 

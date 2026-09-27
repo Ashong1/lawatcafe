@@ -97,7 +97,7 @@
     <!-- CNA Escape Hatch Banner -->
     <div class="fixed top-0 inset-x-0 z-[60] bg-amber-50 border-b border-amber-100 px-4 py-2 text-center lg:hidden"
          x-show="isCNA()" x-cloak>
-        <p class="text-[10px] font-black text-amber-800 uppercase tracking-widest flex items-center justify-center gap-2">
+        <p class="text-xs font-bold text-amber-800 uppercase tracking-wide flex items-center justify-center gap-2">
             <x-lucide-external-link class="w-3 h-3" />
             Issues? <a href="http://connectivitycheck.gstatic.com/generate_204" class="underline decoration-dotted">Open in Browser</a>
         </p>
@@ -119,8 +119,8 @@
               the blur was barely visible anyway. --}}
          class="fixed inset-0 z-[90] bg-black/70 flex flex-col items-center justify-center gap-4 text-white text-center px-6">
         <x-lucide-loader-2 class="w-10 h-10 animate-spin text-amber-500" />
-        <p class="text-sm font-black uppercase tracking-widest">Redeeming your voucher…</p>
-        <p class="text-[10px] text-white/60 font-medium max-w-xs">Please don't close this window.</p>
+        <p class="text-sm font-bold uppercase tracking-wide">Redeeming your voucher…</p>
+        <p class="text-xs text-white/60 font-medium max-w-xs">Please don't close this window.</p>
     </div>
 
     <!-- Main Compact Card -->
@@ -147,7 +147,7 @@
                          — a red pulsing pill on arrival read as "the Wi-Fi is
                          broken". Neutral until they act; red is for real failures. --}}
                     <div class="w-1.5 h-1.5 rounded-full" :class="connectionStatus === 'connecting' ? 'bg-amber-400 animate-pulse' : 'bg-white/50'"></div>
-                    <span class="text-[11px] font-bold text-white/90 tracking-wide" x-text="connectionStatus === 'connecting' ? 'Connecting…' : 'Not connected yet'">Not connected yet</span>
+                    <span class="text-xs font-bold text-white/90 tracking-wide" x-text="connectionStatus === 'connecting' ? 'Connecting…' : 'Not connected yet'">Not connected yet</span>
                 </div>
             </div>
         </div>
@@ -189,10 +189,10 @@
                         <div class="inline-block p-3 rounded-full bg-amber-50 border border-amber-100 mb-4">
                             <x-lucide-wifi class="w-6 h-6 text-amber-800" stroke-width="2.5" />
                         </div>
-                        <h2 class="text-xl font-black text-[#3E2723] mb-1 tracking-tight">Quick Connect</h2>
+                        <h2 class="text-xl font-bold text-[#3E2723] mb-1 tracking-tight">Quick Connect</h2>
                         {{-- Follows the BIR receipt gate like the hint below: no printed receipt, no "receipt passcode". --}}
-                        <p class="text-[10px] text-[#8D6E63] font-bold uppercase tracking-widest mb-1">{{ $receiptPrintingEnabled ? 'Enter the code on your receipt' : 'Enter the code on your voucher slip' }}</p>
-                        <p class="text-[9px] text-[#6D4C41] italic font-medium">High-speed browsing with every brew.</p>
+                        <p class="text-xs text-[#795548] font-bold uppercase tracking-wide mb-1">{{ $receiptPrintingEnabled ? 'Enter the code on your receipt' : 'Enter the code on your voucher slip' }}</p>
+                        <p class="text-xs text-[#6D4C41] italic font-medium">High-speed browsing with every brew.</p>
                     </div>
 
                     <form action="{{ route('portal.authenticate') }}" method="POST" id="lawat-login-form" class="space-y-6 relative z-10" @submit.prevent="submitForm($event)">
@@ -207,7 +207,7 @@
                                 <input type="text" name="passcode" required placeholder="XXXX-XXXX" aria-label="Wi-Fi passcode"
                                         autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"
                                         aria-describedby="passcode-hint"
-                                        class="w-full bg-white border-2 border-[#F0E6D2] rounded-2xl py-4 px-4 text-center text-xl font-mono font-black text-[#3E2723] tracking-[0.3em] uppercase focus:outline-none focus:border-[#3E2723] shadow-sm placeholder-[#D7CCC8]">
+                                        class="w-full bg-white border-2 border-[#F0E6D2] rounded-2xl py-4 px-4 text-center text-xl font-mono font-bold text-[#3E2723] tracking-[0.3em] uppercase focus:outline-none focus:border-[#3E2723] shadow-sm placeholder-[#8D7B72]">
                                 <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[#D7CCC8] pointer-events-none">
                                     <x-lucide-ticket class="w-5 h-5" />
                                 </div>
@@ -230,10 +230,10 @@
                                 confirmButtonColor: '#3E2723',
                                 customClass: {
                                     popup: 'rounded-[2rem] font-sans border-2 border-[#F0E6D2]',
-                                    title: 'text-[#3E2723] font-black uppercase tracking-widest text-sm',
+                                    title: 'text-[#3E2723] font-bold uppercase tracking-wide text-sm',
                                     htmlContainer: 'text-xs text-[#4A3B32] font-medium'
                                 }
-                            })" class="w-full text-center text-[9px] font-bold text-[#6D4C41] hover:text-[#3E2723] transition-colors uppercase tracking-widest flex items-center justify-center gap-1.5">
+                            })" class="w-full min-h-[44px] py-3 text-center text-xs font-bold text-[#6D4C41] hover:text-[#3E2723] transition-colors uppercase tracking-wide flex items-center justify-center gap-1.5">
                                 <x-lucide-help-circle class="w-3 h-3" />
                                 Where can I find my passcode?
                             </button>
@@ -248,13 +248,13 @@
                                 <input type="checkbox" id="terms-voucher" required class="peer w-5 h-5 text-[#3E2723] border-2 border-[#E6D5C3] rounded-lg focus:ring-[#3E2723] cursor-pointer appearance-none transition-all checked:bg-[#3E2723] checked:border-[#3E2723]">
                                 <x-lucide-check class="w-3.5 h-3.5 text-white absolute pointer-events-none hidden peer-checked:block" stroke-width="4" />
                             </div>
-                            <label for="terms-voucher" class="text-[9px] text-[#6D4C41] font-bold leading-tight cursor-pointer uppercase tracking-tight">
+                            <label for="terms-voucher" class="flex-1 min-h-[44px] flex items-center text-xs text-[#6D4C41] font-bold leading-tight cursor-pointer">
                                 I agree to the <a href="javascript:void(0)" @click="showTOS = true" class="text-[#3E2723] underline decoration-[#3E2723]/30">Terms</a>.
                             </label>
                         </div>
 
                         <button type="submit" :disabled="isSubmitting"
-                                class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 text-[10px] flex items-center justify-center gap-3 disabled:opacity-50">
+                                class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-2xl font-bold uppercase tracking-wide transition-all shadow-lg active:scale-95 text-xs flex items-center justify-center gap-3 disabled:opacity-50">
                             <template x-if="!isSubmitting">
                                 <div class="flex items-center gap-3">
                                     <span>Connect to Wi-Fi</span>
@@ -277,8 +277,8 @@
                      ?tab=help link on an old phone sees an empty panel. --}}
                 <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" @if($initialTab !== 'help') style="display: none;" @endif class="flex flex-col flex-1 min-h-0">
                     <div class="text-center mb-4 shrink-0 flex flex-col items-center">
-                        <h2 class="text-xl font-black text-[#3E2723] mb-1 tracking-tight">Barista AI</h2>
-                        <p class="text-[10px] text-[#8D6E63] font-bold uppercase tracking-widest mb-2">Digital Concierge</p>
+                        <h2 class="text-xl font-bold text-[#3E2723] mb-1 tracking-tight">Barista AI</h2>
+                        <p class="text-xs text-[#795548] font-bold uppercase tracking-wide mb-2">Digital Concierge</p>
                         {{-- No "System Online" pill here: a green pulse beside the header's
                              connection status gave two contradictory signals at once. --}}
                     </div>
@@ -301,18 +301,18 @@
         <!-- 3. Footer (Fixed Navigation) -->
         <div class="shrink-0 bg-white border-t border-[#F0E6D2] px-3 py-3 flex flex-row justify-evenly items-center gap-1.5">
             <button x-on:click="activeTab = 'code'" 
-                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
+                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-xs font-bold uppercase tracking-wide transition-all flex flex-col items-center justify-center gap-1.5"
                     :class="activeTab === 'code' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#6D4C41] hover:bg-gray-50/50 border border-transparent'">
                 <x-lucide-keyboard class="w-5 h-5" />
                 <span>Connect</span>
             </button>
             <a href="{{ route('portal.menu') }}" 
-                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5 text-[#6D4C41] hover:bg-gray-50/50 border border-transparent">
+                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-xs font-bold uppercase tracking-wide transition-all flex flex-col items-center justify-center gap-1.5 text-[#6D4C41] hover:bg-gray-50/50 border border-transparent">
                 <x-lucide-coffee class="w-5 h-5" />
                 <span>Menu</span>
             </a>
             <button x-on:click="activeTab = 'help'"
-                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-[8px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center gap-1.5"
+                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-xs font-bold uppercase tracking-wide transition-all flex flex-col items-center justify-center gap-1.5"
                     :class="activeTab === 'help' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#6D4C41] hover:bg-gray-50/50 border border-transparent'">
                 <x-lucide-message-square class="w-5 h-5" />
                 <span>AI Chat</span>
@@ -323,14 +323,14 @@
     <!-- TOS Modal -->
     <x-modal-shell show="showTOS" max-width="sm" panel-class="border border-[#F0E6D2]" labelled-by="tos-modal-title">
             <div class="bg-[#3E2723] p-6 text-center">
-                <h3 id="tos-modal-title" class="text-white text-sm font-black uppercase tracking-widest">Terms of Service</h3>
+                <h3 id="tos-modal-title" class="text-white text-sm font-bold uppercase tracking-wide">Terms of Service</h3>
             </div>
-            <div class="p-6 max-h-[40vh] overflow-y-auto no-scrollbar text-[11px] text-[#4A3B32] leading-relaxed space-y-4">
+            <div class="p-6 max-h-[40vh] overflow-y-auto no-scrollbar text-xs text-[#4A3B32] leading-relaxed space-y-4">
                 <p>This network is provided for the convenience of our customers. Users agree not to engage in illegal activities.</p>
                 <p>Traffic is monitored for security threats. Connection metadata is logged for compliance.</p>
             </div>
             <div class="p-4 bg-[#FAF7F2] border-t border-[#F0E6D2] text-center">
-                <button @click="showTOS = false" class="bg-[#3E2723] text-white px-8 py-3.5 rounded-full font-black uppercase tracking-widest text-[9px]">I Understand</button>
+                <button @click="showTOS = false" class="bg-[#3E2723] text-white px-8 py-3.5 rounded-full font-bold uppercase tracking-wide text-xs">I Understand</button>
             </div>
     </x-modal-shell>
 

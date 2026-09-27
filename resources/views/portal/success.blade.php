@@ -45,14 +45,14 @@
                     <h1 class="text-7xl font-bold text-white drop-shadow-md leading-none" style="font-family: 'Dancing Script', cursive;">Lawa't</h1>
                     <div class="flex items-center justify-center gap-3">
                         <div class="h-[1px] w-8 bg-amber-500/50"></div>
-                        <p class="text-amber-500 text-[11px] font-black tracking-[0.5em] uppercase">Kape</p>
+                        <p class="text-amber-500 text-xs font-bold tracking-wide uppercase">Kape</p>
                         <div class="h-[1px] w-8 bg-amber-500/50"></div>
                     </div>
                 </div>
 
                 <div class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-green-500/20 border border-green-500/30 backdrop-blur-md shadow-inner">
                     <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
-                    <span class="text-[9px] font-black text-white uppercase tracking-[0.2em]">Connected</span>
+                    <span class="text-xs font-bold text-white uppercase tracking-wide">Connected</span>
                 </div>
             </div>
             
@@ -73,18 +73,18 @@
                     <div class="w-24 h-24 lg:w-28 lg:h-28 bg-green-50 border-2 border-green-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner transition-transform hover:scale-110 duration-500 check-pop-in">
                         <x-lucide-check class="w-12 h-12 lg:w-16 lg:h-16 text-green-600" stroke-width="3" />
                     </div>
-                    <h2 class="text-4xl lg:text-6xl font-black text-[#3E2723] mb-4 tracking-tighter uppercase anim-pop-in [animation-delay:250ms]">Success!</h2>
-                    <p class="text-xs lg:text-lg text-[#8D6E63] font-medium leading-relaxed max-w-sm mx-auto anim-pop-in [animation-delay:350ms]">You are now connected to our premium high-speed network. Enjoy your stay!</p>
+                    <h2 class="text-4xl lg:text-6xl font-bold text-[#3E2723] mb-4 tracking-tighter uppercase anim-pop-in [animation-delay:250ms]">Success!</h2>
+                    <p class="text-xs lg:text-lg text-[#795548] font-medium leading-relaxed max-w-sm mx-auto anim-pop-in [animation-delay:350ms]">You are now connected to our premium high-speed network. Enjoy your stay!</p>
                 </div>
 
                 <div class="bg-amber-50 border-2 border-amber-200/50 rounded-[2rem] p-8 mb-8 text-center relative overflow-hidden shadow-sm max-w-md mx-auto w-full">
                     <div class="absolute top-0 left-0 w-full h-1 bg-amber-500/30"></div>
-                    <span class="block text-[10px] font-black text-amber-800 uppercase tracking-[0.3em] mb-3">Voucher Accepted</span>
+                    <span class="block text-xs font-bold text-amber-800 uppercase tracking-wide mb-3">Voucher Accepted</span>
 
-                    <p class="text-4xl lg:text-5xl font-black text-[#3E2723] tracking-tighter mb-1">
+                    <p class="text-4xl lg:text-5xl font-bold text-[#3E2723] tracking-tighter mb-1">
                         {{ $durationMinutes >= 60 ? rtrim(rtrim(number_format($durationMinutes / 60, 1), '0'), '.') : $durationMinutes }}<span class="text-lg lg:text-2xl ml-1">{{ $durationMinutes >= 60 ? 'hr' : 'min' }}</span>
                     </p>
-                    <p class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.25em] mb-5">of Wi-Fi &mdash; until {{ $expiresAt->format('g:i A') }}</p>
+                    <p class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-5">of Wi-Fi &mdash; until {{ $expiresAt->format('g:i A') }}</p>
 
                     {{-- The address is the one thing that has to survive this page.
                          Shown to every guest, not just the sign-in assistant: once
@@ -103,7 +103,7 @@
                         </div>
                     @endif
 
-                    <p class="font-mono text-xs lg:text-sm font-black text-[#3E2723] bg-white/70 border border-amber-200 rounded-xl py-3 px-4 select-all break-all">{{ route('portal.index') }}</p>
+                    <p class="font-mono text-xs lg:text-sm font-bold text-[#3E2723] bg-white/70 border border-amber-200 rounded-xl py-3 px-4 select-all break-all">{{ route('portal.index') }}</p>
                 </div>
 
                 {{-- activate() redirects back here when OPNsense is unreachable, so
@@ -150,7 +150,7 @@
                         {{-- type=button with an explicit go(): a plain submit would
                              race the timer and could fire the form twice. --}}
                         <button type="button" x-on:click="go()" x-bind:disabled="submitting"
-                                class="w-full bg-[#3E2723] hover:bg-[#271815] disabled:opacity-70 text-white py-5 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-[11px] lg:text-sm">
+                                class="w-full bg-[#3E2723] hover:bg-[#271815] disabled:opacity-70 text-white py-5 rounded-2xl lg:rounded-3xl font-bold uppercase tracking-wide transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-xs lg:text-sm">
                             <span x-show="!submitting">{{ $alreadyActive ? 'Continue Browsing' : 'Start Browsing' }}</span>
                             <span x-show="submitting" style="display: none;">Connecting&hellip;</span>
                             <x-lucide-globe class="w-5 h-5 lg:w-6 lg:h-6" x-show="!submitting" />
@@ -161,15 +161,15 @@
                         {{-- No x-cloak: this must be readable before Alpine boots,
                              because it explains why the page is about to change by
                              itself. It only ever swaps text, never appears. --}}
-                        <p class="text-center text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.2em] leading-relaxed" x-show="!submitting">
+                        <p class="text-center text-xs font-bold text-[#6D4C41] uppercase tracking-wide leading-relaxed" x-show="!submitting">
                             <span x-show="!cancelled">Connecting in <span x-text="secondsLeft">6</span>s&hellip;
-                                <button type="button" x-on:click="cancelled = true" class="underline decoration-dotted ml-1 normal-case tracking-normal font-bold">Wait</button>
+                                <button type="button" x-on:click="cancelled = true" class="underline decoration-dotted ml-1 normal-case tracking-normal font-bold px-3 py-3 -my-3">Wait</button>
                             </span>
                             <span x-show="cancelled" style="display: none;">Tap above when you're ready.</span>
                         </p>
                     @endunless
 
-                    <a href="{{ route('portal.index') }}" class="w-full bg-white border-2 border-[#E6D5C3] text-[#6D4C41] py-4 rounded-2xl lg:rounded-3xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-[10px] lg:text-xs hover:border-[#8D6E63]">
+                    <a href="{{ route('portal.index') }}" class="w-full bg-white border-2 border-[#E6D5C3] text-[#6D4C41] py-4 rounded-2xl lg:rounded-3xl font-bold uppercase tracking-wide transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-xs lg:text-xs hover:border-[#8D6E63]">
                         <span>View My Session</span>
                         <x-lucide-timer class="w-4 h-4 lg:w-5 lg:h-5" />
                     </a>
@@ -187,17 +187,17 @@
                          flatten the link's flex layout. --}}
                     <div class="cna-only">
                         <div class="rounded-2xl border-2 border-dashed border-[#E6D5C3] bg-white/70 px-4 py-4 text-center space-y-3">
-                            <p class="text-[10px] font-black text-[#6D4C41] uppercase tracking-[0.2em] leading-relaxed">
+                            <p class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide leading-relaxed">
                                 This window closes once you're online
                             </p>
                             <p class="text-xs text-[#4A3B32] leading-relaxed">
                                 To check your time left later, open your browser and go to
-                                <span class="block mt-1 font-black text-sm text-[#3E2723] select-all">{{ request()->getHost() }}</span>
+                                <span class="block mt-1 font-bold text-sm text-[#3E2723] select-all">{{ request()->getHost() }}</span>
                             </p>
                             {{-- Apple: x-safari- scheme (see safariUrl()); elsewhere a
                                  target=_blank tap. --}}
                             <a href="{{ $safariUrl ?? route('portal.index') }}" @unless($safariUrl) target="_blank" rel="noopener" @endunless
-                               class="w-full bg-[#FFF8E1] border-2 border-[#FFE082] text-[#6D4C41] py-3 rounded-xl font-black uppercase tracking-[0.2em] transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-[10px]">
+                               class="w-full bg-[#FFF8E1] border-2 border-[#FFE082] text-[#6D4C41] py-3 rounded-xl font-bold uppercase tracking-wide transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-xs">
                                 <span>{{ $safariUrl ? 'Open in Safari' : 'Open in my browser' }}</span>
                                 <x-lucide-external-link class="w-4 h-4" />
                             </a>
