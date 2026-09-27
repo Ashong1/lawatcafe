@@ -127,4 +127,26 @@ class CaptivePortalAuthenticateTest extends TestCase
         $response->assertSee('That code does not match any voucher.', false);
         $response->assertSee('Swal.fire', false);
     }
+
+    /**
+     * The real not-found message contains an apostrophe. The toast lives in an
+     * x-init attribute, and the browser HTML-decodes attribute values before
+     * Alpine evaluates them — so Blade's &#039; escape turned back into a raw
+     * quote, closed the JS string early, and the whole x-init threw. The guest
+     * saw no popup at all. Assert on the decoded attribute, which is what
+     * Alpine actually runs.
+     */
+    public function test_a_flashed_error_with_an_apostrophe_is_valid_javascript(): void
+    {
+        $message = "That code doesn't match any voucher — double-check it against your receipt.";
+
+        $html = $this->withSession(['error' => $message])->get(route('portal.index'))->getContent();
+
+        $this->assertMatchesRegularExpression('/<body[^>]*x-init="([^"]*)"/s', $html);
+        preg_match('/<body[^>]*x-init="([^"]*)"/s', $html, $m);
+        $js = html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5);
+
+        $this->assertStringNotContainsString("doesn't", $js, 'a raw apostrophe would terminate the JS string literal');
+        $this->assertStringContainsString("'That code doesn\\u0027t match", $js);
+    }
 }

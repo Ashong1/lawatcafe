@@ -30,7 +30,7 @@
       x-init="
         @if(session('message'))
             Swal.fire({
-                toast: true, position: 'top', icon: 'success', title: '{{ session('message') }}',
+                toast: true, position: 'top', icon: 'success', title: {!! \Illuminate\Support\Js::from(session('message')) !!},
                 showConfirmButton: false, timer: 5000, timerProgressBar: true,
                 background: '#E8F5E9', color: '#2E7D32', iconColor: '#2E7D32',
                 customClass: { popup: 'rounded-2xl border border-green-200 shadow-xl font-bold' }
