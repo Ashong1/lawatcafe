@@ -172,7 +172,7 @@
                     <div class="rounded-2xl border-2 border-dashed border-[#E6D5C3] bg-white/70 px-4 py-4 text-center space-y-3">
                         <p class="text-sm text-[#4A3B32] leading-relaxed">
                             Check your time left anytime at
-                            <span class="block mt-1 font-bold text-base text-[#3E2723] select-all">{{ request()->getHost() }}</span>
+                            <span class="block mt-1 font-bold text-base text-[#3E2723] select-all">{{ config('services.portal.host') }}</span>
                             <span class="block mt-1 text-xs text-[#795548]">or scan the code on your voucher slip.</span>
                         </p>
 
@@ -186,11 +186,7 @@
                         @endif
 
                         <div class="cna-only">
-                            <a href="{{ $safariUrl ?? \App\Http\Controllers\CaptivePortalController::browserPortalUrl() }}" @unless($safariUrl) target="_blank" rel="noopener" @endunless
-                               class="w-full min-h-[44px] bg-[#FFF8E1] border-2 border-[#FFE082] text-[#6D4C41] py-3 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm">
-                                <span>{{ $safariUrl ? 'Open in Safari' : 'Open in my browser' }}</span>
-                                <x-lucide-external-link class="w-4 h-4" />
-                            </a>
+                            @include('portal.partials.open-in-browser', ['label' => 'Open in my browser', 'class' => 'w-full min-h-[44px] bg-[#FFF8E1] border-2 border-[#FFE082] text-[#6D4C41] py-3 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] flex flex-row-reverse items-center justify-center gap-2 text-sm'])
                             <p class="text-xs text-[#795548] mt-2">This window closes once you're online.</p>
                         </div>
                         <div class="browser-only">

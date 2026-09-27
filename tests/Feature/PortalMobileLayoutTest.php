@@ -193,7 +193,9 @@ class PortalMobileLayoutTest extends TestCase
             ->getContent();
 
         $this->assertStringContainsString('Open in Browser', $content);
-        $this->assertStringContainsString(route('portal.handoff'), $content);
+        // A browser picker: named browsers get the name, the phone's own gets the IP.
+        $this->assertStringContainsString('Open in which browser?', $content);
+        $this->assertStringContainsString('intent://wifi.lawatkape.lab/portal#Intent;scheme=http;action=android.intent.action.VIEW;package=com.android.chrome', $content);
         // The detection + .cna-only rule the button depends on.
         $this->assertStringContainsString('isCaptiveAssistant', $content);
         $this->assertStringContainsString('cna-only ml-auto shrink-0', $content);

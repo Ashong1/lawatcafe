@@ -101,7 +101,8 @@
          x-show="isCNA()" x-cloak>
         <p class="text-xs font-bold text-amber-800 uppercase tracking-wide flex items-center justify-center gap-2">
             <x-lucide-external-link class="w-3 h-3" />
-            Issues? <a href="{{ $safariUrl ?? \App\Http\Controllers\CaptivePortalController::browserPortalUrl() }}" @unless($safariUrl) target="_blank" rel="noopener" @endunless class="underline decoration-dotted">Open in Browser</a>
+            Issues?
+            @include('portal.partials.open-in-browser', ['label' => 'Open in Browser', 'class' => 'inline-flex items-center gap-1 underline decoration-dotted uppercase font-bold', 'iconClass' => 'hidden'])
         </p>
     </div>
 

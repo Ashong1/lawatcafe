@@ -157,8 +157,8 @@
                     <div class="max-w-md mx-auto w-full px-2 mb-6">
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-5 text-center shadow-sm">
                             <span class="block text-xs font-bold text-[#6D4C41] uppercase tracking-wide mb-2">Check Back Any Time</span>
-                            <p class="font-mono text-xs font-bold text-[#3E2723] bg-[#FAF7F2] border border-[#F0E6D2] rounded-xl py-2.5 px-3 select-all break-all">{{ route('portal.index') }}</p>
-                            <p class="text-xs text-[#795548] font-bold mt-2.5 leading-relaxed">Bookmark this to see your remaining time later.</p>
+                            <p class="font-mono text-xs font-bold text-[#3E2723] bg-[#FAF7F2] border border-[#F0E6D2] rounded-xl py-2.5 px-3 select-all break-all">{{ config('services.portal.host') }}</p>
+                            <p class="text-xs text-[#795548] font-bold mt-2.5 leading-relaxed">Type this in any browser to see your time left.</p>
                         </div>
                     </div>
 
@@ -241,11 +241,7 @@
                                  the single thing most likely to make the OS honour
                                  it. See CaptivePortalController::handoff(). --}}
                             <span class="cna-only ml-auto shrink-0">
-                                <a href="{{ $safariUrl ?? route('portal.handoff') }}"
-                                   class="inline-flex items-center gap-1.5 bg-[#3E2723] text-white px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide active:scale-95 transition">
-                                    <x-lucide-external-link class="w-3 h-3" />
-                                    Open in Browser
-                                </a>
+                                @include('portal.partials.open-in-browser', ['label' => 'Open in Browser', 'class' => 'inline-flex items-center gap-1.5 bg-[#3E2723] text-white px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide active:scale-95 transition', 'iconClass' => 'w-3 h-3'])
                             </span>
                         </div>
 

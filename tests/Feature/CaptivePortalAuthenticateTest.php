@@ -127,8 +127,11 @@ class CaptivePortalAuthenticateTest extends TestCase
         $html = $this->get(route('portal.index'))->assertOk()->getContent();
 
         $this->assertStringNotContainsString('generate_204', $html);
-        // By IP: the browser it opens may use a vendor cloud DNS that can't find .lab names.
-        $this->assertMatchesRegularExpression('#href="http://192\.168\.2\.100/portal"\s+target="_blank"[^>]*>Open in Browser#', $html);
+        // Named browsers use the shop's DNS and get the name; the phone's own
+        // browser (Xiaomi's uses its cloud DNS, which can't find .lab) gets the IP.
+        $this->assertStringContainsString('package=com.brave.browser', $html);
+        $this->assertStringContainsString('intent://wifi.lawatkape.lab/portal#Intent', $html);
+        $this->assertStringContainsString('intent://192.168.2.100/portal#Intent', $html);
 
         $iphone = $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148'])
             ->get(route('portal.index'))->getContent();

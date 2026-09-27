@@ -10,7 +10,12 @@ the history was rewritten.
 ---
 
 ## 1.12.1 — Network pages made easier
-*builds 168–172*
+*builds 168–173*
+
+- "Open in Browser" in the sign-in window now asks which browser (Chrome,
+  Brave, Firefox, Samsung Internet, Edge, Opera, or the phone's own) and
+  opens that app directly. The status and success pages show
+  wifi.lawatkape.lab instead of an IP address.
 
 - Xiaomi's sign-in window no longer gets the automatic browser handoff after
   a code (it opened Xiaomi's own browser, which can't resolve .lab names).

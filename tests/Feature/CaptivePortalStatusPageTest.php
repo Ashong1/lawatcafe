@@ -261,7 +261,8 @@ class CaptivePortalStatusPageTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertMatchesRegularExpression('#<a href="http://192\.168\.2\.100/portal"\s+target="_blank"#', $html);
+        $this->assertStringContainsString('Open in which browser?', $html);
+        $this->assertStringContainsString('intent://192.168.2.100/portal#Intent;scheme=http;action=android.intent.action.VIEW;S.browser_fallback_url', $html);
         $this->assertStringContainsString('Open in my browser', $html);
         $this->assertStringContainsString('>wifi.lawatkape.lab</span>', $html);
     }
