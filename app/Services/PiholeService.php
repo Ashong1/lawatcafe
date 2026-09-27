@@ -106,10 +106,11 @@ class PiholeService
     public function blockedDomains(): array
     {
         try {
-            $response = $this->withSession(fn ($client) => $client->get('/api/domains', [
-                'type' => 'deny',
-                'kind' => 'exact',
-            ]));
+            // Type and kind go in the PATH in Pi-hole v6. Passed as query
+            // params they were silently ignored, so the sub-domain regex twins
+            // (upsertSubdomainRule) leaked onto the Site Blocking page as raw
+            // patterns like "(\.|^)pornhub\.com$".
+            $response = $this->withSession(fn ($client) => $client->get('/api/domains/deny/exact'));
 
             if (! $response || ! $response->successful()) {
                 return [];

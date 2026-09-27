@@ -240,4 +240,18 @@ class PiholeServiceTest extends TestCase
 
         $this->assertSame(['enabled' => true, 'domains' => 76793], (new PiholeService)->adultList());
     }
+
+    /**
+     * Pi-hole v6 takes type/kind in the path. As query params they were
+     * ignored, so the sub-domain regex twins showed up on the Site Blocking
+     * page as raw patterns like "(\\.|^)pornhub\\.com$".
+     */
+    public function test_blocked_domains_asks_for_exact_entries_by_path(): void
+    {
+        Http::fake($this->fakeAuth() + ['pihole.test/api/domains*' => Http::response(['domains' => []])]);
+
+        (new PiholeService)->blockedDomains();
+
+        Http::assertSent(fn ($r) => $r->method() === 'GET' && parse_url($r->url(), PHP_URL_PATH) === '/api/domains/deny/exact');
+    }
 }

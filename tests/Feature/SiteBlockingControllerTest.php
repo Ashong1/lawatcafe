@@ -166,4 +166,20 @@ class SiteBlockingControllerTest extends TestCase
             ->post(route('network.site-blocking.adult-list'), ['enabled' => '1'])
             ->assertRedirect(route('staff.dashboard'));
     }
+
+    /** The Block button rendered as an empty blob: its form never defined the `submitting` flag it reads. */
+    public function test_the_add_site_form_defines_the_flag_its_button_needs(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->mock(PiholeService::class, function ($mock) {
+            $mock->shouldReceive('adultList')->andReturn(['enabled' => true, 'domains' => 76793]);
+            $mock->shouldReceive('blockedDomains')->andReturn([['domain' => 'sulasok.tv', 'comment' => null, 'enabled' => true]]);
+        });
+
+        $html = $this->actingAs($admin)->get(route('network.site-blocking'))->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/action="[^"]*site-blocking"[^>]*x-data="\{ submitting: false \}"/', $html);
+        $this->assertStringContainsString('sulasok.tv', $html);
+        $this->assertStringContainsString('76,793', $html);
+    }
 }

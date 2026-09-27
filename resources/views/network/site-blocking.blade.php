@@ -2,131 +2,134 @@
 @section('title', 'Site Blocking')
 
 @section('content')
-<div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
-    <div class="max-w-7xl mx-auto">
+{{-- One card, one row per category, sites as chips.
 
-    <div class="mb-8 border-b border-[#E6D5C3] pb-6">
-        <h2 class="flex items-center gap-3 text-[#3E2723]">
-            <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-            <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Site Blocking</span>
-        </h2>
-        <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Block or unblock sites for every guest on the Wi-Fi network in one click, via Pi-hole's DNS filtering.</p>
+     This page used to give every preset its own full-width card in a
+     three-column grid, with the adult-list switch in a separate panel above
+     and custom sites in a table below. A category with two sites left most
+     of its row empty, and the whole thing read as scattered (owner's words).
+     Same routes and fields as before; only the layout changed. --}}
+@php
+    $adultOn = $adultList['enabled'] ?? false;
+    $categoryIcons = [
+        'Social Media' => 'lucide-users',
+        'Streaming & Gaming' => 'lucide-gamepad-2',
+        'Adult Content' => 'lucide-shield-alert',
+        'Piracy & Torrents' => 'lucide-skull',
+    ];
+    $blockedPresetCount = collect($presets)->flatten(1)->where('blocked', true)->count();
+    $blockedCustomCount = collect($customDomains)->where('enabled', true)->count();
+@endphp
+<div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
+    <div class="max-w-5xl mx-auto">
+
+    <div class="mb-6 border-b border-[#E6D5C3] pb-5 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+        <div>
+            <h2 class="flex items-center gap-3 text-[#3E2723]">
+                <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Site Blocking</span>
+            </h2>
+            <p class="text-sm text-[#795548] mt-1 font-medium">Tap a site to block or unblock it for every guest on the Wi-Fi.</p>
+        </div>
+        {{-- The page's answer at a glance, instead of making the owner count red switches. --}}
+        <p class="text-sm font-bold text-[#3E2723]">
+            {{ $blockedPresetCount + $blockedCustomCount }} {{ \Illuminate\Support\Str::plural('site', $blockedPresetCount + $blockedCustomCount) }} blocked
+            @if($adultOn)
+                <span class="text-red-700">+ {{ number_format($adultList['domains'] ?? 0) }} adult sites</span>
+            @endif
+        </p>
     </div>
 
     @unless($piholeConfigured)
-    <div class="mb-8 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-5 flex items-start gap-3">
+    <div class="mb-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-4 flex items-start gap-3">
         <x-lucide-alert-triangle class="w-5 h-5 shrink-0 mt-0.5" />
-        <p class="text-xs font-bold leading-relaxed">Pi-hole isn't configured (no app password set). Toggles below will not take effect until <code class="bg-amber-100 px-1 rounded">PIHOLE_APP_PASSWORD</code> is set on the server.</p>
+        <p class="text-xs font-bold leading-relaxed">Pi-hole isn't configured (no app password set). Changes here will not take effect until <code class="bg-amber-100 px-1 rounded">PIHOLE_APP_PASSWORD</code> is set on the server.</p>
     </div>
     @endunless
 
-    {{-- Category-wide adult blocking. The per-site presets below only name two
-         sites; guests were seen reaching others no one had listed. --}}
-    @php($adultOn = $adultList['enabled'] ?? false)
-    <form action="{{ route('network.site-blocking.adult-list') }}" method="POST"
-          class="mb-8 p-6 md:p-8 rounded-2xl shadow-sm border flex items-center justify-between gap-4 {{ $adultOn ? 'bg-red-50/60 border-red-200' : 'bg-white border-[#F0E6D2]' }}">
-        @csrf
-        <input type="hidden" name="enabled" value="{{ $adultOn ? '0' : '1' }}">
-        <div class="flex items-center gap-3 min-w-0">
-            <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 shrink-0">
-                <x-lucide-shield-alert class="w-6 h-6" />
-            </div>
-            <div class="min-w-0">
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Block All Adult Sites</h3>
-                <p class="text-xs text-[#6D4C41] font-medium">
-                    A maintained list of adult sites, updated weekly by Pi-hole.
-                    @if($adultOn && ($adultList['domains'] ?? null))
-                        <span class="font-bold">{{ number_format($adultList['domains']) }} sites blocked.</span>
+    <div class="bg-white rounded-2xl shadow-sm border border-[#F0E6D2] divide-y divide-[#F0E6D2]">
+
+        @foreach($presets as $category => $sites)
+            @php($blockedHere = collect($sites)->where('blocked', true)->count())
+            <section class="p-5 md:p-6 md:flex md:items-start md:gap-6">
+                <div class="flex items-center gap-3 mb-3 md:mb-0 md:w-56 md:shrink-0 md:pt-1.5">
+                    <x-dynamic-component :component="$categoryIcons[$category] ?? 'lucide-ban'" class="w-5 h-5 text-[#795548] shrink-0" />
+                    <div>
+                        <h3 class="text-sm font-bold text-[#3E2723]">{{ $category }}</h3>
+                        <p class="text-xs text-[#795548]">{{ $blockedHere }} of {{ count($sites) }} blocked</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 flex-1">
+                    {{-- The category-wide list lives with its category, not in a
+                         separate panel: it is the "block all of these" switch. --}}
+                    @if($category === 'Adult Content')
+                        <form action="{{ route('network.site-blocking.adult-list') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="enabled" value="{{ $adultOn ? '0' : '1' }}">
+                            <button type="submit" aria-pressed="{{ $adultOn ? 'true' : 'false' }}"
+                                    title="A maintained list of adult sites, updated weekly by Pi-hole"
+                                    class="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-full border-2 text-sm font-bold transition active:scale-95 {{ $adultOn ? 'bg-red-600 border-red-600 text-white' : 'bg-white border-dashed border-red-300 text-red-700 hover:bg-red-50' }}">
+                                <x-lucide-shield-alert class="w-4 h-4" />
+                                All adult sites
+                                @if($adultOn && ($adultList['domains'] ?? null))
+                                    <span class="text-xs font-medium opacity-80">{{ number_format($adultList['domains']) }}</span>
+                                @endif
+                            </button>
+                        </form>
                     @endif
-                    Anything it misses still shows up in your alerts, one tap to block.
-                </p>
-            </div>
-        </div>
-        <button type="submit"
-                aria-pressed="{{ $adultOn ? 'true' : 'false' }}"
-                aria-label="{{ $adultOn ? 'Turn off' : 'Turn on' }} adult-site blocking"
-                class="shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors {{ $adultOn ? 'bg-red-600' : 'bg-[#E6D5C3]' }}">
-            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {{ $adultOn ? 'translate-x-6' : 'translate-x-1' }}"></span>
-        </button>
-    </form>
 
-    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
-        <div class="flex items-center gap-3 mb-8">
-            <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600">
-                <x-lucide-ban class="w-6 h-6" />
-            </div>
-            <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Common Sites</h3>
-                <p class="text-xs text-[#6D4C41] font-medium">Toggle any of these on or off — no typing required.</p>
-            </div>
-        </div>
-
-        <div class="space-y-8">
-            @foreach($presets as $category => $sites)
-            <div>
-                <h4 class="text-[10px] font-black text-[#8D6E63] uppercase tracking-[0.2em] mb-3">{{ $category }}</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     @foreach($sites as $site)
-                    <form action="{{ route('network.site-blocking.toggle') }}" method="POST"
-                          class="flex items-center justify-between gap-3 border border-[#F0E6D2] rounded-xl px-4 py-3 {{ $site['blocked'] ? 'bg-red-50/60' : 'bg-[#FDF8F5]' }}">
-                        @csrf
-                        <input type="hidden" name="domain" value="{{ $site['domain'] }}">
-                        <input type="hidden" name="block" value="{{ $site['blocked'] ? '0' : '1' }}">
-                        <div class="min-w-0">
-                            <p class="text-xs font-bold text-[#3E2723] truncate">{{ $site['label'] }}</p>
-                            <p class="text-[10px] text-[#8D6E63] font-mono truncate">{{ $site['domain'] }}</p>
-                        </div>
-                        <button type="submit"
-                                aria-pressed="{{ $site['blocked'] ? 'true' : 'false' }}"
-                                aria-label="{{ $site['blocked'] ? 'Unblock' : 'Block' }} {{ $site['label'] }}"
-                                class="shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors {{ $site['blocked'] ? 'bg-red-600' : 'bg-[#E6D5C3]' }}">
-                            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {{ $site['blocked'] ? 'translate-x-6' : 'translate-x-1' }}"></span>
-                        </button>
-                    </form>
+                        <form action="{{ route('network.site-blocking.toggle') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="domain" value="{{ $site['domain'] }}">
+                            <input type="hidden" name="block" value="{{ $site['blocked'] ? '0' : '1' }}">
+                            <button type="submit"
+                                    aria-pressed="{{ $site['blocked'] ? 'true' : 'false' }}"
+                                    aria-label="{{ $site['blocked'] ? 'Unblock' : 'Block' }} {{ $site['label'] }}"
+                                    title="{{ $site['domain'] }}"
+                                    class="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-full border-2 text-sm font-bold transition active:scale-95 {{ $site['blocked'] ? 'bg-red-600 border-red-600 text-white' : 'bg-[#FDF8F5] border-[#F0E6D2] text-[#4A3B32] hover:border-[#8D6E63]' }}">
+                                @if($site['blocked'])
+                                    <x-lucide-ban class="w-4 h-4" />
+                                @endif
+                                {{ $site['label'] }}
+                            </button>
+                        </form>
                     @endforeach
                 </div>
-            </div>
-            @endforeach
-        </div>
-    </div>
+            </section>
+        @endforeach
 
-    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
-        <div class="flex items-center justify-between gap-4 mb-8 flex-col md:flex-row md:items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-700">
-                    <x-lucide-globe class="w-6 h-6" />
-                </div>
+        {{-- Custom sites: same row shape as the categories, so the page reads as
+             one list. Includes anything blocked from the AI chat or an alert. --}}
+        <section class="p-5 md:p-6 md:flex md:items-start md:gap-6">
+            <div class="flex items-center gap-3 mb-3 md:mb-0 md:w-56 md:shrink-0 md:pt-1.5">
+                <x-lucide-globe class="w-5 h-5 text-[#795548] shrink-0" />
                 <div>
-                    <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Custom Sites</h3>
-                    <p class="text-xs text-[#6D4C41] font-medium">Anything blocked here that isn't in the list above.</p>
+                    <h3 class="text-sm font-bold text-[#3E2723]">Other sites</h3>
+                    <p class="text-xs text-[#795548]">{{ $blockedCustomCount }} blocked</p>
                 </div>
             </div>
 
-            <form action="{{ route('network.site-blocking.store') }}" method="POST" class="flex gap-2 w-full md:w-auto">
-                @csrf
-                {{-- ?domain= pre-fills from an adult-site alert (WatchAdultSites), so blocking what it found is one tap. --}}
-                <input type="text" name="domain" required placeholder="example.com" value="{{ old('domain', request('domain')) }}"
-                       class="flex-1 md:w-56 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
-                <x-submit-button label="Block" />
-            </form>
-        </div>
+            <div class="flex-1 space-y-3">
+                {{-- x-data supplies the `submitting` flag <x-submit-button> reads.
+                     Without it the button's label expression threw and it
+                     rendered as an empty dark blob. --}}
+                <form action="{{ route('network.site-blocking.store') }}" method="POST" class="flex gap-2"
+                      x-data="{ submitting: false }" @submit="submitting = true">
+                    @csrf
+                    {{-- ?domain= pre-fills from an adult-site alert (WatchAdultSites), so blocking what it found is one tap. --}}
+                    <input type="text" name="domain" required placeholder="Add a site, e.g. example.com" value="{{ old('domain', request('domain')) }}"
+                           aria-label="Website to block"
+                           class="flex-1 min-w-0 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-full px-4 min-h-[44px] text-sm font-medium focus:outline-none focus:border-[#3E2723] transition-all">
+                    <x-submit-button label="Block" loading-label="Blocking…" class="!flex-none px-6 !py-0 min-h-[44px] !rounded-full" />
+                </form>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-black">Domain</th>
-                        <th class="pb-4 font-black hidden md:table-cell">Note</th>
-                        <th class="pb-4 font-black text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="text-sm">
-                    @forelse($customDomains as $entry)
-                    <tr class="border-b border-[#FAFAFA] group hover:bg-red-50/30 transition-colors">
-                        <td class="py-4 font-mono text-xs font-bold text-[#3E2723]">{{ $entry['domain'] }}</td>
-                        <td class="py-4 hidden md:table-cell text-xs text-[#8D6E63] font-medium italic">{{ $entry['comment'] ?: '—' }}</td>
-                        <td class="py-4 text-right">
-                            <div class="flex items-center justify-end gap-2">
+                @if(count($customDomains))
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($customDomains as $entry)
+                            <div class="min-h-[44px] inline-flex items-center rounded-full border-2 text-sm font-bold {{ $entry['enabled'] ? 'bg-red-600 border-red-600 text-white' : 'bg-[#FDF8F5] border-[#F0E6D2] text-[#4A3B32]' }}"
+                                 @if($entry['comment']) title="{{ $entry['comment'] }}" @endif>
                                 <form action="{{ route('network.site-blocking.toggle') }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="domain" value="{{ $entry['domain'] }}">
@@ -134,8 +137,11 @@
                                     <button type="submit"
                                             aria-pressed="{{ $entry['enabled'] ? 'true' : 'false' }}"
                                             aria-label="{{ $entry['enabled'] ? 'Unblock' : 'Block' }} {{ $entry['domain'] }}"
-                                            class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {{ $entry['enabled'] ? 'bg-red-600' : 'bg-[#E6D5C3]' }}">
-                                        <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {{ $entry['enabled'] ? 'translate-x-6' : 'translate-x-1' }}"></span>
+                                            class="min-h-[40px] inline-flex items-center gap-2 pl-4 pr-2 font-mono">
+                                        @if($entry['enabled'])
+                                            <x-lucide-ban class="w-4 h-4" />
+                                        @endif
+                                        {{ $entry['domain'] }}
                                     </button>
                                 </form>
                                 <form action="{{ route('network.site-blocking.destroy', $entry['domain']) }}" method="POST" id="remove-site-form-{{ $loop->index }}">
@@ -144,33 +150,27 @@
                                     <button type="button"
                                             onclick="window.confirmAction({
                                                 title: 'Remove {{ $entry['domain'] }}?',
-                                                text: 'This removes it from the blocklist entirely, rather than just unblocking it.',
+                                                text: 'This removes it from the list entirely, rather than just unblocking it.',
                                                 icon: 'warning',
                                                 confirmText: 'Yes, Remove',
                                                 callback: () => document.getElementById('remove-site-form-{{ $loop->index }}').submit()
                                             })"
                                             aria-label="Remove {{ $entry['domain'] }}"
-                                            class="p-2 text-[#8D6E63] hover:text-red-700 hover:bg-red-50 rounded-xl transition-all">
-                                        <x-lucide-trash-2 class="w-4 h-4" />
+                                            class="min-h-[40px] px-3 rounded-full opacity-70 hover:opacity-100 transition">
+                                        <x-lucide-x class="w-4 h-4" />
                                     </button>
                                 </form>
                             </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="3" class="py-16 text-center opacity-30">
-                            <div class="flex flex-col items-center">
-                                <x-lucide-globe class="w-10 h-10 mb-3" />
-                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-widest">No custom sites blocked.</p>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-sm text-[#795548]">Nothing extra yet. Sites the AI blocks from chat, or that you add here, show up in this row.</p>
+                @endif
+            </div>
+        </section>
     </div>
+
+    <p class="text-xs text-[#795548] mt-4 px-1">Red means blocked. Blocking a site also blocks its sub-domains (www., m., …). Unblocking keeps it in the list so it's one tap to block again.</p>
 
     </div>
 </div>
