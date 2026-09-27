@@ -6,16 +6,12 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 /**
- * How much of OpenRouter's free-model daily allowance is left, and whether a
- * scheduled job may spend some of it.
+ * How much of OpenRouter's free-model daily allowance is left (50/day, 1,000
+ * with $5 of credit), and whether a scheduled job may spend some. Background
+ * work stops at a reserve so people chatting always have some left.
  *
- * The account gets 50 free-model requests a day (1,000 once $5 of credit is
- * added), and scheduled jobs can use all of it before anyone chats. Background
- * work stops at a reserve so people always have some left.
- *
- * Separate from AIService so jobs' existing AIService mocks stay untouched,
- * and so the test suite can swap in a copy that never calls the real account
- * (see Tests\TestCase).
+ * Separate from AIService so jobs' AIService mocks stay untouched and the test
+ * suite can swap in an offline copy (see Tests\TestCase).
  */
 class AiBudget
 {

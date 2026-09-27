@@ -8,16 +8,11 @@ use App\Services\BaristaForecastService;
 use Illuminate\Console\Command;
 
 /**
- * Keeps the Barista AI forecast cache warm so no admin ever waits on it.
- *
- * The forecast is a live AI call — around nine seconds even on a nearly empty
- * dataset — too slow for whichever web request finds the cache expired.
- *
- * Running it here means the request path only ever reads cache. There
- * is no queue worker on this deployment (QUEUE_CONNECTION=database with
- * nothing consuming it), so the scheduler — which does run, via
- * /etc/cron.d/laravel-lawatcafe-schedule — is the mechanism available for
- * moving work off the request.
+ * Keeps the Barista AI forecast cache warm so no admin waits on it: the
+ * forecast is a ~9s AI call, too slow for a web request. There is no queue
+ * worker here (QUEUE_CONNECTION=database, nothing consuming it), so the
+ * scheduler (/etc/cron.d/laravel-lawatcafe-schedule) is how work leaves the
+ * request path.
  */
 class WarmBaristaForecast extends Command
 {

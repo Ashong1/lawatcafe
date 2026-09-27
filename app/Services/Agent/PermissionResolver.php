@@ -7,19 +7,14 @@ use App\Models\User;
 use App\Services\Agent\Contracts\AgentTool;
 
 /**
- * Resolves the effective permission tier for a tool call, combining:
- *  1. An optional admin-editable override stored in Setting('agent_tool_permissions'),
- *     falling back to the tool's own AgentTool::permissionTier() default.
- *  2. The actor's role, which acts as a hard FLOOR on strictness — settings can
- *     only make a tool stricter for a given actor, never looser than their role
- *     allows. A staff actor can never get 'auto' execution, no matter what the
- *     setting says; an admin actor has no floor imposed.
- *  3. A tool whose own hardcoded default is 'admin_only' is NEVER configurable
- *     via settings at all (see #3 below) — these are the tools picked specifically
- *     for direct financial/network-access consequences (blockDevice, generateVoucherBatch),
- *     and must not be downgradable by an admin fat-fingering the settings UI. This
- *     matters because the role floor alone only blocks staff from 'auto' execution —
- *     without this, a loosened admin_only tool could still become staff-CONFIRMABLE.
+ * The effective permission tier for a tool call:
+ *  1. an admin-editable override (Setting 'agent_tool_permissions'), else the
+ *     tool's own permissionTier();
+ *  2. the actor's role as a FLOOR — settings can only make a tool stricter; a
+ *     staff actor never gets 'auto';
+ *  3. tools whose default is 'admin_only' (blockDevice, generateVoucherBatch —
+ *     money or network access) are never configurable, or a loosened one could
+ *     become staff-confirmable.
  */
 class PermissionResolver
 {

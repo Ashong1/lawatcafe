@@ -105,15 +105,10 @@ class PairingSuggestionService
     /**
      * Last resort: the best-selling active product from any OTHER category.
      *
-     * Without this the suggestion simply did not appear most of the time. The
-     * history tier needs prior co-purchases, and the tier above it needs an
-     * admin to have configured category_pairings — which was unset, so it never
-     * fired at all. A new shop with a thin sales history therefore got no
-     * suggestions on the very orders where a prompt is most useful.
-     *
-     * "Any other category" is also what makes the pairing work in both
-     * directions for free: a drink suggests a pastry, and a pastry suggests a
-     * drink, without anyone having to declare the relationship twice.
+     * The history tier needs prior co-purchases and the configured tier needs
+     * category_pairings set, so a new shop would get no suggestion exactly
+     * when one helps most. "Any other category" also pairs both ways for free:
+     * a drink suggests a pastry, a pastry suggests a drink.
      */
     private function fromAnyOtherCategory(int $productId, array $exclude): ?array
     {

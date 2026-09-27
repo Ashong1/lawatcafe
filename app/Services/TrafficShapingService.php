@@ -100,21 +100,16 @@ class TrafficShapingService
     }
 
     /**
-     * Provision the complete shaping chain on OPNsense and apply it.
+     * Provision the complete shaping chain on OPNsense and apply it. A cap
+     * needs all three, or a "2 Mbps" tier measures full line speed:
+     *   1. a Dummynet pipe per tier per direction (the cap),
+     *   2. a firewall alias per tier (who it applies to),
+     *   3. a shaper rule per direction binding alias -> pipe (what steers
+     *      packets into it).
+     * Idempotent: matched by description and updated in place.
      *
-     * A working cap needs all three — with only the pipe, a "2 Mbps" tier
-     * measures full line speed:
-     *
-     *   1. a Dummynet pipe per tier per direction (the bandwidth cap itself),
-     *   2. a firewall alias per tier (who the cap applies to), and
-     *   3. a shaper rule binding alias -> pipe per direction (what steers a
-     *      guest's packets into the pipe at all).
-     *
-     * Idempotent: existing pipes/rules are matched by description and updated
-     * in place, so repeated saves never accumulate duplicates.
-     *
-     * $settings is the validated array from TrafficController::update
-     * (bw_free_up/down, bw_premium_up/down).
+     * $settings: validated bw_free_up/down, bw_premium_up/down from
+     * TrafficController::update.
      */
     public function applyLimits(array $settings, OpnSenseService $opnsense): bool
     {
@@ -226,16 +221,11 @@ class TrafficShapingService
     /**
      * Remove tier-alias members that no longer have a live session.
      *
-     * The guarantee the filter rules rest on. Membership is written when a
-     * guest activates and cleared when they disconnect or expire, but a failed
-     * removal, an OPNsense restart mid-release, or a session reaped outside the
-     * app all leave an address behind. While the alias only drove a shaper
-     * pipe that was harmless; once a PASS rule matches on it, a stale member is
-     * a guest who keeps working internet after their time is up.
-     *
-     * Authoritative source is the firewall's own session list, not the voucher
-     * table — a voucher says what somebody paid for, only OPNsense knows who is
-     * actually connected right now.
+     * A failed removal, an OPNsense restart or a session reaped outside the
+     * app can leave an address behind, and once a PASS rule matches the alias
+     * that's a guest with internet after their time is up. The firewall's
+     * session list is the authority — a voucher says what was paid for, only
+     * OPNsense knows who is connected.
      *
      * @return array{checked:int, removed:int, failed:int}
      */

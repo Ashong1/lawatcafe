@@ -35,15 +35,11 @@ class ToolCallOrchestrator
 
     /**
      * @param  array  $messages  Canonical chat history: [['role'=>'user'|'assistant'|'system','content'=>string], ...]
-     * @param  string  $audience  'guest'|'staff'|'admin'|'super_admin' — determines which tools the model is even offered.
-     * @param  array  $context  Request-scoped data tools may need (e.g. guest's own IP/MAC). Never model-supplied.
-     * @param  ?callable  $onTextDelta  Invoked with each text chunk as it streams in from the model.
-     *                                  Defaults to a no-op for non-interactive callers (e.g. the scheduled
-     *                                  agent:analyze run) that don't need live output.
-     * @param  ?callable  $onToolStart  Invoked with a tool's name right before it's resolved to a tier —
-     *                                  fires even for a tool that ends up queued for confirmation, since
-     *                                  "checking whether this needs approval" is still useful live feedback.
-     *                                  Defaults to a no-op for callers that don't stream live status.
+     * @param  string  $audience  'guest'|'staff'|'admin'|'super_admin' — decides which tools the model is offered.
+     * @param  array  $context  Request-scoped data tools may need (e.g. the guest's own IP/MAC). Never model-supplied.
+     * @param  ?callable  $onTextDelta  Called with each streamed text chunk; no-op for non-interactive callers.
+     * @param  ?callable  $onToolStart  Called with a tool's name before its tier is resolved — even for one that
+     *                                  ends up queued for confirmation. No-op by default.
      * @return array{reply: ?string, pending: array, executed: array}
      */
     /**
@@ -191,20 +187,12 @@ class ToolCallOrchestrator
     }
 
     /**
-     * Execute a previously-proposed action. Used by the confirm endpoint.
-     * Role ceiling is re-checked here too: an admin_only tool can never be
-     * confirmed by a non-admin, even if it somehow reached this point.
-     *
-     * Ownership is also enforced here, not just at the controller/view layer:
-     * admins can confirm any org-wide pending action, but a staff member may
-     * only confirm their OWN proposals — otherwise any authenticated staff
-     * account could confirm or reject another user's pending action just by
-     * guessing/incrementing the audit id (route-model binding alone doesn't
-     * scope this). Audits with no actor_user_id (a scheduled/system-initiated
-     * proposal not tied to any specific user) are left open to any staff+
-     * account — same "not mine specifically, so not restricted" semantics
-     * pendingCount()/pendingPreview() already use to decide what shows up in
-     * a staff member's own pending list.
+     * Execute a previously-proposed action (the confirm endpoint). Re-checks
+     * the role ceiling — an admin_only tool is never confirmed by a non-admin —
+     * and ownership: admins may confirm any pending action, staff only their
+     * own, or any staff account could confirm another's by guessing audit ids.
+     * Proposals with no actor_user_id (scheduled/system) are open to staff+,
+     * matching what pendingCount()/pendingPreview() show them.
      */
     public function confirmPending(AiActionAudit $audit, User $approvedBy): ToolResult
     {

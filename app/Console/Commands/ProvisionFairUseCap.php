@@ -8,25 +8,17 @@ use App\Services\TrafficShapingService;
 use Illuminate\Console\Command;
 
 /**
- * A single per-client bandwidth ceiling for everything on the guest interface.
+ * A single per-device bandwidth ceiling on the guest interface — the shaping
+ * this OPNsense build can enforce (per-tier caps can't: shaper rules accept
+ * only "any" as source/destination; see docs/INFRASTRUCTURE.md).
  *
- * This is the shaping this OPNsense build can actually enforce. Per-tier caps
- * cannot be provisioned: the shaper's rule model offers nothing but "any" for
- * source and destination, so a rule that matches a tier's alias is rejected —
- * see docs/INFRASTRUCTURE.md and TrafficShapingService.
- *
- * Two things make a shop-wide rule safe here, and both matter:
- *
- *  1. The pipe carries a dst-ip/src-ip MASK, so dummynet gives every address
- *     its own queue at the full rate. It is a ceiling per device, not a total
- *     shared between them — one guest streaming cannot starve the rest.
- *
- *  2. The ceiling is set well above what the shop's own equipment uses. The
- *     captive portal zone is bound to `lan`, which also carries the POS, the
- *     application server, Pi-hole and OPNsense itself; a rule here applies to
- *     all of them. At the tier value (2 Mbit) that would have throttled the
- *     register and every AI call this app makes. As a fair-use ceiling it is
- *     invisible to them and still stops any one device saturating the line.
+ * Safe shop-wide because:
+ *  1. the pipe masks by dst-ip/src-ip, so every address gets its own queue —
+ *     a ceiling per device, not a shared total;
+ *  2. it is set well above what the shop's own equipment needs. The portal
+ *     zone is on `lan`, which also carries the POS, app server, Pi-hole and
+ *     OPNsense; a tier-level cap (2 Mbit) would throttle the register and
+ *     every AI call.
  *
  * Idempotent: pipes and rules are matched by description and updated in place.
  */

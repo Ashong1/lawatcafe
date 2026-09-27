@@ -10,16 +10,11 @@ use Illuminate\Support\Facades\Cache;
 /**
  * Removes tier-alias members who no longer have a live session.
  *
- * The guarantee the per-tier filter rules rest on. Membership is written when a
- * guest activates and cleared when they disconnect or expire, but a failed
- * removal, an OPNsense restart mid-release, or a session reaped outside the app
- * all leave an address behind.
- *
- * While the aliases only fed a shaper pipe, a stale member was harmless — it
- * shaped traffic for an IP that had none. Once a firewall rule PASSES traffic
- * for alias members, the same stale entry is a guest with working internet
- * after their time is up. This command is why that cannot persist longer than
- * one interval, and it is deliberately in place BEFORE those rules exist.
+ * Membership is cleared on disconnect/expiry, but a failed removal, an
+ * OPNsense restart or a session reaped outside the app leaves addresses
+ * behind. Once firewall rules PASS traffic for alias members, a stale entry is
+ * a guest with internet after their time is up — this caps that at one
+ * interval.
  */
 class ReconcileTierMembership extends Command
 {

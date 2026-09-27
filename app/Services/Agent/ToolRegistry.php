@@ -113,14 +113,10 @@ class ToolRegistry
     }
 
     /**
-     * Estate-level tools, super_admin only.
-     *
-     * Every one of these is read-only. That is a deliberate line, not an
-     * oversight: the assistant should be able to tell the owner what is wrong
-     * with the system, but changing infrastructure is not something to do from
-     * a chat bubble on the strength of a model's reading of a log. The existing
-     * admin tools already cover the actions that ARE safe to take that way, and
-     * each of those carries its own permission tier.
+     * Estate-level tools, super_admin only — all read-only on purpose: the
+     * assistant can say what's wrong with the system, but changing
+     * infrastructure from a chat bubble on a model's reading of a log is not
+     * safe. The admin tools cover the safe actions, each with its own tier.
      *
      * @return class-string[]
      */

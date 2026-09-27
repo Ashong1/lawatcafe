@@ -20,22 +20,16 @@ use Illuminate\Support\Str;
 /**
  * The assistant teaching itself what it couldn't do.
  *
- * Reads every "I can't do that" CapabilityGap recorded from staff/admin chats
- * and, per gap, has the model work out how it could have succeeded:
- *
- *  - skill:        a recipe over tools it already has — saved and applied
- *                  automatically, because every step is verified against the
- *                  live tool registry and each tool still enforces its own
- *                  permission tier (an admin_only action still waits for a
- *                  human to confirm it).
- *  - page:         a pointer to the app page that does it — applied
- *                  automatically, only ever a page from PageCatalog that the
- *                  user's role can open.
- *  - tool_request: a drafted spec for a missing tool — never applied; it goes
- *                  to super_admin for a developer. The assistant does not
- *                  write or run code.
- *
- * Applied skills and pointers are revocable on the AI Learning page.
+ * For each "I can't do that" CapabilityGap from staff/admin chat, the model
+ * works out how it could have succeeded:
+ *  - skill: steps over tools it already has — applied automatically; every
+ *    step is checked against the live registry and each tool keeps its own
+ *    permission tier;
+ *  - page: a PageCatalog page the user's role can open — applied
+ *    automatically;
+ *  - tool_request: a drafted spec for a missing tool — never applied, goes to
+ *    super_admin. The assistant never writes or runs code.
+ * Applied items are revocable on the AI Learning page.
  */
 class ResolveCapabilityGaps extends Command
 {

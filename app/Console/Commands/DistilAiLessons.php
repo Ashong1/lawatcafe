@@ -15,25 +15,17 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 /**
- * The learning step: read what actually happened, conclude something durable.
+ * The learning step: read what happened, propose something durable.
  *
- * Runs on the scheduler with no human trigger, which is what makes the loop
- * autonomous. What it produces is a *proposal*, not a change — nothing here can
- * alter a live prompt on its own unless ai_learning_auto_apply is switched on.
+ * Produces proposals, not changes — nothing reaches a live prompt unless
+ * ai_learning_auto_apply is on. Guest chat is unauthenticated, so without that
+ * gate someone feeding the bot nonsense could write a persistent prompt
+ * injection into its instructions.
  *
- * That gate is not ceremony. Guest chat is unauthenticated, so without it an
- * afternoon of somebody feeding the bot nonsense could end up written into its
- * permanent instructions — a persistent prompt injection with a scheduled job
- * helpfully doing the writing.
- *
- * Beyond explicit signals (thumbs, corrections, tool failures), this also
- * mines the admin and super_admin CONVERSATIONS themselves — the transcript of
- * what the owner asked and how the assistant answered. A busy owner almost
- * never rates their own assistant, so before this the admin/super_admin side of
- * the loop was starved and the whole thing leaned on guest-portal ratings.
- * Mining the transcripts is safe where mining guest chat would not be: these
- * are authenticated, trusted users, not anonymous WiFi traffic — and every
- * conclusion still passes the same human review gate before it reaches a prompt.
+ * Besides ratings, corrections and tool failures, it mines admin and
+ * super_admin conversations (owners rarely rate their own assistant). That's
+ * safe because they are authenticated users, and every conclusion still passes
+ * the same review gate.
  */
 class DistilAiLessons extends Command
 {

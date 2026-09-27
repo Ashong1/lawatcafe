@@ -10,19 +10,15 @@ use App\Services\TrafficShapingService;
 use Illuminate\Http\Request;
 
 /**
- * The guest network's traffic page: the one cap this gateway enforces.
+ * The guest network's traffic page: the one cap this gateway enforces — a
+ * Shaper rule per direction on the guest interface, masked per IP so it is a
+ * ceiling per device, not a shared total.
  *
- * That cap is a single Shaper rule per direction across the whole guest
- * interface, with a per-IP mask so the figure is a ceiling PER DEVICE rather
- * than a total shared between them.
- *
- * There is deliberately no per-tier rate form: this OPNsense build can shape an
- * interface and nothing smaller. Shaper rules accept only "any" for source and
- * destination, filter rules naming an alias save and apply but shape nothing,
- * the portal zone has no bandwidth fields, and no endpoint can set a DSCP mark
- * per tier. Inputs that change no traffic would be misleading.
- *
- * The stored per-tier rates are still quoted on the Plans page.
+ * No per-tier rate form, on purpose: this OPNsense build shapes whole
+ * interfaces only (Shaper rules take only "any" as source/destination, filter
+ * rules naming an alias shape nothing, the portal zone has no bandwidth fields,
+ * nothing can set a per-tier DSCP mark). The per-tier rates are still quoted
+ * on the Plans page.
  */
 class TrafficController extends Controller
 {

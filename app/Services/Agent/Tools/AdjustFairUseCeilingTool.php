@@ -11,23 +11,17 @@ use App\Services\OpnSenseService;
 use App\Services\TrafficShapingService;
 
 /**
- * The one action in the adaptive bandwidth loop, and the only tool in this
- * system that rewrites firewall rules affecting every device in the shop.
+ * The adaptive bandwidth loop's one action, and the only tool that rewrites
+ * firewall rules for every device in the shop.
  *
- * The safety here is structural rather than a matter of prompting. Whatever
- * figure arrives — from the scheduled loop, from an admin in chat, or from a
- * model that has misread the situation entirely — it is clamped to the admin's
- * own min/max before anything is written. There is no argument that reaches
- * OPNsense unbounded, so the worst a confused model can do is move the ceiling
- * to one end of a range its owner already approved.
+ * Safety is structural: any figure — from the loop, admin chat or a confused
+ * model — is clamped to the admin's own min/max before anything is written.
+ * The clamp is reported, not silent, or a loop told it set 6 when it set the
+ * 5 Mbps floor keeps proposing 6.
  *
- * The clamp is reported rather than applied silently: a loop told it set 6 when
- * it actually set the 5 Mbps floor would keep proposing 6 forever.
- *
- * Tiered auto_approved so the scheduled loop can act without a human awake at
- * 8pm. An owner who would rather approve each change can move it to
- * confirm_required on the Agent Permissions page — the tier is read from
- * settings at call time, so that switch needs no code change.
+ * auto_approved so the scheduled loop can act unattended; set it to
+ * "requires confirmation" on Agent Permissions to approve each change (read at
+ * call time, no code change).
  */
 class AdjustFairUseCeilingTool implements AgentTool
 {

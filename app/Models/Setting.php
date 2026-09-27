@@ -34,14 +34,10 @@ class Setting extends Model
     /**
      * Get a setting value by key.
      *
-     * The default is applied *after* the cache, never inside it. Caching the
-     * default meant the first caller to ask for an unset key froze its own
-     * fallback in place forever: every later caller got that value regardless
-     * of the default it passed, and editing the default in code had no effect
-     * because the cache still held the old one. That is exactly how
-     * portal_browse_url kept resolving to neverssl.com long after the code
-     * stopped saying so — only an explicit Setting::set(), which forgets the
-     * key, could ever clear it.
+     * The default is applied after the cache, never inside it: caching it
+     * freezes the first caller's fallback for every later caller, and a
+     * changed default in code has no effect until Setting::set() forgets the
+     * key.
      */
     public static function get($key, $default = null)
     {
@@ -87,15 +83,9 @@ class Setting extends Model
     /**
      * Whether the POS may print customer receipts.
      *
-     * Off by default, and that default is the point. Under BIR rules a
-     * point-of-sale machine that issues printed receipts or invoices to
-     * customers has to be registered and accredited before it may do so.
-     * Lawa't Kape's POS is not registered yet, so it must not print — printing
-     * first and registering later is the order that creates a problem.
-     *
-     * Deliberately a single switch rather than something inferred from other
-     * settings: the day the registration comes through, one person flips one
-     * toggle and the feature returns exactly as it was.
+     * Off by default: under BIR rules a POS that issues printed receipts must
+     * be registered and accredited first, and this one isn't yet. A single
+     * switch, so the day registration comes through one toggle restores it.
      */
     public static function receiptPrintingEnabled(): bool
     {

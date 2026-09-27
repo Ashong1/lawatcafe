@@ -62,22 +62,12 @@ class CaptivePortalController extends Controller
     /**
      * Where to send a device the instant its session goes live.
      *
-     * This is what actually hands a guest over to their real browser. A phone's
-     * sign-in window only closes when the OS's own connectivity probe succeeds,
-     * and the OS will not treat a page served by the portal itself as proof of
-     * internet — so redirecting to browseUrl()'s default (the portal) left the
-     * window sitting open on a local address forever, which is exactly the
-     * "it never opens my browser" report.
-     *
-     * The target is each platform's own captive-portal probe endpoint rather
-     * than some third-party site: it is the address the OS is already asking
-     * for, it answers with no content worth looking at, and it avoids dumping a
-     * paying customer on an unrelated stranger's page — which is why the old
-     * hardcoded neverssl.com default was removed in the first place.
-     *
-     * Plain HTTP is mandatory. These probes are defined as HTTP, and an HTTPS
-     * target cannot complete its handshake through a portal that is still
-     * mid-transition on some stacks.
+     * A phone's sign-in window closes only when the OS's own connectivity probe
+     * succeeds, and a page served by the portal doesn't count as internet — so
+     * the target is the platform's probe endpoint (the address the OS already
+     * wants, with nothing on it), never the portal or a third-party site.
+     * Plain HTTP only: the probes are HTTP, and HTTPS can't complete through a
+     * portal that is mid-transition on some stacks.
      */
     private function captiveHandoffUrl(Request $request): string
     {
@@ -135,15 +125,11 @@ class CaptivePortalController extends Controller
 
     /**
      * Last step of the Android handoff: ask the OS to open the status page in
-     * the guest's own browser, and fall back to the connectivity probe if it
-     * will not.
+     * the guest's own browser, falling back to the connectivity probe.
      *
-     * This exists because there is no supported way for a captive portal to
-     * drive the device's browser — the sign-in window is sandboxed precisely so
-     * portals cannot. intent: is the one lever Android exposes, and it is not
-     * guaranteed: CaptivePortalLogin's WebView may decline to resolve it. The
-     * page therefore treats success as a bonus and failure as the normal case,
-     * landing on exactly the behaviour that shipped before either way.
+     * A portal has no supported way to drive the browser; intent: is Android's
+     * one lever and the sign-in WebView may refuse it, so success is a bonus
+     * and the fallback is the normal path.
      */
     public function handoff(Request $request)
     {
@@ -230,19 +216,13 @@ class CaptivePortalController extends Controller
     }
 
     /**
-     * RFC 8908 Captive Portal API.
+     * RFC 8908 Captive Portal API: iOS 14+ and Android 11+ can show the
+     * remaining time natively in Wi-Fi settings, after the sign-in window has
+     * closed. Clients find it via DHCP option 114 — which this Kea build can't
+     * send (docs/INFRASTRUCTURE.md), so it is ready for when it can.
      *
-     * Advertised to clients via DHCP option 114 (RFC 8910) from Kea on
-     * OPNsense — see docs/CAPTIVE_PORTAL.md. iOS 14+ and Android 11+ poll
-     * this and render the remaining session time natively in Wi-Fi settings,
-     * which is the only way a guest can watch their time tick down WITHOUT
-     * keeping a browser tab open: the Captive Network Assistant that shows
-     * the portal is dismissed by the OS the moment the device is authorized,
-     * taking the portal's own countdown with it.
-     *
-     * Deliberately unauthenticated and side-effect free (a pure read) — it's
-     * reachable pre-auth by definition, so it must not trust anything the
-     * client sends beyond its own network identity, and must not mutate.
+     * Unauthenticated and read-only by design: it is reachable pre-auth, so it
+     * trusts nothing but the client's own network identity.
      */
     public function captivePortalApi(Request $request, OpnSenseService $opnsense)
     {
@@ -319,27 +299,16 @@ class CaptivePortalController extends Controller
         // 2. Check if already connected
         $activeSession = $this->liveSessionFor($ip, $mac, $opnsense);
 
-        // Recover any live session the guest still has time left on, whether
-        // it was never activated (sign-in window died before they tapped
-        // through) or was activated and later lost its OPNsense session for
-        // a reason outside the guest's control (a network blip, an AP
-        // roaming event, anything that isn't this guest's own voucher
-        // expiring). Originally this only covered the unactivated case —
-        // activated_at was used as the safety gate on the theory that a
-        // once-activated session going missing meant something intentionally
-        // ended it (the guest's own disconnect, or a security kick). In
-        // practice guests were being dropped by the network layer with no
-        // Voucher-row trace of why, and re-typing a code they'd already paid
-        // for reads as "the portal is broken" — so the real safety bar is
-        // time remaining and not being banned, not activation history: a
-        // stale voucher won't pass secondsRemainingOn(), and an impostor
-        // riding the guest's IP can't pass this at all since it matches on
-        // the MAC-address blind index, not the IP.
+        // Recover a session the guest still has time on — never activated (the
+        // sign-in window died first) or dropped by the network layer. Re-typing
+        // a paid code reads as "the portal is broken". The safety bar is time
+        // remaining and not being banned, not activation history: a stale
+        // voucher fails secondsRemainingOn(), and matching is on the MAC blind
+        // index, so someone reusing the guest's IP can't pass.
         //
-        // The one exception is the guest's own Disconnect button, which is
-        // recorded explicitly (disconnected_at) — disconnect() redirects back
-        // here, so recovering that case put the device straight back online.
-        // Re-entering the code and tapping through clears it (grantAccess()).
+        // Exception: the guest's own Disconnect (disconnected_at) — disconnect()
+        // redirects here, so recovering it would put them straight back online.
+        // Re-entering the code clears it (grantAccess()).
         if (! $activeSession) {
             $pending = $this->activeVoucherFor($ip, $mac);
 

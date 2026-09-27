@@ -689,16 +689,10 @@ class AIService
     }
 
     /**
-     * OpenRouter's OpenAI-compatible streaming delta format. Deliberately NOT
-     * shuffled (unlike the plain-chat cascade below) — this is the
-     * tool-calling path, where an admin's configured model order (see
-     * activeModels()) should be tried deterministically so a stronger/more
-     * tool-reliable model an admin lists first actually gets tried first,
-     * rather than being equally likely to lose a coin flip to a weaker
-     * free-tier model on a hard multi-tool turn. Still health-aware, though
-     * — see healthyModelsFirst() — a model that just failed shouldn't eat one
-     * of the few fast-path slots ahead of an admin-ranked-lower but
-     * currently-healthy one.
+     * The tool-calling stream. NOT shuffled, unlike the plain-chat cascade:
+     * the admin's model order is tried as listed so a stronger tool-caller
+     * listed first really goes first. Still health-aware (healthyModelsFirst):
+     * a model that just failed doesn't take a fast-path slot.
      */
     private function streamOpenAiCompatibleLoop(array $models, string $url, array $headers, array $messages, array $tools, callable $onTextDelta, string $provider, float $deadline, bool $freeOnly = false): ?array
     {
@@ -925,16 +919,11 @@ class AIService
     }
 
     /**
-     * Shared by chat() and ToolCallOrchestrator (guest audience). This is
-     * the highest-risk system prompt in the app — reachable by anonymous,
-     * unauthenticated guests over public WiFi — so it carries explicit
-     * prompt-injection resistance instructions that the admin/staff prompts
-     * don't need (those users are authenticated and tool-scoped already).
-     * This is defense-in-depth on top of, not a replacement for, the real
-     * structural guards: ToolRegistry's hardcoded guest tool allowlist
-     * (ToolCallOrchestrator re-checks it independent of the model's
-     * prompt) and history.*.role validation in the controller rejecting
-     * injected fake system/tool messages before they ever reach here.
+     * Shared by chat() and ToolCallOrchestrator (guest audience) — the
+     * highest-risk prompt, reachable by anonymous guests, so it carries
+     * prompt-injection resistance. Defense in depth only: the real guards are
+     * ToolRegistry's hardcoded guest allowlist (re-checked by the
+     * orchestrator) and the controller rejecting injected system/tool roles.
      */
     public function buildGuestSystemPrompt(): string
     {
@@ -1026,18 +1015,10 @@ OPERATIONAL GUIDELINES:
     }
 
     /**
-     * The super_admin (developer/system account) prompt.
-     *
-     * Built on the admin prompt rather than replacing it — this account can do
-     * everything an admin can, and then some — with the estate added on top and
-     * the assistant's own limits spelled out.
-     *
-     * That last part exists because of a real exchange: asked "can you add
-     * features into the system", the assistant answered a flat "no, I can't
-     * write code" and stopped. Accurate, but useless. It has no idea what it can
-     * actually see or change unless told, so it defaults to declining. The
-     * SCOPE section below replaces "no" with "no, and here is what I can do
-     * instead" — which is the answer that was wanted.
+     * The super_admin (developer/system account) prompt: the admin prompt plus
+     * the estate, with the assistant's own limits spelled out. The SCOPE
+     * section turns "no, I can't write code" into "no, but here is what I can
+     * do" — without it the assistant just declines.
      */
     public function buildSuperAdminSystemPrompt(): string
     {

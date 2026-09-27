@@ -44,20 +44,12 @@
 
         <div class="max-w-3xl mx-auto space-y-8">
 
-            {{-- The one figure on this page that reaches the network, and now the
-                 only one it offers. Submitting rewrites the live Shaper rules
-                 through the same applyFairUseCap() that `shaper:fair-use` calls,
-                 and the value is stored only once OPNsense has accepted it — see
-                 TrafficController::update().
-
-                 Per-tier voucher rates used to sit below this as a second form.
-                 They were recorded and never enforced: this build shapes an
-                 interface and nothing smaller (Shaper rules take only "any" for
-                 source and destination, filter rules naming an alias apply and
-                 then shape nothing, the portal zone has no bandwidth fields, and
-                 nothing can set a DSCP mark per tier). Four inputs that changed
-                 no traffic have been removed. The stored rates are untouched and
-                 the Plans page still quotes them. --}}
+            {{-- The one figure on this page that reaches the network. Submitting
+                 rewrites the live Shaper rules via applyFairUseCap() (as
+                 `shaper:fair-use` does), and the value is stored only once
+                 OPNsense accepts it (TrafficController::update()). No per-tier
+                 inputs: this build can't shape anything smaller than an
+                 interface — see TrafficController. --}}
             <form action="{{ route('network.traffic.update') }}" method="POST" id="fair-use-form"
                   class="p-5 md:p-6 bg-green-50/40 rounded-2xl border-2 border-green-200 space-y-5">
                 @csrf

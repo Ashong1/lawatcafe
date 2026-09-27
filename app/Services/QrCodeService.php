@@ -7,17 +7,10 @@ use BaconQrCode\Encoder\Encoder;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Renders a QR code as an inline SVG, with no external requests at any point.
- *
- * That constraint is not incidental. These codes appear on the guest portal and
- * on printed voucher slips: a pre-auth guest has no internet, so an image
- * fetched from a QR web service would hang and read as "the WiFi is broken",
- * and a printed slip has no network at all. Everything is drawn from the
- * encoded matrix here.
- *
- * SVG rather than PNG deliberately — it needs no imagick/gd, scales cleanly on
- * both a phone screen and a thermal printer, and embeds directly in the markup
- * so there is no second request even to this app.
+ * Renders a QR code as inline SVG with no external requests: codes appear on
+ * the pre-auth portal (no internet — a remote image would hang and read as
+ * "the Wi-Fi is broken") and on printed slips. SVG needs no imagick/gd, scales
+ * for phones and thermal printers, and embeds with no second request.
  */
 class QrCodeService
 {

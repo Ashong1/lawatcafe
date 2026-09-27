@@ -39,16 +39,10 @@ Schedule::command('ai:resolve-gaps')->hourly()->withoutOverlapping();
 // rule passes traffic based on those aliases.
 Schedule::command('shaper:reconcile-tiers')->everyFiveMinutes()->withoutOverlapping();
 
-// The adaptive fair-use loop. Every five minutes because that is how fast a
-// café fills up, not because the ceiling moves that often — most runs only take
-// a throughput sample, since the deadband and cooldown in
-// AdaptiveBandwidthService stop a model being woken for noise.
-//
-// It samples even while adaptation is switched off: the line speed and the
-// busy-hour profile are both learned from that history, so turning the loop on
-// later should find it already knows the shop.
-//
-// withoutOverlapping matters more here than elsewhere — each run holds a
-// ~11-second sample window open, and two overlapping runs would derive their
-// rates from each other's counter reads.
+// The adaptive fair-use loop, every five minutes (how fast a cafe fills up).
+// Most runs only take a sample — the deadband and cooldown in
+// AdaptiveBandwidthService keep the model asleep for noise — and it samples
+// even with adaptation off, so the history is there when it's turned on.
+// withoutOverlapping: each run holds an ~11s sample window, and overlapping
+// runs would read each other's counters.
 Schedule::command('shaper:adapt')->everyFiveMinutes()->withoutOverlapping();

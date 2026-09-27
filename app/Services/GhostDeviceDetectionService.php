@@ -8,19 +8,14 @@ use App\Models\StaticIpAssignment;
 use Illuminate\Support\Collection;
 
 /**
- * Cross-references OPNsense's raw Layer-2/3 view of the LAN (ARP table +
- * Kea DHCP leases) against what the captive portal itself knows about
- * (its session list) and its own allow-list. Anything holding an IP/MAC on
- * the LAN that the portal has zero session record for — pending or
- * authorized — and that isn't explicitly trusted (allow-listed, a static/VIP
- * reservation, infrastructure, or an ignored IP) is a "ghost": it's
- * consuming network access without the portal ever having logged it.
+ * Finds "ghosts": devices holding an IP/MAC on the LAN (ARP table + Kea
+ * leases) that the captive portal has no session for and that aren't trusted
+ * (allow-listed, a static/VIP reservation, infrastructure or ignored) — using
+ * the network without the portal ever logging it.
  *
- * This closes two real blind spots in VoucherController::sessions(), which
- * only ever unions ARP MACs with session MACs: a device whose DHCP lease is
- * still current but whose ARP cache entry has aged out is invisible there
- * entirely, and the allow-list is only ever inferred from passthrough
- * session rows rather than checked directly.
+ * Covers what VoucherController::sessions() can't see: a device with a live
+ * DHCP lease but an aged-out ARP entry, and the allow-list checked directly
+ * rather than inferred from passthrough sessions.
  */
 class GhostDeviceDetectionService
 {

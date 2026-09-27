@@ -9,20 +9,10 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 
 /**
- * super_admin only. The most recent application errors, so "something is broken"
- * can be answered with what actually broke.
- *
- * This is the most sensitive tool in the registry — a log carries file paths,
- * SQL, and occasionally values from a failed request. Three deliberate limits:
- *
- *  1. Only the error headline lines are read, never the stack traces beneath
- *     them. A trace is where the incidental data lives, and it is unreadable in
- *     a chat bubble anyway.
- *  2. The tail is bounded so a huge log cannot be pulled into a prompt.
- *  3. Anything resembling a credential or token in a message is redacted before
- *     it leaves this method.
- *
- * The point is triage — "what is failing, and since when" — not a log viewer.
+ * super_admin only: recent application errors, for "what is failing, and since
+ * when" — triage, not a log viewer. Logs carry paths, SQL and request values,
+ * so it reads only the error headlines (never stack traces), bounds the tail,
+ * and redacts anything resembling a credential or token.
  */
 class GetRecentSystemErrorsTool implements AgentTool
 {

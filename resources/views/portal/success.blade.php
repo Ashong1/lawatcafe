@@ -152,21 +152,19 @@
                         </p>
                     @endunless
 
-                    {{-- The one "check your time" block, for everyone. The address
-                         has to survive this page: once the firewall opens, a sign-in
-                         window is destroyed by the OS, and even a browser tab gets
-                         closed.
+                    {{-- The one "check your time" block. The address must survive
+                         this page: once the firewall opens, a sign-in window (and
+                         even a browser tab) gets closed.
 
-                         Sign-in window: no page can open the real browser on its
-                         own — /portal/handoff's automatic intent:// is blocked by
-                         most (confirmed on a Huawei tablet) because no user gesture
-                         is behind it. A real tap on a target=_blank link is what
-                         some honour; Apple gets the x-safari- scheme (safariUrl()).
-                         Where neither works the page opens in this window, and
-                         auto-reconnect keeps the guest online either way.
+                         No page can open the real browser by itself — the
+                         automatic intent:// handoff is refused without a user
+                         gesture. A real tap on target=_blank works on some
+                         windows; Apple gets the x-safari- scheme (safariUrl()).
+                         Otherwise the page opens here and auto-reconnect keeps
+                         the guest online.
 
-                         .cna-only/.browser-only go on wrappers: their display:block
-                         would flatten the links' flex layout. --}}
+                         .cna-only/.browser-only go on wrappers: their
+                         display:block would flatten the links' flex layout. --}}
                     <div class="rounded-2xl border-2 border-dashed border-[#E6D5C3] bg-white/70 px-4 py-4 text-center space-y-3">
                         <p class="text-sm text-[#4A3B32] leading-relaxed">
                             Check your time left anytime at

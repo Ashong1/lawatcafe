@@ -8,15 +8,11 @@ use Illuminate\Support\Facades\Process;
 /**
  * Turns a bare site name ("sulasok") into the real domains behind it.
  *
- * Asked to block the sites in a photo, the assistant passed what the photo
- * showed — names without a TLD — and blockSites rejected every one, leaving
- * the admin with nothing. Pi-hole needs full domains, so each bare name is
- * tried against the endings sites like these actually use, and every
- * combination that exists in public DNS is returned. Only runs for names an
- * admin has confirmed blocking.
- *
- * Resolved against this server's own resolver, which is public DNS, not
- * Pi-hole — so a site Pi-hole already blocks still shows up as existing.
+ * A photo often shows site names without a TLD, and Pi-hole needs full
+ * domains, so each name is tried against the endings such sites use and every
+ * combination that exists in public DNS is returned. Only for names an admin
+ * has confirmed blocking. Uses this server's resolver (public DNS, not
+ * Pi-hole), so a site Pi-hole already blocks still resolves.
  */
 class BareSiteResolver
 {

@@ -10,18 +10,11 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The "Barista AI" 30-day sales forecast + confidence scoring, shared by
- * DashboardController::getAIInsights() and Admin/AnalyticsController::index()
- * — both used to carry an independent, near-identical ~80-line copy of this
- * logic while caching the result under the same literal key
- * ('barista_forecast_deep', 1 hour TTL). Since Cache::remember() only runs
- * the closure on a miss, whichever endpoint was hit first each hour silently
- * decided what the OTHER endpoint got back too — and the two copies had
- * already drifted (the dashboard version had richer confidence scoring:
- * confidence_label, forecast_range_low/high, a >200-transaction special
- * case) — so the "loser" endpoint could return an incomplete shape
- * depending on request order. This service is the single source of truth
- * both controllers now call.
+ * The "Barista AI" 30-day sales forecast + confidence scoring — the single
+ * implementation behind DashboardController::getAIInsights() and
+ * Admin/AnalyticsController::index(). Both read the same cache key, so two
+ * copies of this logic would let whichever endpoint ran first decide the
+ * other's result shape.
  */
 class BaristaForecastService
 {

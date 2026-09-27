@@ -27,22 +27,16 @@ class OpnSenseService
     }
 
     /**
-     * Build the authenticated HTTP client used for every OPNsense call.
-     * Centralizing this means the TLS verification tradeoff (see
-     * services.opnsense.verify_tls) is applied consistently everywhere,
-     * instead of each method deciding it individually.
+     * The authenticated client for every OPNsense call, so the TLS
+     * verification tradeoff (services.opnsense.verify_tls) is applied in one
+     * place.
      *
-     * The default 1s/2s budget is deliberately tight: several call sites here
-     * (getArpTable, listSessions, getGatewayStatus, getInterfaceStats) run in
-     * a page's render/poll path, and going past Chrome's ~500ms paint-holding
-     * budget flashes a blank page on navigation. Those methods are cached with
-     * a stale-value fallback, so a timeout only costs a little staleness.
-     *
-     * authorizeDevice() is the one call that can't take that tradeoff: it's a
-     * one-shot write triggered directly by a customer redeeming a voucher,
-     * with no cached fallback — a timeout there is a flatly rejected
-     * voucher, not stale data. It passes its own longer budget explicitly
-     * rather than sharing this default.
+     * The default 1s/2s budget is tight on purpose: getArpTable, listSessions,
+     * getGatewayStatus and getInterfaceStats run in a page's render/poll path,
+     * and past Chrome's ~500ms paint-holding budget navigation flashes blank.
+     * They're cached with a stale fallback, so a timeout costs only staleness.
+     * authorizeDevice() has no fallback — a timeout rejects a paid voucher — so
+     * it passes its own longer budget.
      */
     protected function client(?int $connectTimeout = null, ?int $timeoutSeconds = null)
     {
@@ -176,14 +170,10 @@ class OpnSenseService
     /**
      * The Kea DHCPv4 dynamic pool ranges, as integer start/end pairs.
      *
-     * An address inside one of these ranges belongs to whichever guest Kea
-     * handed it to today and to somebody else tomorrow, so it can never
-     * identify a fixed device. Treating one as permanent (infrastructure /
-     * ignored) silently erases a real customer from the sessions page and the
-     * dashboard counts the moment the lease rotates onto their phone.
-     *
-     * Fails open: an unreachable OPNsense returns an empty list, which makes
-     * every caller skip the check rather than block an admin from saving.
+     * A pooled address belongs to a different guest from day to day, so it
+     * can never identify a fixed device; treating one as infrastructure hides
+     * a real customer once the lease rotates onto their phone. Fails open: an
+     * unreachable OPNsense returns [] and callers skip the check.
      *
      * @return array<int, array{start: int, end: int, label: string}>
      */
@@ -287,15 +277,9 @@ class OpnSenseService
     }
 
     /**
-     * Get current Kea DHCPv4 leases from OPNsense — the authoritative
-     * source for a device's self-reported hostname (whatever the client
-     * sent in its DHCP request), which in practice is far more often
-     * populated than the ARP diagnostic endpoint's own 'hostname' field
-     * (ARP is just a Layer-2/3 lookup table; it has no naming data of its
-     * own beyond whatever OPNsense happens to enrich it with). Some devices
-     * genuinely send no hostname at all — that's a real client limitation,
-     * not something either source can paper over.
-     *
+     * Current Kea DHCPv4 leases — the reliable source for a device's hostname
+     * (what the client sent in its DHCP request); the ARP endpoint's
+     * 'hostname' is nearly always empty. Some devices send none at all.
      * Cached like getArpTable() — hit on every sessions-page load.
      *
      * @return array
@@ -662,15 +646,12 @@ class OpnSenseService
     }
 
     /**
-     * The traffic shaper's whole configuration, indexed by description:
+     * The traffic shaper's configuration, indexed by description:
      * ['pipes' => [description => uuid], 'rules' => [description => uuid]].
      *
-     * Identity comes from OPNsense itself on every call rather than from a
-     * UUID the app stored earlier. The previous version cached each pipe's
-     * UUID in a Setting, and a test run that shared this deployment's cache
-     * store wrote its fixture strings ("existing-uuid") into it — after which
-     * every write targeted setPipe/existing-uuid, got a 500, and no pipe was
-     * ever created. Looking the objects up by description cannot desync.
+     * Looked up from OPNsense on every call, never from a stored UUID — a
+     * stored UUID can desync (a test once wrote a fixture UUID into the shared
+     * cache and every write then 500'd). Descriptions can't desync.
      *
      * @return array{pipes: array<string, string>, rules: array<string, string>}
      */
@@ -717,16 +698,11 @@ class OpnSenseService
     /**
      * Create or update one direction's Dummynet pipe for a bandwidth tier.
      *
-     * One pipe per direction, not one per tier: a tier is asymmetric (free is
-     * 2 Mbit down / 1 Mbit up) and a single pipe can only express one number.
-     * The old code collapsed both into max(down, up), so even a working setup
-     * would have handed every free guest 2 Mbit in both directions.
+     * One pipe per direction: tiers are asymmetric (free is 2 down / 1 up) and
+     * a pipe holds one number. mask src-ip/dst-ip makes the cap PER CLIENT —
+     * without it ten guests share one 2 Mbit bucket.
      *
-     * mask src-ip/dst-ip makes the cap PER CLIENT. Without it the pipe is one
-     * shared bucket and ten guests would split a single 2 Mbit link between
-     * them, which is not what "2 Mbps per guest" means.
-     *
-     * Does NOT apply the change by itself — call reconfigureShaper() after.
+     * Doesn't apply the change — call reconfigureShaper() after.
      *
      * @return string|null the pipe's UUID, or null on failure
      */
@@ -1250,14 +1226,11 @@ class OpnSenseService
     }
 
     /**
-     * Read the captive portal zone's "Allowed IP addresses" and "Allowed MAC
-     * addresses" passthrough lists. Devices on these lists skip the portal
-     * entirely — no voucher, ever — which is a different, stronger guarantee
-     * than a Kea static IP reservation (see addKeaReservation): that only
-     * pins the device's IP, it still has to authenticate at the portal.
+     * The captive portal zone's "Allowed IP/MAC addresses" passthrough lists.
+     * Listed devices skip the portal entirely — stronger than a Kea static
+     * reservation (addKeaReservation), which only pins the IP.
      *
-     * Cached like getArpTable()/getDhcpLeases()/listSessions(): the Network >
-     * Sessions page reads it on every 5s poll (ghost-device cross-reference).
+     * Cached like getArpTable(): Network > Sessions reads it on every 5s poll.
      *
      * @return array{ips: string[], macs: string[]}
      */

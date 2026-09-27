@@ -6,20 +6,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Splits "the guest redeemed this code" from "the firewall has let this device
- * through".
+ * Splits "the guest redeemed this code" from "the firewall let this device
+ * through": granting internet at redemption lets the phone's sign-in window
+ * see its probe succeed and close before the guest can read their time.
  *
- * Granting internet at redemption lets the phone's captive-network assistant
- * see its connectivity probe succeed while the success page is still loading,
- * and the OS destroys the window before the guest can read their remaining
- * time. So redemption and activation are two steps, and this column tells
- * them apart.
- *
- * It is deliberately NOT the session clock — that stays used_at, unchanged, so
- * every existing expiry calculation keeps working. This only answers "has this
- * voucher ever been let through?", which is what lets the portal safely
- * re-authorize an abandoned redemption without also undoing a guest's
- * deliberate Disconnect.
+ * Not the session clock — that stays used_at, so expiry maths is unchanged.
+ * It answers "was this voucher ever let through?", which lets the portal
+ * re-authorize an abandoned redemption without undoing a deliberate
+ * Disconnect.
  */
 return new class extends Migration
 {

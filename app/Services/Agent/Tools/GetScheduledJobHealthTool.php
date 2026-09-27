@@ -10,16 +10,12 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * super_admin only. Whether the background jobs are actually running.
+ * super_admin only: whether the background jobs are running. There is no queue
+ * worker, so if the scheduler's cron stops nothing announces it — just stale
+ * forecasts and unenforced limits days later.
  *
- * This matters more on this deployment than it would elsewhere: there is no
- * queue worker, so the scheduler is the only background mechanism. If its cron
- * entry stops firing, nothing announces it — the symptoms surface days later as
- * stale forecasts and unenforced session limits.
- *
- * Health comes from each command's own heartbeat, never from its output. A job
- * that legitimately produces nothing on a quiet day (agent:analyze only writes
- * a run row when it finds signals) is healthy, not dead.
+ * Health comes from each command's heartbeat, never its output: a job that
+ * produces nothing on a quiet day (agent:analyze) is healthy, not dead.
  */
 class GetScheduledJobHealthTool implements AgentTool
 {

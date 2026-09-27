@@ -10,15 +10,12 @@ use Illuminate\Support\Facades\Cache;
  * Keeps authenticated guests' connections looking active.
  *
  * Idle guest sessions vanish from OPNsense after ~25s-3min with no trigger
- * from this app, while active devices survive — something below the app (the
- * AP or an OPNsense liveness timeout) prunes quiet connections. Pinging an
- * idle device every few seconds keeps its session alive. This is a
- * mitigation; the underlying cause is still unidentified.
+ * from this app — something below it (the AP or an OPNsense liveness timeout)
+ * prunes quiet connections. Pinging each guest every few seconds keeps them
+ * alive. A mitigation; the cause is still unidentified.
  *
- * Runs every minute via the scheduler (routes/console.php) but loops
- * internally for ~55s, pinging every few seconds — Laravel's schedule has
- * no sub-minute granularity, and the shortest drop observed (~25s) is well
- * under a minute, so a once-a-minute ping would still leave guests exposed.
+ * Loops for ~55s inside each one-minute scheduler run, because the scheduler
+ * has no sub-minute interval and drops happen within 25s.
  */
 class KeepaliveGuestSessions extends Command
 {

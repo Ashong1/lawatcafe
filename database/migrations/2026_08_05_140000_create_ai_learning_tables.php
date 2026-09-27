@@ -5,20 +5,13 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Storage for the agent's experiential learning loop.
- *
- * Two tables, deliberately separated by what they are:
- *
- * - ai_feedback is RAW EVIDENCE. Every rating, correction and detected failure,
- *   exactly as observed, never edited. It is the audit trail behind any claim
- *   that the agent improved, and it is what the distiller reads.
- *
- * - ai_lessons is DERIVED GUIDANCE. What the distiller concluded from that
- *   evidence, pending human approval before it can influence a live prompt.
- *
- * Keeping them apart matters: evidence must stay immutable and complete even
- * when a lesson drawn from it is rejected, or the satisfaction trend would
- * quietly rewrite itself every time someone declined a suggestion.
+ * Storage for the agent's learning loop, in two deliberately separate tables:
+ * - ai_feedback: RAW EVIDENCE — every rating, correction and failure as
+ *   observed, never edited; the audit trail the distiller reads.
+ * - ai_lessons: DERIVED GUIDANCE, pending human approval before it can reach
+ *   a prompt.
+ * Evidence stays complete even when a lesson from it is rejected, or the
+ * satisfaction trend would rewrite itself.
  */
 return new class extends Migration
 {

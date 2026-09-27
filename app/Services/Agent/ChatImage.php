@@ -8,14 +8,9 @@ use Illuminate\Validation\ValidationException;
 /**
  * A photo attached to a staff/admin/super_admin Barista AI message.
  *
- * Arrives as a data URL the browser has already downscaled (longest side
- * 1280px, JPEG), which keeps it under nginx's default 1MB body limit and
- * cheap for the model. It is sent to the model for this one turn only and
- * never stored: conversation history keeps a text marker, not the image.
- *
- * Not accepted on the guest portal endpoint — anonymous uploads over public
- * Wi-Fi are a different risk entirely, and that endpoint doesn't read this
- * field at all.
+ * Arrives as a data URL already downscaled by the browser (1280px JPEG), under
+ * nginx's 1MB body limit. Used for this turn only and never stored — history
+ * keeps a text marker. The guest portal endpoint never reads it.
  */
 class ChatImage
 {

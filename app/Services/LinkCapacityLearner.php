@@ -9,26 +9,15 @@ use Illuminate\Support\Facades\DB;
 /**
  * What the adaptive fair-use loop has learned about the shop's connection.
  *
- * Nothing in this system is told how fast the internet is. The contracted plan
- * speed is not in the config, OPNsense will not report it, and the only figure
- * anyone ever had was a single unshaped throughput test. So it is learned from
- * observation instead: sample the interface on a schedule, and read the
- * capacity back out of the peaks.
+ * Nothing reports the line speed (not the config, not OPNsense), so it is
+ * learned from interface samples. The estimate is a LOWER BOUND — observed
+ * throughput never exceeds the real link — and dividing a floor among guests
+ * errs on the safe side; guessing high oversubscribes the line.
  *
- * Two things make that honest rather than a guess.
- *
- * The estimate is deliberately a LOWER BOUND. Observed throughput can never
- * exceed the real link, so the busiest moment seen so far is a floor under the
- * truth, never an overstatement. A loop dividing a floor among its guests caps
- * them slightly tighter than strictly necessary, which is the safe direction to
- * be wrong in — the alternative, guessing high, oversubscribes the line and
- * produces exactly the contention the loop exists to prevent.
- *
- * And a sample only counts as evidence about capacity if the line, rather than
- * the shop's own caps, was the limit. With a 20 Mbps ceiling and two guests,
- * 40 Mbps is the most that can be measured no matter how fast the connection
- * is; treating that as "the link is 40" would ratchet the estimate down every
- * quiet hour until the cap collapsed. isInformative() below is that filter.
+ * A sample counts only if the line, not the shop's own caps, was the limit:
+ * with a 20 Mbps ceiling and two guests, 40 Mbps is the most measurable, and
+ * reading that as "the link is 40" would ratchet the estimate down every quiet
+ * hour. isInformative() is that filter.
  */
 class LinkCapacityLearner
 {

@@ -14,18 +14,14 @@ use Illuminate\Support\Facades\Notification;
 class DeliveryReceivingService
 {
     /**
-     * Record a delivery submitted by staff. Each item is matched against an
-     * outstanding ('sent') PurchaseOrderDraft for the same ingredient and the
-     * exact quantity received (plus supplier name, when the draft has a
-     * supplier on file). If every item matches, stock is applied immediately
-     * and the matched drafts are marked fulfilled. If any item doesn't match,
-     * nothing is applied yet — the whole delivery is held as 'pending_review'
-     * so an admin can check it before it affects stock levels.
+     * Record a delivery submitted by staff. Each item must match a 'sent'
+     * PurchaseOrderDraft by ingredient and exact quantity (and supplier, when
+     * the draft has one). All match: stock is applied and drafts fulfilled.
+     * Any mismatch: nothing is applied and the delivery waits in
+     * 'pending_review' for an admin.
      *
-     * Admin-recorded deliveries (IngredientDeliveryController::store) are
-     * intentionally NOT routed through this — admins already have full
-     * authority to record stock directly, so only staff submissions need the
-     * match-or-review gate.
+     * Admin deliveries (IngredientDeliveryController::store) skip this gate —
+     * admins may record stock directly.
      */
     public function recordStaffDelivery(array $data, int $userId): IngredientDelivery
     {

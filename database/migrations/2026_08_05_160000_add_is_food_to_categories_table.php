@@ -5,17 +5,10 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Marks which categories are food rather than drink.
- *
- * The POS pairing suggestion is meant to offer a pastry alongside a drink and a
- * drink alongside a pastry. Nothing in the schema could express that: the
- * fallback could only pick "a product from some other category", which on this
- * menu meant a Classic Latte suggested a Matcha Latte — a different category,
- * still a second drink, and a poor thing to offer someone who just ordered one.
- *
- * A boolean rather than a free-text kind: the only distinction the pairing
- * actually needs is "is this the same sort of thing as what they just ordered",
- * and two values answer that without asking an admin to invent a taxonomy.
+ * Marks which categories are food rather than drink, so the POS pairing
+ * suggestion offers a pastry with a drink (not "some other category", which
+ * paired a Classic Latte with a Matcha Latte). A boolean is all the pairing
+ * needs — no taxonomy for an admin to invent.
  */
 return new class extends Migration
 {

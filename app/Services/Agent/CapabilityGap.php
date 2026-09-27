@@ -7,16 +7,13 @@ use App\Models\AiFeedback;
 use App\Models\User;
 
 /**
- * Notices when the assistant tells a staff/admin user it can't do something,
- * and records it for ai:resolve-gaps to learn from.
+ * Records when the assistant tells a staff/admin user it can't do something,
+ * for ai:resolve-gaps to learn from.
  *
- * Pattern-matched on the reply rather than asking a second model: this runs
- * on every staff/admin turn, and the phrasing models use to decline is narrow
- * enough ("I don't have a tool to…", "I'm not able to…"). A turn where any
- * tool ran or was proposed is never a gap — the assistant did something.
- *
- * Guest turns are never recorded. Guest chat is anonymous; letting it steer
- * what the assistant teaches itself would be an injection route.
+ * Pattern-matched (models decline in narrow phrasing), not a second model call
+ * on every turn. A turn where any tool ran or was proposed is never a gap.
+ * Guest turns are never recorded: anonymous chat steering what the assistant
+ * teaches itself would be an injection route.
  */
 final class CapabilityGap
 {

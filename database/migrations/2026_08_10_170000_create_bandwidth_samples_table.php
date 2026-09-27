@@ -5,17 +5,13 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Throughput samples, taken on a schedule, from which the adaptive fair-use
- * loop learns two things it has no other way to know: roughly how fast the
- * shop's internet actually is, and which hours of the day are busy.
+ * Scheduled throughput samples, from which the adaptive fair-use loop learns
+ * the line speed and the busy hours.
  *
- * `ceiling_mbps` looks redundant next to the two rate columns and is the whole
- * reason the estimate can be trusted. Observed throughput is bounded by the
- * caps in force at the time — with a 20 Mbps ceiling and two guests you will
- * never measure more than 40, however fast the line is. A sample taken while
- * the guests were pinned against their own caps says nothing about capacity,
- * and only by storing the ceiling can the learner tell those apart from a
- * sample where the line itself was the limit.
+ * `ceiling_mbps` is what makes the estimate trustworthy: throughput is bounded
+ * by the caps in force (20 Mbps x two guests never measures more than 40), so
+ * only by storing the ceiling can the learner tell cap-limited samples from
+ * line-limited ones.
  */
 return new class extends Migration
 {

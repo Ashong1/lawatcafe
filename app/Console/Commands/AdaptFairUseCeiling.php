@@ -17,34 +17,20 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 
 /**
- * The adaptive fair-use loop: sample the line, and when the shape of the room
- * has genuinely changed, let the agent decide whether to move the ceiling.
+ * The adaptive fair-use loop, every five minutes.
  *
- * Runs every five minutes and does two separate jobs.
+ * Always samples, even when adaptation is off: the capacity estimate and
+ * busy-hour profile are learned from history, and a gap in the record is a gap
+ * in what can be learned.
  *
- * It always samples, whether or not adaptation is switched on. The capacity
- * estimate and the busy-hour profile are both learned from history, so an owner
- * who enables the loop next month should find it already knows the shop rather
- * than starting from nothing. Sampling is also the only part that must not be
- * skipped: a gap in the record is a gap in what can be learned.
+ * Adapts only when AdaptiveBandwidthService's deadband and cooldown allow it;
+ * otherwise no model is called (five-minute polling would be ~300 calls a day
+ * to learn nothing changed). The agent can decline — one device saturating the
+ * line at 3am isn't the contention this relieves — and declining is recorded.
  *
- * It adapts only when there is something to adapt to. AdaptiveBandwidthService
- * computes the target and applies the deadband and cooldown; if either blocks,
- * this command exits without waking a model at all. That matters for cost as
- * much as for the network — five-minute polling would otherwise be nearly three
- * hundred model calls a day to be told nothing has changed.
- *
- * When a change does look warranted, the evidence goes to the orchestrator and
- * the agent decides whether to call adjustFairUseCeiling. It is a real decision
- * and it can decline: one device saturating the line at 3am with nobody else on
- * is not the contention this loop exists to relieve, and the arithmetic alone
- * cannot tell the difference. Declining is recorded as carefully as acting.
- *
- * The actor is null — scheduled, not chat-triggered — which puts the call
- * through exactly the same permission and audit pipeline as an admin's own
- * chat, the pattern RunAgentAnalysis established. So an owner who moves the
- * tool to confirm_required on the Agent Permissions page gets proposals held
- * for approval instead of applied, with no change here.
+ * The actor is null, so the call goes through the same permission and audit
+ * pipeline as admin chat: set the tool to "requires confirmation" and changes
+ * wait for approval.
  */
 class AdaptFairUseCeiling extends Command
 {

@@ -137,18 +137,11 @@
      @pointercancel.window="stopDrag()"
      @open-agent-chat.window="handleExternalOpen($event.detail.prompt)">
 
-    {{-- Chat Window.
-
-         Absolutely positioned above the toggle button rather than stacked in
-         flow above it, which is what made closing look broken. In flow, the
-         panel's ~500px of height sat between the widget's fixed `top` and the
-         button, so the button's screen position depended on whether the panel
-         was open — and toggle() compensated by shifting posY by exactly that
-         amount. But posY animates (the root carries transition: all 0.3s) while
-         display:none lands instantly at the end of the leave transition, so on
-         close the button swooped a full panel-height down over 300ms and then
-         snapped back up. Out of flow, the button simply never moves and the
-         compensation is gone entirely. --}}
+    {{-- Chat Window: absolutely positioned above the toggle button, not in flow.
+         In flow, the button's position depended on the panel being open and had
+         to be compensated in posY — which animates (transition: all 0.3s) while
+         display:none lands instantly, so the button swooped on close. Out of
+         flow, the button never moves. --}}
     <div x-show="open"
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0 scale-90 translate-y-10"
@@ -731,20 +724,11 @@ document.addEventListener('alpine:init', () => {
             const userMsg = this.message;
             const image = this.image;
             const imageThumb = this.imageThumb;
-            // Captured before pushing the new turn below, so this never has to
-            // guess which entries are "real" — no positional slicing needed,
-            // which matters once history can also be a server-loaded past
-            // conversation with no synthetic greeting bubble at index 0.
-            // Excludes falsy content too: a tool-only turn with no reply text
-            // can end up stored (or cached in sessionStorage from before that
-            // was guarded server-side) with content null/'' — sending that
-            // back fails the server's `history.*.content` string validation
-            // and 422s every message for the rest of that conversation.
-            // Proactively bounded here too (not just server-side via
-            // ConversationHistoryService::slidingWindow()) so a long-running
-            // conversation doesn't keep growing the request payload forever —
-            // this is a size optimization, not the actual safety boundary,
-            // since the server never trusts the client to have done it.
+            // Captured before pushing the new turn, so no positional slicing
+            // (a server-loaded conversation has no greeting at index 0). Skips
+            // empty content — null/'' fails the server's history.*.content
+            // validation and 422s every later message. Bounded here only to keep
+            // the payload small; the server applies its own sliding window.
             const historyForRequest = this.history
                 .filter(m => m.kind === 'text' && !m.isGreeting && (m.content || m.imageThumb))
                 // Earlier photos aren't re-sent; the marker tells the model one existed.
@@ -876,25 +860,15 @@ document.addEventListener('alpine:init', () => {
                                 // an answer was indistinguishable from a hang.
                                 this.history.push({ kind: 'text', role: 'assistant', content: '', streaming: true });
 
-                                // Read the entry back OUT of the array rather
-                                // than keeping the literal we just pushed, and
-                                // this line is the whole reason replies appeared
-                                // truncated.
-                                //
-                                // Alpine's reactivity (@vue/reactivity) stores
-                                // the raw object in the array and only hands out
-                                // a tracking Proxy when you read an element back
-                                // through it. Mutating the literal directly goes
-                                // around that Proxy: the data updates, no
-                                // dependency is ever notified, and the DOM keeps
-                                // whatever it last painted. So the bubble froze
-                                // mid-sentence at some incidental re-render,
-                                // every later delta went unseen, and — worst —
-                                // the authoritative `meta.reply` assignment
-                                // below repainted nothing at all. save() then
-                                // wrote the COMPLETE text to sessionStorage,
-                                // which is exactly why refreshing the page
-                                // produced the rest of the answer.
+                                // Read the entry back OUT of the array; don't
+                                // mutate the literal we pushed. Alpine stores the
+                                // raw object and only hands out a reactive Proxy
+                                // when an element is read back through the array,
+                                // so mutating the literal updates data but
+                                // notifies nothing — the bubble freezes
+                                // mid-sentence and even the final meta.reply
+                                // repaints nothing (while save() stores the full
+                                // text).
                                 assistantEntry = this.history[this.history.length - 1];
 
                                 this.thinking = false;

@@ -8,27 +8,17 @@ use Illuminate\Support\Carbon;
 /**
  * Works out what the fair-use ceiling ought to be right now.
  *
- * The problem this solves is real and specific to how the cap is built. The
- * shaper pipes carry a per-IP mask, so every device gets its own queue at the
- * full ceiling — but the line behind them is one shared pipe. With a 20 Mbps
- * ceiling and ten guests on a ~60 Mbps connection, the caps allow 200 Mbps of
- * demand into a 60 Mbps link, and what happens next is decided by TCP rather
- * than by policy. TCP does not share fairly between users: a guest streaming
- * over a dozen parallel connections takes several times what a guest reading
- * one page does. Lowering the per-device ceiling toward each guest's actual
- * share is what turns that back into a rule.
+ * The per-IP mask gives every device its own queue at the full ceiling, but
+ * they share one line: a 20 Mbps ceiling with ten guests admits 200 Mbps of
+ * demand into a ~60 Mbps link, and TCP then favours whoever opens the most
+ * connections. Lowering the ceiling toward each guest's share restores
+ * fairness.
  *
- * The number is arithmetic and is computed here, deterministically. The agent's
- * job is not to pick it — a model asked for "about eight" will occasionally
- * answer eighty — but to decide whether the moment warrants acting on it at
- * all, which is a judgement about context that arithmetic cannot make. See
- * ShaperAdapt for that half.
- *
- * Two dampers matter as much as the formula. Every change rewrites two pipes
- * and two rules and reloads dummynet, which is a visible blip for everyone on
- * the network, so a loop that chased the guest count would cost more than it
- * gained: the deadband ignores small differences and the cooldown puts a floor
- * under how often the shop can be disturbed.
+ * The number is computed here, deterministically — a model asked for "about
+ * eight" occasionally says eighty. The agent only decides whether to act on it
+ * (AdaptFairUseCeiling). Every change reloads dummynet, a visible blip for
+ * everyone, so a deadband ignores small differences and a cooldown limits how
+ * often it can happen.
  */
 class AdaptiveBandwidthService
 {

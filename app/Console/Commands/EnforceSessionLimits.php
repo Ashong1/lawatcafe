@@ -189,18 +189,11 @@ class EnforceSessionLimits extends Command
     }
 
     /**
-     * The mirror image of handleOrphanedSession(): a used voucher the app
-     * still considers an active session, but whose IP/MAC no longer appears
-     * anywhere in OPNsense's live session list at all — the session dropped
-     * out on OPNsense's side (client walked away, DHCP lease expired,
-     * portal restart) without the app ever finding out, since the main loop
-     * above only ever iterates over sessions OPNsense *does* still report.
-     *
-     * Left uncleaned, the IP stays a member of its tier's bandwidth-shaper
-     * alias forever — a real bug if that IP later gets handed to a
-     * different device by DHCP, which would silently inherit a stranger's
-     * bandwidth tier. This only releases the tier alias; it doesn't touch
-     * the voucher itself (it was genuinely used, so it stays used).
+     * The mirror of handleOrphanedSession(): a voucher the app thinks is
+     * active whose IP/MAC OPNsense no longer reports (client left, lease
+     * expired, portal restart). Left alone, the IP stays in its tier alias and
+     * the next device DHCP gives it to inherits that tier. Releases the alias
+     * only; the voucher stays used.
      */
     protected function reapStaleVoucherSessions(array $liveSessions, OpnSenseService $opnsense, TrafficShapingService $shaping, array $protectedIps): void
     {

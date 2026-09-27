@@ -1,15 +1,11 @@
-{{-- Shared detection for the captive-network assistant (CNA) — the cut-down
-     browser a phone pops up when it joins Wi-Fi and finds a portal.
+{{-- Detects the captive-network assistant (CNA): the throwaway mini-browser a
+     phone opens on joining Wi-Fi, which the OS kills as soon as its own probe
+     succeeds — so the portal must not treat it like a normal browser.
 
-     It matters because the CNA is disposable: the OS kills it the moment its
-     own connectivity probe succeeds. Anything we navigate to inside it is
-     thrown away, so the portal must not treat it like a normal browser.
-
-     Include this in <head>. It is deliberately a plain inline script rather
-     than part of app.js, for two reasons: @vite emits type="module", which is
-     deferred and would run *after* the inline scripts in these views; and the
-     html.is-cna class below has to be set before first paint so the CSS can
-     branch without a flash of the wrong copy. --}}
+     Include in <head> as a plain inline script, not app.js: @vite emits a
+     deferred module that runs after these views' inline scripts, and
+     html.is-cna must be set before first paint so the CSS branches without a
+     flash of the wrong copy. --}}
 <script>
     window.isCaptiveAssistant = function () {
         const ua = navigator.userAgent || '';
