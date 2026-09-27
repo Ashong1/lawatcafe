@@ -27,9 +27,8 @@ class BlocklistService
 
     /**
      * Permanently ban a device's MAC address AND terminate its live network
-     * session, if it currently has one. Unifies what used to be two disconnected
-     * flows: BlocklistController (DB ban only) and VoucherController::kick
-     * (live disconnect only).
+     * session, if it currently has one — the single path for both
+     * BlocklistController and VoucherController::kick.
      *
      * @return array{banned: bool, kicked: bool, message: string}
      */

@@ -2,13 +2,8 @@
 @section('title', 'Site Blocking')
 
 @section('content')
-{{-- One card, one row per category, sites as chips.
-
-     This page used to give every preset its own full-width card in a
-     three-column grid, with the adult-list switch in a separate panel above
-     and custom sites in a table below. A category with two sites left most
-     of its row empty, and the whole thing read as scattered (owner's words).
-     Same routes and fields as before; only the layout changed. --}}
+{{-- One card, one row per category, sites as chips — compact, so a category
+     with two sites doesn't leave a mostly empty row. --}}
 @php
     $adultOn = $adultList['enabled'] ?? false;
     $categoryIcons = [

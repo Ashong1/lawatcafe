@@ -49,10 +49,8 @@
                     <span>Cash Sales (+)</span>
                     <span>₱{{ number_format($summary['cash_sales'], 2) }}</span>
                 </div>
-                {{-- Pay-ins/outs are part of the expected-cash formula but used
-                     to be invisible here, so the total could look like it did
-                     not add up — which matters more now that a button fills
-                     that exact figure into the count. --}}
+                {{-- Pay-ins/outs are part of the expected-cash formula; without
+                     them shown here the total looks like it doesn't add up. --}}
                 @if($summary['pay_ins'] > 0)
                 <div class="flex justify-between items-center opacity-70 text-xs font-medium">
                     <span>Pay-Ins (+)</span>

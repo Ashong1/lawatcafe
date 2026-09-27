@@ -7,9 +7,8 @@ use App\Models\AiAnalysisRun;
 class AiAnalysisController extends Controller
 {
     /**
-     * Browsable history of proactive agent:analyze runs — the narrative and
-     * older findings previously only existed in the DB with no view, once
-     * the "latest few" dashboard widget scrolled past them.
+     * Browsable history of agent:analyze runs, including findings older than
+     * the dashboard's "latest few".
      */
     public function index()
     {

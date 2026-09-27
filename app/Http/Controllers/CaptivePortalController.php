@@ -28,9 +28,8 @@ class CaptivePortalController extends Controller
      * The IP is taken from the actual request (never a client-suppliable
      * query string), and the MAC is cross-checked against OPNsense's own ARP
      * table rather than trusting whatever `clientMac` the guest's browser
-     * carried in from the redirect. This closes the gap where a guest could
-     * previously pass `?clientIp=<victim-ip>` and have that IP authorized
-     * outright.
+     * carried in from the redirect — otherwise a guest could pass
+     * `?clientIp=<victim-ip>` and get that IP authorized.
      */
     private function resolveTrustedIdentity(Request $request, OpnSenseService $opnsense): array
     {
@@ -177,9 +176,8 @@ class CaptivePortalController extends Controller
     /**
      * The most recent redeemed voucher belonging to this device, matched on
      * IP or (preferably) the MAC blind index. Shared by index() and the
-     * RFC 8908 captive-portal API so the "which session is this device on"
-     * question is only answered in one place — they previously would have
-     * had to duplicate this query and could drift apart.
+     * RFC 8908 captive-portal API so "which session is this device on" is
+     * answered in one place.
      */
     private function activeVoucherFor(string $ip, ?string $mac): ?Voucher
     {
@@ -655,13 +653,10 @@ class CaptivePortalController extends Controller
         [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
         $context = ['ip' => $ip, 'mac' => $mac];
 
-        // The shared agent-chat.blade.php widget (embedded here, floating on
-        // admin/staff) always requests `Accept: text/event-stream` and reads
-        // the response as a chunked SSE stream — this used to return a plain
-        // JSON body instead, which the client's stream reader never matched
-        // against its `data: ...\n\n` parser, so a guest's reply silently
-        // never arrived. No $conversation/$conversations here — guest chat
-        // has no durable per-user history (shared kiosks, no account to key it off).
+        // The shared agent-chat widget always reads an SSE stream, so this
+        // must stream too — a plain JSON body is never matched by its
+        // `data: ...\n\n` parser and the reply silently never arrives. No
+        // conversation history: guests have no account to key it off.
         return $responder->stream(
             $messages,
             ToolRegistry::AUDIENCE_GUEST,

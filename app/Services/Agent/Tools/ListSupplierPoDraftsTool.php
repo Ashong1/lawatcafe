@@ -8,9 +8,8 @@ use App\Services\Agent\Contracts\AgentTool;
 use App\Services\Agent\ToolResult;
 
 /**
- * Read-only companion to draftSupplierPo/sendSupplierPo — those two are
- * write-only, so there was previously no way for the model to check what's
- * already pending before deciding to draft again.
+ * Read-only companion to draftSupplierPo/sendSupplierPo, so the model can see
+ * what's already pending before drafting again.
  */
 class ListSupplierPoDraftsTool implements AgentTool
 {

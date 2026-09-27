@@ -86,6 +86,11 @@ after:
 // (the cap is per account), so stop the cascade and pause until the reset.
 ```
 
+Not every flagged word is history. "a previously-proposed action" or "a
+domain that was previously toggled off" describe *state* the code handles —
+leave those. The scanner already ignores "is used to determine"; judge the rest
+by asking whether the sentence narrates a past change or describes the present.
+
 Never change a comment's *meaning* to fit a shorter sentence, and never remove
 a comment that explains why a test fixture or a workaround exists.
 

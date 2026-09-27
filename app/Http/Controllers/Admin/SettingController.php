@@ -60,11 +60,8 @@ class SettingController extends Controller
     }
 
     /**
-     * Display AI provider API key configuration and availability status.
-     * Merges what used to be the separate "API Integrations" page (which
-     * only ever held a decorative, unused model dropdown and one API key
-     * field mislabeled as generic but actually OpenRouter-only) into a
-     * single accurate page alongside real per-provider/per-model status.
+     * AI provider key configuration alongside real per-provider and
+     * per-model status.
      */
     public function aiProviders(AIService $ai)
     {

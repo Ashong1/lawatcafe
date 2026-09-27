@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\Http;
  * scheduled job may spend some of it.
  *
  * The account gets 50 free-model requests a day (1,000 once $5 of credit is
- * added). On 2026-09-28 the scheduled jobs used all 50 before anyone chatted.
- * Background work now stops at a reserve, so people always have some left.
+ * added), and scheduled jobs can use all of it before anyone chats. Background
+ * work stops at a reserve so people always have some left.
  *
  * Separate from AIService so jobs' existing AIService mocks stay untouched,
  * and so the test suite can swap in a copy that never calls the real account

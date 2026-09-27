@@ -162,9 +162,8 @@ class ToolRegistry
     /** All registered tool classes across every audience — used to keep the settings UI in sync. */
     public function allToolClasses(): array
     {
-        // super_admin's list is the superset, so the settings UI stays complete
-        // as system tools are added — it used to read adminToolClasses(), which
-        // would have silently omitted every one of them.
+        // super_admin's list is the superset, so the settings UI stays
+        // complete as system tools are added.
         return array_unique([...$this->systemToolClasses()]);
     }
 }

@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Splits "the guest redeemed this code" from "the firewall has let this device
- * through", which used to be the same instant.
+ * through".
  *
- * Granting internet at redemption meant the phone's captive-network assistant
- * saw its connectivity probe succeed while the success page was still in
- * flight, so the OS destroyed the window before the guest could read their
- * remaining time. Redemption and activation are now two steps, and this column
- * is what tells them apart.
+ * Granting internet at redemption lets the phone's captive-network assistant
+ * see its connectivity probe succeed while the success page is still loading,
+ * and the OS destroys the window before the guest can read their remaining
+ * time. So redemption and activation are two steps, and this column tells
+ * them apart.
  *
  * It is deliberately NOT the session clock — that stays used_at, unchanged, so
  * every existing expiry calculation keeps working. This only answers "has this

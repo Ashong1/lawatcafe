@@ -87,8 +87,8 @@ class BareSiteResolver
 
     /**
      * Endings whose registry answers only for names that really exist. Some
-     * run wildcard DNS — .ph and .com.ph resolved even a made-up name to one
-     * parking IP (2026-09-28), which made every bare name "exist" there. A
+     * run wildcard DNS — .ph and .com.ph resolve even a made-up name to one
+     * parking IP, which would make every bare name "exist" there. A
      * random label is probed once per ending; one that resolves is skipped.
      */
     private function realTlds(string $probe, array $resolving): array

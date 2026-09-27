@@ -307,9 +307,9 @@
             </div>
 
             @unless($receiptPrintingEnabled)
-                {{-- Said out loud so a cashier does not go hunting for a button
-                     that used to be here, and knows the sale itself recorded
-                     fine — only the printing is withheld. --}}
+                {{-- Said out loud so a cashier doesn't go hunting for a print
+                     button, and knows the sale recorded fine — only printing is
+                     withheld. --}}
                 <p class="mt-4 text-center text-xs font-bold uppercase tracking-wide text-[#795548] leading-relaxed">
                     Sale recorded. Receipt printing is off pending BIR registration.
                 </p>

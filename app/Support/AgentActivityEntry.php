@@ -6,13 +6,9 @@ use App\Models\AiActionAudit;
 use Illuminate\Support\Str;
 
 /**
- * One Agent Activity row, in words a cafe owner reads without a glossary.
- *
- * The page used to print the raw audit record: tool names like
- * "getAnomalySignals", results like "1 anomaly signal(s):
- * voucher_revenue_divergence (1).", statuses in capitals, and "Barista AI
- * (scheduled)". Everything here is presentation only — the audit record
- * itself is untouched, so the trail stays exact.
+ * One Agent Activity row, in words a cafe owner reads without a glossary —
+ * no tool names, warning codes or capitalised statuses. Presentation only:
+ * the audit record itself is untouched, so the trail stays exact.
  */
 class AgentActivityEntry
 {
@@ -170,7 +166,7 @@ class AgentActivityEntry
             return $found->isEmpty() ? 'Nothing unusual found.' : 'Found: '.$found->implode('; ').'.';
         }
 
-        // Before the fix in v1.11.1.150 the tool rejected bare site names.
+        // Old failures from when the tool couldn't look up bare site names.
         if ($this->audit->tool_name === 'blockSites' && str_starts_with((string) ($result['message'] ?? ''), 'No valid domain names to block')) {
             return 'It couldn’t tell which websites these were: '.Str::after($result['message'], ': ').' Ask again — it now looks site names up by itself.';
         }

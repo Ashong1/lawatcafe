@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {{-- "only light": stops Android/Huawei sign-in windows from auto-darkening a page that has no dark theme (seen live: dark card, blue focus ring). --}}
+    {{-- "only light": stops Android/Huawei sign-in windows auto-darkening a page that has no dark theme. --}}
     <meta name="color-scheme" content="only light">
     <title>Authorizing - Lawa't Kape</title>
     <!-- Favicons -->
@@ -60,9 +60,8 @@
         <h2 class="text-3xl font-bold text-[#3E2723] mb-4 tracking-tight">Authenticating<span x-show="secondsLeft > 0" x-text="'... (' + secondsLeft + ')'"></span></h2>
         <p class="text-base text-[#795548] font-medium leading-relaxed max-w-md mx-auto">Verifying voucher and configuring firewall access for your device. Please do not close this window.</p>
 
-        {{-- Fills the dead stretch between the countdown ending and the 8s "taking too
-             long" fallback appearing — that middle window (when the real network wait
-             begins) previously had no progress cue at all beyond the static spinner. --}}
+        {{-- Fills the stretch between the countdown ending and the 8s "taking too
+             long" fallback, when the real network wait begins. --}}
         <div x-show="secondsLeft <= 0 && !showManualButton" x-cloak class="mt-6 w-full max-w-[200px] mx-auto h-1 bg-[#F0E6D2] rounded-full overflow-hidden">
             <div class="h-full w-1/3 bg-[#3E2723] rounded-full" style="animation: unlock-indeterminate 1.4s ease-in-out infinite;"></div>
         </div>

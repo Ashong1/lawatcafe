@@ -2,12 +2,9 @@
 @section('title', 'Agent Activity')
 
 @section('content')
-{{-- Rewritten for the cafe owner (2026-09-28). The old page was a raw audit
-     table: tool names ("getAnomalySignals"), internal codes
-     ("voucher_revenue_divergence (1)"), capitalised statuses and
-     "Barista AI (scheduled)". Each entry now reads as a sentence — see
-     App\Support\AgentActivityEntry — with approvals first and routine
-     look-ups hidden unless asked for. --}}
+{{-- Written for the cafe owner: each entry reads as a sentence (see
+     App\Support\AgentActivityEntry), approvals come first, and routine
+     look-ups are hidden unless asked for. --}}
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-4xl mx-auto">
 

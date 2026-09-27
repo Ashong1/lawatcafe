@@ -34,8 +34,7 @@ class Ingredient extends Model
     /**
      * Human-friendly display of current_stock — auto-converts g/ml into
      * kg/mg/L when the raw number would otherwise be awkwardly large or
-     * small, and trims to a sensible number of decimals. Was previously a
-     * 31-line @php block duplicated inline in the ingredients index view.
+     * small, and trims to a sensible number of decimals.
      *
      * @return array{value: string, unit: string}
      */

@@ -42,11 +42,10 @@ class RunAgentAnalysis extends Command
             return self::SUCCESS;
         }
 
-        // The same warning used to be re-reviewed every 15 minutes — two AI
-        // calls and an admin notification each time, ~96 times a day for a
-        // warning that stayed up all week, which alone emptied the 50-a-day
-        // free allowance. Only a CHANGE in what's flagged is worth a review;
-        // numbers inside a summary ("up 100%" vs "up 120%") don't count.
+        // Only a CHANGE in what's flagged is worth a review — each one costs
+        // two AI calls and an admin notification, and a persistent warning
+        // would otherwise be re-reviewed every 15 minutes. Numbers inside a
+        // summary ("up 100%" vs "up 120%") don't count as a change.
         $fingerprint = sha1(collect($signals)
             ->map(fn ($s) => ($s['type'] ?? '').'|'.preg_replace('/\d+(?:\.\d+)?/', '#', (string) ($s['summary'] ?? '')))
             ->sort()->implode("\n"));

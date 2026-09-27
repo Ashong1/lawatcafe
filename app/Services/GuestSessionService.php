@@ -10,14 +10,9 @@ use Carbon\Carbon;
  * The single definition of "an active guest" — a paying customer currently
  * authorized on the Wi-Fi.
  *
- * The dashboard used to answer this from the ARP table instead: every MAC
- * seen on any interface, minus a list of infrastructure IPs. That counted
- * three populations it should not have — devices associated to the Wi-Fi that
- * never bought a voucher, devices whose voucher had already expired, and
- * (because the exclusion list is address-based) machines on the WAN side of
- * the gateway entirely. It also *missed* real customers whose ARP entry had
- * aged out. On 2026-08-05 that produced "6 active guests" on the dashboard
- * against 2 on the sessions page, with the two sets almost disjoint.
+ * Not the ARP table: that counts devices that never bought a voucher, expired
+ * vouchers and machines on the WAN side, and misses customers whose ARP entry
+ * has aged out.
  *
  * VoucherSessionsTest asserts this count stays equal to the number of rows in
  * the sessions page's Active table, so the two cannot drift apart again.

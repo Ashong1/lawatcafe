@@ -8,12 +8,9 @@ use App\Services\Agent\CrossDomainCorrelationService;
 use App\Services\Agent\ToolResult;
 
 /**
- * Admin only — surfaces the same cross-domain anomaly detection
- * (voucher/revenue divergence, repeat-MAC network abuse, banned-device
- * reentry, low-stock-vs-demand mismatch) that RunAgentAnalysis already runs
- * on a schedule, but on demand from chat. Previously the only way to see
- * these signals was to wait for the scheduled command's own AI-narrated
- * finding — this makes the same deterministic detection queryable directly.
+ * Admin only — the same cross-domain anomaly detection RunAgentAnalysis runs
+ * on a schedule (voucher/revenue divergence, repeat-MAC abuse, banned-device
+ * reentry, low-stock-vs-demand), on demand from chat.
  */
 class GetAnomalySignalsTool implements AgentTool
 {

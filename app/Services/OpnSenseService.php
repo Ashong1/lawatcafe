@@ -33,12 +33,10 @@ class OpnSenseService
      * instead of each method deciding it individually.
      *
      * The default 1s/2s budget is deliberately tight: several call sites here
-     * (getArpTable, listSessions, getGatewayStatus, getInterfaceStats) run
-     * synchronously in a page's render/poll path and exceeding Chrome's
-     * ~500ms paint-holding budget was previously causing a blank-page flash
-     * on navigation (see .gemini/memory/LEARNINGS.md, 2026-07-28). Those
-     * methods are all cached with a stale-value fallback on failure, so
-     * timing out costs nothing worse than a few extra seconds of staleness.
+     * (getArpTable, listSessions, getGatewayStatus, getInterfaceStats) run in
+     * a page's render/poll path, and going past Chrome's ~500ms paint-holding
+     * budget flashes a blank page on navigation. Those methods are cached with
+     * a stale-value fallback, so a timeout only costs a little staleness.
      *
      * authorizeDevice() is the one call that can't take that tradeoff: it's a
      * one-shot write triggered directly by a customer redeeming a voucher,
@@ -125,19 +123,12 @@ class OpnSenseService
     /**
      * A unique-per-voucher identity for session/connect's 'user' field.
      *
-     * Every guest used to share one hardcoded username
-     * (config('services.opnsense.guest_user')), which meant OPNsense's
-     * captive portal daemon enforced a single-live-session limit across
-     * every guest in the shop, not per device — this was the real cause of
-     * "only one device can connect at a time", separate from (and not
-     * fixed by) the concurrentlogins zone setting. Verified live 2026-09-23:
-     * a second guest's authorizeDevice() call reliably kicked the first
-     * guest's live session under the shared identity, and giving each a
-     * distinct 'user' value let both hold sessions simultaneously. The
-     * session/connect endpoint doesn't validate this against a real OPNsense
-     * account — an arbitrary string here succeeds exactly like a
-     * pre-registered one — it's a session label, not a checked credential,
-     * so this needs no OPNsense-side user management at all.
+     * It must be unique: OPNsense's captive portal allows one live session per
+     * username, so a shared username (config('services.opnsense.guest_user'))
+     * lets a second guest's login kick the first off — "only one device can
+     * connect at a time", which the concurrentlogins zone setting doesn't fix.
+     * session/connect treats this as a session label, not a checked
+     * credential, so no OPNsense user accounts are needed.
      */
     protected function guestUsername(string $voucherCode, string $ip): string
     {
@@ -189,8 +180,7 @@ class OpnSenseService
      * handed it to today and to somebody else tomorrow, so it can never
      * identify a fixed device. Treating one as permanent (infrastructure /
      * ignored) silently erases a real customer from the sessions page and the
-     * dashboard counts the moment the lease rotates onto their phone — see
-     * the .117 incident fixed in v1.0.0.78.
+     * dashboard counts the moment the lease rotates onto their phone.
      *
      * Fails open: an unreachable OPNsense returns an empty list, which makes
      * every caller skip the check rather than block an admin from saving.
@@ -471,14 +461,10 @@ class OpnSenseService
     /**
      * Get interface statistics from OPNsense.
      *
-     * Cached for a few seconds — this is called every 3s by
-     * DashboardController::liveStats() (the admin.live-stats poll, live for
-     * as long as any admin dashboard is open), and previously had no cache
-     * at all, so every poll from every concurrently open dashboard was its
-     * own uncached OPNsense HTTP round-trip. The raw byte counters returned
-     * here are cumulative anyway (the client computes a bandwidth rate from
-     * the delta between polls), so a few seconds of staleness costs nothing
-     * observable.
+     * Cached for a few seconds: DashboardController::liveStats() polls this
+     * every 3s from every open admin dashboard. The byte counters are
+     * cumulative (the client turns the delta into a rate), so a few seconds of
+     * staleness isn't visible.
      */
     public function getInterfaceStats()
     {
@@ -808,10 +794,8 @@ class OpnSenseService
     /**
      * Create or update the shaper rule that actually binds a tier's alias to
      * its pipe. Without this rule the pipe exists but nothing is ever steered
-     * into it — which is precisely why guests measured full line speed while
-     * the admin page showed a 2 Mbit cap. This step used to be documented as
-     * "a one-time manual OPNsense setup step, not managed by this app", and
-     * it had never been performed.
+     * into it, and guests get full line speed while the admin page shows the
+     * cap.
      *
      * Direction is from the LAN interface's point of view: a guest's download
      * leaves that interface ('out', matched on destination), their upload
@@ -1272,10 +1256,8 @@ class OpnSenseService
      * than a Kea static IP reservation (see addKeaReservation): that only
      * pins the device's IP, it still has to authenticate at the portal.
      *
-     * Cached like getArpTable()/getDhcpLeases()/listSessions() — this is now
-     * also read on every Network > Sessions page load (ghost-device
-     * cross-reference), which polls every 5s, and unlike those it wasn't
-     * previously cached at all (a live zone-config fetch every call).
+     * Cached like getArpTable()/getDhcpLeases()/listSessions(): the Network >
+     * Sessions page reads it on every 5s poll (ghost-device cross-reference).
      *
      * @return array{ips: string[], macs: string[]}
      */

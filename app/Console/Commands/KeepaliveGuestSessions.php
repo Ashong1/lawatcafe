@@ -7,21 +7,13 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Guest captive-portal sessions were observed vanishing from OPNsense with
- * zero application-side trigger — no disconnectDevice() call anywhere in
- * this codebase's logs — at intervals ranging from ~25 seconds to ~3
- * minutes, and a device that was actively generating traffic (browsing,
- * chatting) consistently survived longer than one sitting idle. That points
- * at something below this app's visibility (the AP or an OPNsense-internal
- * state/liveness timeout) pruning connections that go quiet, not anything
- * this app's own scheduled commands or config can directly fix.
+ * Keeps authenticated guests' connections looking active.
  *
- * Verified live 2026-09-23: pinging an idle guest device every few seconds
- * kept its session alive past 5 minutes, well beyond every drop observed
- * without it. This command is the resulting mitigation — it does not fix
- * the underlying cause (still unidentified), it just keeps every
- * authenticated guest's connection looking active so whatever is pruning
- * idle ones never gets the chance to.
+ * Idle guest sessions vanish from OPNsense after ~25s-3min with no trigger
+ * from this app, while active devices survive — something below the app (the
+ * AP or an OPNsense liveness timeout) prunes quiet connections. Pinging an
+ * idle device every few seconds keeps its session alive. This is a
+ * mitigation; the underlying cause is still unidentified.
  *
  * Runs every minute via the scheduler (routes/console.php) but loops
  * internally for ~55s, pinging every few seconds — Laravel's schedule has

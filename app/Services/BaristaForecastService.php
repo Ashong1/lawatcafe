@@ -140,13 +140,10 @@ class BaristaForecastService
             $aiResult = $ai->analyzeSalesTrends($historicalSales, $productPerformance, $wastageData, $daysOfData, $recentPerformance);
 
             if (! $aiResult) {
-                // Every provider failed. Return a well-formed placeholder
-                // (same shape the "calibrating" branch above uses) instead of
-                // null — this used to violate getForecast()'s own `: array`
-                // return type and crash the dashboard/analytics page with a
-                // 500 whenever the AI stack was entirely down. Deliberately
-                // NOT cached (see call site): a transient outage shouldn't
-                // lock every consumer into "AI unavailable" for a full hour.
+                // Every provider failed. Return the same placeholder shape as
+                // the "calibrating" branch — null breaks the `: array` return
+                // type and 500s the dashboard. Not cached (see call site): a
+                // short outage mustn't pin "AI unavailable" for the full TTL.
                 return [
                     'is_calibrating' => false,
                     'calibration_days_remaining' => 0,

@@ -10,7 +10,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-{{-- "only light": stops Android/Huawei sign-in windows from auto-darkening a page that has no dark theme (seen live: dark card, blue focus ring). --}}
+{{-- "only light": stops Android/Huawei sign-in windows auto-darkening a page that has no dark theme. --}}
 <meta name="color-scheme" content="only light">
 <title>Connect to Wi-Fi - Lawa't Kape</title>
 <!-- Favicons -->
@@ -103,13 +103,10 @@
         </p>
     </div>
 
-    {{-- Persistent full-bleed loading overlay for the voucher-redeem round trip —
-         previously a native form submit meant the browser blanked the tab mid-wait
-         and any in-page loading state disappeared with it, right when the real
-         wait (OPNsense auth) began. submitForm() still does a native
-         e.target.submit() rather than a fetch conversion — the overlay just shows
-         immediately beforehand so the pre-navigation instant isn't a bare button
-         spinner. --}}
+    {{-- Full-bleed loading overlay for the voucher-redeem round trip: a native
+         form submit blanks the tab mid-wait, right when the real wait (OPNsense
+         auth) begins. submitForm() still submits natively; the overlay just shows
+         first so the guest sees progress. --}}
     <div x-show="isSubmitting" x-cloak
          x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
          x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"

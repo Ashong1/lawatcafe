@@ -16,16 +16,13 @@ use Illuminate\Http\Request;
  * interface, with a per-IP mask so the figure is a ceiling PER DEVICE rather
  * than a total shared between them.
  *
- * The page used to carry a second form for per-tier voucher rates. Those were
- * recorded and never enforced — this OPNsense build can shape an interface and
- * nothing smaller: Shaper rules accept only "any" for source and destination,
- * filter rules naming an alias save and apply and then shape nothing, the portal
- * zone has no bandwidth fields, and while a Shaper rule can match DSCP no
- * endpoint can set a mark per tier. Offering four inputs that changed no traffic
- * was answering a question the gateway cannot be asked, so the form is gone and
- * the figure that does reach the network is editable in its place.
+ * There is deliberately no per-tier rate form: this OPNsense build can shape an
+ * interface and nothing smaller. Shaper rules accept only "any" for source and
+ * destination, filter rules naming an alias save and apply but shape nothing,
+ * the portal zone has no bandwidth fields, and no endpoint can set a DSCP mark
+ * per tier. Inputs that change no traffic would be misleading.
  *
- * The stored rates themselves are untouched: the Plans page still quotes them.
+ * The stored per-tier rates are still quoted on the Plans page.
  */
 class TrafficController extends Controller
 {

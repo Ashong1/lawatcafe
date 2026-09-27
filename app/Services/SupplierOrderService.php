@@ -74,7 +74,7 @@ class SupplierOrderService
     /**
      * Mark a draft as sent, emailing the linked supplier if an address is on
      * file. This is the only place a PurchaseOrderDraft transitions out of
-     * 'draft' — previously drafts had no way to actually be sent.
+     * 'draft'.
      *
      * @return array{sent: bool, emailed: bool, message: string}
      */

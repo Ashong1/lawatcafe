@@ -1,15 +1,11 @@
 <!DOCTYPE html>
 @php
     $sidebarOpen = request()->cookie('lk_sidebar_open', '1') === '1';
-    // Submenu open/closed state is sticky: once you open a section it stays
-    // open across navigation until you manually close it (explicit user
-    // request, 2026-07-30, after route-derived auto-close/auto-follow
-    // designs were tried and rejected — see memory
-    // project_sidebar_submenu_final_design_2026-07-30.md for the full
-    // history). $routeDefaults only seeds the very first visit, before any
-    // cookie has ever been written; after that, the cookie wins wholesale
-    // for every key it contains — no merging/blending that lets the current
-    // route silently override a manually-set value.
+    // Submenu open/closed state is sticky: a section stays open across
+    // navigation until you close it (the owner's choice over route-driven
+    // auto-open/close). $routeDefaults only seeds the very first visit; after
+    // that the cookie wins wholesale for every key it contains, so the current
+    // route can never override a value the user set.
     $routeDefaults = [
         'inventory' => request()->is('inventory*'),
         'network'   => request()->is('network*'),
@@ -159,14 +155,11 @@
                     against this element, so it does not need a containing block. --}}
                bg-[#3E2723] text-[#FDF8F5] flex flex-col shadow-xl shrink-0 [view-transition-name:app-sidebar]
                {{ $sidebarOpen ? 'lg:w-64' : 'lg:w-20 lk-sidebar-rail' }}"
-        {{-- Object syntax, NOT the array form this used to use. Alpine's array/string
-             class binding only removes classes it added itself, and `lg:w-64` is
-             already in the static class attribute above (server-rendered so the
-             sidebar paints at the right width before Alpine boots). So collapsing
-             added `lg:w-20` without ever removing `lg:w-64` — and since Tailwind
-             emits .lg\:w-64 after .lg\:w-20 at equal specificity, the wider rule won
-             and the collapse button did nothing. The object form removes falsy keys
-             outright, server-rendered or not. --}}
+        {{-- Object syntax, not the array form: Alpine's array/string class binding
+             only removes classes it added itself, and `lg:w-64` is server-rendered
+             in the static class above. Collapsing would add `lg:w-20` next to it,
+             and Tailwind emits .lg\:w-64 later at equal specificity, so the wide
+             rule wins. The object form removes falsy keys outright. --}}
         :class="{
             'translate-x-0': mobileNavOpen,
             '-translate-x-full': ! mobileNavOpen,
@@ -611,9 +604,8 @@
                     // reactive change — Alpine only plays the x-transition on submenu panels
                     // for actual state changes, not for a value that was already true at
                     // init. Without this delay, a section carried over "open" from the
-                    // previous page would just render already-open with no visible
-                    // animation. Explicit user request, 2026-07-30: the open transition
-                    // should be visible every time, not just on a manual click.
+                    // previous page renders already-open with no animation, and the open
+                    // transition should be visible every time, not just on a click.
                     setTimeout(() => { this.menus = this.initialMenus; }, 50);
 
                     const savedScroll = parseInt(localStorage.getItem('lawatkape_admin_nav_scroll'), 10);

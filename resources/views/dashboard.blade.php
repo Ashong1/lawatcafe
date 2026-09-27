@@ -8,13 +8,9 @@
 <div x-data="dashboardManager()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
 
-{{-- Layout, top to bottom, from the 2026-09-28 design critique:
-     needs-attention -> KPIs -> Wi-Fi & network -> Barista AI -> sales detail.
-     It used to be ~12 same-weight panels in five rows with the network (the
-     system's core) in row 4, below the fold, and five separate AI entry
-     points. Service Pulse is gone: its orders and low-stock figures repeated
-     the KPI cards, average ticket moved into the revenue card and Wi-Fi
-     redeemed into the network section. Every live binding is unchanged. --}}
+{{-- Layout, top to bottom: needs-attention -> KPIs -> Wi-Fi & network ->
+     Barista AI -> sales detail. The network is the system's core, so it sits
+     above the fold; there is one AI panel, not several entry points. --}}
 <div class="mb-6 border-b border-[#E6D5C3] pb-5 flex flex-col md:flex-row md:items-end justify-between gap-3">
     <div>
         <h2 class="flex items-center gap-3 text-[#3E2723]">
@@ -195,8 +191,7 @@
     </div>
 </div>
 
-{{-- 4. Barista AI: the brief and the findings used to be two panels, plus a
-     separate "Full AI Report" button in the header. One panel now. --}}
+{{-- 4. Barista AI: brief, findings and the full report in one panel. --}}
 <div class="bg-[#3E2723] rounded-2xl shadow-sm text-white p-6 md:p-8 mb-8">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
         <div class="flex items-center gap-3">

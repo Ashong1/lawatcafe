@@ -49,11 +49,9 @@
              against a flex-sized parent is unreliable and it added nothing.
 
              The scrollbar is deliberately visible (no `no-scrollbar` here):
-             hiding it on a conversation that grows past the box leaves a guest
-             with no cue that there is anything above, which is exactly how this
-             was reported — "the chat is not scrollable". overscroll-contain
-             stops a flick at the top of the history from dragging the whole
-             portal panel instead. --}}
+             hidden, a long conversation gives no cue there is anything above
+             and reads as "not scrollable". overscroll-contain stops a flick at
+             the top of the history from dragging the whole portal panel. --}}
         <div class="overflow-y-auto overscroll-contain space-y-3 pr-1 w-full flex flex-col justify-start z-10 flex-1 min-h-0" id="{{ $anchorId }}-chat-history">
             <template x-for="(msg, index) in history" :key="index">
                 {{-- The bubble's self-end/self-start only works when its parent
@@ -481,9 +479,8 @@ document.addEventListener('alpine:init', () => {
 
         // True for the whole request, where `thinking` is only true until the
         // first token lands. Everything that must stay locked until the reply is
-        // actually finished reads this one — sending a second message mid-stream
-        // used to be possible the moment text started, interleaving two replies
-        // into one transcript.
+        // finished reads this one — otherwise a second message sent mid-stream
+        // interleaves two replies into one transcript.
         streaming: false,
 
         // How long a silent stream is allowed to stay open.
@@ -763,23 +760,14 @@ document.addEventListener('alpine:init', () => {
             this.scrollToBottom();
             this.save();
 
-            // An IDLE timeout, not a total one, and that distinction is the whole
-            // bug this replaced.
-            //
-            // This used to be a flat `setTimeout(abort, 20000)` armed once when
-            // the request started. The server is allowed far longer than that —
-            // ToolCallOrchestrator budgets 60s for a conversation, and each of up
-            // to 5 round trips gets its own ~18s provider cascade — so any answer
-            // that took more than 20 seconds of wall clock was killed by the
-            // browser *while it was still streaming perfectly well*. The bubble
-            // stopped mid-sentence, and because the server carried on and
-            // persisted the finished reply, refreshing the page showed the rest
-            // of it. Exactly the reported symptom.
-            //
-            // Rearming on every chunk means "no data for a while" ends the
-            // request, which is what a stall actually looks like, while a long
-            // answer that is still arriving is left alone. The absolute ceiling
-            // below is only a backstop against a socket that dribbles forever.
+            // An IDLE timeout, not a total one. The server may legitimately take
+            // far longer than any fixed limit — ToolCallOrchestrator budgets 60s
+            // per conversation, each of up to 5 round trips with its own ~18s
+            // cascade — and a total timeout kills answers that are still
+            // streaming fine (the bubble stops mid-sentence while the server
+            // saves the full reply). Rearming on every chunk ends only a real
+            // stall; the absolute ceiling below is a backstop against a socket
+            // that dribbles forever.
             const controller = new AbortController();
             let idleTimer = null;
 

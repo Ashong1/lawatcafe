@@ -102,8 +102,8 @@ class TrafficShapingService
     /**
      * Provision the complete shaping chain on OPNsense and apply it.
      *
-     * A working setup needs all three of these, and the app previously built
-     * only the first — which is why a "2 Mbps" free tier measured 8 Mbps:
+     * A working cap needs all three — with only the pipe, a "2 Mbps" tier
+     * measures full line speed:
      *
      *   1. a Dummynet pipe per tier per direction (the bandwidth cap itself),
      *   2. a firewall alias per tier (who the cap applies to), and
@@ -199,8 +199,7 @@ class TrafficShapingService
     /**
      * Drop an address from every tier alias.
      *
-     * Returns whether every removal that mattered actually succeeded, rather
-     * than swallowing the result as it used to. Once a filter rule PASSES
+     * Returns whether every removal that mattered succeeded. Once a filter rule PASSES
      * traffic for alias members, a silent failure here stops being cosmetic:
      * the address keeps its access after the portal has dropped the session.
      * reconcileTierMembership() is the backstop, but the caller should know.

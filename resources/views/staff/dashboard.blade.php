@@ -21,12 +21,9 @@
         </div>
     </div>
 
-    {{-- Top row, from the 2026-09-28 design critique: staff sell Wi-Fi at the
-         counter, but the dashboard only showed a voucher count on the notice
-         board. The Wi-Fi card opens the register on its Wi-Fi items (staff
-         sell plans through the POS; generating batches is admin-only). The
-         kitchen card is now a link, and Order History moved to the header as
-         a real link — it was a card whose click area was an empty <a>. --}}
+    {{-- Top row: staff sell Wi-Fi at the counter, so the Wi-Fi card opens the
+         register on its Wi-Fi items (plans are sold through the POS; generating
+         batches is admin-only). Order History is a real link in the header. --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
         <div class="md:col-span-2">
             <a href="{{ route('pos') }}" class="h-full min-h-[160px] bg-[#3E2723] hover:bg-[#271815] text-white p-8 rounded-2xl shadow-sm transition-all duration-300 flex items-center justify-between group relative overflow-hidden">

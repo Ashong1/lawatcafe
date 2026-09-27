@@ -249,9 +249,8 @@
                 }
             },
 
-            // Matches the branded error-toast styling in layouts/admin.blade.php's
-            // session('error') handler, instead of SweetAlert2's unstyled default
-            // look this used to render with.
+            // Matches the branded error toast in layouts/admin.blade.php's
+            // session('error') handler rather than SweetAlert2's default look.
             toast(icon, title) {
                 if (typeof Swal === 'undefined') return;
                 Swal.fire({

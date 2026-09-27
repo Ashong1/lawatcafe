@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-{{-- "only light": stops Android/Huawei sign-in windows from auto-darkening a page that has no dark theme (seen live: dark card, blue focus ring). --}}
+{{-- "only light": stops Android/Huawei sign-in windows auto-darkening a page that has no dark theme. --}}
 <meta name="color-scheme" content="only light">
 <title>Connected - Lawa't Kape</title>
 <!-- Favicons -->
@@ -69,11 +69,10 @@
             
             <div class="flex-1 overflow-y-auto px-6 py-10 lg:px-16 lg:py-10 no-scrollbar relative z-10 flex flex-col justify-center">
                 
-                {{-- Design critique: this page lives for ~6 seconds before the
-                     window moves on, so it leads with the one fact that matters
-                     (time bought) and says "check your time" exactly once. It
-                     used to open with a 96px check and "SUCCESS! You are now
-                     connected" — before activation, i.e. before that was true. --}}
+                {{-- This page lives ~6 seconds before the window moves on, so it
+                     leads with the one fact that matters (time bought) and says
+                     "check your time" once. It must not say "connected" before
+                     activation has actually happened. --}}
                 <div class="text-center mb-6">
                     <div class="w-14 h-14 bg-green-50 border-2 border-green-100 rounded-full flex items-center justify-center mx-auto mb-4 check-pop-in">
                         <x-lucide-check class="w-7 h-7 text-green-600" stroke-width="3" />

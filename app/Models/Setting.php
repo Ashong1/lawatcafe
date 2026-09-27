@@ -23,14 +23,11 @@ class Setting extends Model
      * Seed value for network_infrastructure_ips, shared with the settings
      * screen so the code and the textarea can never disagree.
      *
-     * Every address here must sit OUTSIDE the Kea dynamic pool — a fixed
-     * service (Proxmox host/LXC, switch, AP) or a MAC-bound reservation.
-     * 192.168.2.117 used to be in this list purely because an access point
-     * happened to hold that lease the day the list was written; the pool is
-     * 192.168.2.110-199, so once the lease rotated, real guest phones landed
-     * on .117 and were filed as infrastructure — invisible in Active Sessions
-     * and uncounted on the dashboard. Do not add a pooled address here;
-     * SettingController::updateNetwork now rejects them.
+     * Every address here must sit OUTSIDE the Kea dynamic pool
+     * (192.168.2.110-199) — a fixed service (Proxmox host/LXC, switch, AP) or
+     * a MAC-bound reservation. A pooled address rotates to guest phones, which
+     * then vanish from Active Sessions and the dashboard counts;
+     * SettingController::updateNetwork rejects them.
      */
     public const DEFAULT_INFRASTRUCTURE_IPS = '192.168.254.254,192.168.254.108,192.168.2.250,192.168.2.99,192.168.2.100,192.168.2.5,192.168.2.4';
 
@@ -71,10 +68,9 @@ class Setting extends Model
      * counts/tables across the dashboard, network sessions page, and
      * EnforceSessionLimits. Always includes this OPNsense instance's own
      * LAN IP in addition to whatever's in the admin-edited
-     * network_infrastructure_ips setting: that IP is *structurally* always
-     * infrastructure and must never depend on an admin remembering to also
-     * add it to a freeform string — omitting it previously caused OPNsense
-     * to count itself as an "active guest" on the dashboard.
+     * network_infrastructure_ips setting: that IP is always infrastructure
+     * and mustn't depend on an admin remembering to list it (otherwise
+     * OPNsense counts itself as an active guest).
      */
     public static function infrastructureIps(): array
     {

@@ -36,7 +36,7 @@ EMOJI_RE = re.compile("[\U0001F300-\U0001FAFF☀-➿⭐⬆↔-↪]")
 SNAKE_RE = re.compile(r"\b[a-z]+(?:_[a-z0-9]+)+\b")
 CAMEL_RE = re.compile(r"\b[a-z]+(?:[A-Z][a-z0-9]+){1,}\b")
 DIARY_RE = re.compile(
-    r"\b20\d\d-\d\d-\d\d\b|\bv\d+\.\d+\.\d+(?:\.\d+)?\b|\bused to\b|\bpreviously\b|\bthis replaced\b"
+    r"\b20\d\d-\d\d-\d\d\b|\bv\d+\.\d+\.\d+(?:\.\d+)?\b|\b(?:it|this|that|which|we|they|there|page|code|button|card|field)\s+used to\b|\bused to be\b|\bpreviously\b|\bthis replaced\b"
     r"|\b(?:owner|user|guest)(?: feedback)?:\s*[\"']|\bwas reported\b|\breported (?:live|by)\b|\blive(?: check| report)?:",
     re.I,
 )
@@ -118,7 +118,8 @@ def scan_comments(path, hits, long_at):
         m = DIARY_RE.search(text)
         if m:
             hits[path].append((start, "comments/diary", m.group(0), block[0].strip()[:100]))
-        if len(block) >= long_at:
+        # Laravel's stock config/ docblocks are framework boilerplate, not ours.
+        if len(block) >= long_at and "/config/" not in path.replace(os.sep, "/"):
             hits[path].append((start, "comments/long", f"{len(block)} lines", block[0].strip()[:100]))
 
 
