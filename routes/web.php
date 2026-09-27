@@ -264,6 +264,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/site-blocking', [SiteBlockingController::class, 'index'])->name('site-blocking');
             Route::post('/site-blocking', [SiteBlockingController::class, 'store'])->name('site-blocking.store');
             Route::post('/site-blocking/toggle', [SiteBlockingController::class, 'toggle'])->name('site-blocking.toggle');
+            Route::post('/site-blocking/adult-list', [SiteBlockingController::class, 'toggleAdultList'])->name('site-blocking.adult-list');
             Route::delete('/site-blocking/{domain}', [SiteBlockingController::class, 'destroy'])->name('site-blocking.destroy');
 
             // Static IP assignments (MAC-bound Kea DHCP reservations, replaces

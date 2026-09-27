@@ -67,6 +67,7 @@ class SiteBlockingController extends Controller
             'presets' => $presets,
             'customDomains' => $customDomains,
             'piholeConfigured' => ! empty(config('services.pihole.app_password')),
+            'adultList' => $pihole->adultList(),
         ]);
     }
 
@@ -87,6 +88,26 @@ class SiteBlockingController extends Controller
             $ok ? 'success' : 'error',
             $ok ? "{$validated['domain']} has been {$verb}." : "Could not reach Pi-hole to update {$validated['domain']}."
         );
+    }
+
+    /**
+     * The whole adult category, via a maintained list, rather than the two
+     * named presets. Gravity rebuilds after the response: it downloads the list
+     * and can take a minute.
+     */
+    public function toggleAdultList(Request $request, PiholeService $pihole)
+    {
+        $enabled = $request->validate(['enabled' => 'required|boolean'])['enabled'];
+
+        if (! $pihole->setAdultList((bool) $enabled)) {
+            return redirect()->back()->with('error', 'Could not reach Pi-hole to update the adult-content list.');
+        }
+
+        dispatch(fn () => app(PiholeService::class)->rebuildGravity())->afterResponse();
+
+        return redirect()->back()->with('success', $enabled
+            ? 'Adult-content blocking is on. Pi-hole is loading the list — it takes effect within a minute or two.'
+            : 'Adult-content list turned off. Your individually blocked sites stay blocked.');
     }
 
     public function store(Request $request, PiholeService $pihole)

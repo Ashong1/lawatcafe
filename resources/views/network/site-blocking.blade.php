@@ -20,6 +20,36 @@
     </div>
     @endunless
 
+    {{-- Category-wide adult blocking. The per-site presets below only name two
+         sites; guests were seen reaching others no one had listed. --}}
+    @php($adultOn = $adultList['enabled'] ?? false)
+    <form action="{{ route('network.site-blocking.adult-list') }}" method="POST"
+          class="mb-8 p-6 md:p-8 rounded-2xl shadow-sm border flex items-center justify-between gap-4 {{ $adultOn ? 'bg-red-50/60 border-red-200' : 'bg-white border-[#F0E6D2]' }}">
+        @csrf
+        <input type="hidden" name="enabled" value="{{ $adultOn ? '0' : '1' }}">
+        <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600 shrink-0">
+                <x-lucide-shield-alert class="w-6 h-6" />
+            </div>
+            <div class="min-w-0">
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Block All Adult Sites</h3>
+                <p class="text-xs text-[#6D4C41] font-medium">
+                    A maintained list of adult sites, updated weekly by Pi-hole.
+                    @if($adultOn && ($adultList['domains'] ?? null))
+                        <span class="font-bold">{{ number_format($adultList['domains']) }} sites blocked.</span>
+                    @endif
+                    Anything it misses still shows up in your alerts, one tap to block.
+                </p>
+            </div>
+        </div>
+        <button type="submit"
+                aria-pressed="{{ $adultOn ? 'true' : 'false' }}"
+                aria-label="{{ $adultOn ? 'Turn off' : 'Turn on' }} adult-site blocking"
+                class="shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors {{ $adultOn ? 'bg-red-600' : 'bg-[#E6D5C3]' }}">
+            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {{ $adultOn ? 'translate-x-6' : 'translate-x-1' }}"></span>
+        </button>
+    </form>
+
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
         <div class="flex items-center gap-3 mb-8">
             <div class="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600">

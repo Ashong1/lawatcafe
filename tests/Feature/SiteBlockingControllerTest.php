@@ -16,6 +16,7 @@ class SiteBlockingControllerTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->mock(PiholeService::class, function ($mock) {
+            $mock->shouldReceive('adultList')->andReturn(null);
             $mock->shouldReceive('blockedDomains')->once()->andReturn([
                 ['domain' => 'facebook.com', 'comment' => null, 'enabled' => true],
                 ['domain' => 'shady-vpn.example', 'comment' => 'reported by staff', 'enabled' => true],
@@ -40,6 +41,7 @@ class SiteBlockingControllerTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->mock(PiholeService::class, function ($mock) {
+            $mock->shouldReceive('adultList')->andReturn(null);
             $mock->shouldReceive('blockedDomains')->once()->andReturn([]);
         });
 
@@ -138,6 +140,30 @@ class SiteBlockingControllerTest extends TestCase
         $this->actingAs($staff)->post(route('network.site-blocking.toggle'), ['domain' => 'facebook.com', 'block' => '1'])
             ->assertRedirect(route('staff.dashboard'));
         $this->actingAs($staff)->delete(route('network.site-blocking.destroy', 'facebook.com'))
+            ->assertRedirect(route('staff.dashboard'));
+    }
+
+    public function test_admin_can_turn_on_the_adult_list(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->mock(PiholeService::class, function ($mock) {
+            $mock->shouldReceive('setAdultList')->once()->with(true)->andReturn(true);
+            $mock->shouldReceive('rebuildGravity')->andReturn(true);
+        });
+
+        $this->actingAs($admin)
+            ->post(route('network.site-blocking.adult-list'), ['enabled' => '1'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+    }
+
+    public function test_staff_cannot_toggle_the_adult_list(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+
+        $this->actingAs($staff)
+            ->post(route('network.site-blocking.adult-list'), ['enabled' => '1'])
             ->assertRedirect(route('staff.dashboard'));
     }
 }

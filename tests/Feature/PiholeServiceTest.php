@@ -171,4 +171,73 @@ class PiholeServiceTest extends TestCase
 
         Http::assertNothingSent();
     }
+
+    private function fakeAuth(): array
+    {
+        return ['pihole.test/api/auth' => Http::response([
+            'session' => ['valid' => true, 'sid' => 'sid-123', 'csrf' => 'csrf-123', 'validity' => 1800],
+        ])];
+    }
+
+    /** An exact entry left m.pornhub.com open in the live log; every block now carries a sub-domain regex. */
+    public function test_blocking_a_domain_also_blocks_its_sub_domains(): void
+    {
+        Http::fake($this->fakeAuth() + [
+            'pihole.test/api/domains/deny/regex/*' => Http::response([], 404),
+            'pihole.test/api/domains/deny/regex' => Http::response(['domains' => []], 201),
+            'pihole.test/api/domains/deny/exact' => Http::response(['domains' => []], 201),
+            'pihole.test/api/domains*' => Http::response(['domains' => []]),
+        ]);
+
+        $this->assertTrue((new PiholeService)->blockDomain('pornhub.com'));
+
+        Http::assertSent(fn ($r) => $r->method() === 'POST'
+            && str_ends_with($r->url(), '/api/domains/deny/regex')
+            && $r['domain'] === '(\\.|^)pornhub\\.com$'
+            && $r['enabled'] === true);
+    }
+
+    public function test_unblocking_disables_the_sub_domain_rule_too(): void
+    {
+        Http::fake($this->fakeAuth() + [
+            'pihole.test/api/domains/deny/regex/*' => Http::response(['domains' => []]),
+            'pihole.test/api/domains/deny/exact/*' => Http::response(['domains' => []]),
+            'pihole.test/api/domains*' => Http::response(['domains' => [['domain' => 'pornhub.com', 'comment' => null, 'enabled' => true]]]),
+        ]);
+
+        $this->assertTrue((new PiholeService)->unblockDomain('pornhub.com'));
+
+        Http::assertSent(fn ($r) => $r->method() === 'PUT'
+            && str_contains($r->url(), '/api/domains/deny/regex/'.rawurlencode('(\\.|^)pornhub\\.com$'))
+            && $r['enabled'] === false);
+    }
+
+    public function test_adult_list_is_added_when_missing(): void
+    {
+        Http::fake($this->fakeAuth() + [
+            'pihole.test/api/lists*' => fn ($r) => $r->method() === 'POST'
+                ? Http::response(['lists' => []], 201)
+                : Http::response(['lists' => []]),
+        ]);
+
+        $this->assertTrue((new PiholeService)->setAdultList(true));
+
+        // `type` must be in the query string — Pi-hole 400s when it's only in the body.
+        Http::assertSent(fn ($r) => $r->method() === 'POST'
+            && str_ends_with($r->url(), '/api/lists?type=block')
+            && $r['address'] === PiholeService::ADULT_LIST_URL
+            && $r['enabled'] === true);
+    }
+
+    public function test_adult_list_state_is_read_back(): void
+    {
+        Http::fake($this->fakeAuth() + [
+            'pihole.test/api/lists*' => Http::response(['lists' => [
+                ['address' => 'https://example.test/other', 'enabled' => true, 'number' => 5],
+                ['address' => PiholeService::ADULT_LIST_URL, 'enabled' => true, 'number' => 76793],
+            ]]),
+        ]);
+
+        $this->assertSame(['enabled' => true, 'domains' => 76793], (new PiholeService)->adultList());
+    }
 }

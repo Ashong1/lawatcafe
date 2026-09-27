@@ -218,7 +218,7 @@ class PiholeService
                 ? $client->put("/api/domains/deny/exact/{$domain}", $payload)
                 : $client->post('/api/domains/deny/exact', array_merge($payload, ['domain' => $domain])));
 
-            return (bool) $response?->successful();
+            return (bool) $response?->successful() && $this->upsertSubdomainRule($domain, $enabled);
         } catch (\Exception $e) {
             Log::error("Pi-hole: exception setting {$domain} enabled=".($enabled ? 'true' : 'false').': '.$e->getMessage());
 
@@ -237,10 +237,112 @@ class PiholeService
 
         try {
             $response = $this->withSession(fn ($client) => $client->delete("/api/domains/deny/exact/{$domain}"));
+        } catch (\Exception $e) {
+            Log::error("Pi-hole: exception removing {$domain}: ".$e->getMessage());
+
+            return false;
+        }
+
+        // Best-effort: an entry blocked before sub-domain rules existed has
+        // none to delete, and that must not report the removal as failed.
+        try {
+            $this->withSession(fn ($client) => $client->delete('/api/domains/deny/regex/'.rawurlencode($this->subdomainRegex($domain))));
+        } catch (\Exception $e) {
+            Log::warning("Pi-hole: could not remove the sub-domain rule for {$domain}: ".$e->getMessage());
+        }
+
+        return (bool) $response?->successful();
+    }
+
+    /**
+     * An exact entry blocks only that one name — "pornhub.com" left
+     * m.pornhub.com wide open (seen in the live query log). Every exact entry
+     * this app writes gets a companion regex covering all sub-domains, kept in
+     * the same enabled state. The exact entry stays because it is what the
+     * Site Blocking page lists.
+     */
+    public function subdomainRegex(string $domain): string
+    {
+        return '(\\.|^)'.preg_quote($this->normalizeDomain($domain), null).'$';
+    }
+
+    protected function upsertSubdomainRule(string $domain, bool $enabled): bool
+    {
+        $regex = $this->subdomainRegex($domain);
+        $payload = ['enabled' => $enabled, 'comment' => "Sub-domains of {$domain} (Lawa't Kape)"];
+
+        // PUT on a rule that doesn't exist yet is a 404, so fall back to POST.
+        $response = $this->withSession(fn ($client) => $client->put('/api/domains/deny/regex/'.rawurlencode($regex), $payload));
+        if ($response && $response->status() === 404) {
+            $response = $this->withSession(fn ($client) => $client->post('/api/domains/deny/regex', array_merge($payload, ['domain' => $regex])));
+        }
+
+        return (bool) $response?->successful();
+    }
+
+    /**
+     * StevenBlack's adult-only list (~77k domains, maintained upstream). The
+     * two Adult presets can't keep up with a category — guests reached
+     * pinayflix.tv and others no hand-written list named.
+     */
+    public const ADULT_LIST_URL = 'https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts';
+
+    /** @return array{enabled: bool, domains: ?int}|null null when the list was never added or Pi-hole is unreachable. */
+    public function adultList(): ?array
+    {
+        try {
+            $response = $this->withSession(fn ($client) => $client->get('/api/lists', ['type' => 'block']));
+            $list = collect($response?->json('lists') ?? [])->firstWhere('address', self::ADULT_LIST_URL);
+
+            return $list ? ['enabled' => (bool) $list['enabled'], 'domains' => $list['number'] ?? null] : null;
+        } catch (\Exception $e) {
+            Log::error('Pi-hole: exception reading lists: '.$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * Turn the adult list on or off. Takes effect only after rebuildGravity().
+     */
+    public function setAdultList(bool $enabled): bool
+    {
+        try {
+            // Pi-hole reads `type` from the query string only; in the body it
+            // is ignored and the request 400s.
+            $payload = ['enabled' => $enabled, 'comment' => "Adult content (Lawa't Kape)"];
+
+            $response = $this->adultList() === null
+                ? $this->withSession(fn ($client) => $client->post('/api/lists?type=block', array_merge($payload, ['address' => self::ADULT_LIST_URL])))
+                : $this->withSession(fn ($client) => $client->put('/api/lists/'.rawurlencode(self::ADULT_LIST_URL).'?type=block', $payload));
+
+            if (! $response?->successful()) {
+                Log::error('Pi-hole: could not update the adult list.', ['status' => $response?->status(), 'body' => $response?->body()]);
+
+                return false;
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Pi-hole: exception updating the adult list: '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Re-download every enabled list so a list change applies now instead of at
+     * Pi-hole's weekly update. Downloads ~2MB and can take a minute — callers
+     * run it after the response.
+     */
+    public function rebuildGravity(): bool
+    {
+        try {
+            $response = $this->withSession(fn ($client) => $client->timeout(300)->post('/api/action/gravity'));
 
             return (bool) $response?->successful();
         } catch (\Exception $e) {
-            Log::error("Pi-hole: exception removing {$domain}: ".$e->getMessage());
+            Log::error('Pi-hole: exception rebuilding gravity: '.$e->getMessage());
 
             return false;
         }
