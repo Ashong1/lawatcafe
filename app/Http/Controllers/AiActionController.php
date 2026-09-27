@@ -4,15 +4,46 @@ namespace App\Http\Controllers;
 
 use App\Models\AiActionAudit;
 use App\Services\Agent\ToolCallOrchestrator;
+use App\Support\AgentActivityEntry;
 use Illuminate\Http\Request;
 
 class AiActionController extends Controller
 {
-    public function index()
+    /**
+     * Written for the cafe owner, not an auditor (see AgentActivityEntry).
+     * Anything waiting for approval comes first; routine look-ups — the AI
+     * reading sales, sessions or stock, which changes nothing — are hidden
+     * unless asked for, because they outnumbered real actions about 3 to 1.
+     */
+    public function index(Request $request)
     {
-        $actions = AiActionAudit::with(['actor', 'approvedBy'])->latest()->paginate(30);
+        $showRoutine = $request->query('show') === 'all';
+        $routine = AgentActivityEntry::routineTools();
 
-        return view('admin.agent.activity', compact('actions'));
+        $pending = AiActionAudit::pending()->with(['actor', 'approvedBy'])->latest()->get()
+            ->map(fn ($a) => new AgentActivityEntry($a));
+
+        $actions = AiActionAudit::with(['actor', 'approvedBy'])
+            ->where('status', '!=', 'proposed')
+            ->when(! $showRoutine, fn ($q) => $q->whereNotIn('tool_name', $routine)->where('tool_name', '!=', 'None'))
+            ->latest()
+            ->paginate(30)
+            ->withQueryString();
+
+        $hiddenRoutineCount = $showRoutine ? 0 : AiActionAudit::where('status', '!=', 'proposed')
+            ->where(fn ($q) => $q->whereIn('tool_name', $routine)->orWhere('tool_name', 'None'))
+            ->count();
+
+        return view('admin.agent.activity', [
+            'pending' => $pending,
+            'actions' => $actions,
+            'days' => $actions->getCollection()
+                ->map(fn ($a) => new AgentActivityEntry($a))
+                ->groupBy(fn (AgentActivityEntry $e) => $e->audit->created_at->isToday() ? 'Today'
+                    : ($e->audit->created_at->isYesterday() ? 'Yesterday' : $e->audit->created_at->format('l, F j'))),
+            'showRoutine' => $showRoutine,
+            'hiddenRoutineCount' => $hiddenRoutineCount,
+        ]);
     }
 
     /**
@@ -42,6 +73,7 @@ class AiActionController extends Controller
             ->map(fn ($a) => [
                 'id' => $a->id,
                 'tool_name' => $a->tool_name,
+                'label' => AgentActivityEntry::labelFor($a->tool_name, true),
                 'actor' => $a->actor ? ['name' => $a->actor->name] : null,
                 'input_params' => $a->input_params,
                 'created_at' => $a->created_at->toIso8601String(),

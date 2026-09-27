@@ -46,7 +46,7 @@
                             <x-lucide-clock class="w-4 h-4 text-white" />
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-bold text-[#3E2723] font-mono" x-text="item.tool_name"></p>
+                            <p class="text-xs font-bold text-[#3E2723]" x-text="item.label || item.tool_name"></p>
                             <p class="text-[11px] text-[#8D6E63] font-medium mt-0.5" x-text="item.actor ? 'Proposed by ' + item.actor.name : 'Proposed by scheduled agent run'"></p>
                             <p class="text-[9px] text-[#6D4C41] font-bold uppercase tracking-tighter mt-2" x-text="formatDate(item.created_at)"></p>
                         </div>

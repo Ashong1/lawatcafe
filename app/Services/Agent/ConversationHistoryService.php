@@ -3,6 +3,7 @@
 namespace App\Services\Agent;
 
 use App\Models\AiConversation;
+use App\Support\AgentActivityEntry;
 use Illuminate\Support\Str;
 
 /**
@@ -74,6 +75,7 @@ class ConversationHistoryService
             $messages[] = [
                 'kind' => 'executed',
                 'tool' => $entry['tool'] ?? null,
+                'label' => AgentActivityEntry::labelFor($entry['tool'] ?? '', false),
                 'message' => $entry['result']['message'] ?? 'Done.',
             ];
         }
@@ -82,6 +84,7 @@ class ConversationHistoryService
             $messages[] = [
                 'kind' => 'pending',
                 'tool' => $entry['tool'] ?? null,
+                'label' => AgentActivityEntry::labelFor($entry['tool'] ?? '', true),
                 'arguments' => $entry['arguments'] ?? [],
                 'tier' => $entry['tier'] ?? null,
                 'audit_id' => $entry['audit_id'] ?? null,

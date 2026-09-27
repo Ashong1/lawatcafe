@@ -80,7 +80,7 @@
                     <template x-if="msg.kind === 'executed'">
                         <div class="flex items-start gap-2 max-w-[90%] p-3 rounded-xl text-[11px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 mx-1">
                             <x-lucide-check-circle-2 class="w-4 h-4 shrink-0 mt-0.5" />
-                            <span><span class="font-mono" x-text="msg.tool"></span>: <span x-text="msg.message"></span></span>
+                            <span><span class="font-bold" x-text="msg.label || msg.tool"></span>: <span x-text="msg.message"></span></span>
                         </div>
                     </template>
 
@@ -88,7 +88,7 @@
                         <div class="max-w-[90%] p-4 rounded-xl bg-amber-50 border border-amber-300 space-y-2 mx-1">
                             <div class="flex items-center gap-2 text-[11px] font-black text-amber-800 uppercase tracking-tighter">
                                 <x-lucide-clock class="w-4 h-4 shrink-0" />
-                                <span x-text="msg.tool"></span>
+                                <span x-text="msg.label || msg.tool"></span>
                             </div>
                             {{-- break-words: a long domain list was one unbreakable line that pushed the card off the panel. --}}
                             <p class="text-[11px] text-amber-700 font-medium break-words [overflow-wrap:anywhere]" x-text="formatArgs(msg.arguments)"></p>
@@ -259,7 +259,7 @@
                     <template x-if="msg.kind === 'executed'">
                         <div class="flex items-start gap-2 max-w-[90%] p-3 rounded-xl text-[11px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-800">
                             <x-lucide-check-circle-2 class="w-4 h-4 shrink-0 mt-0.5" />
-                            <span><span class="font-mono" x-text="msg.tool"></span>: <span x-text="msg.message"></span></span>
+                            <span><span class="font-bold" x-text="msg.label || msg.tool"></span>: <span x-text="msg.message"></span></span>
                         </div>
                     </template>
 
@@ -268,8 +268,8 @@
                         <div class="max-w-[90%] p-4 rounded-xl bg-amber-50 border border-amber-300 space-y-2">
                             <div class="flex items-center gap-2 text-[11px] font-black text-amber-800 uppercase tracking-tighter">
                                 <x-lucide-clock class="w-4 h-4 shrink-0" />
-                                <span x-text="msg.tool"></span>
-                                <span class="text-[9px] font-bold text-amber-600">needs confirmation</span>
+                                <span x-text="msg.label || msg.tool"></span>
+                                <span class="text-[9px] font-bold text-amber-600">needs your OK</span>
                             </div>
                             {{-- break-words: a long domain list was one unbreakable line that pushed the card off the panel. --}}
                             <p class="text-[11px] text-amber-700 font-medium break-words [overflow-wrap:anywhere]" x-text="formatArgs(msg.arguments)"></p>
@@ -918,11 +918,11 @@ document.addEventListener('alpine:init', () => {
                             }
 
                             (event.executed || []).forEach(e => {
-                                this.history.push({ kind: 'executed', tool: e.tool, message: (e.result && e.result.message) || 'Done.' });
+                                this.history.push({ kind: 'executed', tool: e.tool, label: e.label, message: (e.result && e.result.message) || 'Done.' });
                             });
 
                             (event.pending || []).forEach(p => {
-                                const entry = { kind: 'pending', tool: p.tool, arguments: p.arguments, tier: p.tier, audit_id: p.audit_id, resolved: false, resolution: null, resolutionMessage: null };
+                                const entry = { kind: 'pending', tool: p.tool, label: p.label, arguments: p.arguments, tier: p.tier, audit_id: p.audit_id, resolved: false, resolution: null, resolutionMessage: null };
                                 this.history.push(entry);
                                 this.pendingActions.push(entry);
                             });

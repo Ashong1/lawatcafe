@@ -4,6 +4,7 @@ namespace App\Services\Agent;
 
 use App\Models\AiConversation;
 use App\Models\User;
+use App\Support\AgentActivityEntry;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -65,8 +66,10 @@ class ChatStreamResponder
             $meta = [
                 'type' => 'meta',
                 'reply' => $reply,
-                'pending' => $result['pending'] ?? [],
-                'executed' => $result['executed'] ?? [],
+                // label: the owner-facing wording (AgentActivityEntry), so the
+                // chat's cards don't print raw tool names like "blockSites".
+                'pending' => array_map(fn ($p) => $p + ['label' => AgentActivityEntry::labelFor($p['tool'] ?? '', true)], $result['pending'] ?? []),
+                'executed' => array_map(fn ($e) => $e + ['label' => AgentActivityEntry::labelFor($e['tool'] ?? '', false)], $result['executed'] ?? []),
             ];
             if ($conversation) {
                 $meta['conversation_id'] = $conversation->id;
