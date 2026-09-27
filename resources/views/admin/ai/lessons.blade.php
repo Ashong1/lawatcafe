@@ -26,6 +26,7 @@
             <div class="text-xs text-blue-900 font-medium leading-relaxed">
                 <p class="font-black uppercase tracking-widest text-[10px] mb-1">How this learns</p>
                 <p>Every rating, correction and failed tool call is recorded. Once an hour <span class="font-mono">ai:learn</span> reads what is new and proposes lessons below. Approved lessons are added to the assistant's instructions, and approved worked examples are retrieved when a similar question comes in. The underlying model is not retrained &mdash; the assistant improves by accumulating reviewed experience.</p>
+                <p class="mt-2">When it tells staff or an admin it <em>can't</em> do something, <span class="font-mono">ai:resolve-gaps</span> works out how it could have: a <span class="font-bold">skill</span> (steps using tools it already has) or a pointer to the right page is applied automatically &mdash; revoke it here if it's wrong &mdash; and anything genuinely missing becomes a <span class="font-bold">tool_request</span> for the developer. It never writes or runs code itself.</p>
             </div>
         </div>
 

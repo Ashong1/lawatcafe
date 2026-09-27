@@ -1036,6 +1036,59 @@ OPERATIONAL GUIDELINES:
      * goes through the normal tool-calling/permission/audit pipeline.
      */
     /**
+     * The self-learning step for things the assistant said it couldn't do.
+     *
+     * Given each capability gap plus the assistant's real tool list and the
+     * app's real pages, decide how it could have succeeded: a multi-step skill
+     * over tools it already has, a pointer to the page that does it, or — only
+     * when neither exists — a drafted spec for a new tool. The caller verifies
+     * every tool and page name against the registry/catalog; nothing returned
+     * here is trusted as-is. Returns null when the AI stack is unreachable.
+     */
+    public function resolveCapabilityGaps(array $gaps, array $tools, array $pages): ?array
+    {
+        $prompt = "You are improving an AI assistant for Lawa't Kape, a coffee shop with a POS and a guest Wi-Fi captive portal. Below are requests where the assistant told a staff member or the owner it could NOT help. Work out how it could have.
+
+### REQUESTS IT COULD NOT DO ###
+".json_encode($gaps, JSON_UNESCAPED_UNICODE).'
+
+### TOOLS THE ASSISTANT ALREADY HAS (the only tools that exist) ###
+'.json_encode($tools, JSON_UNESCAPED_UNICODE).'
+
+### PAGES IN THE APP THIS USER CAN OPEN ###
+'.json_encode($pages, JSON_UNESCAPED_UNICODE).'
+
+### DECIDE, FOR EACH REQUEST, IN THIS ORDER ###
+1. "skill" — the request CAN be done by calling one or more of the tools above (maybe several in sequence, maybe with arguments worked out from the request or from an earlier tool\'s result). The assistant simply did not realise it. Give the steps. Use ONLY tool names from the list, spelled exactly.
+2. "page" — no tool can do it, but one of the pages above lets the user do it themselves. Give the page\'s route exactly as listed and one sentence on what to do there.
+3. "tool_request" — neither. Draft a new tool a developer could build: a camelCase name, a one-sentence description, its inputs, and which part of the app it would use.
+4. "none" — the request is out of scope for a coffee-shop system, or not a real request.
+
+Rules: never invent a tool or page. Prefer skill over page over tool_request. "trigger" is a short description of the KIND of request (e.g. "block websites for guests"), not a copy of the message.
+
+Return ONLY a JSON array, one item per request:
+[{"gap":0,"resolution":"skill","trigger":"...","title":"short label","steps":[{"tool":"toolName","how":"what to pass and why"}],"page_route":null,"page_instruction":null,"tool_request":null}]
+For a page: "page_route":"route.name","page_instruction":"...". For a tool_request: "tool_request":{"name":"...","description":"...","inputs":[{"name":"...","type":"string","description":"..."}],"uses":"..."}';
+
+        $data = $this->callAI([['role' => 'user', 'content' => $prompt]]);
+
+        if (! $data) {
+            return null;
+        }
+
+        $raw = str_replace(['```json', '```'], '', trim($data['choices'][0]['message']['content'] ?? ''));
+        $decoded = json_decode($raw, true);
+
+        if (! is_array($decoded)) {
+            Log::warning('resolveCapabilityGaps: unparseable JSON; treating as no resolutions.', ['raw' => Str::limit($raw, 500)]);
+
+            return [];
+        }
+
+        return $decoded;
+    }
+
+    /**
      * Generalise from observed evidence into candidate lessons.
      *
      * Lives here with the other prompts (and uses the same private callAI

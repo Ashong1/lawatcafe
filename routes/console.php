@@ -27,6 +27,9 @@ Schedule::command('ai:warm-forecast')->everyThirtyMinutes()->withoutOverlapping(
 // produces noise. It also self-limits — the command exits early when there is
 // not enough new evidence, so a quiet shop costs one cheap query per hour.
 Schedule::command('ai:learn')->hourly()->withoutOverlapping();
+// Self-learning for "I can't do that": skills over existing tools, page
+// pointers, or drafted tool requests. See ResolveCapabilityGaps.
+Schedule::command('ai:resolve-gaps')->hourly()->withoutOverlapping();
 
 // Backstop for bandwidth-tier alias membership. Every five minutes rather than
 // every minute: EnforceSessionLimits already clears members on the normal path,

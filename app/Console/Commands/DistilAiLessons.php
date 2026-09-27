@@ -64,6 +64,9 @@ class DistilAiLessons extends Command
         Cache::put('ai_learn_last_run', now()->timestamp, 7200);
 
         $evidence = AiFeedback::undistilled()
+            // Capability gaps belong to ai:resolve-gaps; marking them distilled
+            // here would starve it.
+            ->where('signal', '!=', AiFeedback::SIGNAL_CAPABILITY_GAP)
             ->orderBy('created_at')
             ->limit(self::MAX_EVIDENCE)
             ->get();

@@ -64,18 +64,57 @@ class LessonLibrary
     public function promptBlockFor(string $audience): string
     {
         $lessons = $this->lessonsFor($audience);
+        $skills = $this->skillsFor($audience);
 
-        if (empty($lessons)) {
-            return '';
+        $this->markApplied(array_merge(array_column($lessons, 'id'), array_column($skills, 'id')));
+
+        $block = '';
+
+        if (! empty($lessons)) {
+            $lines = array_map(fn ($l, $i) => ($i + 1).'. '.$l['body'], $lessons, array_keys($lessons));
+
+            $block .= "\n\n=== BEGIN LEARNED GUIDANCE (lessons from past conversations, reviewed and approved by staff — follow these) ===\n"
+                .implode("\n", $lines)
+                ."\n=== END LEARNED GUIDANCE ===";
         }
 
-        $this->markApplied(array_column($lessons, 'id'));
+        if (! empty($skills)) {
+            $lines = array_map(fn ($l, $i) => ($i + 1).'. '.$l['body'], $skills, array_keys($skills));
 
-        $lines = array_map(fn ($l, $i) => ($i + 1).'. '.$l['body'], $lessons, array_keys($lessons));
+            $block .= "\n\n=== BEGIN LEARNED SKILLS (things you once said you couldn't do, and have since worked out how to do with your existing tools — use them) ===\n"
+                .implode("\n", $lines)
+                ."\n=== END LEARNED SKILLS ===";
+        }
 
-        return "\n\n=== BEGIN LEARNED GUIDANCE (lessons from past conversations, reviewed and approved by staff — follow these) ===\n"
-            .implode("\n", $lines)
-            ."\n=== END LEARNED GUIDANCE ===";
+        return $block;
+    }
+
+    /**
+     * Self-learned skills (see ResolveCapabilityGaps) for a surface. Re-checked
+     * against the live tool registry every time: a skill naming a tool that
+     * has since been removed — or that this role doesn't have — drops out
+     * instead of telling the model to call something that isn't there.
+     */
+    public function skillsFor(string $audience): array
+    {
+        return Cache::remember("ai_skills_{$audience}", self::CACHE_TTL, function () use ($audience) {
+            if ($audience === ToolRegistry::AUDIENCE_GUEST) {
+                return [];
+            }
+
+            $available = array_keys(app(ToolRegistry::class)->forAudience($audience));
+
+            return AiLesson::approved()
+                ->where('audience', $audience)
+                ->where('kind', AiLesson::KIND_SKILL)
+                ->orderByDesc('reviewed_at')
+                ->limit(self::MAX_LESSONS)
+                ->get()
+                ->filter(fn (AiLesson $l) => collect($l->evidence['steps'] ?? [])->every(fn ($s) => in_array($s['tool'] ?? null, $available, true)))
+                ->map(fn (AiLesson $l) => ['id' => $l->id, 'body' => Str::limit($l->body, self::MAX_BODY_CHARS)])
+                ->values()
+                ->all();
+        });
     }
 
     /**
@@ -192,6 +231,7 @@ class LessonLibrary
     {
         foreach (array_unique([$audience, 'guest', 'staff', 'admin', 'super_admin']) as $key) {
             Cache::forget("ai_lessons_{$key}");
+            Cache::forget("ai_skills_{$key}");
         }
     }
 }

@@ -73,6 +73,11 @@ class ChatStreamResponder
             }
 
             $this->emit($meta);
+
+            // After the reply is out, so it never delays the user.
+            if (isset($result['reply'])) {
+                CapabilityGap::recordIfGap($audience, $actor, $conversation, $userMessage, $result);
+            }
         }, 200, [
             'Content-Type' => 'text/event-stream',
             'Cache-Control' => 'no-cache',

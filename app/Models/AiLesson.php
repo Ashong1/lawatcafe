@@ -20,6 +20,12 @@ class AiLesson extends Model
 
     public const KIND_EXEMPLAR = 'exemplar';
 
+    /** A multi-step recipe over existing tools, learned from a capability gap. */
+    public const KIND_SKILL = 'skill';
+
+    /** A drafted spec for a tool that doesn't exist. Never enters a prompt. */
+    public const KIND_TOOL_REQUEST = 'tool_request';
+
     protected $fillable = [
         'audience',
         'kind',

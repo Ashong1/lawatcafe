@@ -21,6 +21,13 @@ class AiFeedback extends Model
 
     public const SIGNAL_REPETITION = 'repetition';
 
+    /**
+     * The assistant told a staff/admin user it can't do what they asked.
+     * Consumed by ai:resolve-gaps (skills, page pointers, tool requests), not
+     * by ai:learn — see ResolveCapabilityGaps.
+     */
+    public const SIGNAL_CAPABILITY_GAP = 'capability_gap';
+
     protected $fillable = [
         'audience',
         'user_id',
