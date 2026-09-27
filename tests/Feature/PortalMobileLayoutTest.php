@@ -198,4 +198,25 @@ class PortalMobileLayoutTest extends TestCase
         $this->assertStringContainsString('isCaptiveAssistant', $content);
         $this->assertStringContainsString('cna-only ml-auto shrink-0', $content);
     }
+
+    /**
+     * Reported from a phone: the send button was pushed off the card, the
+     * conversation would not scroll, and the guest's own messages sat on the
+     * left with the AI's.
+     */
+    public function test_portal_chat_is_usable_on_a_phone(): void
+    {
+        $html = $this->get(route('portal.index', ['tab' => 'help']))->assertOk()->getContent();
+
+        // Input may shrink so the send button stays on screen.
+        $this->assertMatchesRegularExpression('/<input type="text" x-model="message"[^>]*class="flex-1 min-w-0/', $html);
+
+        // Each message row is a flex column aligned by who sent it.
+        $this->assertStringContainsString('class="anim-pop-in flex flex-col" :class="msg.role === \'user\' ? \'items-end\' : \'items-start\'"', $html);
+
+        // Every flex ancestor of the history box can shrink, so the history
+        // scrolls rather than the whole panel.
+        $this->assertStringContainsString("x-bind:class=\"{ 'min-h-0': activeTab === 'help' }\"", $html);
+        $this->assertMatchesRegularExpression('/x-show="activeTab === \'help\'"[^>]*class="flex flex-col flex-1 min-h-0"/', $html);
+    }
 }

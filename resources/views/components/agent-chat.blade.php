@@ -56,7 +56,10 @@
              portal panel instead. --}}
         <div class="overflow-y-auto overscroll-contain space-y-3 pr-1 w-full flex flex-col justify-start z-10 flex-1 min-h-0" id="{{ $anchorId }}-chat-history">
             <template x-for="(msg, index) in history" :key="index">
-                <div class="anim-pop-in">
+                {{-- The bubble's self-end/self-start only works when its parent
+                     is a flex container; this wrapper was a plain block, so every
+                     message — the guest's included — sat on the left. --}}
+                <div class="anim-pop-in flex flex-col" :class="msg.role === 'user' ? 'items-end' : 'items-start'">
                     <template x-if="msg.kind === 'text'">
                         <div class="p-3 rounded-2xl shadow-sm text-xs font-medium relative w-fit max-w-[85%] break-words whitespace-normal mx-1"
                              :class="msg.role === 'user' ? 'bg-[#3E2723] text-white self-end rounded-br-sm' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] self-start rounded-bl-sm'">
@@ -104,8 +107,12 @@
         </div>
 
         <div class="flex gap-2 shrink-0 pt-3">
+            {{-- min-w-0: a text input has an intrinsic width and, as a flex item,
+                 will not shrink below it. The portal forces inputs to 16px (iOS
+                 zoom guard), which widened it past a phone-width card and pushed
+                 the send button off the edge. --}}
             <input type="text" x-model="message" @keydown.enter="send()" placeholder="Ask something..."
-                   class="flex-1 bg-white border-2 border-[#F0E6D2] rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all shadow-sm text-[#3E2723] placeholder:font-medium"
+                   class="flex-1 min-w-0 bg-white border-2 border-[#F0E6D2] rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all shadow-sm text-[#3E2723] placeholder:font-medium"
                    :disabled="streaming">
             <button @click="send()" class="bg-[#3E2723] text-white px-4 py-3 rounded-2xl hover:bg-[#271815] transition shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center shrink-0" :disabled="streaming || !message.trim()">
                 <x-lucide-send class="w-5 h-5" />

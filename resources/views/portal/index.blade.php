@@ -151,7 +151,11 @@
         <div class="flex-1 overflow-y-auto no-scrollbar p-5 relative flex flex-col">
             <div class="absolute inset-0 opacity-[0.015] pointer-events-none z-0 texture-pinstripe"></div>
             
-            <div class="relative z-10 flex-1 flex flex-col">
+            {{-- min-h-0 only while the chat is open: it lets the chat's own
+                 history box be the scroller instead of this whole panel (see
+                 feedback: min-h-0 on EVERY flex ancestor). The Connect tab keeps
+                 the old behaviour, where the panel itself scrolls on short phones. --}}
+            <div class="relative z-10 flex-1 flex flex-col" x-bind:class="{ 'min-h-0': activeTab === 'help' }">
 
                 {{-- Tab: Voucher Code
 
@@ -265,7 +269,7 @@
                 {{-- Same server-rendered initial state as the code tab, and for the
                      same reason: x-cloak here would mean a guest who followed a
                      ?tab=help link on an old phone sees an empty panel. --}}
-                <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" @if($initialTab !== 'help') style="display: none;" @endif class="flex flex-col flex-1">
+                <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" @if($initialTab !== 'help') style="display: none;" @endif class="flex flex-col flex-1 min-h-0">
                     <div class="text-center mb-4 shrink-0 flex flex-col items-center">
                         <h2 class="text-xl font-black text-[#3E2723] mb-1 tracking-tight">Barista AI</h2>
                         <p class="text-[10px] text-[#8D6E63] font-bold uppercase tracking-widest mb-2">Digital Concierge</p>
