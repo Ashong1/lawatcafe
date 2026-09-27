@@ -10,6 +10,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{{-- "only light": stops Android/Huawei sign-in windows from auto-darkening a page that has no dark theme (seen live: dark card, blue focus ring). --}}
+<meta name="color-scheme" content="only light">
 <title>Connect to Wi-Fi - Lawa't Kape</title>
 <!-- Favicons -->
 <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
@@ -141,8 +143,11 @@
                     <h1 class="text-3xl font-bold text-white leading-none" style="font-family: 'Dancing Script', cursive;">Lawa't Kape</h1>
                 </div>
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/30 border border-white/10">
-                    <div class="w-1.5 h-1.5 rounded-full animate-pulse" :class="connectionStatus === 'disconnected' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]'"></div>
-                    <span class="text-[8px] font-black text-white/90 uppercase tracking-[0.2em]" x-text="connectionStatus === 'disconnected' ? 'Disconnected' : 'Ready to Connect'">Ready to Connect</span>
+                    {{-- A guest who hasn't tried anything yet is not "disconnected"
+                         — a red pulsing pill on arrival read as "the Wi-Fi is
+                         broken". Neutral until they act; red is for real failures. --}}
+                    <div class="w-1.5 h-1.5 rounded-full" :class="connectionStatus === 'connecting' ? 'bg-amber-400 animate-pulse' : 'bg-white/50'"></div>
+                    <span class="text-[11px] font-bold text-white/90 tracking-wide" x-text="connectionStatus === 'connecting' ? 'Connecting…' : 'Not connected yet'">Not connected yet</span>
                 </div>
             </div>
         </div>
@@ -185,7 +190,8 @@
                             <x-lucide-wifi class="w-6 h-6 text-amber-800" stroke-width="2.5" />
                         </div>
                         <h2 class="text-xl font-black text-[#3E2723] mb-1 tracking-tight">Quick Connect</h2>
-                        <p class="text-[10px] text-[#8D6E63] font-bold uppercase tracking-widest mb-1">Enter receipt passcode</p>
+                        {{-- Follows the BIR receipt gate like the hint below: no printed receipt, no "receipt passcode". --}}
+                        <p class="text-[10px] text-[#8D6E63] font-bold uppercase tracking-widest mb-1">{{ $receiptPrintingEnabled ? 'Enter the code on your receipt' : 'Enter the code on your voucher slip' }}</p>
                         <p class="text-[9px] text-[#6D4C41] italic font-medium">High-speed browsing with every brew.</p>
                     </div>
 
@@ -218,7 +224,7 @@
                             <!-- Where is my code? Helper -->
                             <button type="button" @click="Swal.fire({
                                 title: 'Find Your Code',
-                                text: '{{ $receiptPrintingEnabled ? "Your 8-digit Wi-Fi passcode is printed at the very bottom of your Lawa\'t Kape receipt." : "Your 8-digit Wi-Fi passcode is on the voucher slip handed to you at the counter. Ask our staff if you cannot find it." }}',
+                                text: '{{ $receiptPrintingEnabled ? "Your 8-character Wi-Fi passcode is printed at the very bottom of your Lawa\'t Kape receipt." : "Your 8-character Wi-Fi passcode is on the voucher slip handed to you at the counter. Ask our staff if you cannot find it." }}',
                                 icon: 'info',
                                 confirmButtonText: 'Got it!',
                                 confirmButtonColor: '#3E2723',
@@ -251,7 +257,7 @@
                                 class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-lg active:scale-95 text-[10px] flex items-center justify-center gap-3 disabled:opacity-50">
                             <template x-if="!isSubmitting">
                                 <div class="flex items-center gap-3">
-                                    <span>Establish Connection</span>
+                                    <span>Connect to Wi-Fi</span>
                                     <x-lucide-arrow-right class="w-4 h-4 animate-pulse" />
                                 </div>
                             </template>
@@ -273,10 +279,8 @@
                     <div class="text-center mb-4 shrink-0 flex flex-col items-center">
                         <h2 class="text-xl font-black text-[#3E2723] mb-1 tracking-tight">Barista AI</h2>
                         <p class="text-[10px] text-[#8D6E63] font-bold uppercase tracking-widest mb-2">Digital Concierge</p>
-                        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-white/50 border border-[#F0E6D2] shadow-sm" :class="aiCue ? 'animate-bounce' : ''">
-                            <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                            <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">System Online</span>
-                        </div>
+                        {{-- No "System Online" pill here: a green pulse beside the header's
+                             connection status gave two contradictory signals at once. --}}
                     </div>
 
                     <div class="flex-1 min-h-0 w-full bg-white/50 border-2 border-[#F0E6D2] rounded-[1.5rem] p-4 mb-4 flex flex-col shadow-inner relative overflow-hidden" id="chat-container">
@@ -339,8 +343,7 @@ document.addEventListener('alpine:init', () => {
         activeTab: @js($initialTab),
         isSubmitting: false,
         showTOS: false,
-        connectionStatus: 'disconnected',
-        aiCue: false,
+        connectionStatus: 'idle',
 
         init() {
             // The embedded agent-chat component instance owns its own chat state/scrolling now —
@@ -348,11 +351,6 @@ document.addEventListener('alpine:init', () => {
             this.$watch('activeTab', value => {
                 if (value === 'help') {
                     window.dispatchEvent(new CustomEvent('portal-tab-changed'));
-                    // One-shot bounce on the "System Online" pill each time this tab
-                    // activates, reusing the existing animate-bounce vocabulary rather
-                    // than adding new motion — just a "hey, I'm here" cue.
-                    this.aiCue = true;
-                    setTimeout(() => { this.aiCue = false; }, 900);
                 }
             });
         },
@@ -363,7 +361,7 @@ document.addEventListener('alpine:init', () => {
 
         async submitForm(e) {
             this.isSubmitting = true;
-            this.connectionStatus = 'authenticating';
+            this.connectionStatus = 'connecting';
             e.target.submit();
         },
 }));

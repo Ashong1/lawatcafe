@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+{{-- "only light": stops Android/Huawei sign-in windows from auto-darkening a page that has no dark theme (seen live: dark card, blue focus ring). --}}
+<meta name="color-scheme" content="only light">
 <title>Opening your browser - Lawa't Kape</title>
 <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
 {{-- No @vite here on purpose. This page exists for a fraction of a second and

@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{{-- "only light": stops Android/Huawei sign-in windows from auto-darkening a page that has no dark theme (seen live: dark card, blue focus ring). --}}
+<meta name="color-scheme" content="only light">
 <title>Connected - Lawa't Kape</title>
 <!-- Favicons -->
 <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">

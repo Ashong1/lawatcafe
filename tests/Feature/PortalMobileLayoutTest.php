@@ -219,4 +219,26 @@ class PortalMobileLayoutTest extends TestCase
         $this->assertStringContainsString("x-bind:class=\"{ 'min-h-0': activeTab === 'help' }\"", $html);
         $this->assertMatchesRegularExpression('/x-show="activeTab === \'help\'"[^>]*class="flex flex-col flex-1 min-h-0"/', $html);
     }
+
+    /**
+     * Android/Huawei sign-in windows auto-darkened the portal (seen live: dark
+     * card, dark bubbles, a stray blue focus ring). Every portal view must
+     * opt out, since none of them has a dark theme.
+     */
+    public function test_every_portal_view_opts_out_of_forced_dark_mode(): void
+    {
+        foreach (glob(resource_path('views/portal/*.blade.php')) as $view) {
+            $this->assertStringContainsString('<meta name="color-scheme" content="only light">', file_get_contents($view), basename($view));
+        }
+    }
+
+    /** A guest who hasn't tried anything yet must not be greeted with a red "Disconnected". */
+    public function test_first_load_status_is_neutral(): void
+    {
+        $html = $this->get(route('portal.index'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('Not connected yet', $html);
+        $this->assertStringNotContainsString('Disconnected', $html);
+        $this->assertStringContainsString('Connect to Wi-Fi', $html);
+    }
 }
