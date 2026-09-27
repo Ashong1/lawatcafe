@@ -117,6 +117,23 @@ class CaptivePortalAuthenticateTest extends TestCase
             ->assertSessionHas('error');
     }
 
+    /**
+     * Before sign-in the internet is blocked, so the sign-in window's
+     * "Open in Browser" link must point at the portal itself: a link to an
+     * outside address showed Xiaomi's "page does not exist" error.
+     */
+    public function test_the_open_in_browser_link_never_leaves_the_portal(): void
+    {
+        $html = $this->get(route('portal.index'))->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('generate_204', $html);
+        $this->assertMatchesRegularExpression('#href="'.preg_quote(route('portal.index'), '#').'"\s+target="_blank"[^>]*>Open in Browser#', $html);
+
+        $iphone = $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148'])
+            ->get(route('portal.index'))->getContent();
+        $this->assertStringContainsString('href="x-safari-'.route('portal.index').'"', $iphone);
+    }
+
     /** The portal renders the flash as a toast; without this the message is invisible. */
     public function test_the_portal_page_renders_a_flashed_error(): void
     {

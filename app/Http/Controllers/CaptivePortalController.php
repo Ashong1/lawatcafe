@@ -91,6 +91,9 @@ class CaptivePortalController extends Controller
         return (bool) preg_match('/iPhone|iPad|iPod|Macintosh/i', (string) $request->userAgent());
     }
 
+    /** Browsers that still send "Build/" in their user agent — not sign-in windows. */
+    private const NAMED_ANDROID_BROWSERS = '/MiuiBrowser|XiaoMi\\/|SamsungBrowser|HuaweiBrowser|HeyTapBrowser|VivoBrowser|UCBrowser|OPR\\/|Opera|EdgA|Firefox|YaBrowser|Brave|DuckDuckGo/i';
+
     /**
      * A tap-to-open-in-Safari link for Apple devices, or null elsewhere.
      *
@@ -116,9 +119,6 @@ class CaptivePortalController extends Controller
      * portal/partials/captive-assistant.blade.php for the same detection
      * client-side, and why the old Chrome/Safari test never matched.
      */
-    /** Browsers that still send "Build/" in their user agent — not sign-in windows. */
-    private const NAMED_ANDROID_BROWSERS = '/MiuiBrowser|XiaoMi\\/|SamsungBrowser|HuaweiBrowser|HeyTapBrowser|VivoBrowser|UCBrowser|OPR\\/|Opera|EdgA|Firefox|YaBrowser|Brave|DuckDuckGo/i';
-
     private function isAndroidAssistant(Request $request): bool
     {
         $ua = (string) $request->userAgent();
@@ -365,6 +365,7 @@ class CaptivePortalController extends Controller
         // Drives the "where is my code" wording — see portal/index.blade.php.
         return view('portal.index', [
             'receiptPrintingEnabled' => Setting::receiptPrintingEnabled(),
+            'safariUrl' => $this->safariUrl($request),
         ]);
     }
 

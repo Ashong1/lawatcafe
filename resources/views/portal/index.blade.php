@@ -94,12 +94,14 @@
         <div class="absolute inset-0 bg-black/60"></div>
     </div>
 
-    <!-- CNA Escape Hatch Banner -->
+    {{-- Before sign-in the internet is blocked, so this must point at the portal
+         itself, never an outside address. A tap on target=_blank is what some
+         sign-in windows hand to the real browser; the rest just reload here. --}}
     <div class="fixed top-0 inset-x-0 z-[60] bg-amber-50 border-b border-amber-100 px-4 py-2 text-center lg:hidden"
          x-show="isCNA()" x-cloak>
         <p class="text-xs font-bold text-amber-800 uppercase tracking-wide flex items-center justify-center gap-2">
             <x-lucide-external-link class="w-3 h-3" />
-            Issues? <a href="http://connectivitycheck.gstatic.com/generate_204" class="underline decoration-dotted">Open in Browser</a>
+            Issues? <a href="{{ $safariUrl ?? route('portal.index') }}" @unless($safariUrl) target="_blank" rel="noopener" @endunless class="underline decoration-dotted">Open in Browser</a>
         </p>
     </div>
 

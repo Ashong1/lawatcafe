@@ -10,7 +10,10 @@ the history was rewritten.
 ---
 
 ## 1.12.1 — Network pages made easier
-*builds 168–170*
+*builds 168–171*
+
+- The sign-in window's "Open in Browser" bar opens the portal instead of an
+  outside address that is blocked before sign-in.
 
 - Xiaomi's sign-in window is recognised (it omits Android's "; wv)" tag),
   so guests get the "Open in my browser" button there.
