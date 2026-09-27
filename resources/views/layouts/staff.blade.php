@@ -241,6 +241,18 @@
                       class="ml-3 whitespace-nowrap">Vouchers</span>
             </a>
 
+            <a href="{{ route('network.health') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.health') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Network Health">
+                <x-lucide-heart-pulse class="w-6 h-6 shrink-0 {{ request()->routeIs('network.health') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
+                <span x-show="navLabelsVisible"
+                      x-transition:enter="transition ease-in-out duration-300"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in-out duration-300"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap">Network Health</span>
+            </a>
+
             <a href="{{ route('network.sessions') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.sessions') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Active Sessions">
                 <x-lucide-wifi class="w-6 h-6 shrink-0 {{ request()->routeIs('network.sessions') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="navLabelsVisible"

@@ -15,6 +15,10 @@ Schedule::command('network:keepalive-guests')->everyMinute()->withoutOverlapping
 // Adult-site alerts read Pi-hole's query log; see WatchAdultSites. A minute is
 // as close to "when they opened it" as the scheduler gets.
 Schedule::command('network:watch-adult-sites')->everyMinute()->withoutOverlapping();
+// Network health every minute: history for Network > Health, instant alerts
+// when a check changes state (no AI involved), and the live status in the
+// AI's prompt. withoutOverlapping: a slow firewall mustn't stack runs.
+Schedule::command('network:health')->everyMinute()->withoutOverlapping();
 Schedule::command('agent:analyze')->everyFifteenMinutes();
 
 // Every 3 hours (was every 30 min = 48 AI calls a day, most of the 50-a-day

@@ -12,10 +12,11 @@ use App\Http\Controllers\BlocklistController;
 use App\Http\Controllers\CaptivePortalController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EndOfDayController; // <-- Added Portal Controller
-use App\Http\Controllers\IngredientController;
+use App\Http\Controllers\EndOfDayController;
+use App\Http\Controllers\IngredientController; // <-- Added Portal Controller
 use App\Http\Controllers\IngredientDeliveryController;
 use App\Http\Controllers\KdsController;
+use App\Http\Controllers\NetworkHealthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderHistoryController;
 use App\Http\Controllers\PosController;
@@ -144,6 +145,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
         Route::get('/sessions', [VoucherController::class, 'sessions'])->name('sessions');
         Route::post('/sessions/kick', [VoucherController::class, 'kick'])->name('sessions.kick');
+        // Network health: staff see it too — they're at the counter when the Wi-Fi breaks.
+        Route::get('/health', [NetworkHealthController::class, 'index'])->name('health');
+        Route::post('/health/run', [NetworkHealthController::class, 'run'])->name('health.run')->middleware('throttle:6,1');
+        Route::get('/health/status', [NetworkHealthController::class, 'status'])->name('health.status');
     });
 
     // Proactive AI analysis history (shared: audience-scoped in the controller,

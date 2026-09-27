@@ -106,6 +106,23 @@
 
 {{-- 3. Wi-Fi & network: the system's core, now above the fold. --}}
 <h2 class="text-base font-bold text-[#3E2723] mb-3 flex items-center gap-2"><x-lucide-wifi class="w-5 h-5 text-[#795548]" /> Wi-Fi &amp; Network</h2>
+@php($nh = app(\App\Services\NetworkHealthService::class)->latest())
+@if($nh)
+    @php($problems = collect($nh['checks'])->filter(fn ($c) => in_array($c['status'], ['warn', 'fail'], true)))
+    <a href="{{ route('network.health') }}" class="mb-4 flex items-center justify-between gap-3 rounded-2xl border p-4 transition hover:shadow-md {{ $nh['overall'] === 'fail' ? 'bg-red-50 border-red-200 text-red-900' : ($nh['overall'] === 'warn' ? 'bg-amber-50 border-amber-300 text-amber-900' : 'bg-green-50 border-green-200 text-green-900') }}">
+        <span class="flex items-center gap-3 min-w-0">
+            <x-lucide-heart-pulse class="w-5 h-5 shrink-0" />
+            <span class="text-sm font-bold truncate">
+                @if($problems->isEmpty())
+                    Network healthy — {{ $nh['checks']['internet']['summary'] ?? '' }}
+                @else
+                    {{ $problems->count() }} network {{ \Illuminate\Support\Str::plural('issue', $problems->count()) }}: {{ $problems->pluck('label')->implode(', ') }}
+                @endif
+            </span>
+        </span>
+        <span class="text-sm font-bold shrink-0">Network health &rarr;</span>
+    </a>
+@endif
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-8">
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col">
         <div class="flex justify-between items-center mb-5 gap-3">

@@ -34,7 +34,7 @@ class ShiftToolDescriptionScopeTest extends TestCase
     {
         $prompt = app(AIService::class)->buildAdminSystemPrompt();
 
-        $this->assertStringContainsString('no tool call needed', $prompt);
-        $this->assertStringContainsString('never for a general "today\'s sales" or forecast question', $prompt);
+        $this->assertStringContainsString('Answer those three directly from here', $prompt);
+        $this->assertStringContainsString('use shiftHandoffSummary only for a specific shift handoff', $prompt);
     }
 }

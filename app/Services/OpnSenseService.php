@@ -425,12 +425,20 @@ class OpnSenseService
 
         return Cache::remember('opnsense_gateway_status', 15, function () {
             try {
-                $url = "{$this->baseUrl}/api/diagnostics/gateway/status";
-
-                $response = $this->client()->get($url);
+                // This OPNsense version serves gateway status at routes/, not
+                // diagnostics/ (that path 404s and returned nothing at all).
+                $response = $this->client()->get("{$this->baseUrl}/api/routes/gateway/status");
 
                 if ($response->successful()) {
-                    return $response->json();
+                    // 'status' is "none" when dpinger monitoring is off, so the
+                    // readable state comes from status_translated.
+                    return ['gateways' => collect($response->json('items') ?? [])->map(fn ($g) => [
+                        'name' => $g['name'] ?? '?',
+                        'address' => $g['address'] ?? null,
+                        'status' => strtolower((string) ($g['status_translated'] ?? $g['status'] ?? 'unknown')),
+                        'delay' => $g['delay'] ?? '~',
+                        'loss' => $g['loss'] ?? '~',
+                    ])->all()];
                 }
 
                 return Cache::get('opnsense_gateway_status') ?? [];

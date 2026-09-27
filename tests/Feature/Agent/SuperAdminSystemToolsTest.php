@@ -68,7 +68,8 @@ class SuperAdminSystemToolsTest extends TestCase
         $this->assertStringContainsString('CANNOT write code', $prompt);
         $this->assertStringContainsString('do not just refuse and stop', $prompt);
         // And it must still carry everything the admin prompt does.
-        $this->assertStringContainsString('CURRENT SHOP STATUS', $prompt);
+        $this->assertStringContainsString('LIVE NETWORK STATUS', $prompt);
+        $this->assertStringContainsString('SHOP (secondary)', $prompt);
     }
 
     public function test_system_health_reports_concerns_rather_than_raw_numbers_alone(): void

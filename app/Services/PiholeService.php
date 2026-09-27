@@ -180,6 +180,41 @@ class PiholeService
         }
     }
 
+    /**
+     * Today's DNS picture for the network health check and the AI: whether
+     * blocking is on, query and block counts, list size, and the most-blocked
+     * domains. Null when Pi-hole can't be reached.
+     *
+     * @return array{blocking: bool, queries: int, blocked: int, percent_blocked: float, clients: int, domains_on_blocklists: int, top_blocked: array<int, array{domain: string, count: int}>}|null
+     */
+    public function summary(): ?array
+    {
+        try {
+            $stats = $this->withSession(fn ($client) => $client->get('/api/stats/summary'));
+            if (! $stats || ! $stats->successful()) {
+                return null;
+            }
+            $blocking = $this->withSession(fn ($client) => $client->get('/api/dns/blocking'));
+            $top = $this->withSession(fn ($client) => $client->get('/api/stats/top_domains', ['blocked' => 'true', 'count' => 5]));
+
+            return [
+                'blocking' => ($blocking?->json('blocking') ?? 'enabled') === 'enabled',
+                'queries' => (int) $stats->json('queries.total', 0),
+                'blocked' => (int) $stats->json('queries.blocked', 0),
+                'percent_blocked' => round((float) $stats->json('queries.percent_blocked', 0), 1),
+                'clients' => (int) $stats->json('clients.active', 0),
+                'domains_on_blocklists' => (int) $stats->json('gravity.domains_being_blocked', 0),
+                'top_blocked' => collect($top?->json('domains') ?? [])
+                    ->map(fn ($d) => ['domain' => (string) ($d['domain'] ?? ''), 'count' => (int) ($d['count'] ?? 0)])
+                    ->all(),
+            ];
+        } catch (\Exception $e) {
+            Log::error('Pi-hole: exception reading stats: '.$e->getMessage());
+
+            return null;
+        }
+    }
+
     public function blockDomain(string $domain, ?string $comment = null): bool
     {
         return $this->upsertDomain($domain, true, $comment);

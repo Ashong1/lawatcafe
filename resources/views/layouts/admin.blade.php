@@ -379,6 +379,7 @@
                      x-bind:style="(menus.network && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
+                            <a href="/network/health" class="block py-2 text-xs {{ request()->is('network/health') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Health</a>
                             <a href="/network/sessions" class="block py-2 text-xs {{ request()->is('network/sessions') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Active Sessions</a>
                             <a href="/network/vouchers" class="block py-2 text-xs {{ request()->is('network/vouchers') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Vouchers</a>
                             <a href="/network/traffic" class="block py-2 text-xs {{ request()->is('network/traffic') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Traffic Shaping</a>

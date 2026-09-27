@@ -22,6 +22,10 @@ class AiFinding extends Model
         'voucher_revenue_divergence' => 'admin',
         'repeat_mac_abuse' => 'admin',
         'banned_device_reentry' => 'admin',
+        // Staff are at the counter when the Wi-Fi breaks — they should see it.
+        'network_internet' => 'staff',
+        'network_portal' => 'staff',
+        'network_dhcp' => 'staff',
     ];
 
     public function run()

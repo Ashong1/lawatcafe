@@ -55,6 +55,13 @@ class AgentActivityEntry
         'repeat_mac_abuse' => 'one device used several vouchers',
         'banned_device_reentry' => 'a blocked device got back on the Wi-Fi',
         'low_stock_high_demand' => "a popular item's ingredient is running low",
+        'network_internet' => 'the internet link is down or unstable',
+        'network_firewall' => "the firewall can't be reached or a gateway is down",
+        'network_dns' => 'DNS or site blocking is not working',
+        'network_dhcp' => 'the Wi-Fi is running out of addresses',
+        'network_portal' => 'the Wi-Fi login page is not loading',
+        'network_infrastructure' => 'network equipment is not responding',
+        'network_unknown_devices' => 'a blocked device is back on the network',
     ];
 
     /** Friendlier names for the inputs an owner sees on a proposal. */

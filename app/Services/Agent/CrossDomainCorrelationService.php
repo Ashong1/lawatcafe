@@ -8,6 +8,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Setting;
 use App\Models\Voucher;
+use App\Services\NetworkHealthService;
 use App\Services\OpnSenseService;
 use Illuminate\Support\Facades\DB;
 
@@ -29,9 +30,38 @@ class CrossDomainCorrelationService
             ...$this->repeatMacAbuse(),
             ...$this->bannedDeviceReentry(),
             ...$this->lowStockHighDemandMismatch(),
+            ...$this->networkHealthSignals(),
         ]));
 
         return ['signals' => $signals];
+    }
+
+    /**
+     * Every failing or warning network check from the latest health run
+     * (network:health, every minute) becomes a signal, so the scheduled review
+     * diagnoses network problems too, not just sales and abuse. Bandwidth is
+     * informational and 'unknown' says nothing, so neither is a signal.
+     */
+    private function networkHealthSignals(): array
+    {
+        $latest = app(NetworkHealthService::class)->latest();
+        if (! $latest) {
+            return [];
+        }
+
+        $signals = [];
+        foreach ($latest['checks'] as $key => $check) {
+            if (in_array($check['status'], ['warn', 'fail'], true)) {
+                $signals[] = [
+                    'type' => "network_{$key}",
+                    'severity' => $check['status'] === 'fail' ? 'danger' : 'warning',
+                    'summary' => "{$check['label']}: {$check['summary']}",
+                    'data' => $check['details'],
+                ];
+            }
+        }
+
+        return $signals;
     }
 
     /**

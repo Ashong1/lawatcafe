@@ -7,21 +7,25 @@ use App\Services\Agent\Tools\AdjustFairUseCeilingTool;
 use App\Services\Agent\Tools\BlockDeviceTool;
 use App\Services\Agent\Tools\BlockSitesTool;
 use App\Services\Agent\Tools\CheckMySessionTool;
+use App\Services\Agent\Tools\CheckNetworkHealthTool;
 use App\Services\Agent\Tools\CheckStockLevelsTool;
 use App\Services\Agent\Tools\DraftSupplierPoTool;
 use App\Services\Agent\Tools\GenerateVoucherBatchTool;
 use App\Services\Agent\Tools\GetActiveSessionsTool;
 use App\Services\Agent\Tools\GetAiStackStatusTool;
 use App\Services\Agent\Tools\GetAnomalySignalsTool;
+use App\Services\Agent\Tools\GetDnsStatsTool;
 use App\Services\Agent\Tools\GetPortalPostureTool;
 use App\Services\Agent\Tools\GetRecentSystemErrorsTool;
 use App\Services\Agent\Tools\GetSalesSummaryTool;
 use App\Services\Agent\Tools\GetScheduledJobHealthTool;
 use App\Services\Agent\Tools\GetSystemHealthTool;
+use App\Services\Agent\Tools\GetTopBandwidthUsersTool;
 use App\Services\Agent\Tools\GetTrafficStatsTool;
 use App\Services\Agent\Tools\ListBlockedSitesTool;
 use App\Services\Agent\Tools\ListSupplierPoDraftsTool;
 use App\Services\Agent\Tools\ListUserAccountsTool;
+use App\Services\Agent\Tools\LookupDeviceTool;
 use App\Services\Agent\Tools\LookupVoucherTool;
 use App\Services\Agent\Tools\RestockIngredientTool;
 use App\Services\Agent\Tools\SendSupplierPoTool;
@@ -78,6 +82,11 @@ class ToolRegistry
     {
         return [
             ...$this->guestToolClasses(),
+            // Network first-line support (read-only): staff are the ones at the
+            // counter when a guest says the Wi-Fi isn't working.
+            CheckNetworkHealthTool::class,
+            LookupDeviceTool::class,
+            GetTopBandwidthUsersTool::class,
             GetActiveSessionsTool::class,
             GetTrafficStatsTool::class,
             CheckStockLevelsTool::class,
@@ -96,6 +105,7 @@ class ToolRegistry
     {
         return [
             ...$this->staffToolClasses(),
+            GetDnsStatsTool::class,
             BlockDeviceTool::class,
             UnblockDeviceTool::class,
             BlockSitesTool::class,

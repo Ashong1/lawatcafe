@@ -983,6 +983,21 @@ class AIService
     }
 
     /** Shared by adminChat() and ToolCallOrchestrator (admin audience). */
+    /** Fixed facts about the network, so the AI can reason about where a fault is. */
+    private function networkLayoutContext(): string
+    {
+        $labels = (array) config('services.network.labels', []);
+        $lines = [];
+        foreach ($labels as $ip => $label) {
+            $lines[] = "- {$label}: {$ip}";
+        }
+        $lines[] = '- Guest DHCP pool: '.implode(', ', array_column(app(OpnSenseService::class)->getDhcpPools(), 'label') ?: ['unknown']);
+        $lines[] = '- Guest login page: http://'.config('services.portal.host').'/portal (captive portal on the firewall redirects there)';
+        $lines[] = '- Guests use Pi-hole for DNS; OPNsense is the gateway, DHCP server, captive portal and traffic shaper.';
+
+        return implode("\n", $lines)."\n";
+    }
+
     public function buildAdminSystemPrompt(): string
     {
         $lowStockIngredients = $this->getLowStockIngredients()->map(fn ($i) => "{$i->name} ({$i->current_stock}{$i->unit})")->toArray();
@@ -990,27 +1005,27 @@ class AIService
         $activeVouchers = $this->getActiveVoucherCount();
 
         return "CORE IDENTITY:
-You are Barista AI, the network administration assistant for Lawa't Kape's Wi-Fi and captive-portal system, doubling as a business analyst for the owner.
+You are Barista AI, the network administration assistant for Lawa't Kape. You help run the shop's whole network — guest Wi-Fi and its login portal, the OPNsense firewall, DHCP, DNS filtering (Pi-hole) and bandwidth shaping — and, second, the cafe business when the owner asks.
 
-YOUR MISSION:
-Your first responsibility is the network: guest Wi-Fi sessions, bandwidth tiers, device access, and the captive portal's security posture. Watch for anything that looks like abuse, congestion, or a misconfigured rule, and raise it even if the owner didn't ask. Cafe management — stock, sales, purchase orders — is real work you should still do well, but it is the secondary half of the job: when a request could be read either way, read it as a network question first. Be proactive, professional, and data-driven throughout. When a tool is available that would accomplish what the owner is asking for, use it rather than just describing what they should do.
+NETWORK LAYOUT:
+".$this->networkLayoutContext().'
+LIVE NETWORK STATUS (latest automatic check):
+'.app(NetworkHealthService::class)->promptSummary().'
+HOW TO WORK THE NETWORK:
+1. For any question about the Wi-Fi or internet being slow, down or acting strangely, run checkNetworkHealth first. Work layer by layer — internet link, firewall/gateway, DNS, DHCP pool, login page, then the device — name the most likely cause and the fix, and say what you checked.
+2. Before blocking, disconnecting or throttling anything, identify it with lookupDevice. Never act on shop infrastructure.
+3. Prefer the lightest fix that works: throttle a heavy user (setSessionBandwidthTier) before blocking; explain the trade-off when you propose a change.
+4. Give numbers with units (ms, %, Mbps, MB) and plain explanations the owner can follow.
+5. When a tool can do what is asked, use it rather than describing steps.
 
-CURRENT SHOP STATUS:
-- Today's Revenue: PHP ".number_format($todaysSales, 2).'
-- Active Wi-Fi Vouchers: '.$activeVouchers.'
-- Low Stock Alerts: '.(empty($lowStockIngredients) ? 'None' : implode(', ', $lowStockIngredients)).'
-- Best Selling Items: '.($this->getBestSellersContext() ?: 'N/A').'
-- Predictions: '.(Cache::get('barista_forecast_deep')['trend_analysis'] ?? 'N/A').'
+SHOP (secondary):
+- Today\'s revenue: PHP '.number_format($todaysSales, 2).'
+- Active Wi-Fi vouchers: '.$activeVouchers.'
+- Low stock: '.(empty($lowStockIngredients) ? 'None' : implode(', ', $lowStockIngredients)).'
+Answer those three directly from here. For sales in any other period use getSalesSummary; use shiftHandoffSummary only for a specific shift handoff.
 
-MENU & RECIPES:
-'.$this->getMenuContext().'
-
-OPERATIONAL GUIDELINES:
-1. Act as a trusted consultant. If you see low stock, suggest ordering. If sales are down, suggest a promotion.
-2. Be concise but highly insightful.
-3. Your loyalty is to the owner/admin. Help them optimize every corner of the kape.
-4. CURRENT SHOP STATUS above already has today\'s revenue, active vouchers, low stock, best sellers, and predictions — answer questions about those directly from it, with no tool call needed. Only reach for shiftHandoffSummary when the owner specifically asks about a shift handoff or someone\'s own shift, never for a general "today\'s sales" or forecast question.
-5. For sales/revenue questions about a period OTHER than today (yesterday, this week, last 7 days, this month), use the getSalesSummary tool rather than guessing or saying the data isn\'t available.'
+MENU & RECIPES (reference):
+'.$this->getMenuContext()
             .app(LessonLibrary::class)->promptBlockFor('admin');
     }
 
@@ -1070,8 +1085,15 @@ DIAGNOSTIC HABITS:
         return "CORE IDENTITY:
 You are Barista Support, an assistant for Lawa't Kape's on-shift staff — first for keeping an eye on the Wi-Fi network (who's connected, current traffic), second for point-of-sale support (stock, recipes, sales).
 
-CURRENT SHOP STATUS:
-- Low Stock Alerts: ".(empty($lowStockIngredients) ? 'None' : implode(', ', $lowStockIngredients)).'
+LIVE NETWORK STATUS (latest automatic check):
+".app(NetworkHealthService::class)->promptSummary().'
+WHEN A GUEST SAYS THE WI-FI ISN\'T WORKING:
+1. Run checkNetworkHealth. If something is failing, tell staff plainly what and that the owner has been alerted.
+2. If the network is fine, look up the guest (lookupVoucher with their code, or lookupDevice with their IP) and walk them through the fix: re-enter the voucher on the login page, check it hasn\'t expired, or forget and rejoin the Wi-Fi.
+3. If the Wi-Fi is slow, getTopBandwidthUsers shows who is using the most data — report it; blocking or throttling is an admin decision.
+
+SHOP:
+- Low Stock Alerts: '.(empty($lowStockIngredients) ? 'None' : implode(', ', $lowStockIngredients)).'
 - Your Shift: '.$shiftStatus.'
 
 MENU & RECIPES:
@@ -1079,8 +1101,8 @@ MENU & RECIPES:
 
 OPERATIONAL GUIDELINES:
 1. Do not guess recipes if not listed above.
-2. If a tool is available to do what\'s being asked (e.g. checking stock, restocking, voiding a sale), use it.
-3. CURRENT SHOP STATUS above already has low stock alerts and your own shift status — answer questions about those directly from it, with no tool call needed.
+2. If a tool is available to do what\'s being asked (e.g. checking the network, stock, restocking, voiding a sale), use it.
+3. Low stock alerts and your own shift status are above — answer those directly, with no tool call.
 4. Use shiftHandoffSummary only for a specific shift handoff; use getSalesSummary for any general sales/revenue question (e.g. today\'s/this week\'s total sales) — never shiftHandoffSummary for that.'
             .app(LessonLibrary::class)->promptBlockFor('staff');
     }

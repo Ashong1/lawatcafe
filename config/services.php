@@ -75,6 +75,24 @@ return [
         ],
     ],
 
+    // The guest login page's hostname (plain HTTP, straight to nginx).
+    'portal' => [
+        'host' => env('PORTAL_HOST', 'wifi.lawatkape.lab'),
+    ],
+
+    // Readable names for infrastructure addresses on the Network Health page
+    // and in AI answers. Addresses not listed fall back to the DHCP hostname
+    // or the device vendor.
+    'network' => [
+        'labels' => [
+            '192.168.2.251' => 'Firewall (OPNsense)',
+            '192.168.2.4' => 'Pi-hole DNS',
+            '192.168.2.5' => 'Nginx Proxy Manager',
+            '192.168.2.100' => 'App server',
+            '192.168.254.254' => 'ISP router',
+        ],
+    ],
+
     'pihole' => [
         'url' => env('PIHOLE_URL', 'http://192.168.2.4'),
         // Pi-hole v6's API auth is session-based (POST /api/auth exchanges

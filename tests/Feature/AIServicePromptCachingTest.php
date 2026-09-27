@@ -52,20 +52,20 @@ class AIServicePromptCachingTest extends TestCase
 
         $first = app(AIService::class)->buildAdminSystemPrompt();
         $this->assertStringContainsString('150.00', $first);
-        $this->assertStringContainsString('Active Wi-Fi Vouchers: 1', $first);
+        $this->assertStringContainsString('Active Wi-Fi vouchers: 1', $first);
 
         Sale::create(['transaction_number' => 'TRN-B', 'total_amount' => 500, 'status' => 'completed', 'order_type' => 'dine_in', 'user_id' => $staff->id]);
         Voucher::create(['code' => 'LAWA-UNUSED-2', 'duration_minutes' => 60, 'is_used' => false]);
 
         $second = app(AIService::class)->buildAdminSystemPrompt();
         $this->assertStringContainsString('150.00', $second, 'Revenue should still reflect the cached snapshot within the TTL.');
-        $this->assertStringContainsString('Active Wi-Fi Vouchers: 1', $second);
+        $this->assertStringContainsString('Active Wi-Fi vouchers: 1', $second);
 
         Cache::forget('ai_ctx_todays_sales');
         Cache::forget('ai_ctx_active_vouchers');
 
         $third = app(AIService::class)->buildAdminSystemPrompt();
         $this->assertStringContainsString('650.00', $third);
-        $this->assertStringContainsString('Active Wi-Fi Vouchers: 2', $third);
+        $this->assertStringContainsString('Active Wi-Fi vouchers: 2', $third);
     }
 }
