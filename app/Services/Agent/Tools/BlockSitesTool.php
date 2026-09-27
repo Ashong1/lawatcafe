@@ -16,7 +16,7 @@ use App\Services\PiholeService;
  */
 class BlockSitesTool implements AgentTool
 {
-    public function __construct(protected PiholeService $pihole) {}
+    public function __construct(protected PiholeService $pihole, protected BareSiteResolver $resolver) {}
 
     public function name(): string
     {
@@ -25,7 +25,7 @@ class BlockSitesTool implements AgentTool
 
     public function description(): string
     {
-        return 'Block one or more websites (by domain name, e.g. "example.com") for every device on the guest Wi-Fi, via Pi-hole DNS filtering. Also blocks all of each site\'s sub-domains (www., m., …). Use this when asked to block a website, app or domain — including domains read from a photo or screenshot. Not for blocking a device; use blockDevice for that.';
+        return 'Block one or more websites for every device on the guest Wi-Fi, via Pi-hole DNS filtering. Also blocks all of each site\'s sub-domains (www., m., …). Pass full domains ("example.com") when you know them; if a photo or message only shows a site\'s name ("example"), pass the name as-is and the real domains are looked up automatically. Use this when asked to block a website, app or domain — including ones read from a photo or screenshot. Not for blocking a device; use blockDevice for that.';
     }
 
     public function parametersSchema(): array
@@ -52,6 +52,18 @@ class BlockSitesTool implements AgentTool
     {
         [$valid, $invalid] = SiteDomains::parse($arguments['domains'] ?? []);
 
+        // Bare names ("sulasok") become the real domains that exist for them.
+        $bare = array_values(array_filter($invalid, [BareSiteResolver::class, 'isBareName']));
+        $matched = [];
+        foreach ($this->resolver->resolve($bare) as $name => $domains) {
+            if ($domains !== []) {
+                $matched[$name] = $domains;
+                $valid = array_merge($valid, $domains);
+                $invalid = array_values(array_diff($invalid, [$name]));
+            }
+        }
+        $valid = array_values(array_unique($valid));
+
         if ($valid === []) {
             return ToolResult::fail('No valid domain names to block'.($invalid ? ': '.implode(', ', $invalid) : '').'.');
         }
@@ -68,12 +80,15 @@ class BlockSitesTool implements AgentTool
         if ($failed) {
             $message .= ' Could not reach Pi-hole for: '.implode(', ', $failed).'.';
         }
+        if ($matched) {
+            $message .= ' Looked up from site names: '.collect($matched)->map(fn ($d, $n) => "{$n} → ".implode(', ', $d))->implode('; ').'.';
+        }
         if ($invalid) {
-            $message .= ' Skipped (not a valid domain): '.implode(', ', $invalid).'.';
+            $message .= ' Could not find a website for: '.implode(', ', $invalid).'.';
         }
 
         return $blocked
-            ? ToolResult::ok($message, ['blocked' => $blocked, 'failed' => $failed, 'invalid' => $invalid])
+            ? ToolResult::ok($message, ['blocked' => $blocked, 'failed' => $failed, 'invalid' => $invalid, 'matched' => $matched])
             : ToolResult::fail($message);
     }
 }

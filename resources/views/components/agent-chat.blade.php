@@ -60,7 +60,7 @@
                      is a flex container; this wrapper was a plain block, so every
                      message — the guest's included — sat on the left. --}}
                 <div class="anim-pop-in flex flex-col" :class="msg.role === 'user' ? 'items-end' : 'items-start'">
-                    <template x-if="msg.kind === 'text'">
+                    <template x-if="msg.kind === 'text' && (hasText(msg) || msg.imageThumb)">
                         <div class="p-3 rounded-2xl shadow-sm text-xs font-medium relative w-fit max-w-[85%] break-words whitespace-normal mx-1"
                              :class="msg.role === 'user' ? 'bg-[#3E2723] text-white self-end rounded-br-sm' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] self-start rounded-bl-sm'">
                             <span x-html="formatMarkdown(msg.content)" class="leading-relaxed"></span>
@@ -90,7 +90,8 @@
                                 <x-lucide-clock class="w-4 h-4 shrink-0" />
                                 <span x-text="msg.tool"></span>
                             </div>
-                            <p class="text-[11px] text-amber-700 font-medium" x-text="formatArgs(msg.arguments)"></p>
+                            {{-- break-words: a long domain list was one unbreakable line that pushed the card off the panel. --}}
+                            <p class="text-[11px] text-amber-700 font-medium break-words [overflow-wrap:anywhere]" x-text="formatArgs(msg.arguments)"></p>
                         </div>
                     </template>
                 </div>
@@ -233,7 +234,7 @@
             <template x-for="(msg, index) in history" :key="index">
                 <div class="anim-pop-in">
                     <!-- Plain text turn -->
-                    <template x-if="msg.kind === 'text'">
+                    <template x-if="msg.kind === 'text' && (hasText(msg) || msg.imageThumb)">
                         <div class="flex flex-col" :class="msg.role === 'user' ? 'items-end' : 'items-start'">
                             <div class="max-w-[85%] p-4 rounded-2xl text-xs font-medium leading-relaxed shadow-sm"
                                  :class="msg.role === 'user' ? 'bg-[#3E2723] text-white rounded-tr-none' : 'bg-white text-[#4A3B32] border border-[#F0E6D2] rounded-tl-none'">
@@ -270,7 +271,8 @@
                                 <span x-text="msg.tool"></span>
                                 <span class="text-[9px] font-bold text-amber-600">needs confirmation</span>
                             </div>
-                            <p class="text-[11px] text-amber-700 font-medium" x-text="formatArgs(msg.arguments)"></p>
+                            {{-- break-words: a long domain list was one unbreakable line that pushed the card off the panel. --}}
+                            <p class="text-[11px] text-amber-700 font-medium break-words [overflow-wrap:anywhere]" x-text="formatArgs(msg.arguments)"></p>
 
                             <template x-if="!msg.resolved">
                                 <div class="flex gap-2 pt-1">
@@ -1039,8 +1041,16 @@ document.addEventListener('alpine:init', () => {
         formatArgs(args) {
             if (!args || Object.keys(args).length === 0) return '';
             return Object.entries(args)
-                .map(([key, value]) => key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) + ': ' + value)
+                // Arrays read as "a, b, c" — String([...]) gave "a,b,c" with no spaces.
+                .map(([key, value]) => key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) + ': ' + (Array.isArray(value) ? value.join(', ') : value))
                 .join(', ');
+        },
+
+        // A reply of only whitespace (a model that answers with just a tool
+        // call sometimes streams a newline) drew an empty bubble with rating
+        // thumbs under it.
+        hasText(msg) {
+            return typeof msg.content === 'string' && msg.content.trim() !== '';
         },
 
         // Friendly labels for the live "tool_start" status shown next to the

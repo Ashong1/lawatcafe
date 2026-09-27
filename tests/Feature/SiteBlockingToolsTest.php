@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Services\Agent\ToolRegistry;
+use App\Services\Agent\Tools\BareSiteResolver;
 use App\Services\Agent\Tools\BlockSitesTool;
 use App\Services\Agent\Tools\ListBlockedSitesTool;
 use App\Services\Agent\Tools\SiteDomains;
@@ -58,16 +59,18 @@ class SiteBlockingToolsTest extends TestCase
             $mock->shouldReceive('blockDomain')->with('sulasok.tv', \Mockery::any())->once()->andReturn(true);
         });
 
+        $this->fakeDns([]);
         $result = app(BlockSitesTool::class)->execute(['domains' => ['pinayflix.tv', 'https://sulasok.tv/', '???']], User::factory()->make(['name' => 'Owner']));
 
         $this->assertTrue($result->success);
         $this->assertStringContainsString('pinayflix.tv, sulasok.tv', $result->message);
-        $this->assertStringContainsString('Skipped', $result->message);
+        $this->assertStringContainsString('Could not find a website for: ???', $result->message);
     }
 
     public function test_block_sites_with_nothing_valid_fails_without_calling_pihole(): void
     {
         $this->mock(PiholeService::class, fn ($mock) => $mock->shouldNotReceive('blockDomain'));
+        $this->fakeDns([]);
 
         $this->assertFalse(app(BlockSitesTool::class)->execute(['domains' => ['hello world']], null)->success);
     }
@@ -87,5 +90,43 @@ class SiteBlockingToolsTest extends TestCase
         $this->assertStringContainsString('Blocked: pornhub.com', $message);
         $this->assertStringContainsString('switched off: roblox.com', $message);
         $this->assertStringContainsString('ON (76,793 sites)', $message);
+    }
+
+    /** Fake DNS: only $existing resolve — plus every *.ph, mimicking that registry's wildcard. */
+    private function fakeDns(array $existing): void
+    {
+        $this->app->instance(BareSiteResolver::class, new BareSiteResolver(
+            fn (array $hosts) => array_values(array_filter($hosts, fn ($h) => in_array($h, $existing, true) || str_ends_with($h, '.ph')))
+        ));
+    }
+
+    /**
+     * Live report: the photo showed site names, not domains, so the model
+     * passed "sulasok", "beeg"… and every one was rejected, blocking nothing.
+     */
+    public function test_bare_site_names_are_looked_up_and_blocked(): void
+    {
+        $this->fakeDns(['sulasok.tv', 'sulasok.run', 'beeg.com']);
+        $this->mock(PiholeService::class, function ($mock) {
+            foreach (['sulasok.tv', 'sulasok.run', 'beeg.com'] as $d) {
+                $mock->shouldReceive('blockDomain')->with($d, \Mockery::any())->once()->andReturn(true);
+            }
+        });
+
+        $result = app(BlockSitesTool::class)->execute(['domains' => ['sulasok', 'Beeg', 'zzznotasite']], null);
+
+        $this->assertTrue($result->success);
+        $this->assertStringContainsString('sulasok → sulasok.tv, sulasok.run', $result->message);
+        $this->assertStringContainsString('Could not find a website for: zzznotasite', $result->message);
+    }
+
+    /** .ph and .com.ph answer for ANY name (registry wildcard) — they must not count as a match. */
+    public function test_wildcard_endings_are_ignored(): void
+    {
+        $this->fakeDns(['beeg.com']); // fakeDns also makes every *.ph resolve, like the real registry
+
+        $found = app(BareSiteResolver::class)->resolve(['beeg']);
+
+        $this->assertSame(['beeg.com'], $found['beeg']);
     }
 }

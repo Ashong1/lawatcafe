@@ -8,7 +8,7 @@
      No x-cloak: this starts visible and only ever swaps state. Cloaking it would
      hide the control until Alpine boots, on the one surface (the guest portal)
      where the slowest devices live. --}}
-<template x-if="msg.kind === 'text' && msg.role === 'assistant' && !msg.isGreeting">
+<template x-if="msg.kind === 'text' && msg.role === 'assistant' && !msg.isGreeting && hasText(msg)">
     <div class="flex items-center gap-1.5 mt-1 mx-1">
         <template x-if="rated[index] === undefined">
             <div class="flex items-center gap-1.5">

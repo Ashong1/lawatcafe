@@ -31,7 +31,7 @@ final class SiteDomains
 
             preg_match(SiteBlockingController::DOMAIN_REGEX, $domain)
                 ? $valid[] = $domain
-                : $invalid[] = (string) $raw;
+                : $invalid[] = $domain;
         }
 
         return [array_values(array_unique($valid)), $invalid];
