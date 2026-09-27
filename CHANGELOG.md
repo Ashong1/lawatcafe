@@ -9,6 +9,30 @@ the history was rewritten.
 
 ---
 
+## 1.12.1 — Network pages made easier
+*build 168*
+
+- Active Sessions: **Find a device** by IP, MAC, hostname or voucher code,
+  with one-click **Block** and **Trust** buttons on the result and on every
+  guest, waiting and unknown-device row. Shop equipment and protected
+  addresses can never be blocked from here.
+- Plain names throughout: "Guests online", "Shop equipment", "Waiting to
+  sign in", "Not signed in — unknown devices", "Blocked devices".
+- Network Health links each problem to the page that fixes it, with tips
+  for internet and firewall outages.
+- Auto-refresh pauses while the tab is hidden.
+- The device lookup behind the AI's `lookupDevice` tool is now one shared
+  `DeviceLookupService`; fixed per-IP device labels never being read.
+
+## 1.12.0 — Network administration focus
+*build 167*
+
+- Network Health page and a `network:health` check every minute (internet,
+  firewall, DNS, DHCP pool, login page, equipment, bandwidth, unknown
+  devices), with admin alerts only when a check changes state.
+- AI network tools (health, device lookup, top bandwidth users, DNS stats)
+  and network-first AI prompts.
+
 ## 1.11.0 — One-click site blocking
 *builds 127–135*
 

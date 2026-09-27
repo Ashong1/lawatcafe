@@ -9,20 +9,20 @@
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Banned Devices</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Blocked Devices</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Manage permanently restricted devices by their physical MAC address.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Devices that can't use the Wi-Fi. Easiest way to block one: the Block button on Network → Active Sessions.</p>
         </div>
 
         <div x-data="{ showModal: false, submitting: false }">
             <button @click="submitting = false; showModal = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-lg flex items-center gap-2 text-xs uppercase tracking-wide">
                 <x-lucide-user-x class="w-4 h-4" />
-                <span>Ban New Device</span>
+                <span>Block a device by MAC</span>
             </button>
 
             <!-- Ban Modal -->
             <x-modal-shell show="showModal" max-width="xl" panel-class="p-5 sm:p-8 border-t-8 border-red-600" labelled-by="ban-device-heading">
-                    <h3 id="ban-device-heading" class="text-xl font-bold text-[#3E2723] mb-2 uppercase tracking-tight">Restrict Network Access</h3>
+                    <h3 id="ban-device-heading" class="text-xl font-bold text-[#3E2723] mb-2 uppercase tracking-tight">Block a device</h3>
                     <p class="text-xs text-[#795548] mb-8 font-medium leading-relaxed">Enter the device details to permanently block it from connecting to the guest Wi-Fi.</p>
 
                     <form action="{{ route('network.blocklist.store') }}" method="POST" class="space-y-6" @submit="submitting = true">
@@ -33,10 +33,10 @@
                         </div>
                         <div>
                             <label for="hostname" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Device Name (Optional)</label>
-                            <input type="text" id="hostname" name="hostname" placeholder="e.g. Malicious User" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723]">
+                            <input type="text" id="hostname" name="hostname" placeholder="e.g. Table 4 laptop" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723]">
                         </div>
                         <div>
-                            <label for="reason" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Reason for Ban</label>
+                            <label for="reason" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Why (optional)</label>
                             <textarea id="reason" name="reason" rows="2" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-[#3E2723]"></textarea>
                         </div>
 
@@ -56,8 +56,8 @@
                 <x-lucide-shield-off class="w-6 h-6" />
             </div>
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Restricted Hardware Nodes</h3>
-                <p class="text-xs text-[#6D4C41] font-medium">Devices on this list are automatically dropped by the OPNsense firewall.</p>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Blocked devices</h3>
+                <p class="text-xs text-[#6D4C41] font-medium">The firewall drops anything from these devices. Unblock to let one back on.</p>
             </div>
         </div>
 
@@ -66,9 +66,9 @@
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                         <th class="pb-4 font-bold">MAC Address</th>
-                        <th class="pb-4 font-bold">Identity / Note</th>
+                        <th class="pb-4 font-bold">Name</th>
                         <th class="pb-4 font-bold hidden md:table-cell">Reason</th>
-                        <th class="pb-4 font-bold hidden md:table-cell">Banned On</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Blocked on</th>
                         <th class="pb-4 font-bold text-right">Actions</th>
                     </tr>
                 </thead>
@@ -114,7 +114,7 @@
                         <td colspan="5" class="py-20 text-center opacity-30">
                             <div class="flex flex-col items-center">
                                 <x-lucide-shield-check class="w-12 h-12 mb-4 text-green-600" />
-                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-wide">No devices are currently banned.</p>
+                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-wide">No devices are blocked.</p>
                             </div>
                         </td>
                     </tr>

@@ -206,7 +206,7 @@ class VoucherSessionsTest extends TestCase
         $response = $this->actingAs($admin)->get(route('network.sessions'));
 
         $response->assertOk();
-        $response->assertSee('Ghost Devices');
+        $response->assertSee('Not signed in — unknown devices');
         $response->assertSee('ghost-in-the-lan');
         $response->assertViewHas('ghostDevices', fn ($ghosts) => $ghosts->count() === 1
             && $ghosts->first()['mac_address'] === 'AABBCCDDEE09');

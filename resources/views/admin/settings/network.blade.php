@@ -17,7 +17,7 @@
                         <x-lucide-monitor-smartphone class="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                        <h3 class="font-bold text-[#3E2723] uppercase tracking-wider text-sm">Permanent Kape Devices</h3>
+                        <h3 class="font-bold text-[#3E2723] uppercase tracking-wider text-sm">Fixed addresses (DHCP reservations)</h3>
                         <p class="text-xs text-[#6D4C41] font-medium">Pins a device's IP forever via a real DHCP reservation on OPNsense (Kea) — for POS registers, kitchen displays, etc. This does <span class="font-bold">not</span> skip the captive portal; the device still redeems a voucher like any guest. To let a device online with no voucher at all, use the Captive Portal Allow-List below.</p>
                     </div>
                 </div>
@@ -81,7 +81,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="py-8 text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide opacity-50">No permanent devices yet.</td>
+                                <td colspan="4" class="py-8 text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide">No permanent devices yet.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -95,7 +95,7 @@
                         <x-lucide-shield-check class="w-6 h-6 text-emerald-600" />
                     </div>
                     <div>
-                        <h3 class="font-bold text-[#3E2723] uppercase tracking-wider text-sm">Captive Portal Allow-List</h3>
+                        <h3 class="font-bold text-[#3E2723] uppercase tracking-wider text-sm">Trusted devices — skip the Wi-Fi login</h3>
                         <p class="text-xs text-[#6D4C41] font-medium">Devices/networks here skip the captive portal completely — no voucher, ever. This is OPNsense's own "Allowed IP addresses" / "Allowed MAC addresses" passthrough, not an app-side list.</p>
                     </div>
                 </div>
@@ -131,7 +131,7 @@
                                 </form>
                             </li>
                             @empty
-                            <li class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide opacity-50 py-4">No allowed IPs.</li>
+                            <li class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide py-4">No allowed IPs.</li>
                             @endforelse
                         </ul>
                     </div>
@@ -164,7 +164,7 @@
                                 </form>
                             </li>
                             @empty
-                            <li class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide opacity-50 py-4">No allowed MACs.</li>
+                            <li class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide py-4">No allowed MACs.</li>
                             @endforelse
                         </ul>
                     </div>
@@ -206,8 +206,8 @@
                                 <x-lucide-server class="w-6 h-6 text-slate-600" />
                             </div>
                             <div>
-                                <h3 class="font-bold text-[#3E2723] uppercase tracking-wider text-sm">Hidden System Devices</h3>
-                                <p class="text-xs text-[#6D4C41] font-medium">Keep your dashboard clean by hiding hardware.</p>
+                                <h3 class="font-bold text-[#3E2723] uppercase tracking-wider text-sm">Shop equipment</h3>
+                                <p class="text-xs text-[#6D4C41] font-medium">Addresses listed here are never counted as guests, can't be blocked or disconnected, and are checked every minute by Network Health.</p>
                             </div>
                         </div>
                         

@@ -2,7 +2,7 @@
 <div class="mb-12">
     <div class="flex items-center gap-2 mb-4">
         <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Active Customer Sessions</h3>
+        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Guests online</h3>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
@@ -101,7 +101,7 @@
                         <span class="text-xs text-[#6D4C41] font-medium md:hidden">{{ $session->connected_at }}</span>
                     </td>
                     <td class="py-4 text-right">
-                        <div class="flex items-center justify-end gap-1">
+                        <div class="flex flex-wrap items-center justify-end gap-1.5">
                             @if(($session->tier ?? null) && auth()->user()->isAdminOrAbove())
                                 @php($targetTier = $session->tier === 'premium' ? 'free' : 'premium')
                                 <form action="{{ route('network.sessions.set-tier') }}" method="POST" id="tier-form-{{ $session->code }}">
@@ -120,12 +120,11 @@
                                                     document.getElementById('tier-form-{{ $session->code }}').submit();
                                                 }
                                             })"
-                                            title="{{ $targetTier === 'premium' ? 'Upgrade to Premium' : 'Downgrade to Free' }}"
-                                            class="p-2 text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-xl transition-all active:scale-95 group/btn">
+                                            class="min-h-[36px] inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition active:scale-95">
                                         @if($targetTier === 'premium')
-                                            <x-lucide-arrow-up-circle class="w-5 h-5" />
+                                            <x-lucide-arrow-up-circle class="w-4 h-4" /> Upgrade
                                         @else
-                                            <x-lucide-arrow-down-circle class="w-5 h-5" />
+                                            <x-lucide-arrow-down-circle class="w-4 h-4" /> Downgrade
                                         @endif
                                     </button>
                                 </form>
@@ -146,17 +145,19 @@
                                                 document.getElementById('kick-form-{{ $session->sessionId }}').submit();
                                             }
                                         })"
-                                        class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-95 group/btn">                <x-lucide-log-out class="w-5 h-5" />
+                                        class="min-h-[36px] inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-[#4A3B32] bg-white border border-[#E6D5C3] hover:border-[#3E2723] transition active:scale-95">
+                                    <x-lucide-log-out class="w-4 h-4" /> Disconnect
                                 </button>
                             </form>
                             @endif
+                            @include('network.partials.device-actions', ['mac' => $session->mac_address, 'ip' => $session->ip_address, 'name' => $session->hostname !== 'Unknown' ? $session->hostname : null])
                         </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="py-12 text-center opacity-30">
-                        <p class="text-[#6D4C41] text-xs font-bold uppercase tracking-wide">No active customers.</p>
+                    <td colspan="6" class="py-12 text-center">
+                        <p class="text-[#6D4C41] text-sm font-medium">No guests are signed in right now.</p>
                     </td>
                 </tr>
                 @endforelse
@@ -169,15 +170,15 @@
 <div class="mb-12">
     <div class="flex items-center gap-2 mb-4">
         <x-lucide-server class="w-4 h-4 text-blue-500" />
-        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Network Infrastructure</h3>
+        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Shop equipment</h3>
     </div>
     <div class="bg-slate-50 rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="text-slate-500 text-xs uppercase tracking-wide border-b border-slate-200 bg-slate-100/50">
-                    <th class="py-3 px-6 font-bold">Device Node</th>
-                    <th class="py-3 px-6 font-bold">Role / Status</th>
-                    <th class="py-3 px-6 font-bold text-right">Real-time Throughput</th>
+                    <th class="py-3 px-6 font-bold">Device</th>
+                    <th class="py-3 px-6 font-bold">Role</th>
+                    <th class="py-3 px-6 font-bold text-right">Speed now</th>
                 </tr>
             </thead>
             <tbody class="text-xs">
@@ -202,7 +203,7 @@
                     </td>
                     <td class="py-4 px-6">
                         <span class="px-3 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded-lg font-bold text-xs tracking-wide uppercase">
-                            System VIP / Infrastructure
+                            Shop equipment — never blocked
                         </span>
                     </td>
                     <td class="py-4 px-6 text-right">
@@ -227,7 +228,7 @@
                 @empty
                 <tr>
                     <td colspan="3" class="py-8 text-center text-slate-400 text-xs font-bold uppercase tracking-wide">
-                        No infrastructure devices detected.
+                        No shop equipment is online right now.
                     </td>
                 </tr>
                 @endforelse
@@ -240,16 +241,18 @@
 <div class="mt-12 pt-8 border-t border-[#F0E6D2]">
     <div class="flex items-center gap-2 mb-4">
         <x-lucide-shield-alert class="w-4 h-4 text-amber-500" />
-        <h3 class="text-sm font-bold text-[#795548] uppercase tracking-wide">Pending Authentication (Idle Devices)</h3>
+        <h3 class="text-sm font-bold text-[#795548] uppercase tracking-wide">Waiting to sign in</h3>
     </div>
+    <p class="text-sm text-[#6D4C41] mb-4 -mt-2">Connected to the Wi-Fi and sitting at the login page. The firewall keeps them offline until they enter a voucher.</p>
     
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="text-[#6D4C41] text-xs uppercase tracking-wide border-b border-[#F0E6D2]/50">
-                    <th class="pb-3 font-bold">Device Info</th>
-                    <th class="pb-3 font-bold">Firewall Status</th>
-                    <th class="pb-3 font-bold text-right">Last Seen</th>
+                    <th class="pb-3 font-bold">Device</th>
+                    <th class="pb-3 font-bold">Status</th>
+                    <th class="pb-3 font-bold">Seen</th>
+                    <th class="pb-3 font-bold text-right">Actions</th>
                 </tr>
             </thead>
             <tbody class="text-xs">
@@ -269,17 +272,22 @@
                     </td>
                     <td class="py-3">
                         <span class="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100 font-bold text-xs uppercase tracking-wider">
-                            Blocked by Firewall
+                            At the login page
                         </span>
                     </td>
-                    <td class="py-3 text-right text-[#6D4C41] font-medium pr-2">
+                    <td class="py-3 text-[#6D4C41] font-medium">
                         {{ $session->connected_at }}
+                    </td>
+                    <td class="py-3">
+                        <div class="flex flex-wrap items-center justify-end gap-1.5">
+                            @include('network.partials.device-actions', ['mac' => $session->mac_address, 'ip' => $session->ip_address, 'name' => $session->hostname !== 'Unknown' ? $session->hostname : null, 'trust' => true])
+                        </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="3" class="py-8 text-center opacity-30">
-                        <p class="text-[#6D4C41] text-xs font-bold uppercase tracking-wide">No pending devices.</p>
+                    <td colspan="4" class="py-8 text-center">
+                        <p class="text-[#6D4C41] text-sm font-medium">Nobody is waiting at the login page.</p>
                     </td>
                 </tr>
                 @endforelse
@@ -292,17 +300,18 @@
 <div class="mt-12 pt-8 border-t border-[#F0E6D2]">
     <div class="flex items-center gap-2 mb-4">
         <x-lucide-ghost class="w-4 h-4 text-red-500" />
-        <h3 class="text-sm font-bold text-[#795548] uppercase tracking-wide">Ghost Devices</h3>
+        <h3 class="text-sm font-bold text-[#795548] uppercase tracking-wide">Not signed in — unknown devices</h3>
     </div>
-    <p class="text-xs text-[#6D4C41] mb-4 -mt-2">On the LAN (seen in the ARP table or a DHCP lease) but the captive portal has no session record for them at all — never authenticated, never even pending.</p>
+    <p class="text-xs text-[#6D4C41] mb-4 -mt-2">On the network (the firewall has seen them) but they have never reached the login page. Usually a phone that joined and went idle; a <strong>blocked</strong> device here needs attention.</p>
 
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="text-[#6D4C41] text-xs uppercase tracking-wide border-b border-[#F0E6D2]/50">
-                    <th class="pb-3 font-bold">Device Info</th>
-                    <th class="pb-3 font-bold">Seen Via</th>
-                    <th class="pb-3 font-bold text-right">Status</th>
+                    <th class="pb-3 font-bold">Device</th>
+                    <th class="pb-3 font-bold">Found by</th>
+                    <th class="pb-3 font-bold">Status</th>
+                    <th class="pb-3 font-bold text-right">Actions</th>
                 </tr>
             </thead>
             <tbody class="text-xs">
@@ -333,19 +342,24 @@
                         @if($ghost['is_banned'])
                             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-100 text-red-700 rounded-full border border-red-200 font-bold text-xs uppercase tracking-wider">
                                 <x-lucide-shield-off class="w-3 h-3" />
-                                Banned, still on LAN
+                                Blocked — still connected
                             </span>
                         @else
-                            <span class="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100 font-bold text-xs uppercase tracking-wider">
-                                Unrecognized
+                            <span class="px-2 py-0.5 bg-amber-50 text-amber-800 rounded-full border border-amber-200 font-bold text-xs">
+                                Unknown
                             </span>
                         @endif
+                    </td>
+                    <td class="py-3">
+                        <div class="flex flex-wrap items-center justify-end gap-1.5">
+                            @include('network.partials.device-actions', ['mac' => $ghost['mac_address'], 'ip' => $ghost['ip_address'], 'name' => $ghost['hostname'] ?: null, 'trust' => ! $ghost['is_banned'], 'block' => ! $ghost['is_banned']])
+                        </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="3" class="py-8 text-center opacity-30">
-                        <p class="text-[#6D4C41] text-xs font-bold uppercase tracking-wide">No ghost devices detected.</p>
+                    <td colspan="4" class="py-8 text-center">
+                        <p class="text-[#6D4C41] text-sm font-medium">No unknown devices on the network.</p>
                     </td>
                 </tr>
                 @endforelse

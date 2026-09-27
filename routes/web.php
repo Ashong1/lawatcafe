@@ -16,6 +16,7 @@ use App\Http\Controllers\EndOfDayController;
 use App\Http\Controllers\IngredientController; // <-- Added Portal Controller
 use App\Http\Controllers\IngredientDeliveryController;
 use App\Http\Controllers\KdsController;
+use App\Http\Controllers\NetworkDeviceController;
 use App\Http\Controllers\NetworkHealthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderHistoryController;
@@ -262,6 +263,9 @@ Route::middleware(['auth'])->group(function () {
 
             Route::get('/blocklist', [BlocklistController::class, 'index'])->name('blocklist');
             Route::post('/blocklist', [BlocklistController::class, 'store'])->name('blocklist.store');
+            // One-click actions from device rows / Find a device (no MAC typing).
+            Route::post('/devices/block', [NetworkDeviceController::class, 'block'])->name('devices.block');
+            Route::post('/devices/trust', [NetworkDeviceController::class, 'trust'])->name('devices.trust');
             Route::delete('/blocklist/{device}', [BlocklistController::class, 'destroy'])->name('blocklist.destroy');
 
             // Site (domain) blocking — one-click via Pi-hole's DNS blacklist,

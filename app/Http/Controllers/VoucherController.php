@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Setting;
 use App\Models\StaticIpAssignment;
 use App\Models\Voucher;
+use App\Services\DeviceLookupService;
 use App\Services\GhostDeviceDetectionService;
 use App\Services\OpnSenseService;
 use App\Services\QrCodeService;
@@ -483,7 +484,11 @@ class VoucherController extends Controller
             return view('network.partials.sessions-tables', compact('activeSessions', 'infrastructureSessions', 'pendingSessions', 'ghostDevices'));
         }
 
-        return view('network.sessions', compact('activeSessions', 'infrastructureSessions', 'pendingSessions', 'ghostDevices'));
+        // "Find a device" — the same lookup the AI's lookupDevice tool uses.
+        $find = trim((string) request('find', ''));
+        $found = $find !== '' ? app(DeviceLookupService::class)->find($find) : null;
+
+        return view('network.sessions', compact('activeSessions', 'infrastructureSessions', 'pendingSessions', 'ghostDevices', 'find', 'found'));
     }
 
     /**

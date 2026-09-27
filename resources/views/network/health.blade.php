@@ -21,6 +21,20 @@
         'fail' => 'Part of the network is down.',
     ][$latest['overall']] ?? 'Network status unknown.';
     $checks = $latest['checks'];
+    $isAdmin = auth()->user()->isAdminOrAbove();
+    // Where to act on each check. Admin-only pages appear only for admins.
+    $goTo = array_filter([
+        'dns' => $isAdmin ? [route('network.site-blocking'), 'Site blocking'] : null,
+        'dhcp' => [route('network.sessions'), 'See connected devices'],
+        'portal' => [route('network.vouchers.index'), 'Vouchers'],
+        'infrastructure' => auth()->user()->isSuperAdmin() ? [route('admin.settings.network'), 'Equipment list'] : [route('network.sessions'), 'Shop equipment'],
+        'bandwidth' => $isAdmin ? [route('network.traffic'), 'Speed limits'] : [route('network.sessions'), 'Guests online'],
+        'unknown_devices' => [route('network.sessions'), 'Review devices'],
+    ]);
+    $tips = [
+        'internet' => 'If this fails: check the ISP router and its cables, then restart it.',
+        'firewall' => 'If this fails: check that the OPNsense box is powered on and its LAN cable is in.',
+    ];
     $checkedAt = \Carbon\Carbon::parse($latest['checked_at']);
 @endphp
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;"
@@ -75,6 +89,12 @@
                     </span>
                 </div>
                 <p class="text-sm text-[#4A3B32] leading-relaxed">{{ $check['summary'] }}</p>
+                @if($check['status'] !== 'ok' && isset($tips[$key]))
+                    <p class="text-xs text-[#6D4C41]">{{ $tips[$key] }}</p>
+                @endif
+                @if(isset($goTo[$key]))
+                    <a href="{{ $goTo[$key][0] }}" class="mt-auto min-h-[36px] inline-flex items-center text-sm font-bold text-amber-800 hover:text-amber-900">{{ $goTo[$key][1] }} &rarr;</a>
+                @endif
             </section>
         @endforeach
     </div>
