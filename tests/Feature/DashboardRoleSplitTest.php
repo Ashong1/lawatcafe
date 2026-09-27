@@ -63,7 +63,8 @@ class DashboardRoleSplitTest extends TestCase
         $response->assertOk();
         $response->assertViewIs('dashboard');
         $response->assertSee('Control Center', false);
-        $response->assertSee('Service Pulse', false);
+        // Network sits above the sales detail since the 2026-09-28 layout pass.
+        $response->assertSeeInOrder(['Guests online', 'Wi-Fi &amp; Network', 'Barista AI', '7-day revenue trend'], false);
     }
 
     /**

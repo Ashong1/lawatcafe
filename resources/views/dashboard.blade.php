@@ -8,374 +8,257 @@
 <div x-data="dashboardManager()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
 
-<div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+{{-- Layout, top to bottom, from the 2026-09-28 design critique:
+     needs-attention -> KPIs -> Wi-Fi & network -> Barista AI -> sales detail.
+     It used to be ~12 same-weight panels in five rows with the network (the
+     system's core) in row 4, below the fold, and five separate AI entry
+     points. Service Pulse is gone: its orders and low-stock figures repeated
+     the KPI cards, average ticket moved into the revenue card and Wi-Fi
+     redeemed into the network section. Every live binding is unchanged. --}}
+<div class="mb-6 border-b border-[#E6D5C3] pb-5 flex flex-col md:flex-row md:items-end justify-between gap-3">
     <div>
         <h2 class="flex items-center gap-3 text-[#3E2723]">
             <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
             <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Control Center</span>
         </h2>
-        <p class="text-sm text-[#8D6E63] mt-2 font-medium tracking-wide">Real-time network performance and intelligent sales audit.</p>
-    </div>
-    <div class="flex flex-col items-end gap-3">
-        <button @click="getInsights()" class="bg-[#3E2723] text-white px-6 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-[#271815] transition-all shadow-lg active:scale-95">
-            <x-lucide-brain-circuit class="w-4 h-4" />
-            Full AI Report
-        </button>
-        <p class="text-xs font-bold uppercase tracking-widest text-[#6D4C41]">{{ now()->format('l, F jS') }}</p>
+        <p class="text-sm text-[#795548] mt-1 font-medium">Network and sales at a glance &mdash; {{ now()->format('l, F jS') }}</p>
     </div>
 </div>
 
-<!-- Quick Actions Ribbon -->
-<div class="flex flex-row flex-wrap items-center gap-4 mb-8">
-    @unless(auth()->user()->isSuperAdmin())
-    <a href="{{ route('pos') }}" class="bg-white px-5 py-3 rounded-2xl shadow-sm border border-[#F0E6D2] hover:border-[#3E2723] transition-all group flex items-center gap-3 active:scale-95">
-        <div class="p-2 bg-[#3E2723]/5 rounded-lg text-[#3E2723] group-hover:bg-[#3E2723] group-hover:text-white transition-colors">
-            <x-lucide-shopping-cart class="w-4 h-4" />
-        </div>
-        <span class="text-[10px] font-black uppercase tracking-widest text-[#3E2723]">Open POS</span>
-    </a>
-    @endunless
-
-    <a href="{{ route('network.vouchers.index', ['action' => 'generate']) }}" class="bg-white px-5 py-3 rounded-2xl shadow-sm border border-[#F0E6D2] hover:border-amber-500 transition-all group flex items-center gap-3 active:scale-95">
-        <div class="p-2 bg-amber-50 rounded-lg text-amber-700 group-hover:bg-amber-500 group-hover:text-white transition-colors">
-            <x-lucide-ticket class="w-4 h-4" />
-        </div>
-        <span class="text-[10px] font-black uppercase tracking-widest text-[#3E2723]">Issue Voucher</span>
-    </a>
-
-    <a href="{{ route('inventory.deliveries.index', ['action' => 'receive']) }}" class="bg-white px-5 py-3 rounded-2xl shadow-sm border border-[#F0E6D2] hover:border-blue-500 transition-all group flex items-center gap-3 active:scale-95">
-        <div class="p-2 bg-blue-50 rounded-lg text-blue-700 group-hover:bg-blue-500 group-hover:text-white transition-colors">
-            <x-lucide-truck class="w-4 h-4" />
-        </div>
-        <span class="text-[10px] font-black uppercase tracking-widest text-[#3E2723]">Receive Supplies</span>
-    </a>
-
-    <a href="{{ route('sales.export') }}" class="bg-white px-5 py-3 rounded-2xl shadow-sm border border-[#F0E6D2] hover:border-slate-500 transition-all group flex items-center gap-3 active:scale-95">
-        <div class="p-2 bg-slate-50 rounded-lg text-slate-700 group-hover:bg-slate-500 group-hover:text-white transition-colors">
-            <x-lucide-file-text class="w-4 h-4" />
-        </div>
-        <span class="text-[10px] font-black uppercase tracking-widest text-[#3E2723]">Export Daily</span>
-    </a>
-
-    <a href="{{ route('network.traffic') }}" class="bg-white px-5 py-3 rounded-2xl shadow-sm border border-[#F0E6D2] hover:border-indigo-500 transition-all group flex items-center gap-3 active:scale-95">
-        <div class="p-2 bg-indigo-50 rounded-lg text-indigo-700 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-            <x-lucide-activity class="w-4 h-4" />
-        </div>
-        <span class="text-[10px] font-black uppercase tracking-widest text-[#3E2723]">Diagnostics</span>
-    </a>
-</div>
-
-{{-- Row 0: System Alerts Ticker --}}
-<div class="mb-8 space-y-3" x-show="live.systemAlerts.length > 0" x-cloak>
+{{-- 1. Needs attention: first, and only when there is something. --}}
+<div class="mb-6 space-y-3" x-show="live.systemAlerts.length > 0" x-cloak>
     <template x-for="(alert, index) in live.systemAlerts" :key="index">
         <a :href="alert.action" class="flex items-center justify-between p-4 border rounded-2xl shadow-sm hover:shadow-md transition-all group"
-           :class="alert.type === 'danger' ? 'bg-red-50 border-red-100 text-red-700' : 'bg-amber-50 border-amber-100 text-amber-800'">
+           :class="alert.type === 'danger' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-900'">
             <div class="flex items-center gap-4">
-                <div class="p-2 rounded-xl group-hover:scale-110 transition-transform" :class="alert.type === 'danger' ? 'bg-red-100' : 'bg-amber-100'">
+                <div class="p-2 rounded-xl" :class="alert.type === 'danger' ? 'bg-red-100' : 'bg-amber-100'">
                     <template x-if="alert.icon === 'package-x'"><x-lucide-package-x class="w-5 h-5" /></template>
                     <template x-if="alert.icon === 'receipt'"><x-lucide-receipt class="w-5 h-5" /></template>
                     <template x-if="alert.icon !== 'package-x' && alert.icon !== 'receipt'"><x-lucide-alert-triangle class="w-5 h-5" /></template>
                 </div>
                 <div>
-                    <p class="text-[10px] font-black uppercase tracking-widest opacity-60">System Attention Required</p>
+                    <p class="text-xs font-bold">Needs attention</p>
                     <p class="text-sm font-bold" x-text="alert.message"></p>
                 </div>
             </div>
-            <x-lucide-chevron-right class="w-5 h-5 opacity-40 group-hover:translate-x-1 transition-transform" />
+            <x-lucide-chevron-right class="w-5 h-5 opacity-60 group-hover:translate-x-1 transition-transform" />
         </a>
     </template>
 </div>
 
-{{-- Row 1: Key Metrics --}}
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    {{-- Active Guests --}}
-    <a href="{{ route('network.sessions') }}" class="dash-card-in bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-[#1565C0]/30 transition-all duration-300">
-        <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
-        <div class="relative z-10">
-            <div class="flex justify-between items-start mb-4">
-                <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Active Guests</h3>
-                <x-lucide-users class="w-5 h-5 text-blue-600 opacity-50" />
-            </div>
-            <p class="text-4xl font-black text-[#1565C0]" x-text="liveData.activeGuests" aria-live="polite" aria-atomic="true">{{ $activeGuests ?? 0 }}</p>
-            <p class="text-[9px] text-blue-800/60 font-bold uppercase mt-1">Monetized Sessions</p>
+{{-- Quick actions: one neutral style. Each used to have its own hover color
+     (amber, blue, slate, indigo), which spent color on decoration and left
+     nothing to signal an actual problem. --}}
+<div class="flex flex-row flex-wrap items-center gap-3 mb-6">
+    @php
+        $quickActions = array_filter([
+            auth()->user()->isSuperAdmin() ? null : ['route' => route('pos'), 'icon' => 'lucide-shopping-cart', 'label' => 'Open POS'],
+            ['route' => route('network.vouchers.index', ['action' => 'generate']), 'icon' => 'lucide-ticket', 'label' => 'Issue Voucher'],
+            ['route' => route('inventory.deliveries.index', ['action' => 'receive']), 'icon' => 'lucide-truck', 'label' => 'Receive Supplies'],
+            ['route' => route('sales.export'), 'icon' => 'lucide-file-text', 'label' => 'Export Daily'],
+            ['route' => route('network.traffic'), 'icon' => 'lucide-activity', 'label' => 'Traffic & Bandwidth'],
+        ]);
+    @endphp
+    @foreach($quickActions as $action)
+        <a href="{{ $action['route'] }}" class="min-h-[44px] bg-white px-4 rounded-xl border border-[#F0E6D2] hover:border-[#3E2723] transition-all flex items-center gap-2 active:scale-95 text-sm font-bold text-[#3E2723]">
+            <x-dynamic-component :component="$action['icon']" class="w-4 h-4 text-[#795548]" />
+            {{ $action['label'] }}
+        </a>
+    @endforeach
+</div>
+
+{{-- 2. Key metrics --}}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+    <a href="{{ route('network.sessions') }}" class="dash-card-in bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md hover:border-[#3E2723]/30 transition-all">
+        <div class="flex justify-between items-start mb-3">
+            <h3 class="text-sm font-bold text-[#795548]">Guests online</h3>
+            <x-lucide-users class="w-5 h-5 text-blue-700" />
         </div>
+        <p class="text-4xl font-bold text-[#1565C0]" x-text="liveData.activeGuests" aria-live="polite" aria-atomic="true">{{ $activeGuests ?? 0 }}</p>
+        <p class="text-xs text-[#6D4C41] font-medium mt-1">paying guests on the Wi-Fi</p>
     </a>
 
-    {{-- Today's Revenue --}}
-    <a href="{{ route('sales.index') }}" class="dash-card-in [animation-delay:75ms] bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300" :class="flash.todaysSales ? 'ring-2 ring-green-300' : ''">
-        <div class="absolute -right-6 -top-6 w-24 h-24 bg-green-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
-        <div class="relative z-10">
-            <div class="flex justify-between items-start mb-4">
-                <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Today's Revenue</h3>
-                <x-lucide-banknote class="w-5 h-5 text-green-600 opacity-50" />
-            </div>
-            <p class="text-4xl font-black text-[#2E7D32]" x-text="'₱' + Math.round(live.todaysSales).toLocaleString()">₱{{ number_format($todaysSales, 0) }}</p>
-            <p class="text-[9px] text-green-800/60 font-bold uppercase mt-1" x-text="Math.round(live.todaysOrders) + ' Orders Processed'">{{ $todaysOrders }} Orders Processed</p>
+    <a href="{{ route('sales.index') }}" class="dash-card-in [animation-delay:75ms] bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md hover:border-[#3E2723]/30 transition-all">
+        <div class="flex justify-between items-start mb-3">
+            <h3 class="text-sm font-bold text-[#795548]">Today's revenue</h3>
+            <x-lucide-banknote class="w-5 h-5 text-green-700" />
         </div>
+        <p class="text-4xl font-bold text-[#2E7D32]" x-text="'₱' + Math.round(live.todaysSales).toLocaleString()">₱{{ number_format($todaysSales, 0) }}</p>
+        <p class="text-xs text-[#6D4C41] font-medium mt-1"
+           x-text="Math.round(live.todaysOrders) + ' orders · ₱' + (live.todaysOrders > 0 ? Math.round(live.todaysSales / live.todaysOrders).toLocaleString() : 0) + ' avg'">{{ $todaysOrders }} orders · ₱{{ $todaysOrders > 0 ? number_format($todaysSales / $todaysOrders, 0) : 0 }} avg</p>
     </a>
 
-    {{-- Wifi Voucher Stock --}}
-    <a href="{{ route('network.vouchers.index') }}" class="dash-card-in [animation-delay:150ms] bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300" :class="flash.availableVouchers ? 'ring-2 ring-amber-300' : ''">
-        <div class="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
-        <div class="relative z-10">
-            <div class="flex justify-between items-start mb-4">
-                <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Voucher Stock</h3>
-                <x-lucide-ticket class="w-5 h-5 text-amber-600 opacity-50" />
-            </div>
-            <div class="flex items-baseline gap-2">
-                <p class="text-4xl font-black text-[#3E2723]" x-text="Math.round(live.availableVouchers)">{{ $availableVouchers ?? 0 }}</p>
-                <p class="text-xs text-[#6D4C41] font-bold uppercase tracking-tighter">Codes</p>
-            </div>
-            <p class="text-[9px] text-amber-800/60 font-bold uppercase mt-1">Ready for issuance</p>
+    <a href="{{ route('network.vouchers.index') }}" class="dash-card-in [animation-delay:150ms] bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md hover:border-[#3E2723]/30 transition-all">
+        <div class="flex justify-between items-start mb-3">
+            <h3 class="text-sm font-bold text-[#795548]">Voucher stock</h3>
+            <x-lucide-ticket class="w-5 h-5 text-amber-700" />
         </div>
+        <p class="text-4xl font-bold text-[#3E2723]" x-text="Math.round(live.availableVouchers)">{{ $availableVouchers ?? 0 }}</p>
+        <p class="text-xs text-[#6D4C41] font-medium mt-1">codes ready to hand out</p>
     </a>
 
-    {{-- Low Stock Alert --}}
-    <a href="{{ route('inventory.ingredients.index') }}" class="dash-card-in [animation-delay:225ms] bg-white p-6 rounded-[2rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md hover:border-red-200 transition-all duration-300"
-       :class="[live.lowStockCount > 0 ? 'bg-red-50/20' : '', flash.lowStockCount ? 'ring-2 ring-red-300' : '']">
-        <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full z-0 group-hover:scale-125 transition duration-500" :class="live.lowStockCount > 0 ? 'bg-red-100' : 'bg-green-50'"></div>
-        <div class="relative z-10">
-            <div class="flex justify-between items-start mb-4">
-                <h3 class="text-[#8D6E63] text-[10px] font-black uppercase tracking-[0.2em]">Low Stock Alert</h3>
-                <x-lucide-alert-triangle class="w-5 h-5 opacity-50" x-bind:class="live.lowStockCount > 0 ? 'text-red-600' : 'text-green-600'" />
-            </div>
-            <p class="text-4xl font-black" :class="live.lowStockCount > 0 ? 'text-[#C62828]' : 'text-green-700'" x-text="Math.round(live.lowStockCount)">{{ $lowStockCount ?? 0 }}</p>
-            <p class="text-[9px] font-bold uppercase mt-1" :class="live.lowStockCount > 0 ? 'text-red-800/60' : 'text-green-800/60'" x-text="live.lowStockCount > 0 ? 'Restock Required' : 'Inventory Healthy'">{{ $lowStockCount > 0 ? 'Restock Required' : 'Inventory Healthy' }}</p>
+    <a href="{{ route('inventory.ingredients.index') }}" class="dash-card-in [animation-delay:225ms] bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md transition-all"
+       :class="[live.lowStockCount > 0 ? 'border-red-200 bg-red-50/40' : 'hover:border-[#3E2723]/30', flash.lowStockCount ? 'ring-2 ring-red-300' : '']">
+        <div class="flex justify-between items-start mb-3">
+            <h3 class="text-sm font-bold text-[#795548]">Low stock</h3>
+            <x-lucide-alert-triangle class="w-5 h-5" x-bind:class="live.lowStockCount > 0 ? 'text-red-600' : 'text-green-700'" />
         </div>
+        <p class="text-4xl font-bold" :class="live.lowStockCount > 0 ? 'text-[#C62828]' : 'text-green-700'" x-text="Math.round(live.lowStockCount)">{{ $lowStockCount ?? 0 }}</p>
+        <p class="text-xs font-medium mt-1" :class="live.lowStockCount > 0 ? 'text-red-800' : 'text-green-800'" x-text="live.lowStockCount > 0 ? 'ingredients need restocking' : 'inventory healthy'">{{ ($lowStockCount ?? 0) > 0 ? 'ingredients need restocking' : 'inventory healthy' }}</p>
     </a>
 </div>
 
-{{-- Row 2: Revenue Trend --}}
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md transition-shadow">
-        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest mb-6">7-Day Revenue Trend</h3>
-        <div class="relative h-64 w-full">
-            <canvas id="salesTrendChart"></canvas>
-        </div>
-    </div>
-
-    {{-- AI Brief Card --}}
-    <div class="bg-[#3E2723] p-8 rounded-3xl shadow-xl text-white relative overflow-hidden flex flex-col justify-between group">
-        
-        <div class="absolute -right-10 -bottom-10 w-56 h-56 text-white opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-700 z-0" style="opacity: 0.05;">
-            <x-lucide-sparkles class="w-full h-full" />
-        </div>
-        
-        <div class="relative z-10">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="p-2 bg-amber-500 rounded-xl">
-                    <x-lucide-bot class="w-6 h-6 text-[#3E2723]" />
-                </div>
-                <div>
-                    <h3 class="text-sm font-black uppercase tracking-widest">Barista AI Brief</h3>
-                    <p class="text-[10px] text-amber-200/60 font-medium">Daily Smart Analysis</p>
-                </div>
+{{-- 3. Wi-Fi & network: the system's core, now above the fold. --}}
+<h2 class="text-base font-bold text-[#3E2723] mb-3 flex items-center gap-2"><x-lucide-wifi class="w-5 h-5 text-[#795548]" /> Wi-Fi &amp; Network</h2>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-8">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col">
+        <div class="flex justify-between items-center mb-5 gap-3">
+            <h3 class="text-sm font-bold text-[#3E2723]">Network throughput</h3>
+            <div class="flex items-center gap-3">
+                @forelse($gateways ?? [] as $gw)
+                    <div class="flex items-center gap-1.5" title="{{ $gw['name'] }}: {{ $gw['status'] }}">
+                        <div class="w-2 h-2 rounded-full {{ $gw['status'] === 'none' || $gw['status'] === 'online' ? 'bg-green-500' : 'bg-red-500' }}"></div>
+                        <span class="text-xs font-bold text-[#6D4C41]">{{ $gw['name'] }}</span>
+                    </div>
+                @empty
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-xs font-bold text-[#6D4C41]">Live</span>
+                    </div>
+                @endforelse
             </div>
-            <p class="text-sm font-medium leading-relaxed text-amber-50/90 italic">
-                "<span x-text="live.aiBrief">{{ $aiBrief }}</span>"
-            </p>
         </div>
 
-        <div class="relative z-10 mt-8 pt-6 border-t border-white/10 flex justify-between items-center">
-            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-amber-500/50">Enterprise Intelligence</span>
-            <button @click="getInsights()" class="text-[10px] font-black uppercase tracking-widest text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1.5">
-                Full Forecast <x-lucide-arrow-right class="w-3 h-3" />
-            </button>
-        </div>
-    </div>
-</div>
-
-{{-- Row 2.5: Proactive AI Findings (from the agent:analyze scheduled job) --}}
-<div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8" x-show="live.aiFindings.length > 0" x-cloak>
-    <div class="flex items-center justify-between mb-5">
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-amber-100 rounded-xl">
-                <x-lucide-radar class="w-5 h-5 text-amber-700" />
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-1 items-center">
+            <div>
+                <div class="flex items-baseline gap-1">
+                    <x-skeleton x-show="!liveData.hasRate" variant="block" size="h-6" class="w-16" />
+                    <span x-show="liveData.hasRate" x-cloak class="text-2xl font-bold text-[#1565C0]" x-text="liveData.bandwidthDown.toFixed(2)"></span>
+                    <span class="text-xs font-bold text-[#6D4C41]">Mbps</span>
+                </div>
+                <span class="text-xs font-medium text-[#6D4C41]">Download</span>
             </div>
             <div>
-                <h3 class="text-sm font-black uppercase tracking-widest text-[#3E2723]">Barista AI Findings</h3>
-                <p class="text-[10px] text-[#8D6E63] font-medium mt-0.5" x-show="live.latestAiNarrative" x-text="live.latestAiNarrative"></p>
+                <div class="flex items-baseline gap-1">
+                    <x-skeleton x-show="!liveData.hasRate" variant="block" size="h-6" class="w-16" />
+                    <span x-show="liveData.hasRate" x-cloak class="text-2xl font-bold text-[#047857]" x-text="liveData.bandwidthUp.toFixed(2)"></span>
+                    <span class="text-xs font-bold text-[#6D4C41]">Mbps</span>
+                </div>
+                <span class="text-xs font-medium text-[#6D4C41]">Upload</span>
+            </div>
+            <div>
+                <span class="text-2xl font-bold text-[#3E2723]" x-text="liveData.activeGuests">{{ $activeGuests ?? 0 }}</span>
+                <span class="block text-xs font-medium text-[#6D4C41]">Guests online</span>
+            </div>
+            <div>
+                <span class="text-2xl font-bold text-[#3E2723]">{{ $vouchersRedeemed ?? 0 }}</span>
+                <span class="block text-xs font-medium text-[#6D4C41]">Wi-Fi redeemed ({{ strtolower(request('range', 'today')) }})</span>
             </div>
         </div>
-        <div class="flex items-center gap-4 shrink-0">
-            <a href="{{ route('ai.analysis.index') }}" class="text-[10px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-800 transition-colors flex items-center gap-1.5">
-                Findings History <x-lucide-arrow-right class="w-3 h-3" />
-            </a>
-            <a href="{{ route('admin.ai.actions.index') }}" class="text-[10px] font-black uppercase tracking-widest text-amber-700 hover:text-amber-800 transition-colors flex items-center gap-1.5">
-                Agent Activity <x-lucide-arrow-right class="w-3 h-3" />
-            </a>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2]">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-sm font-bold text-[#3E2723]">Recent vouchers</h3>
+            <a href="{{ route('network.vouchers.index') }}" class="min-h-[44px] inline-flex items-center text-sm font-bold text-amber-800 hover:text-amber-900">Manage all &rarr;</a>
+        </div>
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="text-xs font-bold text-[#795548] border-b border-[#F0E6D2]">
+                    <th class="pb-2">Code</th>
+                    <th class="pb-2 text-center">Time</th>
+                    <th class="pb-2 text-right">Status</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm">
+                <template x-for="(voucher, index) in live.recentVouchers.slice(0, 5)" :key="index">
+                    <tr class="border-b border-[#FAFAFA]">
+                        <td class="py-2.5 font-bold text-amber-800 font-mono" x-text="voucher.code"></td>
+                        <td class="py-2.5">
+                            <div class="flex flex-col items-center">
+                                <span class="text-[#6D4C41] font-medium" x-text="voucher.duration_minutes + ' min'"></span>
+                                <template x-if="voucher.percent !== null && voucher.percent > 0">
+                                    <div class="w-12 bg-gray-100 rounded-full h-1 mt-1 overflow-hidden" :title="voucher.remaining_minutes + ' mins remaining'">
+                                        <div class="h-full w-full origin-left transition-transform duration-1000" :class="voucher.color" :style="'transform: scaleX(' + (voucher.percent / 100) + ')'"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </td>
+                        <td class="py-2.5 text-right">
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold" :class="voucher.is_used ? 'bg-gray-100 text-gray-700' : 'bg-green-50 text-green-800 border border-green-200'" x-text="voucher.is_used ? 'Claimed' : 'Available'"></span>
+                        </td>
+                    </tr>
+                </template>
+                <tr x-show="live.recentVouchers.length === 0"><td colspan="3" class="py-10 text-center text-[#6D4C41] text-sm">No vouchers yet.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{-- 4. Barista AI: the brief and the findings used to be two panels, plus a
+     separate "Full AI Report" button in the header. One panel now. --}}
+<div class="bg-[#3E2723] rounded-2xl shadow-sm text-white p-6 md:p-8 mb-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-amber-500 rounded-xl"><x-lucide-bot class="w-6 h-6 text-[#3E2723]" /></div>
+            <div>
+                <h2 class="text-base font-bold">Barista AI</h2>
+                <p class="text-sm text-amber-100/90">Today's brief and what it has noticed</p>
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button @click="getInsights()" class="min-h-[44px] bg-amber-500 hover:bg-amber-400 text-[#3E2723] px-5 rounded-xl text-sm font-bold flex items-center gap-2 transition">
+                <x-lucide-brain-circuit class="w-4 h-4" /> Full AI report
+            </button>
+            <a href="{{ route('ai.analysis.index') }}" class="min-h-[44px] px-4 rounded-xl text-sm font-bold text-amber-100 hover:bg-white/10 inline-flex items-center transition">Findings history</a>
+            <a href="{{ route('admin.ai.actions.index') }}" class="min-h-[44px] px-4 rounded-xl text-sm font-bold text-amber-100 hover:bg-white/10 inline-flex items-center transition">Agent activity</a>
         </div>
     </div>
-    <div class="space-y-2">
+
+    <p class="text-sm leading-relaxed text-amber-50 mb-4">
+        <span x-text="live.aiBrief">{{ $aiBrief }}</span>
+    </p>
+
+    <div x-show="live.aiFindings.length > 0" x-cloak class="space-y-2 pt-4 border-t border-white/10">
+        <p class="text-sm text-amber-100/90" x-show="live.latestAiNarrative" x-text="live.latestAiNarrative"></p>
         <template x-for="(finding, index) in live.aiFindings" :key="index">
-            <div class="flex items-start gap-3 p-3 rounded-xl" :class="finding.severity === 'danger' ? 'bg-red-50' : 'bg-amber-50'">
-                <span class="w-2 h-2 rounded-full mt-1.5 shrink-0" :class="finding.severity === 'danger' ? 'bg-red-500' : 'bg-amber-500'"></span>
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/5">
+                <span class="w-2 h-2 rounded-full mt-1.5 shrink-0" :class="finding.severity === 'danger' ? 'bg-red-400' : 'bg-amber-400'"></span>
                 <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold" :class="finding.severity === 'danger' ? 'text-red-800' : 'text-amber-900'" x-text="finding.summary"></p>
-                    <p class="text-[9px] font-bold uppercase tracking-widest mt-0.5" :class="finding.severity === 'danger' ? 'text-red-500/70' : 'text-amber-700/60'" x-text="finding.created_at"></p>
+                    <p class="text-sm font-bold text-white" x-text="finding.summary"></p>
+                    <p class="text-xs text-amber-100/80 mt-0.5" x-text="finding.created_at"></p>
                 </div>
             </div>
         </template>
     </div>
 </div>
 
-{{-- Row 3: Trade & Network --}}
-{{-- The host-metrics card that used to sit here (CPU load, memory, disk, CPU
-     temperature) has moved to the super_admin System Control dashboard. It was
-     never an admin's question: nothing on it changes how the shop is run, and
-     it pushed genuinely operational figures further down the page. What
-     replaces it is the network's business side — how much Wi-Fi is actually
-     selling — sitting next to the network's technical side on the right. --}}
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    {{-- Service Pulse --}}
-    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col h-full justify-center">
-        <div class="flex justify-between items-center w-full mb-6">
-            <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em] whitespace-nowrap">Service Pulse</h3>
-            <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">{{ ucfirst(request('range', 'today')) }}</span>
-        </div>
-
-        <div class="flex flex-row justify-around items-center w-full gap-4 flex-1">
-            <div class="flex flex-col items-center text-center">
-                <span class="text-2xl font-black text-[#3E2723] tracking-tighter"
-                      x-text="live.todaysOrders > 0 ? '\u20b1' + (live.todaysSales / live.todaysOrders).toLocaleString(undefined, {maximumFractionDigits: 0}) : '\u20b10'">
-                    &#8369;{{ $todaysOrders > 0 ? number_format($todaysSales / $todaysOrders, 0) : 0 }}
-                </span>
-                <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63] mt-1 leading-tight">Average<br>Ticket</span>
-            </div>
-
-            <div class="flex flex-col items-center text-center">
-                <span class="text-2xl font-black text-[#3E2723] tracking-tighter" x-text="live.todaysOrders">{{ $todaysOrders }}</span>
-                <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63] mt-1 leading-tight">Orders<br>Placed</span>
-            </div>
-
-            <div class="flex flex-col items-center text-center">
-                <span class="text-2xl font-black text-[#1565C0] tracking-tighter">{{ $vouchersRedeemed ?? 0 }}</span>
-                <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63] mt-1 leading-tight">Wi-Fi<br>Redeemed</span>
-            </div>
-
-            <div class="flex flex-col items-center text-center">
-                <span class="text-2xl font-black {{ ($lowStockCount ?? 0) > 0 ? 'text-amber-700' : 'text-[#3E2723]' }} tracking-tighter" x-text="live.lowStockCount">{{ $lowStockCount ?? 0 }}</span>
-                <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63] mt-1 leading-tight">Low<br>Stock</span>
-            </div>
+{{-- 5. Sales detail --}}
+<h2 class="text-base font-bold text-[#3E2723] mb-3 flex items-center gap-2"><x-lucide-coffee class="w-5 h-5 text-[#795548]" /> Sales</h2>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
+    <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2]">
+        <h3 class="text-sm font-bold text-[#3E2723] mb-4">7-day revenue trend</h3>
+        <div class="relative h-64 w-full">
+            <canvas id="salesTrendChart"></canvas>
         </div>
     </div>
 
-    {{-- Network Pulse --}}
-    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col relative overflow-hidden group h-full justify-center">
-        <div class="absolute -right-4 -top-4 w-20 h-20 bg-blue-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
-        <div class="relative z-10 w-full h-full flex flex-col">
-            <div class="flex justify-between items-center w-full mb-6">
-                <h3 class="text-[10px] font-black text-[#3E2723] uppercase tracking-[0.2em]">Network Throughput</h3>
-                <div class="flex items-center gap-2 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100">
-                    @forelse($gateways ?? [] as $gw)
-                        <div class="flex items-center gap-1.5" title="{{ $gw['name'] }}: {{ $gw['status'] }}">
-                            <div class="w-1.5 h-1.5 rounded-full {{ $gw['status'] === 'none' || $gw['status'] === 'online' ? 'bg-green-500' : 'bg-red-500' }}"></div>
-                            <span class="text-[7px] font-black uppercase text-slate-400">{{ substr($gw['name'], 0, 4) }}</span>
-                        </div>
-                    @empty
-                        <div class="flex items-center gap-2 opacity-80">
-                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
-                            <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Live Monitoring</span>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-            
-            <div class="flex flex-row justify-around items-center w-full flex-1">
-                <div class="flex flex-col items-center">
-                    <div class="flex items-baseline gap-1 mb-1">
-                        <x-skeleton x-show="!liveData.hasRate" variant="block" size="h-6" class="w-16" />
-                        <span x-show="liveData.hasRate" x-cloak class="text-xl font-black text-[#1565C0]" x-text="liveData.bandwidthDown.toFixed(2)"></span>
-                        <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Mbps</span>
-                    </div>
-                    <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Download</span>
-                </div>
-
-                <div class="flex flex-col items-center">
-                    <div class="flex items-baseline gap-1 mb-1">
-                        <x-skeleton x-show="!liveData.hasRate" variant="block" size="h-6" class="w-16" />
-                        <span x-show="liveData.hasRate" x-cloak class="text-xl font-black text-[#059669]" x-text="liveData.bandwidthUp.toFixed(2)"></span>
-                        <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Mbps</span>
-                    </div>
-                    <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Upload</span>
-                </div>
-
-                <div class="flex flex-col items-center">
-                    <div class="flex items-baseline gap-1 mb-1">
-                        <span class="text-xl font-black text-[#3E2723]" x-text="liveData.activeGuests">{{ $activeGuests ?? 0 }}</span>
-                        <span class="text-[10px] font-bold text-[#6D4C41] uppercase">Active</span>
-                    </div>
-                    <span class="text-[8px] font-black uppercase tracking-widest text-[#8D6E63]">Guest Units</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Row 4: Recent Activity & Splits --}}
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    {{-- Recent Transactions --}}
-    <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Recent Activity</h3>
-                <p class="text-xs text-[#6D4C41] font-medium mt-1">Live transaction monitoring.</p>
-            </div>
-            <a href="{{ route('sales.index') }}" class="text-[10px] font-bold uppercase tracking-widest text-amber-700 hover:text-amber-800 transition-colors">View Journal</a>
-        </div>
-        
-        <div class="overflow-x-auto pr-2">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-black">Ref #</th>
-                        <th class="pb-4 font-black">Method</th>
-                        <th class="pb-4 font-black text-right">Total</th>
-                        <th class="pb-4 font-black text-right">Timestamp</th>
-                    </tr>
-                </thead>
-                <tbody class="text-sm">
-                    <template x-for="(sale, index) in live.recentSales" :key="index">
-                        <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
-                            <td class="py-4">
-                                <span class="font-black text-[#3E2723] block" x-text="sale.transaction_number.slice(-8)"></span>
-                                <span class="text-[10px] text-[#6D4C41] font-bold" x-text="sale.user_name"></span>
-                            </td>
-                            <td class="py-4">
-                                <span class="px-2 py-0.5 border text-[9px] font-black uppercase rounded" :class="paymentMethodClass(sale.payment_method)" x-text="sale.payment_method"></span>
-                            </td>
-                            <td class="py-4 text-right font-black text-[#2E7D32]" x-text="'₱' + sale.total_amount.toFixed(2)"></td>
-                            <td class="py-4 text-[#6D4C41] text-xs font-medium text-right" x-text="sale.created_at"></td>
-                        </tr>
-                    </template>
-                    <tr x-show="live.recentSales.length === 0">
-                        <td colspan="4" class="py-16 text-center text-[#6D4C41] text-xs italic">No transactions recorded today.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div class="space-y-6">
-        <!-- Daily Revenue Split -->
-        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
-            <div class="flex justify-between items-start mb-6">
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Revenue Split</h3>
-            </div>
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col gap-6">
+        <div>
+            <h3 class="text-sm font-bold text-[#3E2723] mb-4">Revenue split</h3>
             <div class="space-y-4">
                 <div>
-                    <div class="flex justify-between text-[10px] mb-2 font-black uppercase tracking-widest">
-                        <span class="text-[#8D6E63]">Physical Cash</span>
+                    <div class="flex justify-between text-sm mb-1.5 font-bold">
+                        <span class="text-[#6D4C41]">Cash</span>
                         <span class="text-[#3E2723]" x-text="'₱' + Math.round(live.paymentBreakdown['Cash'] || 0).toLocaleString()"></span>
                     </div>
                     <div class="w-full bg-[#FAFAFA] rounded-full h-1.5 overflow-hidden">
                         <div class="bg-[#3E2723] h-full w-full origin-left transition-transform duration-700" :style="'transform: scaleX(' + (cashPct() / 100) + ')'"></div>
                     </div>
                 </div>
-
                 <div>
-                    <div class="flex justify-between text-[10px] mb-2 font-black uppercase tracking-widest">
-                        <span class="text-[#8D6E63]">E-Wallet Automation</span>
+                    <div class="flex justify-between text-sm mb-1.5 font-bold">
+                        <span class="text-[#6D4C41]">E-wallet</span>
                         <span class="text-[#3E2723]" x-text="'₱' + Math.round(live.paymentBreakdown['E-Wallet'] || 0).toLocaleString()"></span>
                     </div>
                     <div class="w-full bg-[#FAFAFA] rounded-full h-1.5 overflow-hidden">
@@ -384,99 +267,73 @@
                 </div>
             </div>
         </div>
-
-        <!-- Menu Distribution -->
-        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
-            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest mb-6">Menu Distribution</h3>
-            <div class="relative flex justify-center items-center h-48">
+        <div>
+            <h3 class="text-sm font-bold text-[#3E2723] mb-2">Menu mix</h3>
+            <div class="relative flex justify-center items-center h-44">
                 <canvas id="categoryChart"></canvas>
-                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-12">
-                    <span class="text-2xl font-black text-[#3E2723] leading-none" x-text="live.totalItemsSold">{{ $totalItemsSold ?? 0 }}</span>
-                    <span class="text-[7px] font-black text-[#8D6E63] uppercase tracking-widest mt-1">Total Items</span>
+                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-10">
+                    <span class="text-2xl font-bold text-[#3E2723] leading-none" x-text="live.totalItemsSold">{{ $totalItemsSold ?? 0 }}</span>
+                    <span class="text-xs font-medium text-[#6D4C41] mt-1">items sold</span>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-{{-- Row 5: Vouchers & Performance --}}
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    {{-- Recent Vouchers --}}
-    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Active Vouchers</h3>
-                <p class="text-xs text-[#6D4C41] font-medium mt-1">Recently issued network codes.</p>
-            </div>
-            <a href="{{ route('network.vouchers.index') }}" class="text-[10px] font-black text-amber-700 uppercase tracking-widest hover:text-amber-800 transition">Manage All</a>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-8">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2]">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-sm font-bold text-[#3E2723]">Recent orders</h3>
+            <a href="{{ route('sales.index') }}" class="min-h-[44px] inline-flex items-center text-sm font-bold text-amber-800 hover:text-amber-900">Sales journal &rarr;</a>
         </div>
-        
-        <div class="overflow-x-auto pr-2">
+        <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="text-[#8D6E63] text-[10px] uppercase tracking-[0.2em] border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-black">Code</th>
-                        <th class="pb-4 font-black text-center">Mins</th>
-                        <th class="pb-4 font-black text-right">Status</th>
+                    <tr class="text-xs font-bold text-[#795548] border-b border-[#F0E6D2]">
+                        <th class="pb-2">Ref #</th>
+                        <th class="pb-2">Method</th>
+                        <th class="pb-2 text-right">Total</th>
+                        <th class="pb-2 text-right">Time</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
-                    <template x-for="(voucher, index) in live.recentVouchers" :key="index">
-                        <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
-                            <td class="py-4 font-black text-amber-700 tracking-widest font-mono" x-text="voucher.code"></td>
-                            <td class="py-4">
-                                <div class="flex flex-col items-center">
-                                    <span class="text-[#8D6E63] font-bold text-center" x-text="voucher.duration_minutes + 'm'"></span>
-                                    <template x-if="voucher.percent !== null && voucher.percent > 0">
-                                        <div class="w-12 bg-gray-100 rounded-full h-1 mt-1 overflow-hidden" :title="voucher.remaining_minutes + ' mins remaining'">
-                                            <div class="h-full w-full origin-left transition-transform duration-1000" :class="voucher.color" :style="'transform: scaleX(' + (voucher.percent / 100) + ')'"></div>
-                                        </div>
-                                    </template>
-                                </div>
+                    <template x-for="(sale, index) in live.recentSales" :key="index">
+                        <tr class="border-b border-[#FAFAFA]">
+                            <td class="py-2.5">
+                                <span class="font-bold text-[#3E2723] block" x-text="sale.transaction_number.slice(-8)"></span>
+                                <span class="text-xs text-[#6D4C41]" x-text="sale.user_name"></span>
                             </td>
-                            <td class="py-4 text-right">
-                                <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest" :class="voucher.is_used ? 'bg-gray-100 text-gray-400' : 'bg-green-50 text-green-700 border border-green-100'" x-text="voucher.is_used ? 'Claimed' : 'Valid'"></span>
+                            <td class="py-2.5">
+                                <span class="px-2 py-0.5 border text-xs font-bold rounded" :class="paymentMethodClass(sale.payment_method)" x-text="sale.payment_method"></span>
                             </td>
+                            <td class="py-2.5 text-right font-bold text-[#2E7D32]" x-text="'₱' + sale.total_amount.toFixed(2)"></td>
+                            <td class="py-2.5 text-[#6D4C41] text-xs text-right" x-text="sale.created_at"></td>
                         </tr>
                     </template>
-                    <tr x-show="live.recentVouchers.length === 0"><td colspan="3" class="py-16 text-center text-[#6D4C41] text-xs italic">No vouchers found.</td></tr>
+                    <tr x-show="live.recentSales.length === 0">
+                        <td colspan="4" class="py-10 text-center text-[#6D4C41] text-sm">No orders yet today.</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- Top Selling Items -->
-    <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
-        <div class="flex items-center gap-3 mb-8">
-            <div class="p-2 bg-amber-50 rounded-xl">
-                <x-lucide-trending-up class="w-6 h-6 text-amber-700" />
-            </div>
-            <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-widest">Top Selling Performance</h3>
-                <p class="text-xs text-[#6D4C41] font-medium mt-1">Units sold vs. Revenue impact.</p>
-            </div>
-        </div>
-
-        <div class="space-y-5">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2]">
+        <h3 class="text-sm font-bold text-[#3E2723] mb-4">Top sellers</h3>
+        <div class="space-y-1">
             <template x-for="(item, index) in live.topProducts" :key="index">
-                <a :href="'{{ route('inventory.products.index') }}?search=' + encodeURIComponent(item.item_name)" class="flex items-center justify-between group p-3 hover:bg-[#FDF8F5] rounded-2xl border border-transparent hover:border-[#F0E6D2] transition-all cursor-pointer">
-                    <div class="flex items-center gap-4">
-                        <span class="text-xs font-black text-[#8D6E63] bg-[#FDF8F5] w-8 h-8 rounded-lg flex items-center justify-center border border-[#F0E6D2]" x-text="'0' + (index + 1)"></span>
+                <a :href="'{{ route('inventory.products.index') }}?search=' + encodeURIComponent(item.item_name)" class="flex items-center justify-between p-2.5 hover:bg-[#FDF8F5] rounded-xl transition-all">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-[#6D4C41] bg-[#FDF8F5] w-7 h-7 rounded-lg flex items-center justify-center border border-[#F0E6D2]" x-text="index + 1"></span>
                         <span class="text-sm font-bold text-[#3E2723] capitalize" x-text="item.item_name"></span>
                     </div>
-                    <div class="flex gap-6 items-center">
-                        <div class="flex flex-col items-end">
-                            <span class="text-xs font-black text-[#3E2723]" x-text="Math.round(item.total_qty)"></span>
-                            <span class="text-[9px] font-bold text-[#6D4C41] uppercase tracking-tighter">Units</span>
-                        </div>
-                        <div class="flex flex-col items-end min-w-[70px]">
-                            <span class="text-xs font-black text-[#2E7D32]" x-text="'₱' + Math.round(item.total_revenue).toLocaleString()"></span>
-                            <span class="text-[9px] font-bold text-green-800/60 uppercase tracking-tighter">Revenue</span>
-                        </div>
+                    <div class="flex gap-5 items-center text-right">
+                        <span class="text-sm font-bold text-[#3E2723]" x-text="Math.round(item.total_qty) + ' sold'"></span>
+                        <span class="text-sm font-bold text-[#2E7D32] min-w-[70px]" x-text="'₱' + Math.round(item.total_revenue).toLocaleString()"></span>
                     </div>
                 </a>
             </template>
-            <p class="text-xs text-[#6D4C41] text-center italic py-4" x-show="live.topProducts.length === 0">No sales data yet.</p>
+            <p class="text-sm text-[#6D4C41] text-center py-6" x-show="live.topProducts.length === 0">No sales yet.</p>
         </div>
     </div>
 </div>
