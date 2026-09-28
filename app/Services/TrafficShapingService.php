@@ -116,8 +116,8 @@ class TrafficShapingService
         $this->lastError = null;
 
         $existing = $opnsense->readShaperConfig();
-        $sequence = 0;
         $aliasesChanged = false;
+        $pipes = [];
 
         foreach (self::TIERS as $tier) {
             if (! $opnsense->ensureTierAlias($tier)) {
@@ -128,7 +128,6 @@ class TrafficShapingService
             $aliasesChanged = true;
 
             foreach (self::DIRECTIONS as $direction) {
-                $sequence++;
                 $name = $opnsense->shaperObjectName($tier, $direction);
                 $mbps = (float) ($settings["bw_{$tier}_{$direction}"] ?? 0);
 
@@ -144,30 +143,7 @@ class TrafficShapingService
 
                     return false;
                 }
-
-                $ruleUuid = $opnsense->upsertShaperRule(
-                    $tier,
-                    $direction,
-                    $pipeUuid,
-                    $opnsense->tierAliasName($tier),
-                    $sequence,
-                    $existing['rules'][$name] ?? null
-                );
-
-                if (! $ruleUuid) {
-                    // By far the most likely failure, and the one that produced
-                    // the misleading "could not be reached" report. On this
-                    // OPNsense build the shaper rule's source and destination
-                    // fields accept only the literal value 'any' — verified
-                    // against /api/trafficshaper/settings/getRule, which offers
-                    // no alias among their options — so a rule that matches a
-                    // tier's alias cannot be created through the API at all.
-                    $this->lastError = "OPNsense rejected the shaper rule '{$name}'. "
-                        .'This build\'s shaper rules only accept "any" for source and destination, so they cannot match a tier alias. '
-                        .'See docs/INFRASTRUCTURE.md — per-tier shaping needs either a manual rule in Firewall > Rules or a newer OPNsense.';
-
-                    return false;
-                }
+                $pipes[$name] = $pipeUuid;
             }
         }
 
@@ -175,7 +151,8 @@ class TrafficShapingService
             $opnsense->reconfigureAliases();
         }
 
-        return $opnsense->reconfigureShaper();
+        // The rules that steer each plan's guests into its pipes.
+        return $this->syncTierRules($opnsense, $pipes, $existing['rules'] ?? []);
     }
 
     /**
@@ -184,7 +161,63 @@ class TrafficShapingService
      */
     public function assignTier(Voucher $voucher, string $ip, OpnSenseService $opnsense): void
     {
-        $opnsense->addIpToTierAlias($voucher->tier ?? 'free', $ip);
+        if ($opnsense->isProtectedIp($ip)) {
+            return; // shop equipment is never on a guest plan
+        }
+
+        $tier = $voucher->tier ?? 'free';
+        // Off the other plan first: an upgrade/downgrade must not leave the
+        // address capped by both.
+        foreach (array_diff(self::TIERS, [$tier]) as $other) {
+            $opnsense->removeIpFromTierAlias($other, $ip);
+        }
+        $opnsense->addIpToTierAlias($tier, $ip);
+        $this->syncTierRules($opnsense);
+    }
+
+    /**
+     * Write each plan's member addresses into its Shaper rules — the only
+     * rules that actually limit speed on this gateway. The tier aliases stay
+     * the record of who is on which plan; shaper rules can't name an alias,
+     * but on 25.7 their source/destination take a list of addresses. A plan
+     * with no members gets its rules switched off (the field can't be empty).
+     *
+     * Tier rules run before the shop-wide fair-use rule (sequence 11-12), so a
+     * guest on a plan gets that plan's cap.
+     */
+    public function syncTierRules(OpnSenseService $opnsense, array $pipes = [], ?array $rules = null): bool
+    {
+        $this->lastError = null;
+        // applyLimits() passes what it just wrote, saving a re-read.
+        $config = $pipes && $rules !== null ? ['pipes' => $pipes, 'rules' => $rules] : $opnsense->readShaperConfig();
+        $sequence = 0;
+
+        foreach (self::TIERS as $tier) {
+            $ips = collect($opnsense->listAliasMembers($opnsense->tierAliasName($tier)))
+                ->reject(fn ($ip) => $opnsense->isProtectedIp($ip))
+                ->values()
+                ->all();
+
+            foreach (self::DIRECTIONS as $direction) {
+                $sequence++;
+                $name = $opnsense->shaperObjectName($tier, $direction);
+                $pipe = $config['pipes'][$name] ?? null;
+                if (! $pipe) {
+                    $this->lastError = "There is no '{$name}' speed limit on OPNsense yet — save the plan speeds on the Traffic page first.";
+
+                    return false;
+                }
+
+                $ok = $opnsense->upsertShaperRule($tier, $direction, $pipe, $ips ? implode(',', $ips) : null, $sequence, $config['rules'][$name] ?? null, (bool) $ips);
+                if (! $ok) {
+                    $this->lastError = "OPNsense rejected the speed rule '{$name}'.";
+
+                    return false;
+                }
+            }
+        }
+
+        return $opnsense->reconfigureShaper();
     }
 
     /**
@@ -214,6 +247,8 @@ class TrafficShapingService
                 $ok = false;
             }
         }
+
+        $this->syncTierRules($opnsense);
 
         return $ok;
     }
@@ -247,7 +282,7 @@ class TrafficShapingService
             foreach ($opnsense->listAliasMembers($alias) as $ip) {
                 $checked++;
 
-                if (in_array($ip, $liveIps, true)) {
+                if (in_array($ip, $liveIps, true) && ! $opnsense->isProtectedIp($ip)) {
                     continue;
                 }
 
@@ -260,6 +295,9 @@ class TrafficShapingService
                 }
             }
         }
+
+        // Always re-sync: it also repairs rules edited or lost on the OPNsense side.
+        $this->syncTierRules($opnsense);
 
         return ['checked' => $checked, 'removed' => $removed, 'failed' => $failed];
     }

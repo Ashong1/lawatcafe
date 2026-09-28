@@ -798,7 +798,7 @@ class OpnSenseService
      *                                  rule is rejected outright and a
      *                                  shop-wide rule is the only one that lands.
      */
-    public function upsertShaperRule(string $tier, string $direction, string $pipeUuid, ?string $aliasName, int $sequence, ?string $uuid = null): ?string
+    public function upsertShaperRule(string $tier, string $direction, string $pipeUuid, ?string $aliasName, int $sequence, ?string $uuid = null, bool $enabled = true): ?string
     {
         if (empty($this->apiKey) || empty($this->apiSecret)) {
             return null;
@@ -806,11 +806,13 @@ class OpnSenseService
 
         $name = $this->shaperObjectName($tier, $direction);
         $isDownload = $direction === 'down';
+        // A shaper rule's source/destination is a list field on 25.7: it takes
+        // 'any' or a comma-separated list of addresses (not an alias name).
         $match = $aliasName ?? 'any';
 
         $payload = [
             'rule' => [
-                'enabled' => '1',
+                'enabled' => $enabled ? '1' : '0',
                 'sequence' => (string) $sequence,
                 'interface' => config('services.opnsense.shaper_interface', 'lan'),
                 'proto' => 'ip',

@@ -165,6 +165,12 @@ class VoucherControllerTest extends TestCase
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('removeIpFromTierAlias')->andReturn(true);
+            // The plan speed rules re-sync after every tier change; nothing to sync here.
+            $mock->shouldReceive('readShaperConfig')->andReturn(['pipes' => [], 'rules' => []]);
+            $mock->shouldReceive('listAliasMembers')->andReturn([]);
+            $mock->shouldReceive('tierAliasName')->andReturnUsing(fn (string $t) => "lawatcafe_{$t}_tier");
+            $mock->shouldReceive('shaperObjectName')->andReturnUsing(fn (string $t, string $d) => "lawatcafe_{$t}_{$d}");
+            $mock->shouldReceive('isProtectedIp')->andReturn(false)->byDefault();
             $mock->shouldReceive('addIpToTierAlias')->once()->with('premium', '192.168.2.60')->andReturn(true);
         });
 

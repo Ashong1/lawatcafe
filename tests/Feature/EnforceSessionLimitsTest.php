@@ -35,6 +35,12 @@ class EnforceSessionLimitsTest extends TestCase
             $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession()]);
             $mock->shouldReceive('disconnectDevice')->once()->with('sess-1')->andReturn(true);
             $mock->shouldReceive('removeIpFromTierAlias')->andReturn(true);
+            // The plan speed rules re-sync after every tier change; nothing to sync here.
+            $mock->shouldReceive('readShaperConfig')->andReturn(['pipes' => [], 'rules' => []]);
+            $mock->shouldReceive('listAliasMembers')->andReturn([]);
+            $mock->shouldReceive('tierAliasName')->andReturnUsing(fn (string $t) => "lawatcafe_{$t}_tier");
+            $mock->shouldReceive('shaperObjectName')->andReturnUsing(fn (string $t, string $d) => "lawatcafe_{$t}_{$d}");
+            $mock->shouldReceive('isProtectedIp')->andReturn(false)->byDefault();
         });
 
         $this->artisan('network:enforce-sessions')->assertExitCode(0);
@@ -90,6 +96,12 @@ class EnforceSessionLimitsTest extends TestCase
             ]);
             $mock->shouldReceive('disconnectDevice')->once()->with('sess-1')->andReturn(true);
             $mock->shouldReceive('removeIpFromTierAlias')->andReturn(true);
+            // The plan speed rules re-sync after every tier change; nothing to sync here.
+            $mock->shouldReceive('readShaperConfig')->andReturn(['pipes' => [], 'rules' => []]);
+            $mock->shouldReceive('listAliasMembers')->andReturn([]);
+            $mock->shouldReceive('tierAliasName')->andReturnUsing(fn (string $t) => "lawatcafe_{$t}_tier");
+            $mock->shouldReceive('shaperObjectName')->andReturnUsing(fn (string $t, string $d) => "lawatcafe_{$t}_{$d}");
+            $mock->shouldReceive('isProtectedIp')->andReturn(false)->byDefault();
         });
 
         $this->artisan('network:enforce-sessions')->assertExitCode(0);
@@ -169,7 +181,19 @@ class EnforceSessionLimitsTest extends TestCase
             $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession(['last_accessed' => now()->subMinutes(5)->timestamp])]);
             $mock->shouldNotReceive('disconnectDevice');
             $mock->shouldReceive('removeIpFromTierAlias')->with('free', '192.168.2.60')->once()->andReturn(true);
+            // The plan speed rules re-sync after every tier change; nothing to sync here.
+            $mock->shouldReceive('readShaperConfig')->andReturn(['pipes' => [], 'rules' => []]);
+            $mock->shouldReceive('listAliasMembers')->andReturn([]);
+            $mock->shouldReceive('tierAliasName')->andReturnUsing(fn (string $t) => "lawatcafe_{$t}_tier");
+            $mock->shouldReceive('shaperObjectName')->andReturnUsing(fn (string $t, string $d) => "lawatcafe_{$t}_{$d}");
+            $mock->shouldReceive('isProtectedIp')->andReturn(false)->byDefault();
             $mock->shouldReceive('removeIpFromTierAlias')->with('premium', '192.168.2.60')->once()->andReturn(true);
+            // The plan speed rules re-sync after every tier change; nothing to sync here.
+            $mock->shouldReceive('readShaperConfig')->andReturn(['pipes' => [], 'rules' => []]);
+            $mock->shouldReceive('listAliasMembers')->andReturn([]);
+            $mock->shouldReceive('tierAliasName')->andReturnUsing(fn (string $t) => "lawatcafe_{$t}_tier");
+            $mock->shouldReceive('shaperObjectName')->andReturnUsing(fn (string $t, string $d) => "lawatcafe_{$t}_{$d}");
+            $mock->shouldReceive('isProtectedIp')->andReturn(false)->byDefault();
         });
 
         $this->artisan('network:enforce-sessions')->assertExitCode(0);
@@ -188,6 +212,12 @@ class EnforceSessionLimitsTest extends TestCase
             $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession(['last_accessed' => now()->subMinutes(5)->timestamp])]);
             $mock->shouldNotReceive('disconnectDevice');
             $mock->shouldReceive('removeIpFromTierAlias')->with(\Mockery::any(), '192.168.2.61')->never();
+            // The plan speed rules re-sync after every tier change; nothing to sync here.
+            $mock->shouldReceive('readShaperConfig')->andReturn(['pipes' => [], 'rules' => []]);
+            $mock->shouldReceive('listAliasMembers')->andReturn([]);
+            $mock->shouldReceive('tierAliasName')->andReturnUsing(fn (string $t) => "lawatcafe_{$t}_tier");
+            $mock->shouldReceive('shaperObjectName')->andReturnUsing(fn (string $t, string $d) => "lawatcafe_{$t}_{$d}");
+            $mock->shouldReceive('isProtectedIp')->andReturn(false)->byDefault();
         });
 
         $this->artisan('network:enforce-sessions')->assertExitCode(0);
@@ -205,7 +235,19 @@ class EnforceSessionLimitsTest extends TestCase
             $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
             $mock->shouldReceive('listSessions')->once()->andReturn([]);
             $mock->shouldReceive('removeIpFromTierAlias')->with('free', '192.168.2.62')->once()->andReturn(true);
+            // The plan speed rules re-sync after every tier change; nothing to sync here.
+            $mock->shouldReceive('readShaperConfig')->andReturn(['pipes' => [], 'rules' => []]);
+            $mock->shouldReceive('listAliasMembers')->andReturn([]);
+            $mock->shouldReceive('tierAliasName')->andReturnUsing(fn (string $t) => "lawatcafe_{$t}_tier");
+            $mock->shouldReceive('shaperObjectName')->andReturnUsing(fn (string $t, string $d) => "lawatcafe_{$t}_{$d}");
+            $mock->shouldReceive('isProtectedIp')->andReturn(false)->byDefault();
             $mock->shouldReceive('removeIpFromTierAlias')->with('premium', '192.168.2.62')->once()->andReturn(true);
+            // The plan speed rules re-sync after every tier change; nothing to sync here.
+            $mock->shouldReceive('readShaperConfig')->andReturn(['pipes' => [], 'rules' => []]);
+            $mock->shouldReceive('listAliasMembers')->andReturn([]);
+            $mock->shouldReceive('tierAliasName')->andReturnUsing(fn (string $t) => "lawatcafe_{$t}_tier");
+            $mock->shouldReceive('shaperObjectName')->andReturnUsing(fn (string $t, string $d) => "lawatcafe_{$t}_{$d}");
+            $mock->shouldReceive('isProtectedIp')->andReturn(false)->byDefault();
         });
 
         $this->artisan('network:enforce-sessions')->assertExitCode(0);

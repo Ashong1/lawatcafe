@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Setting;
 use App\Models\Voucher;
 use App\Services\OpnSenseService;
 use App\Services\TrafficShapingService;
@@ -118,34 +119,40 @@ class TrafficShapingServiceTest extends TestCase
     /**
      * Direction is from the LAN interface's point of view: a download leaves
      * it (matched on destination), an upload enters it (matched on source).
+     * Shaper rules can't name an alias, so each plan's rule carries its
+     * members' addresses; shop equipment is never among them, and a plan
+     * with nobody on it has its rules switched off.
      */
-    public function test_rules_match_the_tier_alias_on_the_correct_side_and_direction(): void
+    public function test_rules_list_the_plan_members_on_the_correct_side_and_direction(): void
     {
-        $this->fakeGreenfieldOpnsense();
+        $this->fakeGreenfieldOpnsense([
+            'opnsense.test/api/firewall/alias_util/list/lawatcafe_free_tier' => Http::response(['rows' => [
+                ['ip' => '192.168.2.130'], ['ip' => '192.168.2.131'], ['ip' => '192.168.2.99'],
+            ]], 200),
+            'opnsense.test/api/firewall/alias_util/list/lawatcafe_premium_tier' => Http::response(['rows' => []], 200),
+        ]);
+        Setting::set('network_infrastructure_ips', '192.168.2.99');
 
         app(TrafficShapingService::class)->applyLimits($this->limits, app(OpnSenseService::class));
 
-        Http::assertSent(function ($request) {
-            if (! str_contains($request->url(), '/settings/addRule') || $request['rule']['description'] !== 'lawatcafe_free_down') {
-                return false;
-            }
+        $rule = fn (string $name) => function ($request) use ($name) {
+            return str_contains($request->url(), '/settings/addRule') && $request['rule']['description'] === $name;
+        };
 
-            return $request['rule']['direction'] === 'out'
-                && $request['rule']['destination'] === 'lawatcafe_free_tier'
-                && $request['rule']['source'] === 'any'
-                && $request['rule']['target'] === 'pipe-uuid'
-                && $request['rule']['interface'] === 'lan';
-        });
+        Http::assertSent(fn ($r) => $rule('lawatcafe_free_down')($r)
+            && $r['rule']['direction'] === 'out'
+            && $r['rule']['destination'] === '192.168.2.130,192.168.2.131'
+            && $r['rule']['source'] === 'any'
+            && $r['rule']['target'] === 'pipe-uuid'
+            && $r['rule']['interface'] === 'lan'
+            && $r['rule']['enabled'] === '1');
 
-        Http::assertSent(function ($request) {
-            if (! str_contains($request->url(), '/settings/addRule') || $request['rule']['description'] !== 'lawatcafe_free_up') {
-                return false;
-            }
+        Http::assertSent(fn ($r) => $rule('lawatcafe_free_up')($r)
+            && $r['rule']['direction'] === 'in'
+            && $r['rule']['source'] === '192.168.2.130,192.168.2.131'
+            && $r['rule']['destination'] === 'any');
 
-            return $request['rule']['direction'] === 'in'
-                && $request['rule']['source'] === 'lawatcafe_free_tier'
-                && $request['rule']['destination'] === 'any';
-        });
+        Http::assertSent(fn ($r) => $rule('lawatcafe_premium_down')($r) && $r['rule']['enabled'] === '0');
     }
 
     /**
@@ -270,9 +277,7 @@ class TrafficShapingServiceTest extends TestCase
                 ['name' => 'lawatcafe_free_tier'], ['name' => 'lawatcafe_premium_tier'],
             ]], 200),
             '*/api/trafficshaper/settings/addPipe' => Http::response(['result' => 'saved', 'uuid' => 'pipe-1'], 200),
-            // The real-world case: this build's shaper rules accept only "any"
-            // for source/destination, so a rule matching a tier alias is
-            // refused outright.
+            // OPNsense refusing the rule that steers a plan's guests into its pipe.
             '*/api/trafficshaper/settings/addRule' => Http::response(['result' => 'failed'], 200),
             '*' => Http::response(['result' => 'saved'], 200),
         ]);
@@ -283,8 +288,7 @@ class TrafficShapingServiceTest extends TestCase
 
         $error = $service->lastError();
         $this->assertNotNull($error);
-        $this->assertStringContainsString('shaper rule', $error);
-        $this->assertStringContainsString('source and destination', $error);
+        $this->assertStringContainsString('speed rule', $error);
         // And crucially, it must not send anyone to check a healthy connection.
         $this->assertStringNotContainsString('could not be reached', $error);
         $this->assertStringNotContainsString('Check the connection', $error);

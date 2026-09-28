@@ -9,6 +9,18 @@ the history was rewritten.
 
 ---
 
+## 1.14.1 — Plan speed caps actually enforced
+*build 177*
+
+- Free and Premium speed caps were saved but never applied: this gateway
+  only shapes through Shaper rules, and those can't name an alias. On
+  OPNsense 25.7 their source/destination take a list of addresses, so each
+  plan's rules now carry its members' IPs, re-synced on connect, release,
+  plan change and the 5-minute reconcile. A plan with nobody on it has its
+  rules switched off.
+- Shop equipment is never put in a plan group (192.168.2.99 was in the free
+  group).
+
 ## 1.14.0 — Portal: time's up, add time, quick answers, report
 *builds 175–176*
 
