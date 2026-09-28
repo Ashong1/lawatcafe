@@ -49,6 +49,7 @@ class CaptivePortalActivationTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             // The whole point: nothing touches the firewall at redemption time.
             $mock->shouldNotReceive('authorizeDevice');
         });
@@ -80,6 +81,7 @@ class CaptivePortalActivationTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) use ($voucher) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldReceive('authorizeDevice')->once()->with(self::IP, $voucher->code)->andReturn(true);
         });
 
@@ -115,6 +117,7 @@ class CaptivePortalActivationTest extends TestCase
             $mock->shouldReceive('authorizeDevice')->once()->with(self::IP, $voucher->code)->andReturn(true);
             // Empty before authorization, live after — the portal re-reads the
             // session list so it can render the status page in the same request.
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldReceive('listSessions')->andReturn([], [], [[
                 'sessionId' => 'sess-1',
                 'ipAddress' => self::IP.'/32',
@@ -158,6 +161,7 @@ class CaptivePortalActivationTest extends TestCase
             $mock->shouldReceive('authorizeDevice')->once()->with(self::IP, $voucher->code)->andReturn(true);
             // Empty before authorization, live after — see the matching
             // comment on test_portal_recovers_a_redemption_that_was_never_activated.
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldReceive('listSessions')->andReturn([], [[
                 'sessionId' => 'sess-1',
                 'ipAddress' => self::IP.'/32',
@@ -205,6 +209,7 @@ class CaptivePortalActivationTest extends TestCase
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
             // Live for disconnect()'s ownership check, gone afterwards.
             $mock->shouldReceive('listSessions')->andReturn($live, []);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldReceive('disconnectDevice')->once()->with('sess-1');
             $mock->shouldReceive('authorizeDevice')->never();
         });
@@ -269,6 +274,7 @@ class CaptivePortalActivationTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldNotReceive('authorizeDevice');
         });
 
@@ -325,6 +331,7 @@ class CaptivePortalActivationTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldReceive('authorizeDevice')->andReturn(true);
         });
         $this->mock(TrafficShapingService::class, fn ($mock) => $mock->shouldReceive('assignTier'));
@@ -365,6 +372,7 @@ class CaptivePortalActivationTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
         });
 
         $this->fromGuestDevice()
@@ -397,6 +405,7 @@ class CaptivePortalActivationTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
         });
 
         $this->fromGuestDevice()
@@ -424,6 +433,7 @@ class CaptivePortalActivationTest extends TestCase
             // A different MAC entirely.
             $mock->shouldReceive('resolveMacForIp')->andReturn('BB:BB:BB:BB:BB:BB');
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
         });
 
         $this->fromGuestDevice()
@@ -447,6 +457,7 @@ class CaptivePortalActivationTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
         });
 
         $this->fromGuestDevice()
@@ -475,6 +486,7 @@ class CaptivePortalActivationTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(null);
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
         });
 
         $this->fromGuestDevice()
@@ -502,6 +514,7 @@ class CaptivePortalActivationTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldReceive('authorizeDevice')->andReturn(false);
         });
 
@@ -607,6 +620,7 @@ class CaptivePortalActivationTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldReceive('authorizeDevice')->andReturn(true);
         });
         $this->mock(TrafficShapingService::class, fn ($mock) => $mock->shouldReceive('assignTier'));

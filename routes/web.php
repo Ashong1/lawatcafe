@@ -36,6 +36,7 @@ use App\Http\Controllers\TrafficController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\WastageController;
 use App\Http\Middleware\DenySuperAdmin;
+use App\Http\Middleware\PortalLocale;
 use App\Http\Middleware\RoleMiddleware;
 use Illuminate\Support\Facades\Route;
 
@@ -47,7 +48,7 @@ use Illuminate\Support\Facades\Route;
 // with `php artisan route:cache` — see RootRedirectController.
 Route::get('/', RootRedirectController::class);
 
-Route::prefix('portal')->name('portal.')->group(function () {
+Route::prefix('portal')->name('portal.')->middleware(PortalLocale::class)->group(function () {
     Route::get('/', [CaptivePortalController::class, 'index'])->name('index');
     Route::post('/authenticate', [CaptivePortalController::class, 'authenticate'])->name('authenticate')->middleware('throttle:voucher-auth');
     Route::post('/verify-payment', [CaptivePortalController::class, 'verifyPayment'])->name('verify-payment')->middleware('throttle:portal-payment');
@@ -66,6 +67,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
     // in the guest's own browser, falling back to the connectivity probe when
     // it will not. See CaptivePortalController::handoff().
     Route::get('/handoff', [CaptivePortalController::class, 'handoff'])->name('handoff');
+    Route::post('/more-time', [CaptivePortalController::class, 'requestMoreTime'])->name('more-time')->middleware('throttle:portal-more-time');
 });
 
 // RFC 8908 Captive Portal API, advertised to clients via DHCP option 114

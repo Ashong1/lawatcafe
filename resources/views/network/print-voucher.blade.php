@@ -46,7 +46,7 @@
              scannable code is the only route left that needs no typing. --}}
         @if(!empty($portalQr))
             <div class="qr-block">
-                <div class="qr-label">Check your remaining time</div>
+                <div class="qr-label">Scan to connect &amp; check your time</div>
                 {!! $portalQr !!}
                 <div class="qr-url">{{ $portalUrl }}</div>
             </div>

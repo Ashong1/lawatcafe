@@ -10,7 +10,7 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/portal.css', 'resources/js/portal.js'])
     <style>
         /* Scoped to this page so it doesn't need an asset rebuild — see the
            indeterminate progress cue below (shown once the countdown hits 0,
@@ -43,7 +43,7 @@
       }">
 
     <div class="fixed inset-0 z-0">
-        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat portal-bg-photo" style="background-image: url('/images/lawat-bg.jpg');"></div>
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat portal-bg-photo" style="background-image: url('/images/portal-bg.jpg');"></div>
         <div class="absolute inset-0 bg-black/50"></div>
     </div>
 

@@ -241,7 +241,7 @@ class PosController extends Controller
                     $hasWifi = true;
                     // Generate one code per quantity
                     for ($i = 0; $i < $item['quantity']; $i++) {
-                        $code = 'LAWA-'.strtoupper(Str::random(4));
+                        $code = Voucher::generateCode();
                         Voucher::create([
                             'code' => $code,
                             'duration_minutes' => $item['duration'] ?? 60,
@@ -298,7 +298,7 @@ class PosController extends Controller
             if ($freeWifiMin > 0 && $finalTotal >= $freeWifiMin) {
                 // Check if they already purchased a wifi voucher explicitly to prevent stacking, or allow it. Let's allow it as a bonus.
                 $hasWifi = true;
-                $freeCode = 'FREE-'.strtoupper(Str::random(4));
+                $freeCode = Voucher::generateCode('FREE');
                 Voucher::create([
                     'code' => $freeCode,
                     'duration_minutes' => $freeWifiDuration,

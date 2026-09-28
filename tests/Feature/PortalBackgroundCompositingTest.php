@@ -91,7 +91,7 @@ class PortalBackgroundCompositingTest extends TestCase
      */
     public function test_the_blurred_photo_always_overfills_the_viewport(): void
     {
-        $css = file_get_contents(resource_path('css/app.css'));
+        $css = file_get_contents(resource_path('css/base.css'));
 
         preg_match('/\.portal-bg-photo\s*\{(.*?)\}/s', $css, $rule);
         $this->assertNotEmpty($rule, '.portal-bg-photo is missing.');

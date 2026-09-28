@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Voucher;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 
 class VoucherService
 {
@@ -18,18 +17,14 @@ class VoucherService
         $codes = [];
 
         while (count($codes) < $quantity) {
-            $code = 'LAWA-'.strtoupper(Str::random(4));
-
-            // Collision check: only create if the code doesn't already exist
-            if (! Voucher::where('code', $code)->exists()) {
-                Voucher::create([
-                    'code' => $code,
-                    'duration_minutes' => $durationMinutes,
-                    'tier' => $tier,
-                    'is_used' => false,
-                ]);
-                $codes[] = $code;
-            }
+            $code = Voucher::generateCode();
+            Voucher::create([
+                'code' => $code,
+                'duration_minutes' => $durationMinutes,
+                'tier' => $tier,
+                'is_used' => false,
+            ]);
+            $codes[] = $code;
         }
 
         Cache::forget('dashboard_stats_today');

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() === 'fil' ? 'fil' : 'en' }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -11,7 +11,7 @@
 <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
 <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
 <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
-@vite(['resources/css/app.css', 'resources/js/app.js'])
+@vite(['resources/css/portal.css', 'resources/js/portal.js'])
 <style>
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -41,7 +41,7 @@
       ">
 
     <div class="fixed inset-0 z-0">
-        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat portal-bg-photo" style="background-image: url('/images/lawat-bg.jpg');"></div>
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat portal-bg-photo" style="background-image: url('/images/portal-bg.jpg');"></div>
         <div class="absolute inset-0 bg-black/50"></div>
     </div>
 
@@ -73,14 +73,14 @@
 
                 <div class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-green-500/20 border border-green-500/30 backdrop-blur-md shadow-inner">
                     <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
-                    <span class="text-xs font-bold text-white uppercase tracking-wide">Active Session</span>
+                    <span class="text-sm font-bold text-white">{{ __("You're online") }}</span>
                 </div>
                 
                 <div class="mt-14">
                     <a href="{{ route('portal.menu') }}" class="group relative inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 hover:bg-amber-500 text-white hover:text-[#3E2723] border border-white/10 hover:border-amber-400 transition-all duration-300 text-xs font-bold uppercase tracking-wide overflow-hidden">
                         <div class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                         <x-lucide-coffee class="w-5 h-5 group-hover:scale-110 transition-transform relative z-10" stroke-width="2.5" />
-                        <span class="relative z-10">Explore Menu</span>
+                        <span class="relative z-10">{{ __('See our menu') }}</span>
                     </a>
                 </div>
             </div>
@@ -111,11 +111,13 @@
                     {{-- Collapsed on phones so the cards and the Disconnect button
                          below fit without a hunt. Unchanged from sm up. --}}
                     <div class="text-center mb-4 sm:mb-10 shrink-0">
+                        @include('portal.partials.lang-switch', ['onLight' => true, 'class' => 'mb-3'])
+                        <br>
                         <div class="inline-block p-2 sm:p-4 rounded-full bg-green-50 border border-green-100 mb-2 sm:mb-6 shadow-sm">
                             <x-lucide-shield-check class="w-5 h-5 sm:w-8 sm:h-8 text-green-600" stroke-width="2.5" />
                         </div>
-                        <h2 class="text-xl sm:text-3xl lg:text-5xl font-bold text-[#3E2723] mb-1 sm:mb-3 tracking-tight">You're Online</h2>
-                        <p class="hidden sm:block text-xs lg:text-base text-[#795548] font-medium max-w-md mx-auto px-4">You're connected. Enjoy your time at Lawa't Kape!</p>
+                        <h2 class="text-xl sm:text-3xl lg:text-5xl font-bold text-[#3E2723] mb-1 sm:mb-3 tracking-tight">{{ __("You're online") }}</h2>
+                        <p class="hidden sm:block text-xs lg:text-base text-[#795548] font-medium max-w-md mx-auto px-4">{{ __("Enjoy your time at Lawa't Kape!") }}</p>
                     </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-10 max-w-4xl mx-auto w-full px-2">
@@ -126,15 +128,15 @@
                              queried whenever the guest actually wants it. --}}
                         <div class="bg-amber-50 border-2 border-amber-200/50 rounded-3xl p-4 sm:p-6 shadow-sm col-span-2 flex flex-col items-center justify-center transition-all hover:bg-amber-100/50 group"
                              role="timer" aria-live="off"
-                             :aria-label="`Time remaining: ${remainingLabel} ${remainingUnit}`">
-                            <span class="text-xs font-bold text-amber-800 uppercase tracking-wide mb-2 group-hover:scale-110 transition-transform" aria-hidden="true">Time Remaining</span>
+                             :aria-label="`${T.timeLeft}: ${remainingLabel} ${remainingUnit}`">
+                            <span class="text-sm font-bold text-amber-900 mb-2" aria-hidden="true">{{ __('Time left') }}</span>
                             <span class="text-4xl lg:text-5xl font-bold text-[#3E2723] tabular-nums tracking-tighter inline-block" aria-hidden="true" x-text="remainingLabel" :class="tickPulse ? 'tick-pulse' : ''"></span>
-                            <span class="text-xs font-bold text-amber-800 uppercase tracking-wide mt-1" aria-hidden="true" x-text="remainingUnit"></span>
+                            <span class="text-sm font-bold text-amber-900 mt-1" aria-hidden="true" x-text="remainingUnit"></span>
                         </div>
                         
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">
                             <x-lucide-download class="w-6 h-6 text-[#795548] mb-3" stroke-width="2.5" />
-                            <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide mb-1">Data</span>
+                            <span class="text-sm font-bold text-[#5D4037] mb-1">{{ __('Data used') }}</span>
                             {{-- Defaulted, not assumed: OPNsense does not always
                                  include a counter on a freshly-created session,
                                  and an undefined key here is a 500 on the one
@@ -144,7 +146,7 @@
 
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">
                             <x-lucide-user class="w-6 h-6 text-[#795548] mb-3" stroke-width="2.5" />
-                            <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide mb-1">Device</span>
+                            <span class="text-sm font-bold text-[#5D4037] mb-1">{{ __('Your device') }}</span>
                             <span class="text-base font-bold text-[#3E2723] truncate w-full text-center px-1">{{ $userName }}</span>
                         </div>
                     </div>
@@ -156,9 +158,9 @@
                          else needs the address to reopen it in a real browser. --}}
                     <div class="max-w-md mx-auto w-full px-2 mb-6">
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-5 text-center shadow-sm">
-                            <span class="block text-xs font-bold text-[#6D4C41] uppercase tracking-wide mb-2">Check Back Any Time</span>
-                            <p class="font-mono text-xs font-bold text-[#3E2723] bg-[#FAF7F2] border border-[#F0E6D2] rounded-xl py-2.5 px-3 select-all break-all">{{ config('services.portal.host') }}</p>
-                            <p class="text-xs text-[#795548] font-bold mt-2.5 leading-relaxed">Type this in any browser to see your time left.</p>
+                            <span class="block text-sm font-bold text-[#5D4037] mb-2">{{ __('Check your time anytime') }}</span>
+                            <p class="font-mono text-base font-bold text-[#3E2723] bg-[#FAF7F2] border border-[#F0E6D2] rounded-xl py-2.5 px-3 select-all break-all">{{ config('services.portal.host') }}</p>
+                            <p class="text-sm text-[#795548] mt-2.5 leading-relaxed">{{ __('Type this in any browser to see your time left.') }}</p>
                         </div>
                     </div>
 
@@ -168,18 +170,41 @@
                              and a "Continue Browsing" button that reloads the page the
                              guest is already looking at is worse than no button. --}}
                         @if($browseUrl !== route('portal.index'))
-                            <a href="{{ $browseUrl }}" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl lg:rounded-3xl font-bold uppercase tracking-wide transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-xs lg:text-sm">
-                                Continue Browsing
+                            <a href="{{ $browseUrl }}" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-5 rounded-2xl lg:rounded-3xl font-bold transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-base">
+                                {{ __('Continue browsing') }}
                                 <x-lucide-external-link class="w-5 h-5" />
                             </a>
                         @endif
-                        <form action="{{ route('portal.disconnect') }}" method="POST" x-data="{ disconnecting: false }" @submit="disconnecting = true">
+                        {{-- Asking the counter for more time comes first: it's what a guest
+                             near the end actually wants, and it's harmless to tap. --}}
+                        <form action="{{ route('portal.more-time') }}" method="POST" x-data="{ sending: false }" @submit="sending = true">
+                            @csrf
+                            <button type="submit" :disabled="sending" class="w-full min-h-[56px] bg-amber-500 hover:bg-amber-600 text-[#3E2723] rounded-2xl lg:rounded-3xl font-bold transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-base shadow-sm disabled:opacity-70">
+                                <x-lucide-timer class="w-5 h-5" />
+                                <span x-text="sending ? @js(__('Telling the staff…')) : @js(__('Need more time?'))">{{ __('Need more time?') }}</span>
+                            </button>
+                        </form>
+
+                        {{-- Small and last, and it asks first: one stray tap used to end
+                             the session outright. --}}
+                        <form action="{{ route('portal.disconnect') }}" method="POST" x-data="{ disconnecting: false }" x-ref="disconnectForm" class="pt-4 text-center"
+                              @submit.prevent="Swal.fire({
+                                  title: @js(__('Log out of the Wi-Fi?')),
+                                  text: @js(__('Your code keeps its remaining time. Type it again to reconnect.')),
+                                  icon: 'question',
+                                  showCancelButton: true,
+                                  confirmButtonText: @js(__('Yes, log out')),
+                                  cancelButtonText: @js(__('Stay online')),
+                                  confirmButtonColor: '#C62828',
+                                  cancelButtonColor: '#3E2723',
+                                  reverseButtons: true,
+                              }).then(r => { if (r.isConfirmed) { disconnecting = true; $refs.disconnectForm.submit(); } })">
                             @csrf
                             <input type="hidden" name="session_id" value="{{ $session['sessionId'] }}">
-                            <button type="submit" :disabled="disconnecting" class="w-full bg-white/60 hover:bg-white text-[#C62828] border-2 border-[#F0E6D2] py-4 rounded-2xl lg:rounded-3xl font-bold uppercase tracking-wide transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-xs shadow-sm disabled:opacity-70 disabled:cursor-not-allowed">
+                            <button type="submit" :disabled="disconnecting" class="inline-flex min-h-[44px] items-center justify-center gap-2 px-4 text-sm font-semibold text-[#C62828] underline underline-offset-4 decoration-red-200 disabled:opacity-70">
                                 <x-lucide-log-out x-show="!disconnecting" class="w-4 h-4" />
                                 <x-lucide-loader-2 x-show="disconnecting" x-cloak class="w-4 h-4 animate-spin" />
-                                <span x-text="disconnecting ? 'Disconnecting…' : 'Disconnect Session'"></span>
+                                <span x-text="disconnecting ? @js(__('Logging out…')) : @js(__('Log out of the Wi-Fi'))">{{ __('Log out of the Wi-Fi') }}</span>
                             </button>
                         </form>
                     </div>
@@ -205,7 +230,7 @@
                             <x-lucide-message-circle class="w-5 h-5 sm:w-8 sm:h-8 text-amber-800" stroke-width="2.5" />
                         </div>
                         <h2 class="text-xl sm:text-3xl lg:text-5xl font-bold text-[#3E2723] mb-0 sm:mb-2 tracking-tight">Barista AI</h2>
-                        <p class="hidden sm:block text-xs text-[#795548] font-bold uppercase tracking-wide">Ask about the menu or Wi-Fi</p>
+                        <p class="hidden sm:block text-base text-[#795548] font-semibold">{{ __('Ask about the menu or Wi-Fi') }}</p>
                     </div>
 
                     {{-- min-h-0, not min-h-[300px]: a 300px floor is the same bug
@@ -227,7 +252,7 @@
                         <div class="shrink-0 relative z-10 mb-4 flex items-center gap-2">
                             <div class="flex items-center gap-2.5 bg-[#FAF7F2] px-4 py-1.5 rounded-full border border-[#F0E6D2] shadow-sm" x-bind:class="aiCue ? 'animate-bounce' : ''">
                                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                <span class="text-xs font-bold uppercase tracking-wide text-[#3E2723]">AI Agent Active</span>
+                                <span class="text-sm font-bold text-[#3E2723]">{{ __('Barista AI is here') }}</span>
                             </div>
 
                             {{-- Only inside the phone's sign-in window, which is the
@@ -241,7 +266,7 @@
                                  the single thing most likely to make the OS honour
                                  it. See CaptivePortalController::handoff(). --}}
                             <span class="cna-only ml-auto shrink-0">
-                                @include('portal.partials.open-in-browser', ['label' => 'Open in Browser', 'class' => 'inline-flex items-center gap-1.5 bg-[#3E2723] text-white px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide active:scale-95 transition', 'iconClass' => 'w-3 h-3'])
+                                @include('portal.partials.open-in-browser', ['label' => __('Open in your browser'), 'class' => 'inline-flex items-center gap-1.5 bg-[#3E2723] text-white px-3 py-2 rounded-full text-sm font-bold active:scale-95 transition', 'iconClass' => 'w-4 h-4'])
                             </span>
                         </div>
 
@@ -249,9 +274,9 @@
                             mode="embedded"
                             :endpoint="route('portal.chat')"
                             anchor-id="portal"
-                            greeting="Hi! ☕ I am Barista AI. I can help you with your current connection, extending your session, or even tell you about our latest coffee and meals! How can I help you?"
+                            greeting="{{ __('Hi! I am Barista AI. Ask me about your Wi-Fi time, or our coffee and meals.') }}"
                             :csrf="false"
-                            rate-limit-message="☕ Sorry, I am a bit busy serving other guests. Please try again in a minute!"
+                            rate-limit-message="{{ __('Sorry, I am busy helping other guests. Please try again in a minute.') }}"
                         />
                     </div>
                 </div>
@@ -264,16 +289,16 @@
                  to anything other than zero. --}}
             <div class="bg-white lg:bg-transparent pt-3 sm:pt-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-8 lg:pb-12 px-4 sm:px-8 lg:px-20 flex justify-center gap-4 lg:gap-6 shrink-0 border-t border-[#F0E6D2]/50 lg:border-none relative z-20">
                 <button x-on:click="activeTab = 'status'" 
-                        class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-xs font-bold uppercase tracking-wide transition-all duration-300 flex flex-col items-center gap-2.5 group"
+                        class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-sm font-bold transition-all duration-300 flex flex-col items-center gap-2 group"
                         :class="activeTab === 'status' ? 'text-white bg-[#3E2723] shadow-2xl shadow-amber-900/30 -translate-y-1' : 'text-[#6D4C41] hover:bg-white hover:shadow-md hover:border-[#F0E6D2] border border-transparent'">
                     <x-lucide-wifi class="w-5 h-5 lg:w-6 lg:h-6 transition-colors" x-bind:class="activeTab === 'status' ? 'text-amber-500' : 'text-[#D7CCC8] group-hover:text-[#795548]'" stroke-width="2.5" />
-                    <span>Status</span>
+                    <span>{{ __('My time') }}</span>
                 </button>
                 <button x-on:click="activeTab = 'help'"
                         class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-xs font-bold uppercase tracking-wide transition-all duration-300 flex flex-col items-center gap-2.5 group"
                         :class="activeTab === 'help' ? 'text-white bg-[#3E2723] shadow-2xl shadow-amber-900/30 -translate-y-1' : 'text-[#6D4C41] hover:bg-white hover:shadow-md hover:border-[#F0E6D2] border border-transparent'">
                     <x-lucide-message-square class="w-5 h-5 lg:w-6 lg:h-6 transition-colors" x-bind:class="activeTab === 'help' ? 'text-amber-500' : 'text-[#D7CCC8] group-hover:text-[#795548]'" stroke-width="2.5" />
-                    <span>AI Chat</span>
+                    <span>{{ __('Ask AI') }}</span>
                 </button>
             </div>
 
@@ -282,12 +307,26 @@
     </div>
 
 <script>
+const T = @js([
+    'timeLeft' => __('Time left'),
+    'timesUp' => __("Time's up"),
+    'reconnecting' => __('Reconnecting…'),
+    'daysLeft' => __('days left'),
+    'hoursLeft' => __('hours left'),
+    'minuteLeft' => __('minute left'),
+    'minutesLeft' => __('minutes left'),
+    'secondLeft' => __('second left'),
+    'secondsLeft' => __('seconds left'),
+    'tenLeftTitle' => __('10 minutes left'),
+    'tenLeftText' => __('Your Wi-Fi time is almost up. Need more? Tap "Need more time?" or ask at the counter.'),
+    'gotIt' => __('Got it'),
+]);
 document.addEventListener('alpine:init', () => {
     Alpine.data('portalSystem', (expiresAtMs) => ({
         activeTab: 'status',
         connectionStatus: 'connected',
         remainingLabel: '—',
-        remainingUnit: 'Left',
+        remainingUnit: '',
         tickPulse: false,
         aiCue: false,
         // One-shot: without this the warning would refire every tick for
@@ -333,8 +372,8 @@ document.addEventListener('alpine:init', () => {
             }
 
             if (totalSeconds <= 0) {
-                this.remainingLabel = "Time's Up";
-                this.remainingUnit = 'Reconnecting…';
+                this.remainingLabel = T.timesUp;
+                this.remainingUnit = T.reconnecting;
                 // Let the server have the final say (voucher/session state) rather
                 // than trusting the client clock — reload triggers the expired-
                 // session redirect in CaptivePortalController::index().
@@ -351,23 +390,23 @@ document.addEventListener('alpine:init', () => {
 
             if (days > 0) {
                 this.remainingLabel = `${days}d ${hours}h`;
-                this.remainingUnit = 'Days Left';
+                this.remainingUnit = T.daysLeft;
             } else if (hours > 0) {
                 this.remainingLabel = `${hours}h ${minutes}m`;
-                this.remainingUnit = 'Hours Left';
+                this.remainingUnit = T.hoursLeft;
             } else if (minutes > 0) {
                 // Whole minutes, not m:ss. Under a label reading "Minutes Left",
                 // "5:30" reads as five-point-thirty — guests took it for five and
                 // a half minutes, or for a clock time. The number and its unit
                 // now agree.
                 this.remainingLabel = `${minutes}`;
-                this.remainingUnit = minutes === 1 ? 'Minute Left' : 'Minutes Left';
+                this.remainingUnit = minutes === 1 ? T.minuteLeft : T.minutesLeft;
             } else {
                 // The final minute counts in seconds, so the display keeps moving
                 // instead of sitting on a motionless "1" — a countdown that never
                 // changes is indistinguishable from one that has frozen.
                 this.remainingLabel = `${seconds}`;
-                this.remainingUnit = seconds === 1 ? 'Second Left' : 'Seconds Left';
+                this.remainingUnit = seconds === 1 ? T.secondLeft : T.secondsLeft;
             }
 
             // Pulse the digits whenever the displayed value actually changes
@@ -389,15 +428,15 @@ document.addEventListener('alpine:init', () => {
             // itself and have evidently stopped registering it.
             Swal.fire({
                 icon: 'warning',
-                title: '10 Minutes Left',
-                text: "Your Wi-Fi session is about to expire. Wrap up what you're doing, or check the Status tab to see how much time remains.",
-                confirmButtonText: 'Got it',
+                title: T.tenLeftTitle,
+                text: T.tenLeftText,
+                confirmButtonText: T.gotIt,
                 background: '#FFF8E1',
                 color: '#5D4037',
                 iconColor: '#F59E0B',
                 customClass: {
                     popup: 'rounded-[2rem] border-t-8 border-amber-500 shadow-2xl',
-                    confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-wide text-xs bg-[#3E2723]',
+                    confirmButton: 'px-8 py-3 rounded-full font-bold text-base bg-[#3E2723]',
                 },
             });
 

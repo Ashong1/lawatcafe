@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() === 'fil' ? 'fil' : 'en' }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +10,7 @@
 <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
 <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
 <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
-@vite(['resources/css/app.css', 'resources/js/app.js'])
+@vite(['resources/css/portal.css', 'resources/js/portal.js'])
 <style>
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -20,7 +20,7 @@
 <body class="bg-[#FAF7F2] text-[#4A3B32] min-h-screen font-sans antialiased flex items-center justify-center p-4 lg:p-8" style="font-family: 'Montserrat', sans-serif;">
 
     <div class="fixed inset-0 z-0">
-        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat portal-bg-photo" style="background-image: url('/images/lawat-bg.jpg');"></div>
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat portal-bg-photo" style="background-image: url('/images/portal-bg.jpg');"></div>
         <div class="absolute inset-0 bg-black/50"></div>
     </div>
 
@@ -77,16 +77,16 @@
                     <div class="w-14 h-14 bg-green-50 border-2 border-green-100 rounded-full flex items-center justify-center mx-auto mb-4 check-pop-in">
                         <x-lucide-check class="w-7 h-7 text-green-600" stroke-width="3" />
                     </div>
-                    <h2 class="text-2xl lg:text-4xl font-bold text-[#3E2723] tracking-tight anim-pop-in [animation-delay:150ms]">Code accepted</h2>
-                    <p class="text-sm text-[#795548] font-medium mt-1 anim-pop-in [animation-delay:250ms]">{{ $alreadyActive ? "You're connected." : "We'll connect you in a moment." }}</p>
+                    <h2 class="text-2xl lg:text-4xl font-bold text-[#3E2723] tracking-tight anim-pop-in [animation-delay:150ms]">{{ __('Code accepted') }}</h2>
+                    <p class="text-sm text-[#795548] font-medium mt-1 anim-pop-in [animation-delay:250ms]">{{ $alreadyActive ? __("You're connected.") : __("We'll connect you in a moment.") }}</p>
                 </div>
 
                 <div class="bg-amber-50 border-2 border-amber-200/50 rounded-[2rem] px-6 py-6 mb-6 text-center relative overflow-hidden shadow-sm max-w-md mx-auto w-full">
                     <div class="absolute top-0 left-0 w-full h-1 bg-amber-500/30"></div>
                     <p class="text-5xl lg:text-6xl font-bold text-[#3E2723] tracking-tighter mb-1">
-                        {{ $durationMinutes >= 60 ? rtrim(rtrim(number_format($durationMinutes / 60, 1), '0'), '.') : $durationMinutes }}<span class="text-xl lg:text-2xl ml-1">{{ $durationMinutes >= 60 ? 'hr' : 'min' }}</span>
+                        {{ $durationMinutes >= 60 ? rtrim(rtrim(number_format($durationMinutes / 60, 1), '0'), '.') : $durationMinutes }}<span class="text-xl lg:text-2xl ml-1">{{ $durationMinutes >= 60 ? __('hr') : __('min') }}</span>
                     </p>
-                    <p class="text-sm font-bold text-[#795548]">of Wi-Fi &mdash; until {{ $expiresAt->format('g:i A') }}</p>
+                    <p class="text-base font-bold text-[#795548]">{{ __('of Wi-Fi — until :time', ['time' => $expiresAt->format('g:i A')]) }}</p>
                 </div>
 
                 {{-- activate() redirects back here when OPNsense is unreachable, so
@@ -137,9 +137,9 @@
                         {{-- type=button with an explicit go(): a plain submit would
                              race the timer and could fire the form twice. --}}
                         <button type="button" x-on:click="go()" x-bind:disabled="submitting"
-                                class="w-full bg-[#3E2723] hover:bg-[#271815] disabled:opacity-70 text-white py-5 rounded-2xl lg:rounded-3xl font-bold uppercase tracking-wide transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-xs lg:text-sm">
-                            <span x-show="!submitting">{{ $alreadyActive ? 'Continue Browsing' : 'Start Browsing' }}</span>
-                            <span x-show="submitting" style="display: none;">Connecting&hellip;</span>
+                                class="w-full bg-[#3E2723] hover:bg-[#271815] disabled:opacity-70 text-white py-5 rounded-2xl lg:rounded-3xl font-bold transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-4 text-base min-h-[56px]">
+                            <span x-show="!submitting">{{ $alreadyActive ? __('Continue browsing') : __('Start browsing') }}</span>
+                            <span x-show="submitting" style="display: none;">{{ __('Connecting…') }}</span>
                             <x-lucide-globe class="w-5 h-5 lg:w-6 lg:h-6" x-show="!submitting" />
                         </button>
                     </form>
@@ -148,11 +148,11 @@
                         {{-- No x-cloak: this must be readable before Alpine boots,
                              because it explains why the page is about to change by
                              itself. It only ever swaps text, never appears. --}}
-                        <p class="text-center text-xs font-bold text-[#6D4C41] uppercase tracking-wide leading-relaxed" x-show="!submitting">
-                            <span x-show="!cancelled">Connecting in <span x-text="secondsLeft">6</span>s&hellip;
-                                <button type="button" x-on:click="cancelled = true" class="underline decoration-dotted ml-1 normal-case tracking-normal font-bold px-3 py-3 -my-3">Wait</button>
+                        <p class="text-center text-sm font-semibold text-[#6D4C41] leading-relaxed" x-show="!submitting">
+                            <span x-show="!cancelled">{{ __('Connecting in') }} <span x-text="secondsLeft">6</span>s&hellip;
+                                <button type="button" x-on:click="cancelled = true" class="underline decoration-dotted ml-1 font-bold px-3 py-3 -my-3">{{ __('Wait') }}</button>
                             </span>
-                            <span x-show="cancelled" style="display: none;">Tap above when you're ready.</span>
+                            <span x-show="cancelled" style="display: none;">{{ __("Tap above when you're ready.") }}</span>
                         </p>
                     @endunless
 
@@ -160,20 +160,17 @@
                          this page: once the firewall opens, a sign-in window (and
                          even a browser tab) gets closed.
 
-                         No page can open the real browser by itself — the
-                         automatic intent:// handoff is refused without a user
-                         gesture. A real tap on target=_blank works on some
-                         windows; Apple gets the x-safari- scheme (safariUrl()).
-                         Otherwise the page opens here and auto-reconnect keeps
-                         the guest online.
+                         No page can open the real browser by itself, so this is a
+                         tap: a browser picker on Android, x-safari- on Apple (see
+                         portal/partials/open-in-browser.blade.php).
 
                          .cna-only/.browser-only go on wrappers: their
                          display:block would flatten the links' flex layout. --}}
                     <div class="rounded-2xl border-2 border-dashed border-[#E6D5C3] bg-white/70 px-4 py-4 text-center space-y-3">
                         <p class="text-sm text-[#4A3B32] leading-relaxed">
-                            Check your time left anytime at
+                            {{ __('Check your time left anytime at') }}
                             <span class="block mt-1 font-bold text-base text-[#3E2723] select-all">{{ config('services.portal.host') }}</span>
-                            <span class="block mt-1 text-xs text-[#795548]">or scan the code on your voucher slip.</span>
+                            <span class="block mt-1 text-sm text-[#795548]">{{ __('or scan the QR code on your voucher slip.') }}</span>
                         </p>
 
                         {{-- A second device (a laptop beside the phone) can scan this;
@@ -186,13 +183,13 @@
                         @endif
 
                         <div class="cna-only">
-                            @include('portal.partials.open-in-browser', ['label' => 'Open in my browser', 'class' => 'w-full min-h-[44px] bg-[#FFF8E1] border-2 border-[#FFE082] text-[#6D4C41] py-3 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] flex flex-row-reverse items-center justify-center gap-2 text-sm'])
-                            <p class="text-xs text-[#795548] mt-2">This window closes once you're online.</p>
+                            @include('portal.partials.open-in-browser', ['label' => __('Open in my browser'), 'class' => 'w-full min-h-[44px] bg-[#FFF8E1] border-2 border-[#FFE082] text-[#6D4C41] py-3 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] flex flex-row-reverse items-center justify-center gap-2 text-sm'])
+                            <p class="text-sm text-[#795548] mt-2">{{ __("This window closes once you're online.") }}</p>
                         </div>
                         <div class="browser-only">
                             <a href="{{ route('portal.index') }}"
                                class="w-full min-h-[44px] bg-white border-2 border-[#E6D5C3] text-[#6D4C41] py-3 rounded-xl font-bold tracking-wide transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm hover:border-[#8D6E63]">
-                                <span>View my time left</span>
+                                <span>{{ __('View my time left') }}</span>
                                 <x-lucide-timer class="w-4 h-4" />
                             </a>
                         </div>

@@ -6,12 +6,15 @@ use App\Models\BannedDevice;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Models\User;
 use App\Models\Voucher;
+use App\Notifications\SystemAlert;
 use App\Services\Agent\ChatStreamResponder;
 use App\Services\Agent\ConversationHistoryService;
 use App\Services\Agent\LessonLibrary;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
+use App\Services\NetworkHealthService;
 use App\Services\OpnSenseService;
 use App\Services\QrCodeService;
 use App\Services\TrafficShapingService;
@@ -19,6 +22,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class CaptivePortalController extends Controller
 {
@@ -192,6 +196,20 @@ class CaptivePortalController extends Controller
     }
 
     /**
+     * activeVoucherFor() also matches on IP, so a different phone later given
+     * the same DHCP address would match too. Recovery needs the MAC the code
+     * was redeemed on (or an unbound voucher).
+     */
+    private function boundToThisDevice(Voucher $voucher, ?string $mac): bool
+    {
+        if (empty($voucher->mac_address_hash)) {
+            return true;
+        }
+
+        return ! empty($mac) && hash_equals($voucher->mac_address_hash, Voucher::hashMac($mac));
+    }
+
+    /**
      * Seconds left on a redeemed voucher, or null if it has no time left.
      * Never returns a negative — an expired voucher is "no session", not
      * "negative session".
@@ -325,7 +343,8 @@ class CaptivePortalController extends Controller
         if (! $activeSession) {
             $pending = $this->activeVoucherFor($ip, $mac);
 
-            if ($pending && ! $pending->disconnected_at && $this->secondsRemainingOn($pending) && ! $this->isMacBanned($mac)) {
+            if ($pending && ! $pending->disconnected_at && $this->boundToThisDevice($pending, $mac)
+                && $this->secondsRemainingOn($pending) && ! $this->isMacBanned($mac)) {
                 Log::info("Portal: recovering voucher {$pending->code} for {$ip} (activated: ".($pending->activated_at ? 'yes' : 'no').').');
 
                 if ($this->grantAccess($pending, $ip, $opnsense, $shaping)) {
@@ -350,7 +369,7 @@ class CaptivePortalController extends Controller
                         $opnsense->disconnectDevice($activeSession['sessionId']);
                     }
 
-                    return redirect()->route('portal.index')->with('error', 'Your session has expired. Please enter a new voucher.');
+                    return redirect()->route('portal.index')->with('error', __('Your session has expired. Please enter a new voucher.'));
                 }
 
                 return view('portal.status', [
@@ -358,7 +377,10 @@ class CaptivePortalController extends Controller
                     'session' => $activeSession,
                     'startTime' => Carbon::createFromTimestamp($activeSession['startTime']),
                     'expirationTime' => $expirationTime,
-                    'userName' => $activeSession['userName'] ?? 'Guest',
+                    // Not $activeSession['userName']: that's the firewall's internal login name.
+                    'userName' => $this->deviceNameFor($ip, $mac, $opnsense) ?? $voucher->code,
+                    'voucherCode' => $voucher->code,
+                    'secondsLeft' => (int) $this->secondsRemainingOn($voucher),
                     'browseUrl' => $this->browseUrl(),
                 ]);
             }
@@ -368,7 +390,58 @@ class CaptivePortalController extends Controller
         return view('portal.index', [
             'receiptPrintingEnabled' => Setting::receiptPrintingEnabled(),
             'safariUrl' => $this->safariUrl($request),
+            'signInDown' => $this->signInIsDown(),
+            // The voucher slip's QR carries its code (?code=), so scanning fills it in.
+            'prefillCode' => strtoupper(substr(preg_replace('/[^A-Za-z0-9-]/', '', (string) $request->query('code')), 0, 12)),
         ]);
+    }
+
+    /**
+     * "Need more time?" on the status page: tells staff and admins, who sell
+     * the next voucher at the counter (the shop is cash-only).
+     */
+    public function requestMoreTime(Request $request, OpnSenseService $opnsense)
+    {
+        [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
+        $voucher = $this->activeVoucherFor($ip, $mac);
+        $left = $voucher ? intdiv((int) $this->secondsRemainingOn($voucher), 60) : 0;
+        $device = $this->deviceNameFor($ip, $mac, $opnsense) ?? $ip;
+
+        $recipients = User::whereIn('role', ['staff', 'admin', 'super_admin'])->get();
+        Notification::send($recipients, new SystemAlert(
+            'A guest wants more Wi-Fi time',
+            "{$device} ".($voucher ? "(code {$voucher->code}, {$left} min left)" : '')." asked for more time. They'll come to the counter.",
+            'timer',
+            route('network.sessions'),
+        ));
+
+        return redirect()->route('portal.index')->with('message', __('Staff have been told. Please pay at the counter for more time.'));
+    }
+
+    /**
+     * The minute-by-minute health check can't reach the firewall, so a code
+     * typed now would fail. Only a recent result counts.
+     */
+    private function signInIsDown(): bool
+    {
+        $latest = app(NetworkHealthService::class)->latest();
+        $checkedAt = isset($latest['checked_at']) ? Carbon::parse($latest['checked_at']) : null;
+
+        return $checkedAt && $checkedAt->gt(now()->subMinutes(5))
+            && ($latest['checks']['firewall']['status'] ?? null) === 'fail';
+    }
+
+    /** The phone's own name from its DHCP lease, or its maker, for guest-facing labels. */
+    private function deviceNameFor(string $ip, ?string $mac, OpnSenseService $opnsense): ?string
+    {
+        $lease = collect($opnsense->getDhcpLeases())->first(fn ($l) => ($l['address'] ?? null) === $ip);
+        $name = trim((string) ($lease['hostname'] ?? ''));
+
+        if ($name !== '') {
+            return $name;
+        }
+
+        return ($lease['mac_info'] ?? '') ? __(':maker phone', ['maker' => $lease['mac_info']]) : null;
     }
 
     // Handle session termination
@@ -402,7 +475,7 @@ class CaptivePortalController extends Controller
             }
         }
 
-        return redirect()->route('portal.index')->with('message', 'Successfully disconnected.');
+        return redirect()->route('portal.index')->with('message', __("You're logged out. Your code keeps its remaining time."));
     }
 
     // The self-service GCash tab was removed from the portal UI (system is
@@ -456,7 +529,7 @@ class CaptivePortalController extends Controller
             // never shown, so a guest who mistyped their code just saw the form
             // reset with no explanation at all.
             if (! $voucher) {
-                return redirect()->route('portal.index')->with('error', 'That code doesn\'t match any voucher — double-check it against your receipt.');
+                return redirect()->route('portal.index')->with('error', __('That code doesn\'t match any voucher — double-check it against your receipt.'));
             }
 
             [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
@@ -464,7 +537,7 @@ class CaptivePortalController extends Controller
             if ($this->isMacBanned($mac)) {
                 Log::warning("Portal authenticate: rejected banned device {$mac} ({$ip}).");
 
-                return redirect()->route('portal.index')->with('error', 'This device has been blocked from network access. Please see staff for assistance.');
+                return redirect()->route('portal.index')->with('error', __('This device has been blocked from network access. Please see staff for assistance.'));
             }
 
             // A redeemed voucher is not automatically a spent one. The guest
@@ -481,7 +554,7 @@ class CaptivePortalController extends Controller
                 $secondsRemaining = $this->secondsRemainingOn($voucher);
 
                 if (! $secondsRemaining) {
-                    return redirect()->route('portal.index')->with('error', 'This code has already been used and its time has run out.');
+                    return redirect()->route('portal.index')->with('error', __('This code has already been used and its time has run out.'));
                 }
 
                 // Redeemed against no device at all — nothing to match on, so
@@ -489,13 +562,13 @@ class CaptivePortalController extends Controller
                 // separate from the "another device" branch below because
                 // claiming a specific rival device exists would be a guess.
                 if (empty($voucher->mac_address_hash) && empty($voucher->ip_address)) {
-                    return redirect()->route('portal.index')->with('error', 'This code has already been used.');
+                    return redirect()->route('portal.index')->with('error', __('This code has already been used.'));
                 }
 
                 if (! $this->voucherBelongsTo($voucher, $ip, $mac)) {
                     Log::warning("Portal authenticate: {$mac} ({$ip}) tried to reuse voucher {$voucher->code} bound to another device.");
 
-                    return redirect()->route('portal.index')->with('error', 'This code is already in use on another device.');
+                    return redirect()->route('portal.index')->with('error', __('This code is already in use on another device.'));
                 }
 
                 // Same device, time still on the clock. Re-point the voucher at
@@ -545,17 +618,17 @@ class CaptivePortalController extends Controller
         if ($this->isMacBanned($mac)) {
             Log::warning("Portal activate: rejected banned device {$mac} ({$ip}).");
 
-            return redirect()->route('portal.index')->with('error', 'This device has been blocked from network access. Please see staff for assistance.');
+            return redirect()->route('portal.index')->with('error', __('This device has been blocked from network access. Please see staff for assistance.'));
         }
 
         $voucher = $this->activeVoucherFor($ip, $mac);
 
         if (! $this->secondsRemainingOn($voucher)) {
-            return redirect()->route('portal.index')->with('error', 'Your session has expired. Please enter a new voucher.');
+            return redirect()->route('portal.index')->with('error', __('Your session has expired. Please enter a new voucher.'));
         }
 
         if (! $this->grantAccess($voucher, $ip, $opnsense, $shaping)) {
-            return redirect()->route('portal.success')->with('error', 'Failed to communicate with the firewall. Please try again.');
+            return redirect()->route('portal.success')->with('error', __("We couldn't switch on your Wi-Fi. Please try again or ask our staff."));
         }
 
         // Android is the one platform where the sign-in window can ask the OS

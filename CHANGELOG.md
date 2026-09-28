@@ -9,6 +9,29 @@ the history was rewritten.
 
 ---
 
+## 1.13.0 — Captive portal for everyone
+*build 174*
+
+- English / Filipino switch on every portal page (remembered per phone).
+- Larger, sentence-case text; no terms checkbox ("By connecting you agree
+  to our Wi-Fi rules" instead).
+- Voucher slips: each QR carries its own code, so scanning fills it in; the
+  printed address is wifi.lawatkape.lab (it used to print the staff host).
+- Status page: the phone's name instead of the firewall login name; "Need
+  more time?" alerts staff and admins; logging out asks first and is no
+  longer a big red button.
+- Portal loads about half as much: its own CSS/JS bundle (54 KB CSS vs
+  104 KB, no axios) and a 69 KB background instead of 387 KB.
+- A warning on the sign-in page when the health check can't reach the
+  firewall.
+- New codes are 5 characters from an alphabet without look-alikes (no
+  0/O, 1/I/L); code guessing is also capped at 30 tries an hour per device.
+- Fixed: a staff Disconnect no longer gets undone by auto-reconnect; and
+  auto-reconnect now requires the phone the code was used on, not just the
+  same IP address.
+- docs/OWNER_NETWORK_STEPS.md: forcing guest DNS through Pi-hole, and the
+  `.localdomain` Pi-hole record.
+
 ## 1.12.1 — Network pages made easier
 *builds 168–173*
 

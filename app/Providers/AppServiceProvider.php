@@ -40,8 +40,13 @@ class AppServiceProvider extends ServiceProvider
         // since guests land here via a cross-origin redirect) are CSRF-exempt,
         // so these limiters are the only thing standing between them and
         // automated abuse (voucher brute-forcing, AI cost draining, etc).
+        // Code guessing: a burst limit plus an hourly ceiling, so a device can't
+        // just wait out the minute over and over.
         RateLimiter::for('voucher-auth', function (Request $request) {
-            return Limit::perMinute(5)->by($request->ip());
+            return [
+                Limit::perMinute(5)->by($request->ip()),
+                Limit::perHour(30)->by('hour:'.$request->ip()),
+            ];
         });
 
         RateLimiter::for('portal-payment', function (Request $request) {
@@ -54,6 +59,11 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('portal-chat', function (Request $request) {
             return Limit::perMinute(10)->by($request->ip());
+        });
+
+        // A guest asking the counter for more time: a nudge, not a chat.
+        RateLimiter::for('portal-more-time', function (Request $request) {
+            return Limit::perMinutes(10, 1)->by($request->ip());
         });
 
         RateLimiter::for('portal-disconnect', function (Request $request) {

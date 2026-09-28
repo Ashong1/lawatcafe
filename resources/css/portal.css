@@ -1,0 +1,10 @@
+/* The guest portal's own stylesheet: same base styles, but Tailwind only
+   scans the portal's views, so a phone that isn't online yet downloads a
+   fraction of the staff app's CSS. */
+@import './base.css';
+
+@config '../../tailwind.portal.config.js';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

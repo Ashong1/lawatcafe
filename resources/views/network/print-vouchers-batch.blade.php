@@ -50,13 +50,11 @@
                     <span style="font-size: 9px; opacity: 0.7;">Voucher ID: #{{ $voucher->id }}</span>
                 </div>
 
-                {{-- Same code on every slip — it points at the status page, not
-                     at this particular voucher — so the controller encodes it
-                     once for the whole batch. See VoucherController::printBatch. --}}
-                @if(!empty($portalQr))
+                {{-- Each slip's QR carries its own code. See VoucherController::slipUrl. --}}
+                @if(!empty($portalQrs[$voucher->id]))
                     <div class="qr-block">
-                        <div class="qr-label">Check your remaining time</div>
-                        {!! $portalQr !!}
+                        <div class="qr-label">Scan to connect</div>
+                        {!! $portalQrs[$voucher->id] !!}
                     </div>
                 @endif
             </div>

@@ -28,7 +28,7 @@
 @if(!empty($safariUrl))
     <a href="{{ $safariUrl }}" class="{{ $class }}">
         <x-lucide-external-link class="{{ $iconClass ?? 'w-4 h-4' }}" />
-        <span>{{ $label === 'Open in my browser' ? 'Open in Safari' : $label }}</span>
+        <span>{{ __('Open in Safari') }}</span>
     </a>
 @else
     <button type="button" onclick="window.lkBrowserSheet(true)" class="{{ $class }}">
@@ -41,8 +41,8 @@
              class="fixed inset-0 z-[100] bg-black/60 flex items-end justify-center normal-case tracking-normal" style="display: none;"
              onclick="if (event.target === this) window.lkBrowserSheet(false)">
             <div class="w-full max-w-md bg-white rounded-t-3xl p-5 pb-6 text-left shadow-2xl">
-                <h2 id="lk-browser-sheet-title" class="text-lg font-bold text-[#3E2723] text-center">Open in which browser?</h2>
-                <p class="text-sm text-[#6D4C41] text-center mt-1 mb-4">Pick the one you use. If nothing happens, try another.</p>
+                <h2 id="lk-browser-sheet-title" class="text-lg font-bold text-[#3E2723] text-center">{{ __('Open in which browser?') }}</h2>
+                <p class="text-sm text-[#6D4C41] text-center mt-1 mb-4">{{ __('Pick the one you use. If nothing happens, try another.') }}</p>
                 <div class="grid grid-cols-2 gap-2">
                     @foreach($browsers as $name => $package)
                         <a href="{{ $intent($byName, $package) }}"
@@ -50,10 +50,10 @@
                     @endforeach
                 </div>
                 <a href="{{ $intent($byIp, null) }}"
-                   class="mt-2 min-h-[52px] flex items-center justify-center rounded-2xl border-2 border-[#E6D5C3] bg-white text-base font-bold text-[#3E2723] active:scale-[0.98]">Phone's own browser</a>
-                <p class="text-sm text-[#6D4C41] text-center mt-4">Or open any browser and type<br><span class="font-bold text-[#3E2723] select-all">{{ $portalHost }}</span></p>
+                   class="mt-2 min-h-[52px] flex items-center justify-center rounded-2xl border-2 border-[#E6D5C3] bg-white text-base font-bold text-[#3E2723] active:scale-[0.98]">{{ __("Phone's own browser") }}</a>
+                <p class="text-sm text-[#6D4C41] text-center mt-4">{{ __('Or open any browser and type') }}<br><span class="font-bold text-[#3E2723] select-all">{{ $portalHost }}</span></p>
                 <button type="button" onclick="window.lkBrowserSheet(false)"
-                        class="mt-4 w-full min-h-[48px] rounded-2xl bg-[#3E2723] text-white text-base font-bold">Cancel</button>
+                        class="mt-4 w-full min-h-[48px] rounded-2xl bg-[#3E2723] text-white text-base font-bold">{{ __('Cancel') }}</button>
             </div>
         </div>
         <script>

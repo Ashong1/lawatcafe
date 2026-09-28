@@ -120,7 +120,7 @@ class PosReceiptBirGateTest extends TestCase
         $response = $this->get(route('portal.index'));
 
         $response->assertOk();
-        $response->assertSee('given to you at the counter', false);
+        $response->assertSee('slip we gave you at the counter', false);
         $response->assertDontSee('printed at the bottom of your receipt', false);
     }
 

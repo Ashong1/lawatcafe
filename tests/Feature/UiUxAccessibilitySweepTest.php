@@ -114,7 +114,7 @@ class UiUxAccessibilitySweepTest extends TestCase
         $response = $this->get(route('portal.index'));
 
         $response->assertOk();
-        $response->assertSee('aria-label="Wi-Fi passcode"', false);
+        $response->assertSee('aria-label="Wi-Fi code"', false);
     }
 
     public function test_admin_settings_ai_providers_fields_are_labelled(): void

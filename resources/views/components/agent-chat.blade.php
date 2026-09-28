@@ -327,7 +327,7 @@
                     <input type="file" accept="image/*" class="hidden" x-ref="imageInput" @change="attachImage($event)">
                 </label>
                 <input type="text" x-model="message" @keydown.enter="send()" @paste="pasteImage($event)"
-                       :placeholder="imageThumb ? 'Say what to do with this photo...' : 'Ask a question or request an action...'"
+                       :placeholder="imageThumb ? 'Say what to do with this photo...' : {{ \Illuminate\Support\Js::from(__('Ask a question or request an action...')) }}"
                        class="flex-1 min-w-0 bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-[#3E2723] transition-all"
                        :disabled="streaming">
                 <button @click="send()"

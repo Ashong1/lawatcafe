@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\VoucherController;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Services\OpnSenseService;
@@ -89,10 +90,28 @@ class PortalQrCodeTest extends TestCase
             ->get(route('network.vouchers.print', $voucher));
 
         $response->assertOk();
-        $response->assertSee('Check your remaining time', false);
+        $response->assertSee('Scan to connect', false);
         $response->assertSee('<svg', false);
-        // The address itself stays too — a scanner is not always to hand.
-        $response->assertSee(route('portal.index'), false);
+        // The guest address (never the staff host the slip was printed from)
+        // stays too — a scanner is not always to hand.
+        $response->assertSee('wifi.lawatkape.lab', false);
+        // Scanning fills in this slip's own code.
+        $this->assertSame('http://wifi.lawatkape.lab/portal?code='.$voucher->code, VoucherController::slipUrl($voucher));
+    }
+
+    public function test_the_portal_fills_in_a_code_from_the_qr_link(): void
+    {
+        $this->get(route('portal.index', ['code' => 'lawa-ab2cd']))
+            ->assertOk()
+            ->assertSee('value="LAWA-AB2CD"', false);
+    }
+
+    public function test_new_codes_use_five_unambiguous_characters(): void
+    {
+        foreach (range(1, 50) as $i) {
+            $this->assertMatchesRegularExpression('/^LAWA-[ABCDEFGHJKMNPQRSTUVWXYZ2-9]{5}$/', Voucher::generateCode());
+        }
+        $this->assertStringStartsWith('FREE-', Voucher::generateCode('FREE'));
     }
 
     public function test_batch_printed_slips_carry_the_code_too(): void
@@ -108,8 +127,8 @@ class PortalQrCodeTest extends TestCase
             ->get(route('network.vouchers.batch-print', ['ids' => $ids]));
 
         $response->assertOk();
-        // One per slip, all encoding the same status page.
-        $this->assertSame(3, substr_count($response->getContent(), 'Check your remaining time'));
+        // One per slip, each carrying its own code.
+        $this->assertSame(3, substr_count($response->getContent(), 'Scan to connect'));
     }
 
     public function test_the_success_page_shows_the_same_code(): void
@@ -128,6 +147,7 @@ class PortalQrCodeTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
         });
 
         $response = $this->withServerVariables(['REMOTE_ADDR' => self::IP])
@@ -135,6 +155,6 @@ class PortalQrCodeTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('<svg', false);
-        $response->assertSee('scan the code on your voucher slip', false);
+        $response->assertSee('scan the QR code on your voucher slip', false);
     }
 }

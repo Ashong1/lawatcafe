@@ -35,4 +35,23 @@ class Voucher extends Model
     {
         return $this->belongsTo(Sale::class);
     }
+
+    /**
+     * Five characters from an alphabet without look-alikes (no 0/O, 1/I/L),
+     * so a code read off a slip is typed right the first time and there are
+     * 28 million possibilities per prefix instead of 1.7 million.
+     */
+    public const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+    public static function generateCode(string $prefix = 'LAWA'): string
+    {
+        do {
+            $code = $prefix.'-';
+            for ($i = 0; $i < 5; $i++) {
+                $code .= self::CODE_ALPHABET[random_int(0, strlen(self::CODE_ALPHABET) - 1)];
+            }
+        } while (static::where('code', $code)->exists());
+
+        return $code;
+    }
 }

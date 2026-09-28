@@ -6,7 +6,7 @@
     $initialTab = request('tab') === 'help' ? 'help' : 'code';
 @endphp
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() === 'fil' ? 'fil' : 'en' }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +17,7 @@
 <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
 <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
 <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
-@vite(['resources/css/app.css', 'resources/js/app.js'])
+@vite(['resources/css/portal.css', 'resources/js/portal.js'])
 <style>
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; scroll-behavior: smooth; }
@@ -90,19 +90,17 @@
 
     <!-- Background -->
     <div class="fixed inset-0 z-0">
-        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat portal-bg-photo" style="background-image: url('/images/lawat-bg.jpg');"></div>
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat portal-bg-photo" style="background-image: url('/images/portal-bg.jpg');"></div>
         <div class="absolute inset-0 bg-black/60"></div>
     </div>
 
-    {{-- Before sign-in the internet is blocked, so this must point at the portal
-         itself, never an outside address. A tap on target=_blank is what some
-         sign-in windows hand to the real browser; the rest just reload here. --}}
+    {{-- Inside the phone's sign-in window only: a way out to a real browser.
+         See portal/partials/open-in-browser.blade.php. --}}
     <div class="fixed top-0 inset-x-0 z-[60] bg-amber-50 border-b border-amber-100 px-4 py-2 text-center lg:hidden"
          x-show="isCNA()" x-cloak>
-        <p class="text-xs font-bold text-amber-800 uppercase tracking-wide flex items-center justify-center gap-2">
-            <x-lucide-external-link class="w-3 h-3" />
-            Issues?
-            @include('portal.partials.open-in-browser', ['label' => 'Open in Browser', 'class' => 'inline-flex items-center gap-1 underline decoration-dotted uppercase font-bold', 'iconClass' => 'hidden'])
+        <p class="text-sm font-semibold text-amber-900 flex items-center justify-center gap-2">
+            {{ __('Trouble here?') }}
+            @include('portal.partials.open-in-browser', ['label' => __('Open in your browser'), 'class' => 'inline-flex items-center gap-1 underline underline-offset-2 font-bold', 'iconClass' => 'w-4 h-4'])
         </p>
     </div>
 
@@ -142,13 +140,14 @@
                     <x-lucide-coffee class="w-6 h-6 text-amber-500" />
                     <h1 class="text-3xl font-bold text-white leading-none" style="font-family: 'Dancing Script', cursive;">Lawa't Kape</h1>
                 </div>
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/30 border border-white/10">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/30 border border-white/10 mb-3">
                     {{-- A guest who hasn't tried anything yet is not "disconnected"
                          — a red pulsing pill on arrival read as "the Wi-Fi is
                          broken". Neutral until they act; red is for real failures. --}}
                     <div class="w-1.5 h-1.5 rounded-full" :class="connectionStatus === 'connecting' ? 'bg-amber-400 animate-pulse' : 'bg-white/50'"></div>
-                    <span class="text-xs font-bold text-white/90 tracking-wide" x-text="connectionStatus === 'connecting' ? 'Connecting…' : 'Not connected yet'">Not connected yet</span>
+                    <span class="text-xs font-bold text-white/90 tracking-wide" x-text="connectionStatus === 'connecting' ? @js(__('Connecting…')) : @js(__('Not connected yet'))">{{ __('Not connected yet') }}</span>
                 </div>
+                @include('portal.partials.lang-switch')
             </div>
         </div>
 
@@ -180,11 +179,16 @@
                         <div class="inline-block p-3 rounded-full bg-amber-50 border border-amber-100 mb-4">
                             <x-lucide-wifi class="w-6 h-6 text-amber-800" stroke-width="2.5" />
                         </div>
-                        <h2 class="text-xl font-bold text-[#3E2723] mb-1 tracking-tight">Quick Connect</h2>
+                        <h2 class="text-2xl font-bold text-[#3E2723] mb-1 tracking-tight">{{ __('Connect to Wi-Fi') }}</h2>
                         {{-- Follows the BIR receipt gate like the hint below: no printed receipt, no "receipt passcode". --}}
-                        <p class="text-xs text-[#795548] font-bold uppercase tracking-wide mb-1">{{ $receiptPrintingEnabled ? 'Enter the code on your receipt' : 'Enter the code on your voucher slip' }}</p>
-                        <p class="text-xs text-[#6D4C41] italic font-medium">High-speed browsing with every brew.</p>
+                        <p class="text-base text-[#5D4037] font-semibold">{{ $receiptPrintingEnabled ? __('Type the code on your receipt') : __('Type the code on your voucher slip') }}</p>
                     </div>
+
+                    @if($signInDown)
+                        <div role="alert" class="relative z-10 mb-4 rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-semibold text-red-800">
+                            {{ __('Wi-Fi sign-in is having trouble right now. Please ask our staff for help.') }}
+                        </div>
+                    @endif
 
                     <form action="{{ route('portal.authenticate') }}" method="POST" id="lawat-login-form" class="space-y-6 relative z-10" @submit.prevent="submitForm($event)">
                         @csrf
@@ -195,7 +199,7 @@
                                      these a phone submits whatever autocorrect decided — a
                                      capitalised word, a trailing space, a "smart" dash. The server
                                      normalises too; this just stops the keyboard fighting the guest. --}}
-                                <input type="text" name="passcode" required placeholder="XXXX-XXXX" aria-label="Wi-Fi passcode"
+                                <input type="text" name="passcode" required placeholder="LAWA-XXXXX" aria-label="{{ __('Wi-Fi code') }}" value="{{ $prefillCode }}"
                                         autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false"
                                         aria-describedby="passcode-hint"
                                         class="w-full bg-white border-2 border-[#F0E6D2] rounded-2xl py-4 px-4 text-center text-xl font-mono font-bold text-[#3E2723] tracking-[0.3em] uppercase focus:outline-none focus:border-[#3E2723] shadow-sm placeholder-[#8D7B72]">
@@ -209,56 +213,48 @@
                                      registration, telling a guest to look at the bottom
                                      of a receipt sends them hunting for a piece of paper
                                      that was never produced. --}}
-                                <span id="passcode-hint" class="sr-only">Eight character code {{ $receiptPrintingEnabled ? 'printed at the bottom of your receipt' : 'given to you at the counter' }}, for example LAWA-1234.</span>
+                                <span id="passcode-hint" class="sr-only">{{ $receiptPrintingEnabled ? __('The code is printed at the bottom of your receipt, for example LAWA-1234.') : __('The code is on the slip from the counter, for example LAWA-1234.') }}</span>
                             </div>
                             
                             <!-- Where is my code? Helper -->
                             <button type="button" @click="Swal.fire({
-                                title: 'Find Your Code',
-                                text: '{{ $receiptPrintingEnabled ? "Your 8-character Wi-Fi passcode is printed at the very bottom of your Lawa\'t Kape receipt." : "Your 8-character Wi-Fi passcode is on the voucher slip handed to you at the counter. Ask our staff if you cannot find it." }}',
+                                title: @js(__('Where is my code?')),
+                                text: @js($receiptPrintingEnabled ? __('Your Wi-Fi code is printed at the very bottom of your receipt.') : __('Your Wi-Fi code is on the slip we gave you at the counter. You can also scan its QR code. Ask our staff if you cannot find it.')),
                                 icon: 'info',
-                                confirmButtonText: 'Got it!',
+                                confirmButtonText: @js(__('Got it')),
                                 confirmButtonColor: '#3E2723',
                                 customClass: {
                                     popup: 'rounded-[2rem] font-sans border-2 border-[#F0E6D2]',
-                                    title: 'text-[#3E2723] font-bold uppercase tracking-wide text-sm',
-                                    htmlContainer: 'text-xs text-[#4A3B32] font-medium'
+                                    title: 'text-[#3E2723] font-bold text-lg',
+                                    htmlContainer: 'text-base text-[#4A3B32]'
                                 }
-                            })" class="w-full min-h-[44px] py-3 text-center text-xs font-bold text-[#6D4C41] hover:text-[#3E2723] transition-colors uppercase tracking-wide flex items-center justify-center gap-1.5">
-                                <x-lucide-help-circle class="w-3 h-3" />
-                                Where can I find my passcode?
+                            })" class="w-full min-h-[44px] py-3 text-center text-sm font-semibold text-[#5D4037] hover:text-[#3E2723] transition-colors underline underline-offset-4 decoration-[#D7CCC8] flex items-center justify-center gap-1.5">
+                                <x-lucide-help-circle class="w-4 h-4" />
+                                {{ __('Where is my code?') }}
                             </button>
                         </div>
 
-                        <div class="flex items-center gap-3 px-1">
-                            <div class="relative flex items-center justify-center">
-                                {{-- "peer" is what makes the tick below work: peer-checked:block
-                                     matches on a later sibling of an element marked peer, and
-                                     without it the icon stayed display:none forever. The box
-                                     filled dark on check but never showed a check mark. --}}
-                                <input type="checkbox" id="terms-voucher" required class="peer w-5 h-5 text-[#3E2723] border-2 border-[#E6D5C3] rounded-lg focus:ring-[#3E2723] cursor-pointer appearance-none transition-all checked:bg-[#3E2723] checked:border-[#3E2723]">
-                                <x-lucide-check class="w-3.5 h-3.5 text-white absolute pointer-events-none hidden peer-checked:block" stroke-width="4" />
-                            </div>
-                            <label for="terms-voucher" class="flex-1 min-h-[44px] flex items-center text-xs text-[#6D4C41] font-bold leading-tight cursor-pointer">
-                                I agree to the <a href="javascript:void(0)" @click="showTOS = true" class="text-[#3E2723] underline decoration-[#3E2723]/30">Terms</a>.
-                            </label>
-                        </div>
+
 
                         <button type="submit" :disabled="isSubmitting"
-                                class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-2xl font-bold uppercase tracking-wide transition-all shadow-lg active:scale-95 text-xs flex items-center justify-center gap-3 disabled:opacity-50">
+                                class="w-full min-h-[56px] bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95 text-base flex items-center justify-center gap-3 disabled:opacity-50">
                             <template x-if="!isSubmitting">
                                 <div class="flex items-center gap-3">
-                                    <span>Connect to Wi-Fi</span>
-                                    <x-lucide-arrow-right class="w-4 h-4 animate-pulse" />
+                                    <span>{{ __('Connect') }}</span>
+                                    <x-lucide-arrow-right class="w-5 h-5" />
                                 </div>
                             </template>
                             <template x-if="isSubmitting">
                                 <div class="flex items-center gap-3">
                                     <x-lucide-loader-2 class="w-4 h-4 animate-spin" />
-                                    <span>Authenticating...</span>
+                                    <span>{{ __('Checking your code…') }}</span>
                                 </div>
                             </template>
                         </button>
+                        <p class="text-center text-sm text-[#6D4C41]">
+                            {{ __('By connecting you agree to our') }}
+                            <a href="javascript:void(0)" @click="showTOS = true" class="font-semibold text-[#3E2723] underline underline-offset-2">{{ __('Wi-Fi rules') }}</a>.
+                        </p>
                     </form>
                 </div>
 
@@ -269,7 +265,7 @@
                 <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" @if($initialTab !== 'help') style="display: none;" @endif class="flex flex-col flex-1 min-h-0">
                     <div class="text-center mb-4 shrink-0 flex flex-col items-center">
                         <h2 class="text-xl font-bold text-[#3E2723] mb-1 tracking-tight">Barista AI</h2>
-                        <p class="text-xs text-[#795548] font-bold uppercase tracking-wide mb-2">Ask about the menu or Wi-Fi</p>
+                        <p class="text-base text-[#5D4037] font-semibold mb-2">{{ __('Ask about the menu or Wi-Fi') }}</p>
                         {{-- No "System Online" pill here: a green pulse beside the header's
                              connection status gave two contradictory signals at once. --}}
                     </div>
@@ -279,9 +275,9 @@
                             mode="embedded"
                             :endpoint="route('portal.chat')"
                             anchor-id="portal"
-                            greeting="Hi! ☕ I am Barista AI. How can I help you today?"
+                            greeting="{{ __('Hi! I am Barista AI. How can I help you today?') }}"
                             :csrf="false"
-                            rate-limit-message="☕ Sorry, I am a bit busy serving other guests. Please try again in a minute!"
+                            rate-limit-message="{{ __('Sorry, I am busy helping other guests. Please try again in a minute.') }}"
                         />
                     </div>
                 </div>
@@ -292,21 +288,21 @@
         <!-- 3. Footer (Fixed Navigation) -->
         <div class="shrink-0 bg-white border-t border-[#F0E6D2] px-3 py-3 flex flex-row justify-evenly items-center gap-1.5">
             <button x-on:click="activeTab = 'code'" 
-                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-xs font-bold uppercase tracking-wide transition-all flex flex-col items-center justify-center gap-1.5"
+                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1"
                     :class="activeTab === 'code' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#6D4C41] hover:bg-gray-50/50 border border-transparent'">
                 <x-lucide-keyboard class="w-5 h-5" />
-                <span>Connect</span>
+                <span>{{ __('Connect') }}</span>
             </button>
             <a href="{{ route('portal.menu') }}" 
-                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-xs font-bold uppercase tracking-wide transition-all flex flex-col items-center justify-center gap-1.5 text-[#6D4C41] hover:bg-gray-50/50 border border-transparent">
+                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1 text-[#6D4C41] hover:bg-gray-50/50 border border-transparent">
                 <x-lucide-coffee class="w-5 h-5" />
-                <span>Menu</span>
+                <span>{{ __('Menu') }}</span>
             </a>
             <button x-on:click="activeTab = 'help'"
-                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-xs font-bold uppercase tracking-wide transition-all flex flex-col items-center justify-center gap-1.5"
+                    class="flex-1 py-3 px-1 min-h-[44px] rounded-2xl text-sm font-bold transition-all flex flex-col items-center justify-center gap-1"
                     :class="activeTab === 'help' ? 'text-[#3E2723] bg-[#FAF7F2] shadow-sm border border-[#F0E6D2]' : 'text-[#6D4C41] hover:bg-gray-50/50 border border-transparent'">
                 <x-lucide-message-square class="w-5 h-5" />
-                <span>AI Chat</span>
+                <span>{{ __('Ask AI') }}</span>
             </button>
         </div>
     </div>
@@ -314,14 +310,14 @@
     <!-- TOS Modal -->
     <x-modal-shell show="showTOS" max-width="sm" panel-class="border border-[#F0E6D2]" labelled-by="tos-modal-title">
             <div class="bg-[#3E2723] p-6 text-center">
-                <h3 id="tos-modal-title" class="text-white text-sm font-bold uppercase tracking-wide">Terms of Service</h3>
+                <h3 id="tos-modal-title" class="text-white text-lg font-bold">{{ \Illuminate\Support\Str::ucfirst(__('Wi-Fi rules')) }}</h3>
             </div>
-            <div class="p-6 max-h-[40vh] overflow-y-auto no-scrollbar text-xs text-[#4A3B32] leading-relaxed space-y-4">
-                <p>This network is provided for the convenience of our customers. Users agree not to engage in illegal activities.</p>
-                <p>Traffic is monitored for security threats. Connection metadata is logged for compliance.</p>
+            <div class="p-6 max-h-[40vh] overflow-y-auto no-scrollbar text-base text-[#4A3B32] leading-relaxed space-y-4">
+                <p>{{ __('This Wi-Fi is for our customers. Please do not use it for anything illegal.') }}</p>
+                <p>{{ __('We watch the network for security threats and keep a record of connections, as the law requires.') }}</p>
             </div>
             <div class="p-4 bg-[#FAF7F2] border-t border-[#F0E6D2] text-center">
-                <button @click="showTOS = false" class="bg-[#3E2723] text-white px-8 py-3.5 rounded-full font-bold uppercase tracking-wide text-xs">I Understand</button>
+                <button @click="showTOS = false" class="bg-[#3E2723] text-white px-8 py-3.5 rounded-full font-bold text-base min-h-[48px]">{{ __('OK') }}</button>
             </div>
     </x-modal-shell>
 

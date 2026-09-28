@@ -36,6 +36,7 @@ class CaptivePortalStatusPageTest extends TestCase
 
         $this->mock(OpnSenseService::class, function ($mock) use ($voucher) {
             $mock->shouldReceive('resolveMacForIp')->andReturn('AA:BB:CC:DD:EE:FF');
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldReceive('listSessions')->andReturn([
                 [
                     'sessionId' => 'sess-1',
@@ -52,7 +53,7 @@ class CaptivePortalStatusPageTest extends TestCase
 
         $response->assertOk();
         $response->assertViewIs('portal.status');
-        $response->assertSee('You\'re Online', false);
+        $response->assertSee('online</h2>', false);
         // The live countdown reads its starting point from this timestamp.
         $response->assertSee((string) $voucher->used_at->copy()->addMinutes(180)->getTimestampMs());
     }
@@ -77,6 +78,7 @@ class CaptivePortalStatusPageTest extends TestCase
 
         $this->mock(OpnSenseService::class, function ($mock) use ($voucher) {
             $mock->shouldReceive('resolveMacForIp')->andReturn('AA:BB:CC:DD:EE:FF');
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldReceive('listSessions')->andReturn([[
                 'sessionId' => 'sess-1',
                 'ipAddress' => '192.168.2.50/32',
@@ -91,7 +93,7 @@ class CaptivePortalStatusPageTest extends TestCase
         $response->assertOk()->assertViewIs('portal.status');
         $response->assertSee('warnedTenMinutes', false);
         $response->assertSee('totalSeconds <= 600', false);
-        $response->assertSee('10 Minutes Left', false);
+        $response->assertSee('10 minutes left', false);
     }
 
     /**
@@ -117,6 +119,7 @@ class CaptivePortalStatusPageTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn('AA:BB:CC:DD:EE:FF');
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
         });
     }
 
@@ -193,7 +196,7 @@ class CaptivePortalStatusPageTest extends TestCase
         $content = $this->getSuccessPage()->getContent();
 
         $this->assertStringContainsString('cancelled = true', $content);
-        $this->assertStringContainsString("Tap above when you're ready.", $content);
+        $this->assertStringContainsString('Tap above when you', $content);
     }
 
     /**
@@ -215,6 +218,7 @@ class CaptivePortalStatusPageTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn('AA:BB:CC:DD:EE:FF');
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldReceive('authorizeDevice')->andReturn(true);
         });
         // Tier provisioning is TrafficShapingServiceTest's subject, not this

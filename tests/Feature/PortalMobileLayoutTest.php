@@ -44,6 +44,7 @@ class PortalMobileLayoutTest extends TestCase
     {
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
             $mock->shouldReceive('listSessions')->andReturn([[
                 'sessionId' => 'sess-1',
                 'ipAddress' => self::IP.'/32',
@@ -65,6 +66,7 @@ class PortalMobileLayoutTest extends TestCase
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('resolveMacForIp')->andReturn(self::MAC);
             $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
         });
 
         $this->withServerVariables(['REMOTE_ADDR' => self::IP])
@@ -114,7 +116,7 @@ class PortalMobileLayoutTest extends TestCase
         $this->assertStringNotContainsString("String(seconds).padStart(2, '0')", $content);
         $this->assertStringContainsString('this.remainingLabel = `${minutes}`;', $content);
         // Singular/plural must track the value, or it reads "1 Minutes Left".
-        $this->assertStringContainsString("minutes === 1 ? 'Minute Left' : 'Minutes Left'", $content);
+        $this->assertStringContainsString('minutes === 1 ? T.minuteLeft : T.minutesLeft', $content);
         // The last minute still counts in seconds, so the display keeps moving.
         $this->assertStringContainsString('this.remainingLabel = `${seconds}`;', $content);
     }
@@ -192,7 +194,7 @@ class PortalMobileLayoutTest extends TestCase
             ->get(route('portal.index'))
             ->getContent();
 
-        $this->assertStringContainsString('Open in Browser', $content);
+        $this->assertStringContainsString('Open in your browser', $content);
         // A browser picker: named browsers get the name, the phone's own gets the IP.
         $this->assertStringContainsString('Open in which browser?', $content);
         $this->assertStringContainsString('intent://wifi.lawatkape.lab/portal#Intent;scheme=http;action=android.intent.action.VIEW;package=com.android.chrome', $content);

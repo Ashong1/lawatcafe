@@ -138,8 +138,8 @@ class VoucherController extends Controller
             // the status page in their own browser with nothing typed. Rendered
             // inline as SVG: a printed slip has no network to fetch an image
             // from. See QrCodeService.
-            'portalQr' => app(QrCodeService::class)->svg(route('portal.index'), 110),
-            'portalUrl' => route('portal.index'),
+            'portalQr' => app(QrCodeService::class)->svg(self::slipUrl($voucher), 110),
+            'portalUrl' => config('services.portal.host'),
         ]);
     }
 
@@ -155,14 +155,22 @@ class VoucherController extends Controller
 
         $vouchers = Voucher::whereIn('id', $request->ids)->get();
 
-        // One QR for the whole batch: every slip points at the same status
-        // page, so encoding it once and reusing the markup keeps a 50-voucher
-        // print from doing 50 identical encodes.
+        $qr = app(QrCodeService::class);
+
         return view('network.print-vouchers-batch', [
             'vouchers' => $vouchers,
-            'portalQr' => app(QrCodeService::class)->svg(route('portal.index'), 90),
-            'portalUrl' => route('portal.index'),
+            'portalQrs' => $vouchers->mapWithKeys(fn (Voucher $v) => [$v->id => $qr->svg(self::slipUrl($v), 90)]),
         ]);
+    }
+
+    /**
+     * What a slip's QR opens: the guest portal by name (never the staff host
+     * the slip was printed from) with the code filled in, so scanning it
+     * leaves the guest one tap from online — and later shows their time left.
+     */
+    public static function slipUrl(Voucher $voucher): string
+    {
+        return 'http://'.config('services.portal.host').'/portal?code='.urlencode($voucher->code);
     }
 
     /**
@@ -500,9 +508,16 @@ class VoucherController extends Controller
             'sessionId' => 'required|string',
         ]);
 
+        $ip = $opnsense->ipForSession($request->sessionId);
         $success = $opnsense->disconnectDevice($request->sessionId);
 
         if ($success) {
+            // Without this the portal's auto-reconnect puts the guest straight
+            // back online on their next page load. Re-entering the code undoes it.
+            if ($ip) {
+                Voucher::where('ip_address', $ip)->whereNotNull('used_at')->latest('used_at')->first()?->update(['disconnected_at' => now()]);
+            }
+
             return redirect()->back()->with('success', 'Device has been disconnected from the network.');
         }
 

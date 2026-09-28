@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\Voucher;
 use App\Services\OpnSenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -38,7 +39,10 @@ class StaffCanViewAndKickSessionsTest extends TestCase
     {
         $staff = User::factory()->create(['role' => 'staff']);
 
+        $voucher = Voucher::create(['code' => 'LAWA-KICK1', 'duration_minutes' => 60, 'tier' => 'free', 'is_used' => true, 'used_at' => now(), 'ip_address' => '192.168.2.130']);
+
         $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('ipForSession')->with('sess-123')->andReturn('192.168.2.130');
             $mock->shouldReceive('disconnectDevice')->once()->andReturn(true);
         });
 
@@ -46,6 +50,8 @@ class StaffCanViewAndKickSessionsTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('success');
+        // Otherwise the portal's auto-reconnect would put the guest straight back online.
+        $this->assertNotNull($voucher->fresh()->disconnected_at);
     }
 
     public function test_staff_cannot_change_a_sessions_tier(): void
