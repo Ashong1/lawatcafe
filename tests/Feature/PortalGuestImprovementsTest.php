@@ -115,12 +115,14 @@ class PortalGuestImprovementsTest extends TestCase
         $this->assertSame([], $missing);
     }
 
-    public function test_no_terms_checkbox_stands_between_the_guest_and_connecting(): void
+    public function test_the_terms_checkbox_must_be_ticked_before_connecting(): void
     {
         $html = $this->get(route('portal.index'))->getContent();
 
-        $this->assertStringNotContainsString('terms-voucher', $html);
-        $this->assertStringContainsString('By connecting you agree to our', $html);
+        $this->assertMatchesRegularExpression('/id="terms-voucher" required/', $html);
+        $this->assertStringContainsString('I agree to the', $html);
+        // Above the Connect button, where a phone shows it without scrolling.
+        $this->assertLessThan(strpos($html, 'type="submit" :disabled="isSubmitting"'), strpos($html, 'id="terms-voucher"'));
     }
 
     public function test_a_warning_shows_when_the_firewall_cannot_be_reached(): void

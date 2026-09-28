@@ -10,7 +10,10 @@ the history was rewritten.
 ---
 
 ## 1.14.0 — Portal: time's up, add time, quick answers, report
-*build 175*
+*builds 175–176*
+
+- The "I agree to the Wi-Fi rules" checkbox is back (required), above the
+  Connect button with a larger tap target.
 
 - "Your Wi-Fi time is up" screen (code and end time, Need more time?, menu)
   instead of a bare Connect page when a code has run out.

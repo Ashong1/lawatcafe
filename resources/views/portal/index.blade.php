@@ -254,6 +254,19 @@
 
 
 
+                        {{-- "peer" makes the tick show: peer-checked:block matches a later
+                             sibling of the element marked peer. The label is the tap target. --}}
+                        <label for="terms-voucher" class="flex items-center gap-3 min-h-[48px] cursor-pointer">
+                            <span class="relative flex items-center justify-center shrink-0">
+                                <input type="checkbox" id="terms-voucher" required class="peer w-6 h-6 text-[#3E2723] border-2 border-[#8D6E63] rounded-md cursor-pointer appearance-none transition-all checked:bg-[#3E2723] checked:border-[#3E2723] focus:outline-none focus:ring-2 focus:ring-[#3E2723]/40">
+                                <x-lucide-check class="w-4 h-4 text-white absolute pointer-events-none hidden peer-checked:block" stroke-width="4" />
+                            </span>
+                            <span class="text-base text-[#4A3B32] font-semibold leading-snug">
+                                {{ __('I agree to the') }}
+                                <a href="javascript:void(0)" @click.prevent="showTOS = true" class="text-[#3E2723] underline underline-offset-2">{{ __('Wi-Fi rules') }}</a>
+                            </span>
+                        </label>
+
                         <button type="submit" :disabled="isSubmitting"
                                 class="w-full min-h-[56px] bg-[#3E2723] hover:bg-[#271815] text-white py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95 text-base flex items-center justify-center gap-3 disabled:opacity-50">
                             <template x-if="!isSubmitting">
@@ -269,10 +282,6 @@
                                 </div>
                             </template>
                         </button>
-                        <p class="text-center text-sm text-[#6D4C41]">
-                            {{ __('By connecting you agree to our') }}
-                            <a href="javascript:void(0)" @click="showTOS = true" class="font-semibold text-[#3E2723] underline underline-offset-2">{{ __('Wi-Fi rules') }}</a>.
-                        </p>
                     </form>
                 </div>
 
