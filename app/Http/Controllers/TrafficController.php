@@ -10,23 +10,27 @@ use App\Services\TrafficShapingService;
 use Illuminate\Http\Request;
 
 /**
- * The guest network's traffic page: the one cap this gateway enforces — a
- * Shaper rule per direction on the guest interface, masked per IP so it is a
- * ceiling per device, not a shared total.
- *
- * No per-tier rate form, on purpose: this OPNsense build shapes whole
- * interfaces only (Shaper rules take only "any" as source/destination, filter
- * rules naming an alias shape nothing, the portal zone has no bandwidth fields,
- * nothing can set a per-tier DSCP mark). The per-tier rates are still quoted
- * on the Plans page.
+ * The guest network's traffic page: each plan's speed cap (Shaper rules that
+ * list the plan's guest IPs), and the shop-wide fair-use ceiling behind them.
+ * Every figure shown is read back from OPNsense, so the page agrees with a
+ * speed test rather than with what was last typed.
  */
 class TrafficController extends Controller
 {
     /** Matches ProvisionFairUseCap's default, so the two never disagree. */
     private const DEFAULT_CEILING = '20';
 
-    public function index(AdaptiveBandwidthService $adaptive, LinkCapacityLearner $learner)
+    /** Matches ProvisionTrafficShaping's defaults. */
+    private const PLAN_DEFAULTS = [
+        'bw_free_down' => '2', 'bw_free_up' => '1',
+        'bw_premium_down' => '10', 'bw_premium_up' => '5',
+    ];
+
+    public function index(AdaptiveBandwidthService $adaptive, LinkCapacityLearner $learner, TrafficShapingService $shaper, OpnSenseService $opnsense)
     {
+        $stored = collect(self::PLAN_DEFAULTS)->map(fn ($default, $key) => Setting::get($key, $default))->all();
+        $live = $shaper->liveStatus($opnsense, $stored);
+
         $settings = [
             'bw_fair_use_mbps' => Setting::get('bw_fair_use_mbps', self::DEFAULT_CEILING),
             'bw_adaptive_enabled' => Setting::get('bw_adaptive_enabled', AdaptiveBandwidthService::DEFAULTS['bw_adaptive_enabled']),
@@ -43,7 +47,38 @@ class TrafficController extends Controller
             'last_decision' => $adaptive->lastDecision(),
         ];
 
-        return view('network.traffic', compact('settings', 'learned'));
+        return view('network.traffic', compact('settings', 'learned', 'live'));
+    }
+
+    /**
+     * Apply each plan's speed caps, then record them — same order as the
+     * ceiling, so a stored figure never describes a cap the gateway refused.
+     */
+    public function updatePlans(Request $request, TrafficShapingService $shaper, OpnSenseService $opnsense)
+    {
+        $rule = 'required|numeric|min:0.5|max:1000';
+        $validated = $request->validate(
+            array_fill_keys(array_keys(self::PLAN_DEFAULTS), $rule),
+            [],
+            [
+                'bw_free_down' => 'free download speed', 'bw_free_up' => 'free upload speed',
+                'bw_premium_down' => 'premium download speed', 'bw_premium_up' => 'premium upload speed',
+            ]
+        );
+
+        if (! $shaper->applyLimits($validated, $opnsense)) {
+            return redirect()->back()->withInput()->with('error',
+                ($shaper->lastError() ?? 'OPNsense rejected the plan speeds.').' The plan speeds were not saved.');
+        }
+
+        foreach ($validated as $key => $value) {
+            Setting::set($key, (string) (float) $value);
+        }
+
+        return redirect()->back()->with('success', sprintf(
+            'Plan speeds are live. Free: %s down / %s up. Premium: %s down / %s up (Mbps, per device).',
+            ...array_map(fn ($k) => (float) $validated[$k], ['bw_free_down', 'bw_free_up', 'bw_premium_down', 'bw_premium_up'])
+        ));
     }
 
     /**

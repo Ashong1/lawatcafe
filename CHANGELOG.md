@@ -9,6 +9,16 @@ the history was rewritten.
 
 ---
 
+## 1.14.2 — Traffic page shows the plan speeds
+*build 178*
+
+- The Traffic page now shows each plan's speed as the gateway is running it
+  (Free 5/3, Premium 15/6 Mbps), with how many devices are on it, and lets you
+  change them. Changes apply to the gateway first and are only saved if it
+  accepts them.
+- The fair-use ceiling no longer says "In Force" when it is switched off on the
+  gateway.
+
 ## 1.14.1 — Plan speed caps actually enforced
 *build 177*
 

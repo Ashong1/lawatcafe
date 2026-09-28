@@ -100,6 +100,59 @@ class TrafficShapingService
     }
 
     /**
+     * The caps the gateway is enforcing right now, read from OPNsense rather
+     * than from settings — what the Traffic page shows, so it agrees with a
+     * speed test. Stored figures fill in only when OPNsense can't be read, and
+     * 'reachable' says so.
+     *
+     * A plan counts as in force when both of its pipes and rules exist; its
+     * rules are switched off while nobody is on the plan (see syncTierRules),
+     * which is idle rather than broken.
+     *
+     * @param  array<string, string>  $stored  bw_{tier}_{direction} settings
+     * @return array{reachable: bool, plans: array<string, array{down: float, up: float, provisioned: bool, guests: int}>, fair_use: array{enforced: bool, mbps: float|null}}
+     */
+    public function liveStatus(OpnSenseService $opnsense, array $stored): array
+    {
+        $live = $opnsense->readShaperStatus();
+        $plans = [];
+
+        foreach (self::TIERS as $tier) {
+            $plan = ['provisioned' => $live !== null, 'guests' => 0];
+
+            foreach (self::DIRECTIONS as $direction) {
+                $name = $opnsense->shaperObjectName($tier, $direction);
+                $pipe = $live['pipes'][$name] ?? null;
+                $plan[$direction] = $pipe['mbps'] ?? (float) ($stored["bw_{$tier}_{$direction}"] ?? 0);
+
+                if ($live !== null && (! $pipe || ! isset($live['rules'][$name]))) {
+                    $plan['provisioned'] = false;
+                }
+            }
+
+            $down = $live['rules'][$opnsense->shaperObjectName($tier, 'down')] ?? null;
+            if ($down && $down['enabled']) {
+                $plan['guests'] = count($down['ips']);
+            }
+
+            $plans[$tier] = $plan;
+        }
+
+        $fairName = $opnsense->shaperObjectName(self::FAIR_USE_TIER, 'down');
+        $fairRule = $live['rules'][$fairName] ?? null;
+        $fairPipe = $live['pipes'][$fairName] ?? null;
+
+        return [
+            'reachable' => $live !== null,
+            'plans' => $plans,
+            'fair_use' => [
+                'enforced' => (bool) ($fairRule['enabled'] ?? false) && (bool) ($fairPipe['enabled'] ?? false),
+                'mbps' => $fairPipe['mbps'] ?? null,
+            ],
+        ];
+    }
+
+    /**
      * Provision the complete shaping chain on OPNsense and apply it. A cap
      * needs all three, or a "2 Mbps" tier measures full line speed:
      *   1. a Dummynet pipe per tier per direction (the cap),
@@ -109,7 +162,7 @@ class TrafficShapingService
      * Idempotent: matched by description and updated in place.
      *
      * $settings: validated bw_free_up/down, bw_premium_up/down from
-     * TrafficController::update.
+     * TrafficController::updatePlans.
      */
     public function applyLimits(array $settings, OpnSenseService $opnsense): bool
     {

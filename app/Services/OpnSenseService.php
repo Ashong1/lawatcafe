@@ -654,6 +654,67 @@ class OpnSenseService
     }
 
     /**
+     * What the shaper is actually running, for display: each of our pipes' rate
+     * and each of our rules' on/off state and matched addresses, keyed by
+     * description. Null when OPNsense can't be read, so a page can say "not
+     * confirmed" instead of passing stored settings off as live.
+     *
+     * @return array{pipes: array<string, array{mbps: float, enabled: bool}>, rules: array<string, array{enabled: bool, ips: string[]}>}|null
+     */
+    public function readShaperStatus(): ?array
+    {
+        if (empty($this->apiKey) || empty($this->apiSecret)) {
+            return null;
+        }
+
+        try {
+            $response = $this->client()->get("{$this->baseUrl}/api/trafficshaper/settings/get");
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $ts = $response->json('ts') ?? [];
+            // OptionFields come back as every option with a "selected" flag.
+            $selected = fn ($field) => is_array($field)
+                ? collect($field)->filter(fn ($o) => ! empty($o['selected']))->keys()->map(fn ($k) => (string) $k)->all()
+                : array_filter(explode(',', (string) $field));
+            $toMbps = ['bit' => 0.000001, 'Kbit' => 0.001, 'Mbit' => 1, 'Gbit' => 1000];
+
+            $pipes = [];
+            foreach ($ts['pipes']['pipe'] ?? [] as $pipe) {
+                $name = $pipe['description'] ?? '';
+                if (! str_starts_with($name, 'lawatcafe_')) {
+                    continue;
+                }
+                $metric = $selected($pipe['bandwidthMetric'] ?? 'Mbit')[0] ?? 'Mbit';
+                $pipes[$name] = [
+                    'mbps' => round((float) ($pipe['bandwidth'] ?? 0) * ($toMbps[$metric] ?? 1), 3),
+                    'enabled' => ($pipe['enabled'] ?? '0') === '1',
+                ];
+            }
+
+            $rules = [];
+            foreach ($ts['rules']['rule'] ?? [] as $rule) {
+                $name = $rule['description'] ?? '';
+                if (! str_starts_with($name, 'lawatcafe_')) {
+                    continue;
+                }
+                $match = str_ends_with($name, '_down') ? $rule['destination'] ?? [] : $rule['source'] ?? [];
+                $rules[$name] = [
+                    'enabled' => ($rule['enabled'] ?? '0') === '1',
+                    'ips' => array_values(array_diff($selected($match), ['any'])),
+                ];
+            }
+
+            return ['pipes' => $pipes, 'rules' => $rules];
+        } catch (\Exception $e) {
+            Log::error('OPNsense: Exception reading traffic shaper status: '.$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
      * The traffic shaper's configuration, indexed by description:
      * ['pipes' => [description => uuid], 'rules' => [description => uuid]].
      *

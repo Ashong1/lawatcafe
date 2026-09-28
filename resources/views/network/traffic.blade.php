@@ -44,12 +44,100 @@
 
         <div class="max-w-3xl mx-auto space-y-8">
 
-            {{-- The one figure on this page that reaches the network. Submitting
-                 rewrites the live Shaper rules via applyFairUseCap() (as
+            {{-- Each plan's cap as OPNsense is running it (liveStatus()), so this
+                 matches what a guest's speed test shows. Saving applies to the
+                 gateway first and records only on success. --}}
+            <form action="{{ route('network.traffic.plans') }}" method="POST" id="plan-speeds-form"
+                  class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] space-y-6">
+                @csrf
+
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 bg-[#FDF8F5] rounded-xl flex items-center justify-center text-[#3E2723] shrink-0">
+                        <x-lucide-gauge class="w-6 h-6" />
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Plan Speeds</h3>
+                        <p class="text-xs text-[#6D4C41] font-medium leading-relaxed mt-1">
+                            The top speed each guest gets on their plan, per device. These are the limits a
+                            speed test on a guest's phone will show.
+                        </p>
+                    </div>
+                </div>
+
+                @unless($live['reachable'])
+                    <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
+                        <x-lucide-triangle-alert class="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                        <p class="text-xs text-amber-900 font-medium leading-relaxed">
+                            Couldn't reach the gateway, so these are the last saved speeds, not confirmed live ones.
+                        </p>
+                    </div>
+                @endunless
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @foreach(['free' => 'Free', 'premium' => 'Premium'] as $tier => $label)
+                        @php($plan = $live['plans'][$tier])
+                        <div class="p-4 rounded-2xl border {{ $tier === 'premium' ? 'border-amber-200 bg-amber-50/40' : 'border-[#F0E6D2] bg-[#FDF8F5]' }} space-y-4">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-xs font-bold uppercase tracking-wide text-[#3E2723]">{{ $label }}</p>
+                                @if(! $live['reachable'])
+                                    <span class="text-xs font-bold text-amber-700">Not confirmed</span>
+                                @elseif(! $plan['provisioned'])
+                                    <span class="text-xs font-bold text-red-700">Not set up yet</span>
+                                @else
+                                    <span class="flex items-center gap-1.5 text-xs font-bold text-green-700">
+                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                        In force &middot; {{ $plan['guests'] }} {{ Str::plural('device', $plan['guests']) }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            <div class="flex items-baseline gap-4">
+                                <p class="text-2xl font-bold text-[#3E2723] whitespace-nowrap">
+                                    {{ rtrim(rtrim(number_format($plan['down'], 2, '.', ''), '0'), '.') }}<span class="text-xs font-bold text-[#795548] ml-1">Mbps down</span>
+                                </p>
+                                <p class="text-sm font-bold text-[#6D4C41] whitespace-nowrap">
+                                    {{ rtrim(rtrim(number_format($plan['up'], 2, '.', ''), '0'), '.') }}<span class="text-xs text-[#795548] ml-1">up</span>
+                                </p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                @foreach(['down' => 'Download', 'up' => 'Upload'] as $direction => $dirLabel)
+                                    @php($field = "bw_{$tier}_{$direction}")
+                                    <div>
+                                        <label for="{{ $field }}" class="block text-xs font-bold text-[#795548] uppercase mb-1">{{ $dirLabel }}</label>
+                                        <input type="number" id="{{ $field }}" name="{{ $field }}" step="0.5" min="0.5" max="1000" required
+                                               value="{{ old($field, rtrim(rtrim(number_format($plan[$direction], 3, '.', ''), '0'), '.')) }}"
+                                               class="w-full bg-white border border-[#F0E6D2] rounded-xl px-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
+                                        <x-field-error :name="$field" />
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <p class="text-xs text-[#6D4C41] font-medium leading-relaxed">
+                    A guest is placed on their plan's limit as soon as they connect. Plan limits take
+                    priority over the fair-use ceiling below. Shop equipment is never put on a plan.
+                </p>
+
+                <button type="button"
+                        onclick="window.confirmAction({
+                            title: 'Apply these plan speeds?',
+                            text: 'Guests already connected get the new speeds right away.',
+                            icon: 'warning',
+                            confirmText: 'Yes, apply them',
+                            callback: () => document.getElementById('plan-speeds-form').submit()
+                        })"
+                        class="w-full py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg active:scale-[0.98]">
+                    Apply Plan Speeds
+                </button>
+            </form>
+
+            {{-- The shop-wide backstop behind the plan caps. Submitting rewrites
+                 the live Shaper rules via applyFairUseCap() (as
                  `shaper:fair-use` does), and the value is stored only once
-                 OPNsense accepts it (TrafficController::update()). No per-tier
-                 inputs: this build can't shape anything smaller than an
-                 interface — see TrafficController. --}}
+                 OPNsense accepts it (TrafficController::update()). --}}
             <form action="{{ route('network.traffic.update') }}" method="POST" id="fair-use-form"
                   class="p-5 md:p-6 bg-green-50/40 rounded-2xl border-2 border-green-200 space-y-5">
                 @csrf
@@ -57,13 +145,26 @@
                 <div>
                     <h4 class="text-xs font-bold text-green-800 uppercase tracking-wide mb-2 flex items-center gap-2">
                         <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                        Fair-Use Ceiling &mdash; In Force
+                        Fair-Use Ceiling &mdash;
+                        @if($live['fair_use']['enforced'])
+                            In Force
+                        @elseif($live['reachable'])
+                            <span class="text-[#795548]">Off</span>
+                        @else
+                            <span class="text-amber-700">Not confirmed</span>
+                        @endif
                     </h4>
                     <p class="text-xs text-[#6D4C41] font-medium leading-relaxed">
                         Every device on the guest network is capped at this rate each way, so no single
                         guest can saturate the line. It is a ceiling <span class="font-bold">per device</span>,
                         not a total shared between them.
                     </p>
+                    @if($live['reachable'] && ! $live['fair_use']['enforced'])
+                        <p class="text-xs text-[#6D4C41] font-medium leading-relaxed mt-2">
+                            It is switched off on the gateway right now, so only the plan speeds above apply.
+                            Applying a ceiling here switches it back on.
+                        </p>
+                    @endif
                 </div>
 
                 {{-- Said before the input rather than after the save: the cap is

@@ -11,12 +11,9 @@ use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /**
- * The shaping this OPNsense build can actually enforce.
- *
- * Per-tier caps cannot be provisioned here — the shaper's rule model offers
- * nothing but "any" for source and destination, so a rule matching a tier alias
- * is rejected (see docs/INFRASTRUCTURE.md). What works is one rule for the whole
- * interface, made safe by two things these tests pin:
+ * The shop-wide fair-use ceiling behind the per-plan caps (those are covered in
+ * TrafficPlanSpeedsTest). One rule for the whole interface, made safe by two
+ * things these tests pin:
  *
  *   - the pipe carries a per-IP mask, so the figure is a ceiling PER DEVICE and
  *     not a total shared between them;
@@ -194,13 +191,7 @@ class FairUseCapTest extends TestCase
             || ctype_digit($request['pipe']['bandwidth']));
     }
 
-    /**
-     * The page offers exactly one number: the ceiling. The four per-tier inputs
-     * that used to sit below it were recorded and never enforced, so they were
-     * removed rather than left implying the gateway could tell a free guest from
-     * a premium one.
-     */
-    public function test_the_page_offers_the_ceiling_and_nothing_that_is_not_enforced(): void
+    public function test_the_page_offers_the_ceiling(): void
     {
         Setting::set('bw_fair_use_mbps', '20');
         Cache::forget('setting.bw_fair_use_mbps');
@@ -213,10 +204,7 @@ class FairUseCapTest extends TestCase
         // Editable, and seeded with what is actually in force.
         $response->assertSee('name="bw_fair_use_mbps"', false);
         $response->assertSee('value="20"', false);
-
-        foreach (['bw_free_down', 'bw_free_up', 'bw_premium_down', 'bw_premium_up', 'bw_burst_enabled'] as $gone) {
-            $response->assertDontSee('name="'.$gone.'"', false);
-        }
+        $response->assertDontSee('name="bw_burst_enabled"', false);
     }
 
     /**
@@ -305,12 +293,8 @@ class FairUseCapTest extends TestCase
         Http::assertNothingSent();
     }
 
-    /**
-     * The per-tier rates are no longer editable, but they were never deleted —
-     * the Plans page still quotes them to guests, and dropping the form must not
-     * quietly reset what those guests are being told.
-     */
-    public function test_removing_the_tier_form_left_the_stored_rates_alone(): void
+    /** Saving the ceiling must not touch the plan speeds guests are quoted. */
+    public function test_saving_the_ceiling_leaves_the_plan_speeds_alone(): void
     {
         $this->fakeOpnsense();
         Setting::set('bw_premium_down', '12');
