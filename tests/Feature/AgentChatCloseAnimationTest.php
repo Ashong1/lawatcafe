@@ -35,7 +35,8 @@ class AgentChatCloseAnimationTest extends TestCase
         $response = $this->actingAs($admin)->get(route('dashboard'));
         $response->assertOk();
 
-        return $response->getContent();
+        // The widget's script is bundled (resources/js/agent-chat.js), not inline.
+        return $response->getContent().file_get_contents(resource_path('js/agent-chat.js'));
     }
 
     public function test_the_chat_panel_is_out_of_flow_above_the_toggle_button(): void

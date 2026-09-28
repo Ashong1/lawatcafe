@@ -9,6 +9,28 @@ the history was rewritten.
 
 ---
 
+## 1.14.0 — Portal: time's up, add time, quick answers, report
+*build 175*
+
+- "Your Wi-Fi time is up" screen (code and end time, Need more time?, menu)
+  instead of a bare Connect page when a code has run out.
+- Staff and admins add +30 min / +1 hr to a guest's code from Active
+  Sessions or Find a device; the "Need more time?" alert opens straight on
+  that guest. Time already run out counts from now.
+- Guest chat quick questions (where's my code, opening hours, Wi-Fi prices,
+  how to reconnect) answered from settings with no AI call.
+- Voucher slips: numbered steps in English and Filipino, a "scan to join the
+  Wi-Fi" QR (Wi-Fi Plans → network name), and a use-by date.
+- Unused codes stop working after a set number of days (default 60, 0 =
+  never).
+- The chat widget's script moved from inline Blade into the bundle
+  (resources/js/agent-chat.js): portal pages went from 78 KB to 37 KB.
+- Status page: data used counts downloads and uploads; shows the plan and
+  speed, and what Premium would give a free guest.
+- Portal report (Network → Portal Report): sign-in funnel, busiest hours,
+  wrong codes by reason, more-time requests, and guests cut off early with
+  their idle time (recorded by the minute-by-minute network check).
+
 ## 1.13.0 — Captive portal for everyone
 *build 174*
 

@@ -124,15 +124,13 @@ class GuestChatHardeningTest extends TestCase
         // discarded meta.reply. AIService hands the same onTextDelta to every
         // model attempt in the OpenRouter cascade, so a model failing
         // mid-stream leaves partial text that the retry appends to.
-        $response = $this->get(route('portal.index'));
-
-        $response->assertOk();
-        $response->assertSee('assistantEntry.content = event.reply', false);
+        $this->get(route('portal.index'))->assertOk();
+        $this->assertStringContainsString('assistantEntry.content = event.reply', $this->widgetScript());
     }
 
     public function test_widget_renders_headings_and_ordered_lists_instead_of_raw_markup(): void
     {
-        $content = $this->get(route('portal.index'))->getContent();
+        $content = $this->widgetScript();
 
         // Heading + numbered-list handling, and blank-run collapsing, are what
         // stop replies reading as "messy" in the bubble.
@@ -144,7 +142,7 @@ class GuestChatHardeningTest extends TestCase
     {
         // The escape-then-pattern-match ordering is what makes piping model
         // output into x-html safe; a refactor must never flip it.
-        $content = $this->get(route('portal.index'))->getContent();
+        $content = $this->widgetScript();
 
         $escapeAt = strpos($content, "replace(/&/g, '&amp;')");
         $boldAt = strpos($content, '<strong>$1</strong>');
@@ -152,5 +150,11 @@ class GuestChatHardeningTest extends TestCase
         $this->assertNotFalse($escapeAt);
         $this->assertNotFalse($boldAt);
         $this->assertLessThan($boldAt, $escapeAt, 'HTML escaping must happen before any markup is introduced.');
+    }
+
+    /** The chat widget's script, bundled from resources/js/agent-chat.js rather than inline. */
+    private function widgetScript(): string
+    {
+        return file_get_contents(resource_path('js/agent-chat.js'));
     }
 }

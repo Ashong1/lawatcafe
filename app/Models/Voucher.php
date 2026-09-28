@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasHashedMacAddress;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 class Voucher extends Model
 {
@@ -53,5 +54,16 @@ class Voucher extends Model
         } while (static::where('code', $code)->exists());
 
         return $code;
+    }
+
+    /**
+     * When a code nobody has used yet stops working (Settings → Wi-Fi plans),
+     * or null when unused codes never expire. A lost slip shouldn't be good forever.
+     */
+    public function unusedExpiresAt(): ?Carbon
+    {
+        $days = (int) Setting::get('voucher_unused_expiry_days', '60');
+
+        return $days > 0 && ! $this->used_at && $this->created_at ? $this->created_at->copy()->addDays($days) : null;
     }
 }

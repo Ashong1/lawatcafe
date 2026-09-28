@@ -129,6 +129,9 @@
                                     </button>
                                 </form>
                             @endif
+                            @if($session->code ?? null)
+                                @include('network.partials.add-time', ['code' => $session->code])
+                            @endif
                             @if($session->sessionId)
                             <form action="{{ route('network.sessions.kick') }}" method="POST" id="kick-form-{{ $session->sessionId }}">
                                 @csrf

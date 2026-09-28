@@ -141,7 +141,12 @@
                                  include a counter on a freshly-created session,
                                  and an undefined key here is a 500 on the one
                                  page a paying guest is most likely to be on. --}}
-                            <span class="text-lg font-bold text-[#3E2723] tabular-nums">{{ number_format(($session['bytes_received'] ?? 0) / (1024 * 1024), 1) }} MB</span>
+                            @php
+                                $mbIn = ($session['bytes_in'] ?? $session['bytes_received'] ?? 0) / 1048576;
+                                $mbOut = ($session['bytes_out'] ?? $session['bytes_sent'] ?? 0) / 1048576;
+                            @endphp
+                            <span class="text-lg font-bold text-[#3E2723] tabular-nums">{{ number_format($mbIn + $mbOut, 1) }} MB</span>
+                            <span class="text-xs text-[#795548] tabular-nums mt-0.5">↓ {{ number_format($mbIn, 1) }} · ↑ {{ number_format($mbOut, 1) }}</span>
                         </div>
 
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">
@@ -156,6 +161,19 @@
                          with it. Devices supporting RFC 8908 (iOS 14+/Android 11+) get the
                          remaining time natively from /captive-portal-api instead; everyone
                          else needs the address to reopen it in a real browser. --}}
+                    {{-- The guest's plan and speed; free guests see what Premium would give them. --}}
+                    <div class="max-w-md mx-auto w-full px-2 mb-4">
+                        <div class="rounded-2xl border-2 border-[#F0E6D2] bg-white px-4 py-3 text-center">
+                            <p class="text-base font-bold text-[#3E2723]">
+                                {{ $tier === 'premium' ? __('Premium plan') : __('Free plan') }}
+                                <span class="font-semibold text-[#5D4037]">· {{ __('up to :mbps Mbps', ['mbps' => rtrim(rtrim(number_format($tierMbps, 1), '0'), '.')]) }}</span>
+                            </p>
+                            @if($tier !== 'premium' && $premiumMbps > $tierMbps)
+                                <p class="text-sm text-[#795548] mt-1">{{ __('Want it faster? Premium is up to :mbps Mbps — ask at the counter.', ['mbps' => rtrim(rtrim(number_format($premiumMbps, 1), '0'), '.')]) }}</p>
+                            @endif
+                        </div>
+                    </div>
+
                     <div class="max-w-md mx-auto w-full px-2 mb-6">
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-5 text-center shadow-sm">
                             <span class="block text-sm font-bold text-[#5D4037] mb-2">{{ __('Check your time anytime') }}</span>
@@ -274,6 +292,7 @@
                             mode="embedded"
                             :endpoint="route('portal.chat')"
                             anchor-id="portal"
+                            :quick-replies="$quickReplies"
                             greeting="{{ __('Hi! I am Barista AI. Ask me about your Wi-Fi time, or our coffee and meals.') }}"
                             :csrf="false"
                             rate-limit-message="{{ __('Sorry, I am busy helping other guests. Please try again in a minute.') }}"

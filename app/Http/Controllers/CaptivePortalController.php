@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BannedDevice;
 use App\Models\Category;
+use App\Models\PortalEvent;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
@@ -16,6 +17,7 @@ use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
 use App\Services\NetworkHealthService;
 use App\Services\OpnSenseService;
+use App\Services\PortalQuickReplies;
 use App\Services\QrCodeService;
 use App\Services\TrafficShapingService;
 use Carbon\Carbon;
@@ -381,13 +383,22 @@ class CaptivePortalController extends Controller
                     'userName' => $this->deviceNameFor($ip, $mac, $opnsense) ?? $voucher->code,
                     'voucherCode' => $voucher->code,
                     'secondsLeft' => (int) $this->secondsRemainingOn($voucher),
+                    'tier' => $voucher->tier,
+                    'tierMbps' => (float) Setting::get("bw_{$voucher->tier}_down", $voucher->tier === 'premium' ? '10' : '2'),
+                    'premiumMbps' => (float) Setting::get('bw_premium_down', '10'),
+                    'quickReplies' => app(PortalQuickReplies::class)->all(),
                     'browseUrl' => $this->browseUrl(),
                 ]);
             }
         }
 
+        $timeUp = $this->recentlyEndedVoucher($ip, $mac);
+        PortalEvent::record($timeUp ? PortalEvent::TIME_UP : PortalEvent::VISIT, $ip, $timeUp?->code);
+
         // Drives the "where is my code" wording — see portal/index.blade.php.
         return view('portal.index', [
+            'timeUp' => $timeUp,
+            'quickReplies' => app(PortalQuickReplies::class)->all(),
             'receiptPrintingEnabled' => Setting::receiptPrintingEnabled(),
             'safariUrl' => $this->safariUrl($request),
             'signInDown' => $this->signInIsDown(),
@@ -407,15 +418,36 @@ class CaptivePortalController extends Controller
         $left = $voucher ? intdiv((int) $this->secondsRemainingOn($voucher), 60) : 0;
         $device = $this->deviceNameFor($ip, $mac, $opnsense) ?? $ip;
 
+        PortalEvent::record(PortalEvent::MORE_TIME, $ip, $voucher?->code);
+
         $recipients = User::whereIn('role', ['staff', 'admin', 'super_admin'])->get();
         Notification::send($recipients, new SystemAlert(
             'A guest wants more Wi-Fi time',
             "{$device} ".($voucher ? "(code {$voucher->code}, {$left} min left)" : '')." asked for more time. They'll come to the counter.",
             'timer',
-            route('network.sessions'),
+            // Opens Active Sessions on this guest, where +30 min / +1 hr are one tap.
+            route('network.sessions', array_filter(['find' => $voucher?->code ?? $ip])),
         ));
 
         return redirect()->route('portal.index')->with('message', __('Staff have been told. Please pay at the counter for more time.'));
+    }
+
+    /**
+     * This device's code ran out within the last 12 hours and it has no newer
+     * time — the "Your time is up" screen. Without it, a guest cut off by the
+     * firewall lands on a plain "Connect" page and assumes the code broke.
+     */
+    private function recentlyEndedVoucher(string $ip, ?string $mac): ?Voucher
+    {
+        $voucher = $this->activeVoucherFor($ip, $mac);
+
+        if (! $voucher || ! $voucher->used_at || ! $this->boundToThisDevice($voucher, $mac) || $this->secondsRemainingOn($voucher)) {
+            return null;
+        }
+
+        $endedAt = $voucher->used_at->copy()->addMinutes($voucher->duration_minutes);
+
+        return $endedAt->gt(now()->subHours(12)) ? $voucher->setAttribute('ended_at', $endedAt) : null;
     }
 
     /**
@@ -504,6 +536,12 @@ class CaptivePortalController extends Controller
             // after autocorrect — so collapse whitespace and case before looking
             // up rather than blaming the guest for their keyboard.
             $code = strtoupper(preg_replace('/\s+/', '', (string) $request->passcode));
+            PortalEvent::record(PortalEvent::CODE_TRIED, $request->ip(), substr($code, 0, 32));
+            $failed = function (string $reason, string $message) use ($request, $code) {
+                PortalEvent::record(PortalEvent::CODE_FAILED, $request->ip(), substr($code, 0, 32), ['reason' => $reason]);
+
+                return redirect()->route('portal.index')->with('error', $message);
+            };
 
             $voucher = Voucher::where('code', $code)
                 ->lockForUpdate()
@@ -529,7 +567,11 @@ class CaptivePortalController extends Controller
             // never shown, so a guest who mistyped their code just saw the form
             // reset with no explanation at all.
             if (! $voucher) {
-                return redirect()->route('portal.index')->with('error', __('That code doesn\'t match any voucher — double-check it against your receipt.'));
+                return $failed('no_match', __('That code doesn\'t match any voucher — double-check it against your receipt.'));
+            }
+
+            if (! $voucher->is_used && ($expiredOn = $voucher->unusedExpiresAt()) && $expiredOn->isPast()) {
+                return $failed('expired_unused', __('This code expired on :date. Please ask for a new one at the counter.', ['date' => $expiredOn->format('M j, Y')]));
             }
 
             [$ip, $mac] = $this->resolveTrustedIdentity($request, $opnsense);
@@ -537,7 +579,7 @@ class CaptivePortalController extends Controller
             if ($this->isMacBanned($mac)) {
                 Log::warning("Portal authenticate: rejected banned device {$mac} ({$ip}).");
 
-                return redirect()->route('portal.index')->with('error', __('This device has been blocked from network access. Please see staff for assistance.'));
+                return $failed('banned', __('This device has been blocked from network access. Please see staff for assistance.'));
             }
 
             // A redeemed voucher is not automatically a spent one. The guest
@@ -554,7 +596,7 @@ class CaptivePortalController extends Controller
                 $secondsRemaining = $this->secondsRemainingOn($voucher);
 
                 if (! $secondsRemaining) {
-                    return redirect()->route('portal.index')->with('error', __('This code has already been used and its time has run out.'));
+                    return $failed('used_up', __('This code has already been used and its time has run out.'));
                 }
 
                 // Redeemed against no device at all — nothing to match on, so
@@ -562,13 +604,13 @@ class CaptivePortalController extends Controller
                 // separate from the "another device" branch below because
                 // claiming a specific rival device exists would be a guess.
                 if (empty($voucher->mac_address_hash) && empty($voucher->ip_address)) {
-                    return redirect()->route('portal.index')->with('error', __('This code has already been used.'));
+                    return $failed('used', __('This code has already been used.'));
                 }
 
                 if (! $this->voucherBelongsTo($voucher, $ip, $mac)) {
                     Log::warning("Portal authenticate: {$mac} ({$ip}) tried to reuse voucher {$voucher->code} bound to another device.");
 
-                    return redirect()->route('portal.index')->with('error', __('This code is already in use on another device.'));
+                    return $failed('other_device', __('This code is already in use on another device.'));
                 }
 
                 // Same device, time still on the clock. Re-point the voucher at
@@ -656,6 +698,7 @@ class CaptivePortalController extends Controller
 
         $voucher->update(['activated_at' => now(), 'disconnected_at' => null]);
         $shaping->assignTier($voucher, $ip, $opnsense);
+        PortalEvent::record(PortalEvent::CONNECTED, $ip, $voucher->code);
 
         return true;
     }

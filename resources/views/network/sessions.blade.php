@@ -38,12 +38,21 @@
                         </div>
                         @unless($found['infrastructure'] || $found['banned'])
                             <div class="flex flex-wrap gap-1.5 shrink-0">
+                                @if($foundCode)
+                                    @include('network.partials.add-time', ['code' => $foundCode])
+                                @endif
                                 @include('network.partials.device-actions', ['mac' => $found['mac'], 'ip' => $found['ip'], 'name' => $found['name'], 'trust' => ! $found['trusted']])
                             </div>
                         @endunless
                     </div>
                 @else
                     <p class="text-sm text-amber-900">Nothing matching "{{ $find }}" is on the network right now.</p>
+                    @if($foundCode)
+                        <div class="mt-3 flex flex-wrap items-center gap-1.5">
+                            <span class="text-sm text-[#4A3B32]">Add time to <b class="font-mono">{{ $foundCode }}</b>:</span>
+                            @include('network.partials.add-time', ['code' => $foundCode])
+                        </div>
+                    @endif
                 @endif
             </div>
         @endif

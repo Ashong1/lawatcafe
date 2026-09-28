@@ -175,6 +175,23 @@
                         <x-lucide-coffee class="w-64 h-64 text-[#3E2723]" />
                     </div>
 
+                    @if($timeUp)
+                        {{-- The firewall cut this phone off when its time ran out; say so,
+                             instead of a bare "Connect" page that reads as a broken code. --}}
+                        <div class="relative z-10 mb-5 rounded-3xl border-2 border-amber-200 bg-amber-50 p-5 text-center">
+                            <x-lucide-timer class="w-8 h-8 text-amber-700 mx-auto mb-2" />
+                            <h2 class="text-xl font-bold text-[#3E2723]">{{ __('Your Wi-Fi time is up') }}</h2>
+                            <p class="text-base text-[#5D4037] mt-1">{{ __('Code :code ended at :time.', ['code' => $timeUp->code, 'time' => $timeUp->ended_at->format('g:i A')]) }}</p>
+                            <form action="{{ route('portal.more-time') }}" method="POST" class="mt-4" x-data="{ sending: false }" @submit="sending = true">
+                                @csrf
+                                <button type="submit" :disabled="sending" class="w-full min-h-[52px] rounded-2xl bg-amber-500 text-[#3E2723] text-base font-bold active:scale-[0.98] disabled:opacity-70">
+                                    <span x-text="sending ? @js(__('Telling the staff…')) : @js(__('Need more time?'))">{{ __('Need more time?') }}</span>
+                                </button>
+                            </form>
+                            <a href="{{ route('portal.menu') }}" class="mt-2 inline-flex min-h-[44px] items-center text-sm font-semibold text-[#5D4037] underline underline-offset-4">{{ __('See our menu') }}</a>
+                        </div>
+                        <p class="relative z-10 text-center text-base font-semibold text-[#5D4037] mb-3">{{ __('Have a new code? Type it below.') }}</p>
+                    @else
                     <div class="text-center mb-6 shrink-0 relative z-10">
                         <div class="inline-block p-3 rounded-full bg-amber-50 border border-amber-100 mb-4">
                             <x-lucide-wifi class="w-6 h-6 text-amber-800" stroke-width="2.5" />
@@ -183,6 +200,7 @@
                         {{-- Follows the BIR receipt gate like the hint below: no printed receipt, no "receipt passcode". --}}
                         <p class="text-base text-[#5D4037] font-semibold">{{ $receiptPrintingEnabled ? __('Type the code on your receipt') : __('Type the code on your voucher slip') }}</p>
                     </div>
+                    @endif
 
                     @if($signInDown)
                         <div role="alert" class="relative z-10 mb-4 rounded-2xl border-2 border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-semibold text-red-800">
@@ -263,7 +281,8 @@
                      same reason: x-cloak here would mean a guest who followed a
                      ?tab=help link on an old phone sees an empty panel. --}}
                 <div x-show="activeTab === 'help'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" @if($initialTab !== 'help') style="display: none;" @endif class="flex flex-col flex-1 min-h-0">
-                    <div class="text-center mb-4 shrink-0 flex flex-col items-center">
+                    {{-- Hidden on phones: the tab already says "Ask AI", and the chat needs the room. --}}
+                    <div class="text-center mb-4 shrink-0 hidden sm:flex flex-col items-center">
                         <h2 class="text-xl font-bold text-[#3E2723] mb-1 tracking-tight">Barista AI</h2>
                         <p class="text-base text-[#5D4037] font-semibold mb-2">{{ __('Ask about the menu or Wi-Fi') }}</p>
                         {{-- No "System Online" pill here: a green pulse beside the header's
@@ -275,6 +294,7 @@
                             mode="embedded"
                             :endpoint="route('portal.chat')"
                             anchor-id="portal"
+                            :quick-replies="$quickReplies"
                             greeting="{{ __('Hi! I am Barista AI. How can I help you today?') }}"
                             :csrf="false"
                             rate-limit-message="{{ __('Sorry, I am busy helping other guests. Please try again in a minute.') }}"

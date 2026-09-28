@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PortalEvent;
 use App\Models\Setting;
 use App\Models\StaticIpAssignment;
 use App\Models\Voucher;
@@ -14,6 +15,7 @@ use App\Services\VoucherService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class VoucherController extends Controller
 {
@@ -140,6 +142,7 @@ class VoucherController extends Controller
             // from. See QrCodeService.
             'portalQr' => app(QrCodeService::class)->svg(self::slipUrl($voucher), 110),
             'portalUrl' => config('services.portal.host'),
+            ...self::slipJoinWifi(),
         ]);
     }
 
@@ -160,7 +163,25 @@ class VoucherController extends Controller
         return view('network.print-vouchers-batch', [
             'vouchers' => $vouchers,
             'portalQrs' => $vouchers->mapWithKeys(fn (Voucher $v) => [$v->id => $qr->svg(self::slipUrl($v), 90)]),
+            ...self::slipJoinWifi(),
         ]);
+    }
+
+    /**
+     * The slip's "scan to join the Wi-Fi" QR: the standard WIFI: payload phone
+     * cameras understand. The guest network is open, so no password.
+     *
+     * @return array{ssid: string, joinQr: ?string}
+     */
+    public static function slipJoinWifi(): array
+    {
+        $ssid = trim((string) Setting::get('wifi_ssid', ''));
+        $escaped = preg_replace('/([\\\\;,:"])/', '\\\\$1', $ssid);
+
+        return [
+            'ssid' => $ssid,
+            'joinQr' => $ssid !== '' ? app(QrCodeService::class)->svg("WIFI:T:nopass;S:{$escaped};;", 90) : null,
+        ];
     }
 
     /**
@@ -220,6 +241,8 @@ class VoucherController extends Controller
             'voucher_durations' => Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'),
             'free_wifi_min_amount' => Setting::get('free_wifi_min_amount', '200'),
             'free_wifi_duration' => Setting::get('free_wifi_duration', '60'),
+            'wifi_ssid' => Setting::get('wifi_ssid', ''),
+            'voucher_unused_expiry_days' => Setting::get('voucher_unused_expiry_days', '60'),
         ];
 
         return view('network.plans', compact('settings'));
@@ -495,13 +518,45 @@ class VoucherController extends Controller
         // "Find a device" — the same lookup the AI's lookupDevice tool uses.
         $find = trim((string) request('find', ''));
         $found = $find !== '' ? app(DeviceLookupService::class)->find($find) : null;
+        // The code the +time buttons act on: the device's voucher, or the
+        // searched code itself when that phone has already left the network.
+        $foundCode = $found['voucher'] ?? ($find !== '' ? Voucher::where('code', strtoupper($find))->whereNotNull('used_at')->value('code') : null);
 
-        return view('network.sessions', compact('activeSessions', 'infrastructureSessions', 'pendingSessions', 'ghostDevices', 'find', 'found'));
+        return view('network.sessions', compact('activeSessions', 'infrastructureSessions', 'pendingSessions', 'ghostDevices', 'find', 'found', 'foundCode'));
     }
 
     /**
      * Terminate an active network session.
      */
+    /**
+     * The guest paid at the counter for more time: extend their code instead
+     * of printing a new one. If they were already cut off, the portal's
+     * auto-reconnect brings them back the next time the phone opens a page.
+     */
+    public function addTime(Request $request)
+    {
+        $v = $request->validate([
+            'voucher_code' => 'required|string|exists:vouchers,code',
+            'minutes' => 'required|integer|in:30,60',
+        ]);
+
+        $voucher = Voucher::where('code', $v['voucher_code'])->firstOrFail();
+        if (! $voucher->used_at) {
+            return redirect()->back()->with('error', "{$voucher->code} hasn't been used yet, so there's no time to extend.");
+        }
+
+        // Time already run out counts from now, not from the old end.
+        $end = $voucher->used_at->copy()->addMinutes($voucher->duration_minutes);
+        $added = $v['minutes'] + ($end->isPast() ? (int) ceil($end->diffInMinutes(now())) : 0);
+        $voucher->update(['duration_minutes' => $voucher->duration_minutes + $added, 'disconnected_at' => null]);
+
+        $newEnd = $voucher->used_at->copy()->addMinutes($voucher->duration_minutes);
+        PortalEvent::record(PortalEvent::TIME_ADDED, $voucher->ip_address, $voucher->code, ['minutes' => $v['minutes'], 'by' => $request->user()->name]);
+        Log::info("Voucher {$voucher->code}: +{$v['minutes']} min by {$request->user()->name}, now until {$newEnd}.");
+
+        return redirect()->back()->with('success', "Added {$v['minutes']} minutes to {$voucher->code}. Their Wi-Fi now runs until {$newEnd->format('g:i A')}.");
+    }
+
     public function kick(Request $request, OpnSenseService $opnsense)
     {
         $request->validate([

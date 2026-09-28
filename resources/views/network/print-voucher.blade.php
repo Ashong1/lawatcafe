@@ -20,6 +20,12 @@
         /* Scanners need the quiet zone the SVG already carries, so no extra
            padding or background here that could crop it. */
         .qr-url { font-size: 9px; color: #888; margin-top: 6px; word-break: break-all; }
+        .slip-steps { text-align: left; font-size: 11px; color: #333; margin: 10px 0; }
+        .slip-steps ol { margin: 0 0 8px; padding-left: 18px; }
+        .slip-steps li { margin-bottom: 3px; }
+        .slip-steps .fil { color: #777; }
+        .slip-steps .join-qr { text-align: center; margin: 8px 0; }
+        .slip-steps .use-by { font-size: 10px; color: #555; text-align: center; }
         @media print {
             .no-print { display: none; }
         }
@@ -34,9 +40,10 @@
         <div class="code">{{ $voucher->code }}</div>
         
         <div class="details">
-            Duration: {{ $voucher->duration_minutes }} Minutes<br>
-            Status: {{ ucfirst($voucher->status ?? 'unused') }}
+            {{ $voucher->duration_minutes }} minutes of Wi-Fi
         </div>
+
+        @include('network.partials.slip-steps', ['useBy' => $voucher->unusedExpiresAt()])
 
         {{-- The whole point of putting this on the slip: the customer keeps the
              paper, so scanning it opens the status page in their own browser

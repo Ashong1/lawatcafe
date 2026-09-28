@@ -225,6 +225,8 @@ class SettingController extends Controller
             'store_open_time' => 'nullable|string',
             'store_close_time' => 'nullable|string',
             'receipt_header' => 'nullable|string|max:255',
+            'wifi_ssid' => 'nullable|string|max:32',
+            'voucher_unused_expiry_days' => 'nullable|integer|min:0|max:3650',
         ]);
 
         $this->applySettings($validated);

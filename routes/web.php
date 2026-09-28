@@ -20,6 +20,7 @@ use App\Http\Controllers\NetworkDeviceController;
 use App\Http\Controllers\NetworkHealthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderHistoryController;
+use App\Http\Controllers\PortalReportController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
@@ -148,6 +149,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/vouchers', [VoucherController::class, 'index'])->name('vouchers.index');
         Route::get('/sessions', [VoucherController::class, 'sessions'])->name('sessions');
         Route::post('/sessions/kick', [VoucherController::class, 'kick'])->name('sessions.kick');
+        Route::post('/sessions/add-time', [VoucherController::class, 'addTime'])->name('sessions.add-time');
         // Network health: staff see it too — they're at the counter when the Wi-Fi breaks.
         Route::get('/health', [NetworkHealthController::class, 'index'])->name('health');
         Route::post('/health/run', [NetworkHealthController::class, 'run'])->name('health.run')->middleware('throttle:6,1');
@@ -253,6 +255,7 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/vouchers/{voucher}', [VoucherController::class, 'destroy'])->name('vouchers.destroy');
 
             Route::get('/plans', [VoucherController::class, 'plans'])->name('plans');
+            Route::get('/portal-report', [PortalReportController::class, 'index'])->name('portal-report');
             Route::get('/traffic', [TrafficController::class, 'index'])->name('traffic');
             Route::get('/traffic/stats', [TrafficController::class, 'stats'])->name('traffic.stats');
             // Applies the fair-use ceiling. This one DOES write the live

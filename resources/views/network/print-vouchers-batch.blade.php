@@ -22,6 +22,12 @@
         .details { font-size: 12px; color: #666; margin-bottom: 10px; }
         .qr-block { border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 4px; }
         .qr-label { font-size: 8px; text-transform: uppercase; letter-spacing: 1px; color: #777; margin-bottom: 6px; }
+        .slip-steps { text-align: left; font-size: 11px; color: #333; margin: 10px 0; }
+        .slip-steps ol { margin: 0 0 8px; padding-left: 18px; }
+        .slip-steps li { margin-bottom: 3px; }
+        .slip-steps .fil { color: #777; }
+        .slip-steps .join-qr { text-align: center; margin: 8px 0; }
+        .slip-steps .use-by { font-size: 10px; color: #555; text-align: center; }
         @media print {
             .no-print { display: none; }
             body { padding: 0; }
@@ -45,8 +51,9 @@
                 
                 <div class="code">{{ $voucher->code }}</div>
                 
+                @include('network.partials.slip-steps', ['useBy' => $voucher->unusedExpiresAt()])
                 <div class="details">
-                    Duration: {{ $voucher->duration_minutes }} Minutes<br>
+                    {{ $voucher->duration_minutes }} minutes of Wi-Fi<br>
                     <span style="font-size: 9px; opacity: 0.7;">Voucher ID: #{{ $voucher->id }}</span>
                 </div>
 

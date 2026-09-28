@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Services\Agent\ChatStreamResponder;
 use App\Services\Agent\ToolCallOrchestrator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -32,7 +33,9 @@ class ChatStreamTruncationTest extends TestCase
         return $this->actingAs(User::factory()->create(['role' => 'admin']))
             ->get('/dashboard')
             ->assertOk()
-            ->getContent();
+            ->getContent()
+            // The widget's script is bundled (resources/js/agent-chat.js), not inline.
+            .file_get_contents(resource_path('js/agent-chat.js'));
     }
 
     /**
@@ -96,7 +99,7 @@ class ChatStreamTruncationTest extends TestCase
      */
     public function test_the_stream_opens_with_an_immediate_event(): void
     {
-        $responder = new \ReflectionClass(\App\Services\Agent\ChatStreamResponder::class);
+        $responder = new \ReflectionClass(ChatStreamResponder::class);
         $source = file_get_contents($responder->getFileName());
 
         $this->assertStringContainsString("'type' => 'open'", $source);
@@ -178,7 +181,7 @@ class ChatStreamTruncationTest extends TestCase
     {
         $html = $this->widgetSource();
 
-        $this->assertStringContainsString("streaming: true", $html);
+        $this->assertStringContainsString('streaming: true', $html);
         $this->assertStringContainsString('x-show="msg.streaming"', $html);
     }
 

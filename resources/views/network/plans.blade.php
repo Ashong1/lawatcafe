@@ -197,6 +197,25 @@
                 </div>
 
                 <input type="hidden" name="voucher_durations" :value="jsonOutput">
+
+                {{-- What goes on the printed slip. --}}
+                <div class="mt-8 grid gap-4 md:grid-cols-2 rounded-2xl border border-[#F0E6D2] bg-white p-5">
+                    <div>
+                        <label for="wifi_ssid" class="block text-sm font-bold text-[#3E2723] mb-1">Wi-Fi network name</label>
+                        <input id="wifi_ssid" name="wifi_ssid" type="text" maxlength="32" value="{{ $settings['wifi_ssid'] }}" placeholder="e.g. Lawa't Kape"
+                               class="w-full rounded-xl border-2 border-[#F0E6D2] px-4 py-3 text-sm focus:border-[#3E2723] focus:ring-0">
+                        <p class="text-xs text-[#6D4C41] mt-1.5">Exactly as phones show it. Slips get a QR code that joins this network, plus step-by-step instructions.</p>
+                    </div>
+                    <div>
+                        <label for="voucher_unused_expiry_days" class="block text-sm font-bold text-[#3E2723] mb-1">Unused codes stop working after</label>
+                        <div class="flex items-center gap-2">
+                            <input id="voucher_unused_expiry_days" name="voucher_unused_expiry_days" type="number" min="0" max="3650" value="{{ $settings['voucher_unused_expiry_days'] }}"
+                                   class="w-28 rounded-xl border-2 border-[#F0E6D2] px-4 py-3 text-sm focus:border-[#3E2723] focus:ring-0">
+                            <span class="text-sm text-[#4A3B32]">days</span>
+                        </div>
+                        <p class="text-xs text-[#6D4C41] mt-1.5">So a lost slip isn't good forever. 0 means codes never expire. Once used, a code runs for its own time as usual.</p>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
