@@ -9,6 +9,24 @@ the history was rewritten.
 
 ---
 
+## 1.22.0 — Adding staff by email invite
+*build 194*
+
+- **Adding staff** asks for a name, a username (suggested from the name) and
+  an email. The person gets an email with a link to choose their own
+  password and is signed in; the owner never types or knows it. Links last
+  3 days and work once.
+- Staff sign in with their **username or email**. "Forgot password?" accepts
+  either and sends the same kind of link.
+- The staff list shows who is still **waiting to set a password**, with
+  **Resend** and **Copy link** (to send by text when the email can't go out).
+- A form with a mistake keeps what was typed instead of clearing it.
+- **Removing** someone who has sales or shifts on record used to fail with a
+  server error, and for someone with only cash movements, wastage or
+  deliveries it deleted those records with them. They are now switched off
+  instead: they can't sign in, their name stays on the reports, and
+  **Removed → Restore** brings them back.
+
 ## 1.21.1 — Less crowded on a phone
 *build 193*
 

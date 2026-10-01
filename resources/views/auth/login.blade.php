@@ -8,12 +8,12 @@
     <form method="POST" action="{{ route('login') }}" class="space-y-6 max-w-md mx-auto w-full" x-data="{ submitting: false }" @submit="submitting = true">
         @csrf
 
-        <!-- Email Address -->
+        <!-- Email or username -->
         <div>
-            <label for="email" class="block text-xs font-bold text-white/80 uppercase tracking-wide mb-2 ml-1">Email address</label>
-            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus 
+            <label for="email" class="block text-xs font-bold text-white/80 uppercase tracking-wide mb-2 ml-1">Username or email</label>
+            <input id="email" type="text" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false" 
                 class="w-full bg-white/10 text-white border-white/20 focus:border-white focus:ring-0 rounded-xl px-4 py-3.5 placeholder-white/30 transition shadow-inner text-sm" 
-                placeholder="admin@lawatkape.com" />
+                placeholder="e.g. ana" />
             <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-400 text-xs font-bold" />
         </div>
 

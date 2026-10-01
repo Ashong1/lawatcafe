@@ -9,7 +9,7 @@ PW="$(head -c 18 /dev/urandom | base64 | tr -dc A-Za-z0-9 | head -c 16)"
 # Always runs: the throwaway shift first (it belongs to the account), then the account.
 cleanup() { (cd "$APP" && sudo -u www-data php artisan tinker --execute="\$u=App\Models\User::where('email','$EMAIL')->first(); if(\$u){ App\Models\Shift::where('user_id',\$u->id)->delete(); \$u->delete(); }" >/dev/null 2>&1) || true; }
 trap cleanup EXIT
-(cd "$APP" && sudo -u www-data php artisan tinker --execute="App\Models\User::create(['name'=>'Screenshot $ROLE','email'=>'$EMAIL','password'=>Hash::make('$PW'),'role'=>'$ROLE']);" >/dev/null)
+(cd "$APP" && sudo -u www-data php artisan tinker --execute="App\Models\User::create(['name'=>'Screenshot $ROLE','email'=>'$EMAIL','password'=>Hash::make('$PW'),'role'=>'$ROLE','password_set_at'=>now()]);" >/dev/null)
 # A register needs an open shift, or the page shows the open-shift screen.
 if [ "$ROLE" != "super_admin" ]; then
   (cd "$APP" && sudo -u www-data php artisan tinker --execute="\$u=App\Models\User::where('email','$EMAIL')->first(); App\Models\Shift::create(['user_id'=>\$u->id,'starting_cash'=>0,'status'=>'open','opened_at'=>now()]);" >/dev/null)

@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -19,8 +20,11 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
+        'password_set_at',
+        'deactivated_at',
         'role',
     ];
 
@@ -44,6 +48,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'password_set_at' => 'datetime',
+            'deactivated_at' => 'datetime',
         ];
     }
 
@@ -78,5 +84,32 @@ class User extends Authenticatable
             // problem, and echoing it verbatim invites it to look official.
             default => 'Unknown Role',
         };
+    }
+
+    /** Invited but hasn't chosen a password yet, so can't sign in. */
+    public function isPendingInvite(): bool
+    {
+        return $this->password_set_at === null;
+    }
+
+    public function isDeactivated(): bool
+    {
+        return $this->deactivated_at !== null;
+    }
+
+    /**
+     * Records that point at this account. Sales and shifts refuse a delete;
+     * cash movements, wastage and deliveries would be deleted with it.
+     */
+    public function hasWorkHistory(): bool
+    {
+        foreach (['sales' => 'user_id', 'shifts' => 'user_id', 'shift_transactions' => 'user_id', 'wastages' => 'user_id',
+            'ingredient_deliveries' => 'user_id', 'sale_void_requests' => 'requested_by'] as $table => $column) {
+            if (DB::table($table)->where($column, $this->id)->exists()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

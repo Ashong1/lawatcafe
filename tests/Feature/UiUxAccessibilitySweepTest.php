@@ -51,17 +51,18 @@ class UiUxAccessibilitySweepTest extends TestCase
     public function test_accounts_index_form_fields_are_labelled(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        User::factory()->create(['role' => 'staff']);
+        $staff = User::factory()->create(['role' => 'staff']);
 
         $response = $this->actingAs($admin)->get(route('accounts.index'));
 
         $response->assertOk();
-        foreach (['account-name', 'account-email', 'account-role', 'account-password'] as $id) {
+        // No password field: people choose their own from the emailed link.
+        foreach (['account-name', 'account-username', 'account-email'] as $id) {
             $response->assertSee("for=\"{$id}\"", false);
             $response->assertSee("id=\"{$id}\"", false);
         }
-        $response->assertSee('aria-label="Edit Staff"', false);
-        $response->assertSee('aria-label="Remove Access"', false);
+        $response->assertSee('aria-label="Edit '.e($staff->name).'"', false);
+        $response->assertSee('aria-label="Remove '.e($staff->name).'"', false);
     }
 
     public function test_network_vouchers_page_labels_fields_and_labels_bulk_delete(): void

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\AccountSetupController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
@@ -23,6 +24,7 @@ Route::middleware('guest')->group(function () {
         ->name('password.request');
 
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('throttle:5,1')
         ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
@@ -31,6 +33,13 @@ Route::middleware('guest')->group(function () {
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
 });
+
+// The emailed invite / new-password link. Not behind 'guest': the controller
+// itself refuses when someone else is signed in on this device.
+Route::get('welcome/{user}', [AccountSetupController::class, 'show'])->name('account.setup');
+Route::post('welcome/{user}', [AccountSetupController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('account.setup.store');
 
 Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)

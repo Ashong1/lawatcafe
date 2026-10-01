@@ -1,7 +1,7 @@
 <x-guest-layout>
     <x-slot name="header">
         <h2 class="text-xl font-semibold text-white mb-1" style="font-family: 'Montserrat', sans-serif;">Reset Password</h2>
-        <p class="text-sm text-[#6D4C41]" style="font-family: 'Montserrat', sans-serif;">Enter your email to receive a reset link</p>
+        <p class="text-sm text-[#6D4C41]" style="font-family: 'Montserrat', sans-serif;">Enter your username or email. We'll email you a link to choose a new password.</p>
     </x-slot>
 
     <form method="POST" action="{{ route('password.email') }}" class="space-y-5 max-w-md mx-auto w-full">
@@ -9,10 +9,10 @@
 
         <!-- Email Address -->
         <div>
-            <label for="email" class="block text-xs font-medium text-[#6D4C41] mb-1 ml-1">Email address</label>
-            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus 
+            <label for="email" class="block text-xs font-medium text-[#6D4C41] mb-1 ml-1">Username or email</label>
+            <input id="email" type="text" name="email" autocomplete="username" autocapitalize="none" spellcheck="false" value="{{ old('email') }}" required autofocus 
                 class="w-full bg-[#4E342E] text-[#FDF8F5] border-transparent focus:border-[#A1887F] focus:ring-0 rounded-lg px-4 py-3 placeholder-[#8D6E63] transition shadow-inner text-sm" 
-                placeholder="admin@lawatkape.com" />
+                placeholder="e.g. ana" />
             <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-400 text-xs" />
         </div>
 

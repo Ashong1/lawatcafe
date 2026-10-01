@@ -51,7 +51,7 @@ class UiUxFieldValidationErrorsTest extends TestCase
         $this->actingAs($admin)->from(route('accounts.index'))
             ->post(route('accounts.store'), ['email' => 'not-an-email'])
             ->assertRedirect(route('accounts.index'))
-            ->assertSessionHasErrors(['name', 'email', 'password']);
+            ->assertSessionHasErrors(['name', 'email', 'username']);
 
         $response = $this->actingAs($admin)->get(route('accounts.index'));
 

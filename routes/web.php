@@ -323,6 +323,8 @@ Route::middleware(['auth'])->group(function () {
 
         // System Accounts
         Route::resource('accounts', AccountController::class)->except(['create', 'show', 'edit']);
+        Route::post('accounts/{account}/send-link', [AccountController::class, 'sendLink'])->middleware('throttle:10,1')->name('accounts.send-link');
+        Route::post('accounts/{account}/restore', [AccountController::class, 'restore'])->name('accounts.restore');
 
         // System Settings (Consolidated) — Store Preferences and the AI Providers
         // API-key form are business-facing and stay reachable by admin-or-above

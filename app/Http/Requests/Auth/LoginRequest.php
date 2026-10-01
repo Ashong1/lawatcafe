@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -28,7 +29,8 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            // Named "email" for password managers; it takes an email or a username.
+            'email' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
         ];
     }
@@ -42,11 +44,28 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $login = trim($this->string('email'));
+        $field = str_contains($login, '@') ? 'email' : 'username';
+        $credentials = [$field => $field === 'username' ? Str::lower($login) : $login, 'password' => $this->string('password')->toString()];
+
+        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
+            // An invited account has no password of its own yet, so say where to get one.
+            $pending = User::where($field, $credentials[$field])->whereNull('password_set_at')->exists();
+
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'email' => $pending
+                    ? 'This account isn\'t set up yet. Open the invite in your email to choose a password, or ask the owner to send it again.'
+                    : trans('auth.failed'),
+            ]);
+        }
+
+        if (Auth::user()->isDeactivated()) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'This account was removed. Ask the owner if you need access again.',
             ]);
         }
 

@@ -290,6 +290,19 @@ Details in [AI_AGENT.md](AI_AGENT.md).
 - **Accounts** (`/accounts`): an admin adds, edits and removes staff
   accounts; the super admin can also create admin accounts. The super admin
   account itself is never listed or editable here.
+  - **Adding someone**: name, username (suggested from the name) and email.
+    No password: they get an email link (`/welcome/{user}`, signed, 3 days,
+    works once) to choose their own and are signed in. The list shows
+    "Waiting to set a password" with **Resend** and **Copy link** (for when
+    the email can't go out; queued mail retries for 3 days while offline).
+  - **Signing in** takes the username or the email. **Forgot password?**
+    and **Email a new-password link** (in Edit) send the same kind of link.
+  - **Removing** someone with sales, shifts or other records switches the
+    account off instead of deleting it, so reports keep their name; a
+    signed-in removed person is signed out on their next click. **Removed**
+    lists them with **Restore**. Accounts with no records are deleted.
+  - Code: `AccountController`, `AccountInviteService`,
+    `Auth\AccountSetupController`, `SignOutRemovedAccounts`.
 - **Profile** (`/profile`, everyone): name, email, password.
 - **Idle sign-out**: a session left idle is signed out.
 - **Settings → Store Settings** (admin): opening and closing time, receipt header,

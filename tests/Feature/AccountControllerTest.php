@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class AccountControllerTest extends TestCase
@@ -47,7 +48,7 @@ class AccountControllerTest extends TestCase
         $response = $this->actingAs($admin)->post(route('accounts.store'), [
             'name' => 'Sneaky',
             'email' => 'sneaky@example.com',
-            'password' => 'password123',
+            'username' => 'newuser',
             'role' => 'admin',
         ]);
 
@@ -62,7 +63,7 @@ class AccountControllerTest extends TestCase
         $response = $this->actingAs($superAdmin)->post(route('accounts.store'), [
             'name' => 'Another Super Admin',
             'email' => 'super2@example.com',
-            'password' => 'password123',
+            'username' => 'newuser',
             'role' => 'super_admin',
         ]);
 
@@ -72,12 +73,13 @@ class AccountControllerTest extends TestCase
 
     public function test_super_admin_can_create_an_admin_account(): void
     {
+        Mail::fake();
         $superAdmin = User::factory()->create(['role' => 'super_admin']);
 
         $response = $this->actingAs($superAdmin)->post(route('accounts.store'), [
             'name' => 'New Owner',
             'email' => 'owner@example.com',
-            'password' => 'password123',
+            'username' => 'newuser',
             'role' => 'admin',
         ]);
 

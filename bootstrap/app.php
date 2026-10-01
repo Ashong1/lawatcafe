@@ -43,6 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'portal/chat',
         ]);
         $middleware->appendToGroup('web', [
+            \App\Http\Middleware\SignOutRemovedAccounts::class,
             IdleSessionTimeout::class,
         ]);
     })
