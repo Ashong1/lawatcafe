@@ -109,7 +109,7 @@ A short tour. Every feature is described in full in
 
 ### Network administration
 
-- **Active sessions**: every device on the network, split into guests,
+- **Who's Online**: every device on the network, split into guests,
   shop equipment, devices waiting to sign in, and unknown devices. Includes
   **Find a device** by IP, MAC, name or code, and **Block** or **Trust** in
   one tap.
@@ -119,7 +119,7 @@ A short tour. Every feature is described in full in
   streaming, adult content or piracy in one toggle each, or any domain you
   type.
 - **Alerts when a guest looks up an adult site.**
-- **Network health**, checked every minute: internet, firewall, DNS, DHCP
+- **Network Status**, checked every minute: internet, firewall, DNS, DHCP
   pool, login page, equipment, bandwidth and unknown devices. It keeps a
   history and alerts only when something changes.
 - **Fixed addresses** (DHCP reservations on the firewall), a portal report
@@ -450,10 +450,10 @@ which build is running. The version lives in one place, `composer.json`.
 | A page shows a 500 error after a deploy, mentioning permissions | Artisan was run as root and wrote cache files www-data can't overwrite | `sudo chown -R www-data:www-data storage bootstrap/cache`, then run Artisan as `www-data` from now on |
 | A new route gives "Route not defined" | Stale route cache | `sudo -u www-data php artisan route:clear` (then `route:cache` again in production) |
 | Tests refuse to run: "pointed at mysql" | Production config is cached | `sudo -u www-data php artisan config:clear` before testing |
-| Barista AI: "trouble connecting" | OpenRouter's free daily allowance is used up, or the internet is down | Check the yellow bar, and Settings → AI Providers. $5 of OpenRouter credit raises the free limit from 50 to 1,000 requests a day |
-| Network pages: "can't reach the firewall" | OPNsense API key, URL or zone is wrong, or OPNsense is down | Check `OPNSENSE_*` in `.env` and Network → Health |
+| Barista AI: "trouble connecting" | OpenRouter's free daily allowance is used up, or the internet is down | Check the yellow bar, and Settings → Barista AI Settings. $5 of OpenRouter credit raises the free limit from 50 to 1,000 requests a day |
+| Network pages: "can't reach the firewall" | OPNsense API key, URL or zone is wrong, or OPNsense is down | Check `OPNSENSE_*` in `.env` and Wi-Fi & Network → Network Status |
 | Guests can't get online after a power cut | OPNsense waits for the ISP before starting DHCP | [docs/OWNER_NETWORK_STEPS.md §3](docs/OWNER_NETWORK_STEPS.md#3-start-the-shop-without-internet-after-a-power-cut-15-minutes) |
-| A staff device keeps getting the sign-in page | Trusted by MAC only, and its address changed, or the phone uses a private Wi-Fi address | Give it a fixed address, then trust it again on Network → Trusted Devices |
+| A staff device keeps getting the sign-in page | Trusted by MAC only, and its address changed, or the phone uses a private Wi-Fi address | Give it a fixed address, then trust it again on Wi-Fi & Network → Trusted Devices |
 
 More in [docs/OPERATIONS.md](docs/OPERATIONS.md#troubleshooting).
 

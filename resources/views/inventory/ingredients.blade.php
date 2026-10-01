@@ -11,7 +11,7 @@
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Ingredient Inventory</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Track and manage raw materials, stock levels, and supply adjustments.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Everything the menu is made from, how much is left, and when to reorder.</p>
         </div>
     </div>
 
@@ -19,13 +19,13 @@
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Raw Materials</h3>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Ingredients</h3>
             </div>
             
             <div class="flex flex-wrap gap-3">
                 <button class="bg-[#FAFAFA] hover:bg-[#FDF8F5] text-[#795548] hover:text-[#3E2723] border border-[#F0E6D2] px-6 py-3 rounded-full font-bold transition text-xs tracking-wide uppercase flex items-center gap-2">
                     <x-lucide-history class="w-4 h-4" />
-                    <span>Adjustments</span>
+                    <span>Stock changes</span>
                 </button>
                 <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                     <x-lucide-plus class="w-4 h-4" />
@@ -40,7 +40,7 @@
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                         <th class="pb-4 font-bold">Ingredient</th>
                         <th class="pb-4 font-bold text-right">Current Stock</th>
-                        <th class="pb-4 font-bold text-right hidden md:table-cell">Threshold</th>
+                        <th class="pb-4 font-bold text-right hidden md:table-cell">Alert below</th>
                         <th class="pb-4 font-bold text-center">Status</th>
                         <th class="pb-4 font-bold text-right">Actions</th>
                     </tr>

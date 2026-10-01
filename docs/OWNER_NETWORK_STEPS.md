@@ -65,7 +65,7 @@ Click **Apply changes** after each section.
 
 **Check:** on a phone on the café Wi-Fi, set Private DNS off and a manual
 DNS of `8.8.8.8`, then open a site on the Site Blocking list. It should
-not load. The Network → Health page's DNS check should stay green.
+not load. The Wi-Fi & Network → Network Status page's DNS check should stay green.
 **Undo:** disable the three rules (tick them off) and Apply.
 
 Not covered: DNS-over-HTTPS (browsers' "secure DNS") looks like normal web
@@ -98,7 +98,7 @@ it keeps retrying every 30 seconds in the background.
 **Check:** switch off the ISP router (or unplug the cable from its LAN port),
 then reboot OPNsense from **Power → Reboot**. Phones should get Wi-Fi
 addresses about a minute sooner than before. Turn the ISP router back on: the
-Network Health page shows the internet back within a few minutes, without
+Network Status page shows the internet back within a few minutes, without
 rebooting anything.
 **Undo:** set **Configuration Mode** back to **Basic** and save.
 

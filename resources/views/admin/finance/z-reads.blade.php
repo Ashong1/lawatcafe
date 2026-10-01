@@ -9,9 +9,9 @@
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Z-Reads</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">End of Day</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Review and audit cash drawer declarations and shift performance.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Each shift's counted cash compared with what the register expected (the Z-read).</p>
         </div>
 
         <div class="flex gap-2">
@@ -27,8 +27,8 @@
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                         <th class="pb-4 font-bold">Staff / Time</th>
                         <th class="pb-4 font-bold text-right">Expected</th>
-                        <th class="pb-4 font-bold text-right">Declared</th>
-                        <th class="pb-4 font-bold text-center">Variance</th>
+                        <th class="pb-4 font-bold text-right">Counted</th>
+                        <th class="pb-4 font-bold text-center">Short / over</th>
                         <th class="pb-4 font-bold text-center">Status</th>
                         <th class="pb-4 font-bold text-right">Actions</th>
                     </tr>

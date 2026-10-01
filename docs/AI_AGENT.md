@@ -107,7 +107,7 @@ nothing.
 
 1. **The tool's own tier.** If it is `admin_only`, that is final; no setting
    can loosen it.
-2. **An optional override** from Settings → Agent (`agent_tool_permissions`),
+2. **An optional override** from System Administration → Agent Permissions (`agent_tool_permissions`),
    for the other tools.
 3. **The person's floor**: a staff member never gets `auto` for anything
    above `auto`. Scheduled runs (no person) and admins have no floor.

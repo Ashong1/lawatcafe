@@ -14,7 +14,7 @@
             <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Review, send, or dismiss purchase order drafts (drafted by Barista AI when stock runs low).</p>
         </div>
 
-        <x-ask-ai-button prompt="Draft purchase orders for any ingredients that are currently low on stock." label="Ask AI to draft POs" />
+        <x-ask-ai-button prompt="Draft purchase orders for any ingredients that are currently low on stock." label="Ask Barista AI to draft orders" />
     </div>
 
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">

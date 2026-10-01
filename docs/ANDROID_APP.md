@@ -27,7 +27,7 @@ reinstalling it**.
    so Android asks this for any app installed this way.)
 5. Open **Lawa't Kape** from the home screen and sign in.
 
-Recommended: add the phone on **Network → Trusted Devices**. The app works
+Recommended: add the phone on **Wi-Fi & Network → Trusted Devices**. The app works
 without this, because the server is reachable before Wi-Fi sign-in, but
 Android otherwise keeps showing "Sign in to Wi-Fi" notifications.
 

@@ -100,8 +100,8 @@ owner's admin account; on a fresh database it does nothing.
 
 - **`network_health_checks`** — one row per minute from `network:health`:
   `checked_at, overall, internet_latency_ms, internet_loss_pct, dns_ok, dhcp_used, dhcp_size, guests_online, infrastructure_down, results (JSON of every check)`.
-  Kept for 7 days; feeds the Network Health charts.
-- **`portal_events`** — the guest sign-in funnel for the Portal Report:
+  Kept for 7 days; feeds the Network Status charts.
+- **`portal_events`** — the guest sign-in funnel for the Sign-in Report:
   `type, ip_address, voucher_code, meta (JSON), created_at`. Types: `visit`,
   `code_tried`, `code_failed` (with the reason), `connected`, `more_time`,
   `time_added`, `time_up`, `dropped` (cut off with time left, with idle

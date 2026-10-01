@@ -106,7 +106,7 @@ legitimate place that still filters on the specific `pending`/`preparing`/
 ## Waiting-order reminders
 
 `OrderWaitService::waiting()` lists sales still `pending` or `preparing`
-after `order_wait_alert_minutes` (default 1, Settings → Store) and less than
+after `order_wait_alert_minutes` (default 1, Settings → Store Settings) and less than
 6 hours old, leaving out sales with only Wi-Fi items. `GET /orders/waiting`
 serves it to `partials/order-wait-reminder`, which is included in the admin
 and staff layouts (not for the super admin).
@@ -185,7 +185,7 @@ Cards show the wait, turn amber at 5 minutes and red at 10, and get a
 
 Printed customer receipts are **off** until the register is BIR-registered
 (`pos_receipt_printing_enabled`, default off, super admin only on
-Settings → Store). While off, the Print button is gone, the receipt URL
+Settings → Store Settings). While off, the Print button is gone, the receipt URL
 redirects with an explanation, and the success screen says the sale was
 recorded and printing is withheld. The portal also stops pointing guests at
 a receipt for their code.

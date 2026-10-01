@@ -63,7 +63,7 @@ minutes for 3 days, so a send during an internet outage isn't lost.
 
 | Variable | Default | Notes |
 |---|---|---|
-| `OPENROUTER_API_KEY` | (none) | https://openrouter.ai/keys. Can also be set on Settings → AI Providers, which wins over `.env`. Without a key the AI features say they are unavailable; everything else works |
+| `OPENROUTER_API_KEY` | (none) | https://openrouter.ai/keys. Can also be set on Settings → Barista AI Settings, which wins over `.env`. Without a key the AI features say they are unavailable; everything else works |
 
 ### OPNsense
 
@@ -114,7 +114,7 @@ minutes for 3 days, so a send during an internet outage isn't lost.
 | `wifi_ssid` | (empty) | Network name, used for the "scan to join" QR on slips |
 | `voucher_unused_expiry_days` | `60` | An unused code stops working after this many days; `0` = never |
 
-### Settings → Store (`/settings/store`, admin)
+### Settings → Store Settings (`/settings/store`, admin)
 
 | Key | Default | Meaning |
 |---|---|---|
@@ -123,7 +123,7 @@ minutes for 3 days, so a send during an internet outage isn't lost.
 | `order_wait_alert_minutes` | `1` | Remind staff when an order hasn't been marked done after this long (1–60) |
 | `pos_receipt_printing_enabled` | `0` | Printed receipts. **Super admin only**; leave off until BIR-registered |
 
-### Traffic Shaping (`/network/traffic`, admin)
+### Wi-Fi Speed (`/network/traffic`, admin)
 
 | Key | Default | Meaning |
 |---|---|---|
@@ -134,7 +134,7 @@ minutes for 3 days, so a send during an internet outage isn't lost.
 | `bw_adaptive_enabled` | `0` | Let the system move the ceiling with how busy the shop is |
 | `bw_adaptive_min`, `bw_adaptive_max` | `5`, `20` | The limits it may move between (Mbps) |
 
-### Settings → Network (`/settings/network`, super admin)
+### System Administration → Network Config (`/settings/network`, super admin)
 
 | Key | Default | Meaning |
 |---|---|---|
@@ -145,14 +145,14 @@ minutes for 3 days, so a send during an internet outage isn't lost.
 Fixed addresses (DHCP reservations) and trusted devices (the captive portal
 allow-list) are stored on the firewall itself, not in settings.
 
-### Settings → AI Providers (`/settings/ai-providers`, admin; tests and model changes: super admin)
+### Settings → Barista AI Settings (`/settings/ai-providers`, admin; tests and model changes: super admin)
 
 | Key | Default | Meaning |
 |---|---|---|
 | `openrouter_api_key` | (empty) | Overrides `OPENROUTER_API_KEY` |
 | per-provider model list | the built-in list | Which models to try, in order |
 
-### Settings → Agent (`/settings/agent`, super admin)
+### System Administration → Agent Permissions (`/settings/agent`, super admin)
 
 | Key | Default | Meaning |
 |---|---|---|

@@ -92,7 +92,7 @@ For how each piece works inside, follow the links to the other guides.
 **Staff, admin** · on every screen
 
 - When an order hasn't been marked done within the reminder time (default
-  **1 minute**, set in Settings → Store), every staff and admin screen chimes,
+  **1 minute**, set in Settings → Store Settings), every staff and admin screen chimes,
   vibrates on tablets, and shows the order: number, how long it has waited,
   dine in or take away, and the items. A button opens the kitchen display.
 - Repeats every 3 minutes for an order still not done. Several late orders
@@ -159,7 +159,7 @@ For how each piece works inside, follow the links to the other guides.
   performance by category, and a 7-day AI revenue forecast with confidence
   and a growth tip. The forecast is prepared every 3 hours, so the page
   never waits for it.
-- **Portal report** (`/network/portal-report`): see [Network administration](#network-administration).
+- **Sign-in Report** (`/network/portal-report`): see [Network administration](#network-administration).
 
 ## Guest Wi-Fi (captive portal)
 
@@ -200,11 +200,11 @@ For how each piece works inside, follow the links to the other guides.
 
 **Admin** (selling at the till: staff too)
 
-- **Wi-Fi plans** (`/network/plans`): price → duration pairs sold at the
+- **Wi-Fi Prices** (`/network/plans`): price → duration pairs sold at the
   register (default ₱20 = 1 hour, ₱50 = 3 hours, ₱100 = whole day), the
   free Wi-Fi minimum spend and its duration, and the Wi-Fi network name
   printed on slips.
-- **Vouchers** (`/network/vouchers`, staff can view): generate batches by
+- **Wi-Fi Codes** (`/network/vouchers`, staff can view): generate batches by
   plan (Free or Premium) and duration (admin), filter available or used,
   print one slip or a whole batch, and delete codes in bulk (admin).
 - **Slips** carry the code, a QR that fills it in, a "scan to join the Wi-Fi"
@@ -214,10 +214,10 @@ For how each piece works inside, follow the links to the other guides.
 
 ## Network administration
 
-**Admin**. Staff can also open Active Sessions and Network Health, and
+**Admin**. Staff can also open Who's Online and Network Status, and
 disconnect a guest or add time.
 
-- **Active sessions** (`/network/sessions`): everything on the network,
+- **Who's Online** (`/network/sessions`): everything on the network,
   split into guests online, shop equipment, devices waiting to sign in, and
   unknown devices. Each guest shows their code, plan, time left and data
   used.
@@ -235,28 +235,28 @@ disconnect a guest or add time.
   equipment can only be removed by the super admin.
 - **Blocked devices** (`/network/blocklist`): banned devices with the reason,
   and unblock. Blocking also disconnects the device.
-- **Site blocking** (`/network/site-blocking`): through Pi-hole. Preset
+- **Blocked Websites** (`/network/site-blocking`): through Pi-hole. Preset
   groups (social media, streaming and gaming, adult content, piracy) with a
   toggle per site, a ready-made adult-site list, and custom domains.
 - **Adult-site alerts**: admins are notified when a guest device looks up a
   likely adult site.
-- **Network health** (`/network/health`): checked every minute, covering
+- **Network Status** (`/network/health`): checked every minute, covering
   internet (latency and loss), firewall, DNS (Pi-hole), DHCP pool usage, the
   login page, each piece of equipment, bandwidth and unknown devices. It
   shows 24-hour charts, the top data users and the most blocked lookups,
   with **Check now**, and links each problem to the page that fixes it.
   Admins are alerted only when a check changes state.
-- **Traffic shaping** (`/network/traffic`): live throughput, the **plan
+- **Wi-Fi Speed** (`/network/traffic`): live throughput, the **plan
   speeds** as the firewall is actually running them (editable; applied to the
   firewall before being saved), and the **fair-use ceiling**, a per-device
   cap for everything not on a plan, with an on/off switch. An **adaptive
   ceiling** lets Barista AI move it between owner-set limits as the shop
   gets busy or quiet.
-- **Portal report** (`/network/portal-report`): how many guests got from
+- **Sign-in Report** (`/network/portal-report`): how many guests got from
   opening the page to getting online, busiest hours, wrong codes by reason,
   more-time requests, and guests cut off early with how long they had been
   idle.
-- **Fixed addresses** (super admin, Settings → Network): DHCP reservations
+- **Fixed addresses** (super admin, System Administration → Network Config): DHCP reservations
   on the firewall, so a device always gets the same IP.
 
 ## Barista AI
@@ -292,15 +292,15 @@ Details in [AI_AGENT.md](AI_AGENT.md).
   account itself is never listed or editable here.
 - **Profile** (`/profile`, everyone): name, email, password.
 - **Idle sign-out**: a session left idle is signed out.
-- **Settings → Store** (admin): opening and closing time, receipt header,
+- **Settings → Store Settings** (admin): opening and closing time, receipt header,
   waiting-order reminder time.
-- **Settings → AI Providers** (admin; testing and model changes: super
+- **Settings → Barista AI Settings** (admin; testing and model changes: super
   admin): OpenRouter key, the model list and its order, status per model,
   daily allowance.
-- **Settings → Network** (super admin): firewall zone, fixed addresses,
+- **System Administration → Network Config** (super admin): firewall zone, fixed addresses,
   infrastructure addresses (never counted as guests), and a link to Trusted
   Devices.
-- **Settings → Agent** (super admin): permission tier per AI tool, within
+- **System Administration → Agent Permissions** (super admin): permission tier per AI tool, within
   the limits each tool allows.
 - **Receipt printing** (super admin): off until the register is
   BIR-registered.

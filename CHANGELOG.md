@@ -9,6 +9,16 @@ the history was rewritten.
 
 ---
 
+## 1.20.3 — Finance, inventory, accounts and settings in plain words
+*build 191*
+
+- End of Day (Z-reads): "Declared" is now "Counted" and "Variance" is
+  "Short / over", with a plain explanation of what the page shows.
+- Ingredients, Stock History, Staff Accounts, Store Settings and the
+  purchase-order buttons use everyday wording; Store Settings no longer
+  describes things it doesn't contain.
+- The guides use the new page names.
+
 ## 1.20.2 — Dashboard and Barista AI pages in plain words
 *build 190*
 

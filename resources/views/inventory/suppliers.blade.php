@@ -15,7 +15,7 @@
         </div>
         
         <div class="flex items-center gap-3">
-            <x-ask-ai-button prompt="Draft purchase orders for any ingredients that are currently low on stock." label="Ask AI to draft POs" />
+            <x-ask-ai-button prompt="Draft purchase orders for any ingredients that are currently low on stock." label="Ask Barista AI to draft orders" />
             <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                 <x-lucide-plus class="w-4 h-4" />
                 <span>Add Supplier</span>

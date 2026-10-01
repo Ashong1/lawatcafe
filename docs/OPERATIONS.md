@@ -113,7 +113,7 @@ sudo -u www-data php artisan view:clear
 ```
 
 Check the version in the sidebar footer matches `composer.json`, then open
-Network → Health.
+Wi-Fi & Network → Network Status.
 
 To go back: `git checkout <previous tag>` and repeat the steps. Migrations
 are additive, so older code runs fine against a newer schema.
@@ -156,7 +156,7 @@ doesn't hold their configuration.
 
 ## Monitoring
 
-- **Network → Health** shows the minute-by-minute checks with 24-hour
+- **Wi-Fi & Network → Network Status** shows the minute-by-minute checks with 24-hour
   history; admins are notified when a check changes state.
 - **Super admin dashboard** shows the app host, AI provider health, captive
   portal posture and infrastructure.
@@ -193,11 +193,11 @@ The app controls the shop's real firewall. Lessons learned the hard way:
 | Barista AI: "has used up today's free AI allowance" | OpenRouter's free daily cap (50 requests a day without credit) | Wait for the reset time it gives, or add $5 credit (raises it to 1,000 a day) |
 | Barista AI: "the internet is down" | The minute check can't reach the internet | Check the ISP router; everything else keeps working |
 | Emails not arriving | No internet, or Resend key wrong | `queue:failed`; check `MAIL_MAILER` and `RESEND_API_KEY`; queued mail retries for 3 days |
-| Network pages: "can't reach the firewall" | OPNsense down, or API credentials wrong | Network → Health; check `OPNSENSE_API_URL`/`KEY`/`SECRET` |
+| Network pages: "can't reach the firewall" | OPNsense down, or API credentials wrong | Wi-Fi & Network → Network Status; check `OPNSENSE_API_URL`/`KEY`/`SECRET` |
 | Guests can't get online after a power cut | OPNsense waits for the ISP before starting DHCP, or Proxmox didn't start the VM | [OWNER_NETWORK_STEPS.md §3](OWNER_NETWORK_STEPS.md#3-start-the-shop-without-internet-after-a-power-cut-15-minutes) |
 | Only one guest can be online at a time | Guests sharing one sign-in identity, or `concurrentlogins` set on the zone | Fixed in 1.11 (per-guest identity); check the zone's concurrent logins is 0 |
 | Guest gets "Connected" but the sign-in window stays open | The phone's assistant needs a real outside URL to probe | See [CAPTIVE_PORTAL.md](CAPTIVE_PORTAL.md) on the browser handoff |
 | A trusted staff device gets the sign-in page | Trusted by MAC only and its address changed, or it uses a private (random) Wi-Fi address | Give it a fixed address, turn off private address on the phone, trust it again |
 | Site blocking page: "Pi-hole not configured" | `PIHOLE_APP_PASSWORD` empty or wrong | Create a new app password in Pi-hole |
-| Order reminders keep chiming | Orders aren't being marked done on the kitchen display | Mark them done; the reminder time is in Settings → Store |
+| Order reminders keep chiming | Orders aren't being marked done on the kitchen display | Mark them done; the reminder time is in Settings → Store Settings |
 | Locked out of an account | | `sudo -u www-data php artisan user:reset-password someone@example.com` |

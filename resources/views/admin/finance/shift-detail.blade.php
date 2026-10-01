@@ -30,11 +30,11 @@
         <div class="bg-white p-6 rounded-3xl shadow-sm border border-[#F0E6D2] flex flex-col items-center text-center">
             <p class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-4">Cash in Drawer</p>
             <span class="text-3xl font-bold text-green-700">₱{{ number_format($shift->ending_cash, 2) }}</span>
-            <p class="text-xs font-bold text-[#6D4C41] mt-2 uppercase">Declared physical count</p>
+            <p class="text-xs font-bold text-[#6D4C41] mt-2 uppercase">Cash counted at closing</p>
         </div>
 
         <div class="p-6 rounded-3xl shadow-sm border flex flex-col items-center text-center {{ $variance == 0 ? 'bg-green-50 border-green-200' : ($variance > 0 ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200') }}">
-            <p class="text-xs font-bold uppercase tracking-wide mb-4 {{ $variance >= 0 ? 'text-green-800' : 'text-red-800' }}">Variance</p>
+            <p class="text-xs font-bold uppercase tracking-wide mb-4 {{ $variance >= 0 ? 'text-green-800' : 'text-red-800' }}">Short / over</p>
             <span class="text-3xl font-bold {{ $variance == 0 ? 'text-green-700' : ($variance > 0 ? 'text-blue-700' : 'text-red-700') }}">
                 {{ $variance > 0 ? '+' : '' }}₱{{ number_format($variance, 2) }}
             </span>
@@ -109,7 +109,7 @@
                         <span class="text-xl font-bold">₱{{ number_format($expectedCash, 2) }}</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-white/40 uppercase tracking-wide">Actual Declared</span>
+                        <span class="text-xs font-bold text-white/40 uppercase tracking-wide">Counted</span>
                         <span class="text-xl font-bold">₱{{ number_format($shift->ending_cash, 2) }}</span>
                     </div>
                 </div>

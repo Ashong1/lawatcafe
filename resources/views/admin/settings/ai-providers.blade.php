@@ -32,7 +32,7 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">API Key</h3>
-                        <p class="text-xs text-[#6D4C41] font-medium italic">Used only if OPENROUTER_API_KEY isn't already set on the server.</p>
+                        <p class="text-xs text-[#6D4C41] font-medium italic">Only needed if the system administrator hasn't already set one up.</p>
                     </div>
                 </div>
 

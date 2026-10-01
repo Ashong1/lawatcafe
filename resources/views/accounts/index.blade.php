@@ -5,16 +5,16 @@
 <div x-data="accountManager()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
         <div class="mb-8 border-b border-[#E6D5C3] pb-6">
-            <h2 class="text-3xl font-bold text-[#3E2723] tracking-wider uppercase italic" style="font-family: 'Dancing Script', cursive;">Lawa't <span class="font-sans not-italic font-bold text-[#4A3B32] text-2xl tracking-wide">STAFF MANAGEMENT</span></h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium">Control system access, assign roles, and edit admin accounts.</p>
+            <h2 class="text-3xl font-bold text-[#3E2723] tracking-wider uppercase italic" style="font-family: 'Dancing Script', cursive;">Lawa't <span class="font-sans not-italic font-bold text-[#4A3B32] text-2xl tracking-wide">STAFF ACCOUNTS</span></h2>
+            <p class="text-sm text-[#795548] mt-2 font-medium">Add staff, change their details or password, and remove people who have left.</p>
         </div>
 
     <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Active Accounts</h3>
-                <p class="text-xs text-[#6D4C41] mt-1 font-medium italic">System users with authenticated access to the dashboard.</p>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Accounts</h3>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium italic">Everyone who can sign in to the system.</p>
             </div>
             
             <button @click="openAddModal()" 
@@ -30,7 +30,7 @@
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                         <th class="pb-4 px-4 font-bold">Name</th>
                         <th class="pb-4 px-4 font-bold">Email Address</th>
-                        <th class="pb-4 px-4 font-bold">Role / Access</th>
+                        <th class="pb-4 px-4 font-bold">Role</th>
                         <th class="pb-4 px-4 font-bold hidden md:table-cell">Joined Date</th>
                         <th class="pb-4 px-4 font-bold text-right">Actions</th>
                     </tr>

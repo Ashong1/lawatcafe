@@ -52,7 +52,7 @@ Acts as the LAN's router/firewall/DHCP server and the captive-portal enforcement
 - **Captive portal**: authorizing a device's session (`authorizeDevice`), disconnecting a session (`disconnectDevice`), listing active sessions (`listSessions`), reconfiguring the captive portal zone (`reconfigureCaptivePortal`)
 - **DHCP (Kea)**: adding/updating/deleting static reservations (`addKeaReservation`, `updateKeaReservation`, `deleteKeaReservation`), reading leases (`getDhcpLeases`) — device hostnames are read from Kea leases specifically, not ARP, because ARP's hostname field is almost always empty
 - **Firewall aliases**: a MAC block alias for banned devices (`addMacToBlockAlias`/`removeMacFromBlockAlias`), per-tier IP aliases for voucher speed tiers (`addIpToTierAlias`/`removeIpFromTierAlias`), and an "allowed addresses" allow-list (infrastructure/staff devices that should never be treated as guests)
-- **Traffic shaping**: dummynet pipes plus Shaper rules (`upsertShaperPipe`, `upsertShaperRule`, `reconfigureShaper`) — a per-device fair-use ceiling. Free/premium tiers are recorded but cannot be enforced on this build. See *Bandwidth shaping* below
+- **Wi-Fi Speed**: dummynet pipes plus Shaper rules (`upsertShaperPipe`, `upsertShaperRule`, `reconfigureShaper`) — a per-device fair-use ceiling. Free/premium tiers are recorded but cannot be enforced on this build. See *Bandwidth shaping* below
 - **Monitoring**: gateway status and interface stats (`getGatewayStatus`, `getInterfaceStats`) surfaced on the admin network dashboard
 
 **Captive portal zone: `concurrentlogins` must stay `0` (unlimited).** Found

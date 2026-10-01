@@ -86,7 +86,7 @@ the guest has seen anything:
   "Your Wi-Fi time is up" screen with the code, when it ended, **Need more
   time?** and the menu.
 - **Need more time?** (`POST /portal/more-time`) notifies staff and admins
-  with a link that opens Active Sessions on this guest.
+  with a link that opens Who's Online on this guest.
 
 ## Coming back and reconnecting
 
@@ -151,7 +151,7 @@ carry steps in both.
 
 ## What staff can do
 
-From **Active Sessions** and **Find a device** (see
+From **Who's Online** and **Find a device** (see
 [FEATURES.md](FEATURES.md#network-administration)): disconnect, add 30
 minutes or an hour (time already run out counts from now), change plan,
 block, or trust. Shop equipment and protected addresses can never be
