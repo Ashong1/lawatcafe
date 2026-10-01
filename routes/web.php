@@ -34,6 +34,7 @@ use App\Http\Controllers\StaffDeliveryController;
 use App\Http\Controllers\StaticIpController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TrafficController;
+use App\Http\Controllers\TrustedDeviceController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\WastageController;
 use App\Http\Middleware\DenySuperAdmin;
@@ -287,6 +288,12 @@ Route::middleware(['auth'])->group(function () {
             // the old app-only "Permanent Kape Devices" IP whitelist).
             Route::post('/static-ips', [StaticIpController::class, 'store'])->name('static-ips.store');
             Route::delete('/static-ips/{assignment}', [StaticIpController::class, 'destroy'])->name('static-ips.destroy');
+
+            // Trusted devices: the allow-list below, picked from a list of
+            // devices on the network instead of typed addresses.
+            Route::get('/trusted-devices', [TrustedDeviceController::class, 'index'])->name('trusted-devices');
+            Route::post('/trusted-devices', [TrustedDeviceController::class, 'store'])->name('trusted-devices.store');
+            Route::delete('/trusted-devices', [TrustedDeviceController::class, 'destroy'])->name('trusted-devices.destroy');
 
             // Captive portal allow-list — OPNsense's own "Allowed IP/MAC
             // addresses" passthrough, distinct from static-ips above: these

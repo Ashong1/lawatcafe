@@ -18,7 +18,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-[#3E2723] uppercase tracking-wider text-sm">Fixed addresses (DHCP reservations)</h3>
-                        <p class="text-xs text-[#6D4C41] font-medium">Pins a device's IP forever via a real DHCP reservation on OPNsense (Kea) — for POS registers, kitchen displays, etc. This does <span class="font-bold">not</span> skip the captive portal; the device still redeems a voucher like any guest. To let a device online with no voucher at all, use the Captive Portal Allow-List below.</p>
+                        <p class="text-xs text-[#6D4C41] font-medium">Pins a device's IP forever via a real DHCP reservation on OPNsense (Kea) — for POS registers, kitchen displays, etc. This does <span class="font-bold">not</span> skip the captive portal; the device still redeems a voucher like any guest. To let a device online with no voucher at all, trust it on the Trusted Devices page.</p>
                     </div>
                 </div>
 
@@ -89,86 +89,19 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-[2rem] border border-[#F0E6D2] p-8 shadow-sm lg:col-span-2">
-                <div class="flex items-center gap-3 mb-4">
+            <div class="bg-white rounded-[2rem] border border-[#F0E6D2] p-8 shadow-sm lg:col-span-2 flex flex-col md:flex-row md:items-center gap-4">
+                <div class="flex items-center gap-3 flex-1">
                     <div class="p-2 bg-emerald-50 rounded-xl">
                         <x-lucide-shield-check class="w-6 h-6 text-emerald-600" />
                     </div>
                     <div>
                         <h3 class="font-bold text-[#3E2723] uppercase tracking-wider text-sm">Trusted devices — skip the Wi-Fi login</h3>
-                        <p class="text-xs text-[#6D4C41] font-medium">Devices/networks here skip the captive portal completely — no voucher, ever. This is OPNsense's own "Allowed IP addresses" / "Allowed MAC addresses" passthrough, not an app-side list.</p>
+                        <p class="text-xs text-[#6D4C41] font-medium">{{ count($allowedAddresses['ips']) + count($allowedAddresses['macs']) }} entries on OPNsense's captive portal allow-list. Managed from the device list, where each device shows its name, IP and MAC.</p>
                     </div>
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                        <h4 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-3">Allowed IP Addresses</h4>
-                        <form action="{{ route('network.allowed-addresses.ips.store') }}" method="POST" class="flex gap-2 mb-4" x-data="{ submitting: false }" @submit="submitting = true">
-                            @csrf
-                            <input type="text" name="address" required placeholder="192.168.2.50 or 192.168.2.0/24" aria-label="IP address or CIDR range to allow"
-                                   class="flex-1 min-w-0 text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-2xl p-3 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all">
-                            {{-- Wrapped (not a flex sibling) so the component's own flex-1
-                                 default doesn't fight the input for the row's width. --}}
-                            <div class="shrink-0"><x-submit-button label="Allow" loading-label="Adding…" /></div>
-                        </form>
-                        <ul class="space-y-2">
-                            @forelse($allowedAddresses['ips'] as $ip)
-                            <li class="flex items-center justify-between bg-[#FDF8F5] border border-[#F0E6D2] rounded-xl px-4 py-2.5">
-                                <span class="font-mono text-xs font-bold text-[#3E2723]">{{ $ip }}</span>
-                                <form id="remove-allowed-ip-{{ $loop->index }}" action="{{ route('network.allowed-addresses.ips.destroy') }}" method="POST">
-                                    @csrf
-                                    @method('DELETE')
-                                    <input type="hidden" name="address" value="{{ $ip }}">
-                                    <button type="button"
-                                            @click="window.confirmAction({
-                                                title: 'Remove From Allow-List?',
-                                                text: 'Remove {{ $ip }} from the allow-list? It will need a voucher again.',
-                                                icon: 'warning',
-                                                confirmText: 'Yes, Remove',
-                                                callback: () => document.getElementById('remove-allowed-ip-{{ $loop->index }}').submit()
-                                            })"
-                                            class="px-2 py-1 text-xs font-bold uppercase tracking-wide text-[#795548] hover:bg-red-50 hover:text-red-600 rounded-lg transition">Remove</button>
-                                </form>
-                            </li>
-                            @empty
-                            <li class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide py-4">No allowed IPs.</li>
-                            @endforelse
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-3">Allowed MAC Addresses</h4>
-                        <form action="{{ route('network.allowed-addresses.macs.store') }}" method="POST" class="flex gap-2 mb-4" x-data="{ submitting: false }" @submit="submitting = true">
-                            @csrf
-                            <input type="text" name="mac_address" required placeholder="AA:BB:CC:DD:EE:FF" aria-label="MAC address to allow"
-                                   class="flex-1 min-w-0 text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-2xl p-3 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all">
-                            <div class="shrink-0"><x-submit-button label="Allow" loading-label="Adding…" /></div>
-                        </form>
-                        <ul class="space-y-2">
-                            @forelse($allowedAddresses['macs'] as $mac)
-                            <li class="flex items-center justify-between bg-[#FDF8F5] border border-[#F0E6D2] rounded-xl px-4 py-2.5">
-                                <span class="font-mono text-xs font-bold text-[#3E2723]">{{ $mac }}</span>
-                                <form id="remove-allowed-mac-{{ $loop->index }}" action="{{ route('network.allowed-addresses.macs.destroy') }}" method="POST">
-                                    @csrf
-                                    @method('DELETE')
-                                    <input type="hidden" name="mac_address" value="{{ $mac }}">
-                                    <button type="button"
-                                            @click="window.confirmAction({
-                                                title: 'Remove From Allow-List?',
-                                                text: 'Remove {{ $mac }} from the allow-list? It will need a voucher again.',
-                                                icon: 'warning',
-                                                confirmText: 'Yes, Remove',
-                                                callback: () => document.getElementById('remove-allowed-mac-{{ $loop->index }}').submit()
-                                            })"
-                                            class="px-2 py-1 text-xs font-bold uppercase tracking-wide text-[#795548] hover:bg-red-50 hover:text-red-600 rounded-lg transition">Remove</button>
-                                </form>
-                            </li>
-                            @empty
-                            <li class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide py-4">No allowed MACs.</li>
-                            @endforelse
-                        </ul>
-                    </div>
-                </div>
+                <a href="{{ route('network.trusted-devices') }}" class="shrink-0 inline-flex items-center justify-center gap-2 bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition text-xs uppercase tracking-wide">
+                    Open Trusted Devices <x-lucide-arrow-right class="w-4 h-4" />
+                </a>
             </div>
         </div>
 

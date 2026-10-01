@@ -385,6 +385,7 @@
                             <a href="/network/vouchers" class="block py-2 text-xs {{ request()->is('network/vouchers') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Vouchers</a>
                             <a href="/network/traffic" class="block py-2 text-xs {{ request()->is('network/traffic') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Traffic Shaping</a>
                             <a href="/network/blocklist" class="block py-2 text-xs {{ request()->is('network/blocklist') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Device Blocklist</a>
+                            <a href="/network/trusted-devices" class="block py-2 text-xs {{ request()->is('network/trusted-devices') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Trusted Devices</a>
                             <a href="/network/site-blocking" class="block py-2 text-xs {{ request()->is('network/site-blocking') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Site Blocking</a>
                             <a href="/network/plans" class="block py-2 text-xs {{ request()->is('network/plans') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Wi-Fi Plans</a>
                         </div>
@@ -544,7 +545,10 @@
         window.confirmAction = function(options) {
             Swal.fire({
                 title: options.title || 'Are you sure?',
-                text: options.text || "This action cannot be undone.",
+                // html, when given, replaces text: for confirmations that need
+                // line breaks (e.g. an IP and MAC to check against a device).
+                text: options.html ? undefined : (options.text || "This action cannot be undone."),
+                html: options.html,
                 icon: options.icon || 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3E2723',

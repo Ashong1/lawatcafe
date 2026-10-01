@@ -86,6 +86,7 @@ return [
     // or the device vendor.
     'network' => [
         'labels' => [
+            '192.168.2.1' => 'Wi-Fi access point',
             '192.168.2.251' => 'Firewall (OPNsense)',
             '192.168.2.4' => 'Pi-hole DNS',
             '192.168.2.5' => 'Nginx Proxy Manager',

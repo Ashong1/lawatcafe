@@ -345,7 +345,10 @@
         window.confirmAction = function(options) {
             Swal.fire({
                 title: options.title || 'Are you sure?',
-                text: options.text || "This action cannot be undone.",
+                // html, when given, replaces text: for confirmations that need
+                // line breaks (e.g. an IP and MAC to check against a device).
+                text: options.html ? undefined : (options.text || "This action cannot be undone."),
+                html: options.html,
                 icon: options.icon || 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3E2723',

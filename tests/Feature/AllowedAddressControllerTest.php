@@ -16,6 +16,7 @@ class AllowedAddressControllerTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('dhcpPoolContaining')->with('192.168.2.60')->andReturn(null);
             $mock->shouldReceive('addAllowedIp')
                 ->once()
                 ->with('192.168.2.60')

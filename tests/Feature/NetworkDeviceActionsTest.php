@@ -99,6 +99,9 @@ class NetworkDeviceActionsTest extends TestCase
     {
         $opn = $this->fakeNetwork();
         $opn->shouldReceive('addAllowedMac')->once()->with(self::MAC)->andReturn(['success' => true]);
+        // .130 is a guest-pool address, so only the MAC is allow-listed.
+        $opn->shouldReceive('dhcpPoolContaining')->andReturn(['start' => 0, 'end' => 0, 'label' => '192.168.2.110-192.168.2.199']);
+        $opn->shouldNotReceive('addAllowedIp');
 
         $this->actingAs(User::factory()->create(['role' => 'admin']))
             ->post(route('network.devices.trust'), ['mac_address' => self::MAC])

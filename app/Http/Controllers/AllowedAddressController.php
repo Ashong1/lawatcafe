@@ -21,6 +21,13 @@ class AllowedAddressController extends Controller
             'address.regex' => 'Enter a valid IP address, e.g. 192.168.2.50 or 192.168.2.0/24.',
         ]);
 
+        // A guest-pool address belongs to whoever leases it next, so allowing
+        // it would let a stranger skip the portal.
+        $host = explode('/', $validated['address'])[0];
+        if (! str_contains($validated['address'], '/') && ($pool = $opnsense->dhcpPoolContaining($host))) {
+            return redirect()->back()->with('error', "{$host} is in the guest address range ({$pool['label']}), so a different device may get it tomorrow. Give the device a fixed address first, or trust it from the device list.");
+        }
+
         $result = $opnsense->addAllowedIp($validated['address']);
 
         return redirect()->back()->with(

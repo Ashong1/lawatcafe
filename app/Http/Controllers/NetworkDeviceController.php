@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\BlocklistService;
 use App\Services\DeviceLookupService;
 use App\Services\OpnSenseService;
+use App\Services\TrustedDeviceService;
 use Illuminate\Http\Request;
 
 /**
@@ -44,15 +45,12 @@ class NetworkDeviceController extends Controller
     }
 
     /** Let the device skip the Wi-Fi login permanently (captive portal allow-list). */
-    public function trust(Request $request, OpnSenseService $opnsense)
+    public function trust(Request $request, TrustedDeviceService $trusted)
     {
         $v = $request->validate(['mac_address' => self::MAC_RULE]);
 
-        $result = $opnsense->addAllowedMac($v['mac_address']);
+        $result = $trusted->trust($v['mac_address']);
 
-        return back()->with(
-            $result['success'] ? 'success' : 'error',
-            $result['success'] ? 'Trusted — this device now connects without a voucher.' : ($result['message'] ?? 'Could not update the firewall.')
-        );
+        return back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }
 }
