@@ -5,6 +5,7 @@ namespace App\Services\Agent;
 use App\Models\AiConversation;
 use App\Models\User;
 use App\Services\AIService;
+use App\Services\InternetStatus;
 use App\Support\AgentActivityEntry;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -58,7 +59,7 @@ class ChatStreamResponder
 
             $result = $this->orchestrator->run($messages, $audience, $actor, $context, $onTextDelta, $onToolStart);
 
-            $reply = $result['reply'] ?? $this->quotaReply($audience) ?? $fallbackReply;
+            $reply = $result['reply'] ?? $this->quotaReply($audience) ?? $this->offlineReply($audience) ?? $fallbackReply;
 
             if ($conversation && $conversations) {
                 $conversations->append($conversation, $userMessage, $reply, $result['executed'] ?? [], $result['pending'] ?? []);
@@ -108,6 +109,22 @@ class ChatStreamResponder
             ? "Our AI helper is taking a break until {$when}. Our staff at the counter are happy to help in the meantime!"
             : "Barista AI has used up today's free AI allowance, so it can't answer right now. It comes back at {$when}. "
                 .'To stop this happening, add $5 of credit to the shop\'s OpenRouter account — that raises the daily limit from 50 to 1,000 requests.';
+    }
+
+    /**
+     * The shop's internet is down, so the AI service can't be reached. Says so
+     * instead of "trouble connecting", and that the rest of the system works.
+     */
+    private function offlineReply(string $audience): ?string
+    {
+        if (! InternetStatus::isDown()) {
+            return null;
+        }
+
+        return $audience === ToolRegistry::AUDIENCE_GUEST
+            ? 'The internet is down at the moment, so our AI helper can\'t answer. Our staff at the counter are happy to help!'
+            : 'The shop\'s internet is down, so Barista AI can\'t reach its AI service right now. '
+                .'Everything else still works: the register, vouchers, the Wi-Fi login and the reports. I\'ll be back as soon as the internet returns.';
     }
 
     private function emit(array $payload): void

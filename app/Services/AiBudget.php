@@ -44,11 +44,12 @@ class AiBudget
     /**
      * Whether a scheduled job may spend AI calls right now: not once the
      * allowance is used up, and not when it's down to the reserve kept for
-     * people. An unknown count (endpoint unreachable) doesn't block.
+     * people, and not while the internet is down. An unknown count (endpoint
+     * unreachable) doesn't block.
      */
     public function backgroundMaySpend(): bool
     {
-        if (AIService::quotaExhaustedUntil()) {
+        if (AIService::quotaExhaustedUntil() || InternetStatus::isDown()) {
             return false;
         }
 

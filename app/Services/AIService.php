@@ -428,7 +428,7 @@ class AIService
             $models = $this->freeModelsOnly($models);
         }
 
-        if ($this->openRouterKey && ! $this->providerIsOpen('openrouter') && ! self::quotaExhaustedUntil()) {
+        if ($this->openRouterKey && ! $this->providerIsOpen('openrouter') && ! self::quotaExhaustedUntil() && ! InternetStatus::isDown()) {
             $response = $this->streamOpenAiCompatibleLoop(
                 $models,
                 'https://openrouter.ai/api/v1/chat/completions',
@@ -531,6 +531,10 @@ class AIService
      */
     public function openRouterCatalog(): ?array
     {
+        if (InternetStatus::isDown()) {
+            return Cache::get('openrouter_catalog');
+        }
+
         return Cache::remember('openrouter_catalog', 86400, function () {
             try {
                 $response = Http::timeout(5)->get('https://openrouter.ai/api/v1/models');
@@ -646,7 +650,7 @@ class AIService
      */
     public function imageCapableModels(array $models): array
     {
-        $catalog = Cache::remember('openrouter_image_models', 86400, function () {
+        $catalog = (InternetStatus::isDown() ? Cache::get('openrouter_image_models') : Cache::remember('openrouter_image_models', 86400, function () {
             try {
                 $response = Http::timeout(5)->get('https://openrouter.ai/api/v1/models');
 
@@ -660,7 +664,7 @@ class AIService
 
                 return null;
             }
-        }) ?: self::IMAGE_MODELS_FALLBACK;
+        })) ?: self::IMAGE_MODELS_FALLBACK;
 
         $usable = fn ($m) => in_array($m, $catalog, true) && ! Str::contains($m, self::IMAGE_MODEL_EXCLUDE);
 
@@ -829,7 +833,7 @@ class AIService
 
     private function callOpenRouterLoop($messages, array $tools = [], bool $fast = false)
     {
-        if (self::quotaExhaustedUntil()) {
+        if (self::quotaExhaustedUntil() || InternetStatus::isDown()) {
             return null;
         }
 
@@ -1435,7 +1439,7 @@ Return ONLY a JSON array, at most 5 items:
      */
     public function phraseSuggestion(string $itemName, string $suggestedName): ?string
     {
-        if (! $this->openRouterKey || $this->providerIsOpen('openrouter')) {
+        if (! $this->openRouterKey || $this->providerIsOpen('openrouter') || InternetStatus::isDown()) {
             return null;
         }
 

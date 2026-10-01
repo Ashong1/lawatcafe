@@ -50,3 +50,8 @@ Schedule::command('shaper:reconcile-tiers')->everyFiveMinutes()->withoutOverlapp
 // withoutOverlapping: each run holds an ~11s sample window, and overlapping
 // runs would read each other's counters.
 Schedule::command('shaper:adapt')->everyFiveMinutes()->withoutOverlapping();
+
+// Queued mail (purchase orders, shift audits). There is no long-running
+// worker, so each minute drains the queue and exits; mail that fails during
+// an internet outage is retried every 5 minutes (see WaitsForInternet).
+Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping();

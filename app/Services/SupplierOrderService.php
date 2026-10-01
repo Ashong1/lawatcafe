@@ -100,6 +100,7 @@ class SupplierOrderService
 
         $message = "Purchase order for {$draft->ingredient->name} marked as sent";
         $message .= match (true) {
+            $emailed && InternetStatus::isDown() => ". The internet is down, so the email to {$draft->supplier->name} will go out as soon as it's back.",
             $emailed => " and emailed to {$draft->supplier->name}.",
             (bool) $draft->supplier => ", but no email is on file for {$draft->supplier->name}.",
             default => ', but no supplier is linked to this draft.',

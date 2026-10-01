@@ -527,6 +527,8 @@
             </div>
         </header>
 
+        @include('partials.offline-banner')
+
         {{-- Padding is written per-axis rather than as `p-4 sm:p-6 lg:p-8` so the
              bottom can be set independently: below lg the floating Barista AI
              button parks itself over the bottom-right of this scroller, and with a

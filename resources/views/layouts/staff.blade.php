@@ -332,6 +332,8 @@
             </div>
         </header>
 
+        @include('partials.offline-banner')
+
         {{-- Per-axis padding so the bottom can clear the floating chat button —
              see the note on the same element in layouts/admin.blade.php. --}}
         <main class="flex-1 overflow-x-hidden overflow-y-auto px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8

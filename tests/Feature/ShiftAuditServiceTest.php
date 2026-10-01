@@ -48,8 +48,8 @@ class ShiftAuditServiceTest extends TestCase
 
         app(ShiftAuditService::class)->auditShiftClose($shift);
 
-        Mail::assertSent(ShiftAuditResult::class, fn ($mail) => $mail->hasTo($staff->email));
-        Mail::assertSent(ShiftAuditResult::class, fn ($mail) => $mail->hasTo($admin->email));
+        Mail::assertQueued(ShiftAuditResult::class, fn ($mail) => $mail->hasTo($staff->email));
+        Mail::assertQueued(ShiftAuditResult::class, fn ($mail) => $mail->hasTo($admin->email));
         Notification::assertSentTo($staff, SystemAlert::class);
         Notification::assertSentTo($admin, SystemAlert::class);
     }
@@ -65,7 +65,7 @@ class ShiftAuditServiceTest extends TestCase
 
         app(ShiftAuditService::class)->auditShiftClose($shift);
 
-        Mail::assertNothingSent();
+        Mail::assertNothingOutgoing();
         Notification::assertNothingSent();
     }
 
@@ -80,7 +80,7 @@ class ShiftAuditServiceTest extends TestCase
 
         app(ShiftAuditService::class)->auditShiftClose($shift);
 
-        Mail::assertNothingSent();
+        Mail::assertNothingOutgoing();
         Notification::assertNothingSent();
     }
 
@@ -95,6 +95,6 @@ class ShiftAuditServiceTest extends TestCase
 
         app(ShiftAuditService::class)->auditShiftClose($shift);
 
-        Mail::assertSent(ShiftAuditResult::class, fn ($mail) => $mail->aiSummary === null);
+        Mail::assertQueued(ShiftAuditResult::class, fn ($mail) => $mail->aiSummary === null);
     }
 }

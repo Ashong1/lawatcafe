@@ -1,6 +1,6 @@
 # Network steps the owner does by hand
 
-Two changes the app can't make itself: the app's Pi-hole password can read
+Changes the app can't make itself: the app's Pi-hole password can read
 settings but not change them, and firewall rule changes on OPNsense are
 kept manual on purpose. Each step lists how to check it worked and how to undo it.
 
@@ -72,3 +72,60 @@ Not covered: DNS-over-HTTPS (browsers' "secure DNS") looks like normal web
 traffic and can't be redirected. Chrome and Firefox turn it off by
 themselves when they see a network-provided DNS filter, which covers most
 guests.
+
+## 3. Start the shop without internet after a power cut (15 minutes)
+
+**Why:** OPNsense waits for the internet provider's router before it starts
+the shop's own network. The firewall log for the 2026-09-28 01:50 boot shows
+it: "Configuring WAN interface" at 01:50:32, then nothing until the request
+to the ISP router (192.168.254.254) timed out at 01:51:51. Only after that
+79-second wait did it start handing out Wi-Fi addresses (Kea), DNS and the
+login page. After a power cut the ISP router is still starting up too, so every
+phone, the POS and the tablets sit without an address the whole time. With
+WAN up, the same step takes about 1 second.
+
+### 3a. OPNsense: stop waiting long for the ISP router
+
+1. Open OPNsense (`https://192.168.2.251`) → **Interfaces → [WAN]**.
+2. Under **DHCP client configuration**, set **Configuration Mode** to **Advanced**.
+3. Under **Protocol Timing**, enter: Timeout `10`, Retry `30`, Select Timeout `0`,
+   Reboot `10`, Backoff Cutoff `30`, Initial Interval `1`.
+4. **Save**, then **Apply changes**.
+
+The WAN still picks up its address on its own once the ISP router is ready:
+it keeps retrying every 30 seconds in the background.
+
+**Check:** switch off the ISP router (or unplug the cable from its LAN port),
+then reboot OPNsense from **Power → Reboot**. Phones should get Wi-Fi
+addresses about a minute sooner than before. Turn the ISP router back on: the
+Network Health page shows the internet back within a few minutes, without
+rebooting anything.
+**Undo:** set **Configuration Mode** back to **Basic** and save.
+
+### 3b. Proxmox: start everything by itself, router first
+
+1. In the Proxmox web page, select the OPNsense VM → **Options**.
+   - **Start at boot**: Yes.
+   - **Start/Shutdown order**: `1`, **Startup delay**: `30` (seconds before the next machine starts).
+2. Do the same for Pi-hole (192.168.2.4), Nginx Proxy Manager (192.168.2.5)
+   and the app server (192.168.2.100): **Start at boot** Yes, order `2`.
+3. In the Proxmox computer's BIOS, set **Restore on AC power loss** (also
+   called "AC back" or "Power on after power failure") to **Power On**, so the
+   server turns itself back on when the electricity returns.
+4. Check that the Proxmox host's own address is set by hand (fixed) in
+   **System → Network**, not by DHCP. It must not depend on OPNsense being up.
+
+**Check:** with the internet off, pull the Proxmox power plug and put it back.
+Without anyone touching it, the shop Wi-Fi, the POS and the login page should
+come back within about 3 minutes. The app shows a yellow "The internet is
+down" bar until the internet returns.
+**Undo:** set **Start at boot** back to No.
+
+### What works while the internet is down
+
+The register, vouchers, the Wi-Fi login page, reports and staff screens all
+run inside the shop. Guests can connect and enter their code; websites load
+once the internet is back. Barista AI says plainly that the internet is down
+instead of spinning. Purchase-order and shift-audit emails wait in a queue
+and go out by themselves once it returns (retried every 5 minutes, for up to
+3 days).

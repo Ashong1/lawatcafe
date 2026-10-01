@@ -65,7 +65,7 @@ class SupplierAndShiftToolsTest extends TestCase
         $this->assertTrue($result->data['emailed']);
         $draft->refresh();
         $this->assertSame('sent', $draft->status);
-        Mail::assertSent(PurchaseOrderRequest::class, fn ($mail) => $mail->hasTo($supplier->email));
+        Mail::assertQueued(PurchaseOrderRequest::class, fn ($mail) => $mail->hasTo($supplier->email));
     }
 
     public function test_send_supplier_po_still_marks_sent_without_a_supplier_email(): void
@@ -87,7 +87,7 @@ class SupplierAndShiftToolsTest extends TestCase
         $this->assertFalse($result->data['emailed']);
         $draft->refresh();
         $this->assertSame('sent', $draft->status);
-        Mail::assertNothingSent();
+        Mail::assertNothingOutgoing();
     }
 
     public function test_send_supplier_po_rejects_an_already_sent_draft(): void

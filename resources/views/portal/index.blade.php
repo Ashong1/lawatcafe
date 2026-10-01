@@ -208,6 +208,12 @@
                         </div>
                     @endif
 
+                    @if(\App\Services\InternetStatus::isDown())
+                        <div role="status" class="relative z-10 mb-4 rounded-2xl border-2 border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900">
+                            {{ __('Our internet provider is down right now, so websites won\'t load yet. Your code still works, and you will be online as soon as it is back.') }}
+                        </div>
+                    @endif
+
                     <form action="{{ route('portal.authenticate') }}" method="POST" id="lawat-login-form" class="space-y-6 relative z-10" @submit.prevent="submitForm($event)">
                         @csrf
                         <input type="hidden" name="zone" value="{{ \App\Models\Setting::get('opnsense_zone', '0') }}">

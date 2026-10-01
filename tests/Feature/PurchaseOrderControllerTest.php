@@ -52,7 +52,7 @@ class PurchaseOrderControllerTest extends TestCase
         $response->assertSessionHas('success');
         $draft->refresh();
         $this->assertSame('sent', $draft->status);
-        Mail::assertSent(PurchaseOrderRequest::class);
+        Mail::assertQueued(PurchaseOrderRequest::class);
     }
 
     public function test_send_flashes_error_when_already_sent(): void

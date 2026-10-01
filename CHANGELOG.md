@@ -9,6 +9,22 @@ the history was rewritten.
 
 ---
 
+## 1.16.0 — Keeps working when the internet is down
+*build 181*
+
+- A yellow "The internet is down" bar on admin and staff screens while the
+  every-minute network check finds no internet, saying what still works.
+- Barista AI and the other AI features stop at once with a plain "the
+  internet is down" message instead of waiting out a timeout. Closing a shift
+  no longer stalls on the AI summary.
+- Purchase-order and shift-audit emails are queued and retried every 5 minutes
+  for up to 3 days, so an email sent during an outage goes out once the
+  internet is back. The scheduler now runs the queue every minute.
+- The guest Wi-Fi page tells guests the provider is down and that their code
+  still works (English and Filipino).
+- Owner steps for starting the shop without internet after a power cut
+  (OPNsense WAN timing, Proxmox start order): docs/OWNER_NETWORK_STEPS.md §3.
+
 ## 1.15.1 — Fair-use ceiling on/off switch
 *build 180*
 

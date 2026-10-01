@@ -3,13 +3,15 @@
 namespace App\Mail;
 
 use App\Models\Shift;
+use App\Mail\Concerns\WaitsForInternet;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class ShiftAuditResult extends Mailable
+class ShiftAuditResult extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use Queueable, SerializesModels, WaitsForInternet;
 
     public function __construct(
         public Shift $shift,
