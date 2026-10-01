@@ -454,7 +454,7 @@ class AdaptiveBandwidthTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'admin']))
             ->get(route('network.traffic'))
             ->assertOk()
-            ->assertSee('Adaptive Ceiling', false)
+            ->assertSee('Automatic speed limit', false)
             ->assertSee('name="bw_adaptive_min"', false)
             ->assertSee('name="bw_adaptive_max"', false)
             ->assertSee('60 Mbps down', false);

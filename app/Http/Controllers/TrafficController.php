@@ -68,7 +68,7 @@ class TrafficController extends Controller
 
         if (! $shaper->applyLimits($validated, $opnsense)) {
             return redirect()->back()->withInput()->with('error',
-                ($shaper->lastError() ?? 'OPNsense rejected the plan speeds.').' The plan speeds were not saved.');
+                ($shaper->lastError() ?? 'The router refused the plan speeds.').' The plan speeds were not saved.');
         }
 
         foreach ($validated as $key => $value) {
@@ -76,7 +76,7 @@ class TrafficController extends Controller
         }
 
         return redirect()->back()->with('success', sprintf(
-            'Plan speeds are live. Free: %s down / %s up. Premium: %s down / %s up (Mbps, per device).',
+            'Plan speeds saved and working. Free: %s download / %s upload. Premium: %s download / %s upload (Mbps, per device).',
             ...array_map(fn ($k) => (float) $validated[$k], ['bw_free_down', 'bw_free_up', 'bw_premium_down', 'bw_premium_up'])
         ));
     }
@@ -104,11 +104,11 @@ class TrafficController extends Controller
 
         return redirect()->back()->with('success', $request->boolean('bw_adaptive_enabled')
             ? sprintf(
-                'Adaptive ceiling is on. Barista AI may move the cap between %s and %s Mbps as the room fills and empties.',
+                'Automatic speed limit is on. Barista AI may move the limit between %s and %s Mbps as the shop fills up and empties.',
                 $validated['bw_adaptive_min'],
                 $validated['bw_adaptive_max']
             )
-            : 'Adaptive ceiling is off. The cap stays where you set it; throughput sampling continues so the loop keeps learning.');
+            : 'Automatic speed limit is off. The limit stays where you set it; Barista AI keeps learning your busy hours in the background.');
     }
 
     /**
@@ -141,9 +141,9 @@ class TrafficController extends Controller
             // applied cap — say so rather than letting a stored number imply a
             // clean state.
             return redirect()->back()->withInput()->with('error', sprintf(
-                '%s The ceiling was not saved, and the gateway may be part-way through the change — '
-                .'try again, or run php artisan shaper:fair-use %s --apply.',
-                $shaper->lastError() ?? 'OPNsense rejected the configuration.',
+                '%s The speed limit was not saved, and the router may be part-way through the change. '
+                .'Try again; if it keeps failing, ask the system administrator (it can be applied with php artisan shaper:fair-use %s --apply).',
+                $shaper->lastError() ?? 'The router refused the change.',
                 rtrim(rtrim(number_format($mbps, 2, '.', ''), '0'), '.')
             ));
         }
@@ -152,8 +152,8 @@ class TrafficController extends Controller
         Setting::set('bw_fair_use_enabled', '1');
 
         return redirect()->back()->with('success', sprintf(
-            'Fair-use ceiling is live at %s Mbps per device, each way. It applies to every device on '
-            .'the guest interface — the POS and this server included.',
+            'Speed limit is on: %s Mbps per device, download and upload. It applies to every device '
+            .'not on a Wi-Fi plan, including the register and the server.',
             rtrim(rtrim(number_format($mbps, 2, '.', ''), '0'), '.')
         ));
     }
@@ -163,13 +163,13 @@ class TrafficController extends Controller
     {
         if (! $shaper->disableFairUseCap($opnsense)) {
             return redirect()->back()->with('error',
-                ($shaper->lastError() ?? 'OPNsense rejected the change.').' The ceiling may still be on.');
+                ($shaper->lastError() ?? 'The router refused the change.').' The speed limit may still be on.');
         }
 
         Setting::set('bw_fair_use_enabled', '0');
 
         return redirect()->back()->with('success',
-            'Fair-use ceiling is off. Guests still get their plan speeds; other devices are no longer capped.');
+            'Speed limit is off. Guests still get their plan speeds; other devices are no longer limited.');
     }
 
     public function stats(OpnSenseService $opnsense)

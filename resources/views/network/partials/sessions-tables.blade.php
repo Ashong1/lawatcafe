@@ -9,8 +9,8 @@
             <thead>
                 <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                     <th class="pb-4 font-bold">Device</th>
-                    <th class="pb-4 font-bold">Voucher Code</th>
-                    <th class="pb-4 font-bold hidden md:table-cell">Usage & Speed</th>
+                    <th class="pb-4 font-bold">Wi-Fi code</th>
+                    <th class="pb-4 font-bold hidden md:table-cell">Data used &amp; speed now</th>
                     <th class="pb-4 font-bold hidden md:table-cell">Connected</th>
                     <th class="pb-4 font-bold">Time Left</th>
                     <th class="pb-4 font-bold text-right">Actions</th>
@@ -36,7 +36,7 @@
                             </span>
                             <span class="text-xs text-[#6D4C41] font-mono tracking-tighter mt-0.5">{{ $session->ip_address }}</span>
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-xs text-[#6D4C41] font-mono tracking-tighter">{{ $session->mac_address }}</span>
+                                <span class="text-xs text-[#6D4C41] font-mono tracking-tighter">{{ \App\Support\Mac::format($session->mac_address) }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
                                     <span class="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
@@ -87,7 +87,7 @@
                     </td>
                     <td class="py-4">
                         @if($session->is_orphaned ?? false)
-                            <span class="text-xs font-bold text-red-600">Stale — no voucher</span>
+                            <span class="text-xs font-bold text-red-600">No code on record</span>
                         @else
                             <div class="flex items-center gap-3">
                                 <div class="w-full bg-[#FDF8F5] border border-[#F0E6D2] rounded-full h-2.5 max-w-[80px] overflow-hidden">
@@ -111,7 +111,7 @@
                                     <button type="button"
                                             onclick="window.confirmAction({
                                                 title: '{{ $targetTier === 'premium' ? 'Upgrade to Premium?' : 'Downgrade to Free?' }}',
-                                                text: 'This device will be moved to the {{ $targetTier }} bandwidth tier.',
+                                                text: 'This device will get {{ $targetTier === 'premium' ? 'Premium' : 'Free' }} plan speeds.',
                                                 icon: 'warning',
                                                 confirmText: 'Yes, {{ $targetTier === 'premium' ? 'Upgrade' : 'Downgrade' }}',
                                                 callback: () => {
@@ -139,7 +139,7 @@
                                 <button type="button"
                                         onclick="window.confirmAction({
                                             title: 'Disconnect Device?',
-                                            text: 'Are you sure you want to disconnect this device from the network?',
+                                            text: 'It goes back to the Wi-Fi sign-in page. Its code keeps any time it has left.',
                                             icon: 'warning',
                                             confirmText: 'Yes, Disconnect',
                                             callback: () => {
@@ -173,14 +173,14 @@
 <div class="mb-12">
     <div class="flex items-center gap-2 mb-4">
         <x-lucide-server class="w-4 h-4 text-blue-500" />
-        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Shop equipment</h3>
+        <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Shop equipment &amp; trusted devices</h3>
     </div>
     <div class="bg-slate-50 rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="text-slate-500 text-xs uppercase tracking-wide border-b border-slate-200 bg-slate-100/50">
                     <th class="py-3 px-6 font-bold">Device</th>
-                    <th class="py-3 px-6 font-bold">Role</th>
+                    <th class="py-3 px-6 font-bold">What it is</th>
                     <th class="py-3 px-6 font-bold text-right">Speed now</th>
                 </tr>
             </thead>
@@ -197,7 +197,7 @@
                             </span>
                             <span class="text-xs text-slate-500 font-mono mt-0.5">{{ $session->ip_address }}</span>
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-xs text-slate-500 font-mono">{{ $session->mac_address }}</span>
+                                <span class="text-xs text-slate-500 font-mono">{{ \App\Support\Mac::format($session->mac_address) }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
                                     <span class="text-xs px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
@@ -205,9 +205,15 @@
                         </div>
                     </td>
                     <td class="py-4 px-6">
-                        <span class="px-3 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded-lg font-bold text-xs tracking-wide uppercase">
-                            Shop equipment — never blocked
-                        </span>
+                        @if($session->is_trusted_device ?? false)
+                            <span class="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg font-bold text-xs tracking-wide uppercase">
+                                Trusted device — no code needed
+                            </span>
+                        @else
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded-lg font-bold text-xs tracking-wide uppercase">
+                                Shop equipment — never blocked
+                            </span>
+                        @endif
                     </td>
                     <td class="py-4 px-6 text-right">
                         <div class="flex flex-col items-end gap-1">
@@ -246,7 +252,7 @@
         <x-lucide-shield-alert class="w-4 h-4 text-amber-500" />
         <h3 class="text-sm font-bold text-[#795548] uppercase tracking-wide">Waiting to sign in</h3>
     </div>
-    <p class="text-sm text-[#6D4C41] mb-4 -mt-2">Connected to the Wi-Fi and sitting at the login page. The firewall keeps them offline until they enter a voucher.</p>
+    <p class="text-sm text-[#6D4C41] mb-4 -mt-2">Joined the Wi-Fi but haven't typed a code yet. They stay offline until they do.</p>
     
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
@@ -266,7 +272,7 @@
                             <span class="font-bold text-[#4A3B32]">{{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unknown Device' }}</span>
                             <span class="text-xs text-[#6D4C41] font-mono mt-0.5">{{ $session->ip_address }}</span>
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-xs text-[#6D4C41] font-mono">{{ $session->mac_address }}</span>
+                                <span class="text-xs text-[#6D4C41] font-mono">{{ \App\Support\Mac::format($session->mac_address) }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
                                     <span class="text-xs px-1 py-0.5 bg-gray-200 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
@@ -275,7 +281,7 @@
                     </td>
                     <td class="py-3">
                         <span class="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full border border-amber-100 font-bold text-xs uppercase tracking-wider">
-                            At the login page
+                            At the sign-in page
                         </span>
                     </td>
                     <td class="py-3 text-[#6D4C41] font-medium">
@@ -290,7 +296,7 @@
                 @empty
                 <tr>
                     <td colspan="4" class="py-8 text-center">
-                        <p class="text-[#6D4C41] text-sm font-medium">Nobody is waiting at the login page.</p>
+                        <p class="text-[#6D4C41] text-sm font-medium">Nobody is waiting at the sign-in page.</p>
                     </td>
                 </tr>
                 @endforelse
@@ -305,14 +311,14 @@
         <x-lucide-ghost class="w-4 h-4 text-red-500" />
         <h3 class="text-sm font-bold text-[#795548] uppercase tracking-wide">Not signed in — unknown devices</h3>
     </div>
-    <p class="text-xs text-[#6D4C41] mb-4 -mt-2">On the network (the firewall has seen them) but they have never reached the login page. Usually a phone that joined and went idle; a <strong>blocked</strong> device here needs attention.</p>
+    <p class="text-xs text-[#6D4C41] mb-4 -mt-2">On the network but they have never opened the Wi-Fi sign-in page. Usually a phone that joined and went idle; a <strong>blocked</strong> device here needs attention.</p>
 
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="text-[#6D4C41] text-xs uppercase tracking-wide border-b border-[#F0E6D2]/50">
                     <th class="pb-3 font-bold">Device</th>
-                    <th class="pb-3 font-bold">Found by</th>
+                    <th class="pb-3 font-bold">Seen</th>
                     <th class="pb-3 font-bold">Status</th>
                     <th class="pb-3 font-bold text-right">Actions</th>
                 </tr>
@@ -325,7 +331,7 @@
                             <span class="font-bold text-[#4A3B32]">{{ $ghost['hostname'] ?: 'Unknown Device' }}</span>
                             <span class="text-xs text-[#6D4C41] font-mono mt-0.5">{{ $ghost['ip_address'] ?: 'N/A' }}</span>
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-xs text-[#6D4C41] font-mono">{{ $ghost['mac_address'] }}</span>
+                                <span class="text-xs text-[#6D4C41] font-mono">{{ \App\Support\Mac::format($ghost['mac_address']) }}</span>
                                 @if($ghost['manufacturer'])
                                     <span class="text-xs px-1 py-0.5 bg-gray-200 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $ghost['manufacturer'] }}</span>
                                 @endif
@@ -336,7 +342,7 @@
                         <div class="flex items-center gap-1">
                             @foreach($ghost['seen_via'] as $source)
                                 <span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full border border-slate-200 font-bold text-xs uppercase tracking-wider">
-                                    {{ strtoupper($source) }}
+                                    {{ ['arp' => 'On the network', 'dhcp' => 'Got a Wi-Fi address'][$source] ?? ucfirst($source) }}
                                 </span>
                             @endforeach
                         </div>
@@ -349,7 +355,7 @@
                             </span>
                         @else
                             <span class="px-2 py-0.5 bg-amber-50 text-amber-800 rounded-full border border-amber-200 font-bold text-xs">
-                                Unknown
+                                Not signed in
                             </span>
                         @endif
                     </td>

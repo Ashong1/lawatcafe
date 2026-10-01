@@ -35,7 +35,7 @@
                     <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                     <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Wi-Fi Prices</span>
                 </h2>
-                <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Configure pricing tiers and session durations for your guest network.</p>
+                <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">What Wi-Fi costs at the register, and the free Wi-Fi you give with bigger orders.</p>
             </div>
         </div>
 
@@ -45,15 +45,15 @@
                 <div>
                     <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide flex items-center gap-2">
                         <x-lucide-list-checks class="w-5 h-5 text-amber-600" />
-                        Active Pricing Tiers
+                        Prices
                     </h3>
-                    <p class="text-xs text-[#6D4C41] mt-1 font-medium italic">Manage how much customers pay for specific Wi-Fi durations.</p>
+                    <p class="text-xs text-[#6D4C41] mt-1 font-medium italic">How much customers pay for each length of Wi-Fi time.</p>
                 </div>
                 
                 <button type="button" @click="openAddModal()"
                         class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-wide transition shadow-lg active:scale-95 flex items-center gap-3">
                     <x-lucide-plus class="w-4 h-4" />
-                    Add New Tier
+                    Add a Price
                 </button>
             </div>
 
@@ -68,11 +68,11 @@
                     <table class="w-full text-left border-collapse bg-[#FAFAFA]">
                         <thead>
                             <tr class="border-b border-[#F0E6D2] bg-[#FDF8F5] text-xs font-bold text-[#795548] uppercase tracking-wide">
-                                <th class="py-4 px-6">Tier</th>
-                                <th class="py-4 px-6">Price / Trigger</th>
-                                <th class="py-4 px-6">Allocated Speed</th>
-                                <th class="py-4 px-6">Duration (Minutes)</th>
-                                <th class="py-4 px-6">Formatted Display</th>
+                                <th class="py-4 px-6">Plan</th>
+                                <th class="py-4 px-6">Price</th>
+                                <th class="py-4 px-6">Speed</th>
+                                <th class="py-4 px-6">Time</th>
+                                <th class="py-4 px-6">Shown as</th>
                                 <th class="py-4 px-6 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -81,13 +81,13 @@
                             <tr class="hover:bg-amber-50/30 transition-colors bg-amber-50/10">
                                 <td class="py-4 px-6">
                                     <span class="px-2.5 py-1 bg-amber-100 text-amber-800 border border-amber-200 rounded-md text-xs font-bold uppercase tracking-wide">
-                                        Complimentary
+                                        Free Wi-Fi
                                     </span>
                                 </td>
                                 <td class="py-4 px-6">
                                     <div class="flex flex-col">
-                                        <span class="font-bold text-[#3E2723] text-sm" x-text="'Min. Order: ₱' + freeMinAmount"></span>
-                                        <span class="text-xs text-amber-600 font-bold uppercase mt-1">Auto-Provisioned</span>
+                                        <span class="font-bold text-[#3E2723] text-sm" x-text="'With orders of ₱' + freeMinAmount + ' or more'"></span>
+                                        <span class="text-xs text-amber-600 font-bold uppercase mt-1">Added automatically</span>
                                     </div>
                                 </td>
                                 <td class="py-4 px-6">
@@ -110,7 +110,7 @@
                                           x-text="formatDuration(freeDuration)"></span>
                                 </td>
                                 <td class="py-4 px-6 text-right">
-                                    <button type="button" @click="openModalForComplimentary()" title="Edit Complimentary Rules" aria-label="Edit Complimentary Rules"
+                                    <button type="button" @click="openModalForComplimentary()" title="Edit free Wi-Fi" aria-label="Edit free Wi-Fi"
                                             class="p-2 text-amber-700 hover:text-amber-900 hover:bg-amber-100/50 rounded-xl transition-all">
                                         <x-lucide-pencil class="w-4 h-4" />
                                     </button>
@@ -121,18 +121,18 @@
                                 <tr class="hover:bg-amber-50/20 transition-colors">
                                     <td class="py-4 px-6">
                                         <span class="px-2.5 py-1 bg-[#FAFAFA] border border-[#F0E6D2] rounded-md text-xs font-bold text-[#795548] uppercase tracking-wide"
-                                              x-text="'Tier ' + (index + 1)"></span>
+                                              x-text="'Paid Wi-Fi'"></span>
                                     </td>
                                     <td class="py-4 px-6 font-bold text-[#3E2723]" x-text="'₱' + plan.price"></td>
                                     <td class="py-4 px-6">
                                         <div class="flex flex-col">
                                             <div class="flex items-center gap-1 text-xs font-bold text-blue-600 uppercase">
                                                 <x-lucide-arrow-down class="w-2.5 h-2.5" />
-                                                <span x-text="(index === 0 ? '{{ \App\Models\Setting::get('bw_free_down', 2) }}' : '{{ \App\Models\Setting::get('bw_premium_down', 10) }}') + ' Mbps'"></span>
+                                                <span x-text="'{{ \App\Models\Setting::get('bw_premium_down', 10) }} Mbps'"></span>
                                             </div>
                                             <div class="flex items-center gap-1 text-xs font-bold text-amber-600 uppercase mt-0.5">
                                                 <x-lucide-arrow-up class="w-2.5 h-2.5" />
-                                                <span x-text="(index === 0 ? '{{ \App\Models\Setting::get('bw_free_up', 1) }}' : '{{ \App\Models\Setting::get('bw_premium_up', 5) }}') + ' Mbps'"></span>
+                                                <span x-text="'{{ \App\Models\Setting::get('bw_premium_up', 5) }} Mbps'"></span>
                                             </div>
                                         </div>
                                     </td>
@@ -143,11 +143,11 @@
                                     </td>
                                     <td class="py-4 px-6 text-right">
                                         <div class="flex items-center justify-end gap-2">
-                                            <button type="button" @click="openModalForEdit(plan, index)" title="Edit Tier" aria-label="Edit Tier"
+                                            <button type="button" @click="openModalForEdit(plan, index)" title="Edit price" aria-label="Edit price"
                                                     class="p-2 text-amber-700 hover:text-amber-900 hover:bg-amber-100/50 rounded-xl transition-all">
                                                 <x-lucide-pencil class="w-4 h-4" />
                                             </button>
-                                            <button type="button" @click="removePlan(index)" title="Remove Tier" aria-label="Remove Tier"
+                                            <button type="button" @click="removePlan(index)" title="Remove price" aria-label="Remove price"
                                                     class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
                                                 <x-lucide-trash-2 class="w-4 h-4" />
                                             </button>
@@ -163,8 +163,8 @@
                                             <div class="w-16 h-16 bg-[#FAFAFA] rounded-full flex items-center justify-center border border-[#F0E6D2] mb-4">
                                                 <x-lucide-wifi class="w-8 h-8 text-amber-200" />
                                             </div>
-                                            <p class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">No plans defined yet</p>
-                                            <p class="text-xs text-[#D7CCC8] mt-1 font-medium">Click "Add New Tier" to populate pricing structures.</p>
+                                            <p class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">No prices yet</p>
+                                            <p class="text-xs text-[#D7CCC8] mt-1 font-medium">Tap "Add a Price" to add one.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -180,9 +180,9 @@
                             <x-lucide-lightbulb class="w-6 h-6 text-amber-600" />
                         </div>
                         <div class="flex-1 min-w-0">
-                            <h4 class="text-sm font-bold text-amber-900 uppercase tracking-wide mb-2">Strategy Note</h4>
+                            <h4 class="text-sm font-bold text-amber-900 uppercase tracking-wide mb-2">Good to know</h4>
                             <p class="text-sm text-amber-800 font-medium leading-relaxed">
-                                The system uses the <span class="font-bold underline decoration-amber-500/30 underline-offset-4">lowest priced plan</span> as the default for manual batch voucher generation. Ensure durations are balanced to encourage higher-tier purchases.
+                                Paid Wi-Fi runs at Premium speed and free Wi-Fi at Free speed (set on Wi-Fi &amp; Network → Wi-Fi Speed). Codes you make on the Wi-Fi Codes page use the <span class="font-bold">cheapest price's</span> time unless you choose another.
                             </p>
                         </div>
                     </div>
@@ -191,7 +191,7 @@
                         <button type="submit" 
                                 class="w-full h-full min-h-[70px] px-6 py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-2xl font-bold text-xs md:text-sm uppercase tracking-wide transition shadow-xl shadow-amber-900/20 active:scale-95 flex items-center justify-center gap-3">
                             <x-lucide-save class="w-5 h-5 shrink-0" />
-                            <span>Save Configuration</span>
+                            <span>Save Prices</span>
                         </button>
                     </div>
                 </div>
@@ -224,7 +224,7 @@
             <div class="bg-[#FDF8F5] border-b border-[#F0E6D2] px-6 py-5 flex items-center justify-between">
                 <h3 id="plan-modal-title" class="text-sm font-bold text-[#3E2723] uppercase tracking-wide flex items-center gap-2">
                     <x-lucide-wifi class="w-4 h-4 text-amber-600" />
-                    <span x-text="isEditingComplimentary ? 'Modify Complimentary Tier' : (isEditMode ? 'Modify Pricing Tier' : 'Add New Pricing Tier')"></span>
+                    <span x-text="isEditingComplimentary ? 'Edit free Wi-Fi' : (isEditMode ? 'Edit price' : 'Add a price')"></span>
                 </h3>
                 <button type="button" @click="modalOpen = false" aria-label="Close dialog" class="text-[#6D4C41] hover:text-[#3E2723] transition-colors">
                     <x-lucide-x class="w-5 h-5" />
@@ -234,7 +234,7 @@
             <div class="p-6 space-y-5">
                 <div>
                     <label for="plan-price" class="block text-xs font-bold text-[#6D4C41] uppercase tracking-wide ml-1 mb-1.5"
-                           x-text="isEditingComplimentary ? 'Minimum Order Amount (₱)' : 'Price (₱)'"></label>
+                           x-text="isEditingComplimentary ? 'Minimum order (₱)' : 'Price (₱)'"></label>
                     <div class="flex items-center bg-[#FAFAFA] border border-gray-200 rounded-xl focus-within:border-[#3E2723] focus-within:ring-1 focus-within:ring-[#3E2723] transition-all group overflow-hidden">
                         <span class="pl-4 pr-1 text-xl font-bold text-[#6D4C41] group-focus-within:text-[#3E2723] transition-colors select-none pointer-events-none">₱</span>
                         <input type="number" id="plan-price" x-model="modalData.price"

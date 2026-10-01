@@ -140,30 +140,30 @@ class NetworkHealthService
         $reachable = array_filter($results, fn ($r) => $r['loss'] < 100);
 
         if ($results === [] || $reachable === []) {
-            return $this->check('Internet link', 'fail', 'No internet — the public DNS servers do not answer pings.', ['targets' => $results]);
+            return $this->check('Internet', 'fail', "No internet — the internet provider's line isn't answering. Everything inside the shop still works.", ['targets' => $results]);
         }
 
         $latency = round(array_sum(array_column($reachable, 'avg')) / count($reachable), 1);
         $loss = round(array_sum(array_column($results, 'loss')) / count($results), 1);
         $status = $loss >= 20 || $latency > 150 ? 'warn' : 'ok';
-        $summary = ($status === 'ok' ? 'Internet OK' : 'Internet is slow or unstable')
-            ." — {$latency} ms".($loss > 0 ? ", {$loss}% packet loss" : ', no packet loss').'.';
+        $summary = ($status === 'ok' ? 'Working well' : 'Slow or unstable')
+            ." — answers in {$latency} ms".($loss > 0 ? ", {$loss}% of checks got no answer" : '').'.';
 
-        return $this->check('Internet link', $status, $summary, ['latency_ms' => $latency, 'loss_pct' => $loss, 'targets' => $results]);
+        return $this->check('Internet', $status, $summary, ['latency_ms' => $latency, 'loss_pct' => $loss, 'targets' => $results]);
     }
 
     private function checkFirewall(): array
     {
         $gateways = $this->opnsense->getGatewayStatus()['gateways'] ?? [];
         if ($gateways === []) {
-            return $this->check('Firewall (OPNsense)', 'fail', "Can't reach the firewall — guest logins and blocking may not work.", []);
+            return $this->check('Router (firewall)', 'fail', "Can't reach the router — guest sign-in and blocking may not work.", []);
         }
 
         $down = array_values(array_filter($gateways, fn ($g) => ! in_array($g['status'], ['online', 'none'], true)));
 
         return $down === []
-            ? $this->check('Firewall (OPNsense)', 'ok', 'Firewall reachable; '.count($gateways).' internet gateway(s) online.', ['gateways' => $gateways])
-            : $this->check('Firewall (OPNsense)', 'fail', 'Gateway down: '.implode(', ', array_column($down, 'name')).'.', ['gateways' => $gateways]);
+            ? $this->check('Router (firewall)', 'ok', 'Working, and connected to the internet provider.', ['gateways' => $gateways])
+            : $this->check('Router (firewall)', 'fail', "The router has lost its connection to the internet provider.", ['gateways' => $gateways]);
     }
 
     private function checkDns(): array
@@ -173,23 +173,23 @@ class NetworkHealthService
         $stats = $this->pihole->summary();
 
         if (! $answer) {
-            return $this->check('DNS (Pi-hole)', 'fail', 'Pi-hole is not answering DNS — guests will see "no internet" even when the link is up.', ['server' => $server, 'stats' => $stats]);
+            return $this->check('Website filter (Pi-hole)', 'fail', "The website filter isn't answering — guests will see \"no internet\" even though the line is up.", ['server' => $server, 'stats' => $stats]);
         }
         if ($stats === null) {
-            return $this->check('DNS (Pi-hole)', 'warn', "DNS works, but Pi-hole's admin API can't be reached, so blocking can't be confirmed.", ['server' => $server]);
+            return $this->check('Website filter (Pi-hole)', 'warn', "Websites open, but the filter's settings can't be read, so blocking can't be confirmed.", ['server' => $server]);
         }
         if (! $stats['blocking']) {
-            return $this->check('DNS (Pi-hole)', 'warn', 'DNS works, but Pi-hole blocking is switched OFF — blocked sites are reachable.', ['server' => $server, 'stats' => $stats]);
+            return $this->check('Website filter (Pi-hole)', 'warn', 'Websites open, but blocking is switched OFF — blocked sites can be opened.', ['server' => $server, 'stats' => $stats]);
         }
 
-        return $this->check('DNS (Pi-hole)', 'ok', "DNS working; blocking on — {$stats['blocked']} of {$stats['queries']} lookups blocked today ({$stats['percent_blocked']}%).", ['server' => $server, 'stats' => $stats]);
+        return $this->check('Website filter (Pi-hole)', 'ok', "Working, blocking on — {$stats['blocked']} of {$stats['queries']} website lookups blocked today ({$stats['percent_blocked']}%).", ['server' => $server, 'stats' => $stats]);
     }
 
     private function checkDhcp(): array
     {
         $pools = $this->opnsense->getDhcpPools();
         if ($pools === []) {
-            return $this->check('DHCP address pool', 'unknown', "Couldn't read the DHCP pool from the firewall.", []);
+            return $this->check('Wi-Fi addresses', 'unknown', "Couldn't read the Wi-Fi address range from the router.", []);
         }
 
         $size = array_sum(array_map(fn ($p) => $p['end'] - $p['start'] + 1, $pools));
@@ -200,10 +200,10 @@ class NetworkHealthService
             ->count();
         $pct = $size > 0 ? (int) round($used / $size * 100) : 0;
         $status = $pct >= 95 ? 'fail' : ($pct >= 80 ? 'warn' : 'ok');
-        $summary = "{$pct}% of guest addresses in use ({$used} of {$size})"
-            .($status === 'fail' ? ' — new devices may not get an address.' : ($status === 'warn' ? ' — getting full.' : '.'));
+        $summary = "{$used} of {$size} guest addresses in use ({$pct}%)"
+            .($status === 'fail' ? ' — new phones may not be able to join.' : ($status === 'warn' ? ' — getting full.' : '.'));
 
-        return $this->check('DHCP address pool', $status, $summary, ['used' => $used, 'size' => $size, 'percent' => $pct, 'ranges' => array_column($pools, 'label')]);
+        return $this->check('Wi-Fi addresses', $status, $summary, ['used' => $used, 'size' => $size, 'percent' => $pct, 'ranges' => array_column($pools, 'label')]);
     }
 
     private function checkPortal(): array
@@ -222,14 +222,14 @@ class NetworkHealthService
         }
 
         return $ok
-            ? $this->check('Wi-Fi login page', 'ok', 'Login page up'.($online !== null ? "; {$online} guest(s) online." : '.'), ['host' => $host, 'guests_online' => $online])
-            : $this->check('Wi-Fi login page', 'fail', "The Wi-Fi login page isn't loading — new guests can't sign in.", ['host' => $host, 'guests_online' => $online]);
+            ? $this->check('Wi-Fi sign-in page', 'ok', 'Working'.($online !== null ? "; {$online} guest(s) online." : '.'), ['host' => $host, 'guests_online' => $online])
+            : $this->check('Wi-Fi sign-in page', 'fail', "The Wi-Fi sign-in page isn't loading — new guests can't get online.", ['host' => $host, 'guests_online' => $online]);
     }
 
     private function checkInfrastructure(array $targets, array $pings): array
     {
         if ($targets === []) {
-            return $this->check('Network equipment', 'unknown', 'No infrastructure addresses are configured.', []);
+            return $this->check('Shop equipment', 'unknown', 'No shop equipment is set up to be checked.', []);
         }
 
         // Up if it answers a ping OR the firewall has a live ARP entry for it:
@@ -246,8 +246,8 @@ class NetworkHealthService
         }
 
         return $down === []
-            ? $this->check('Network equipment', 'ok', 'All '.count($targets).' devices respond.', ['down' => [], 'devices' => $targets])
-            : $this->check('Network equipment', 'warn', count($down).' device(s) not responding: '.implode(', ', array_map(fn ($d) => $d['label'] === $d['ip'] ? $d['ip'] : "{$d['label']} ({$d['ip']})", $down)).'.', ['down' => $down, 'devices' => $targets]);
+            ? $this->check('Shop equipment', 'ok', 'All '.count($targets).' devices are responding.', ['down' => [], 'devices' => $targets])
+            : $this->check('Shop equipment', 'warn', count($down).' device(s) not responding: '.implode(', ', array_map(fn ($d) => $d['label'] === $d['ip'] ? $d['ip'] : "{$d['label']} ({$d['ip']})", $down)).'.', ['down' => $down, 'devices' => $targets]);
     }
 
     private function checkBandwidth(): array
@@ -257,17 +257,17 @@ class NetworkHealthService
         $top = $this->topUsers(3);
 
         if (! $sample) {
-            return $this->check('Bandwidth', 'unknown', 'No traffic samples yet.', ['top_users' => $top]);
+            return $this->check('Internet use', 'unknown', 'No measurements yet.', ['top_users' => $top]);
         }
 
         $down = (float) $sample->down_mbps;
         $capacity = $estimate['learned'] ? $estimate['down'] : null;
         $busy = $capacity && $down >= 0.9 * $capacity;
-        $summary = "Using {$down} Mbps down / {$sample->up_mbps} up"
-            .($capacity ? " of about {$capacity} Mbps" : ' (line speed still being learned)')
+        $summary = "Using {$down} Mbps download / {$sample->up_mbps} upload"
+            .($capacity ? " of about {$capacity} Mbps" : " (still learning the line's top speed)")
             .($busy ? ' — the line is nearly full.' : '.');
 
-        return $this->check('Bandwidth', $busy ? 'warn' : 'ok', $summary, [
+        return $this->check('Internet use', $busy ? 'warn' : 'ok', $summary, [
             'down_mbps' => $down, 'up_mbps' => (float) $sample->up_mbps,
             'sampled_at' => $sample->sampled_at?->toIso8601String(),
             'capacity' => $estimate, 'top_users' => $top,
@@ -283,7 +283,7 @@ class NetworkHealthService
                 ->filter(fn ($d) => $d['ip_address'] && str_starts_with($d['ip_address'], $lanPrefix) && ! in_array($d['ip_address'], $infra, true))
                 ->values()->all();
         } catch (\Throwable $e) {
-            return $this->check('Unknown devices', 'unknown', "Couldn't compare the network against the login system.", []);
+            return $this->check('Unknown devices', 'unknown', "Couldn't compare the network against the sign-in system.", []);
         }
 
         // Joined but not signed in is normal — that's every guest at the login
@@ -293,12 +293,12 @@ class NetworkHealthService
         $describe = fn (array $list) => implode(', ', array_map(fn ($d) => $d['ip_address'].($d['manufacturer'] ? " ({$d['manufacturer']})" : ''), array_slice($list, 0, 5)));
 
         if ($banned !== []) {
-            return $this->check('Unknown devices', 'warn', count($banned).' BLOCKED device(s) are back on the network: '.$describe($banned).'.', ['devices' => $unknown, 'banned' => $banned]);
+            return $this->check('Unknown devices', 'warn', count($banned).' BLOCKED device(s) are back on the Wi-Fi: '.$describe($banned).'.', ['devices' => $unknown, 'banned' => $banned]);
         }
 
         return $unknown === []
-            ? $this->check('Unknown devices', 'ok', 'Every device on the network has signed in or is trusted.', ['devices' => [], 'banned' => []])
-            : $this->check('Unknown devices', 'ok', count($unknown).' device(s) connected but not signed in yet (normal for guests at the login page): '.$describe($unknown).'.', ['devices' => $unknown, 'banned' => []]);
+            ? $this->check('Unknown devices', 'ok', 'Every device has signed in or is trusted.', ['devices' => [], 'banned' => []])
+            : $this->check('Unknown devices', 'ok', count($unknown).' device(s) joined but haven\'t signed in yet (normal for guests at the sign-in page): '.$describe($unknown).'.', ['devices' => $unknown, 'banned' => []]);
     }
 
     /**
@@ -315,8 +315,16 @@ class NetworkHealthService
             ->map(fn ($s) => ['ip' => str_replace('/32', '', (string) ($s['ipAddress'] ?? '')), 'bytes' => (int) ($s['bytes_in'] ?? 0) + (int) ($s['bytes_out'] ?? 0)])
             ->filter(fn ($s) => $s['ip'] !== '' && ! in_array($s['ip'], $infra, true))
             ->sortByDesc('bytes')->take($limit)
-            ->map(fn ($s) => ['ip' => $s['ip'], 'mb' => round($s['bytes'] / 1048576, 1)])
+            ->map(fn ($s) => ['ip' => $s['ip'], 'name' => $this->deviceName($s['ip']), 'mb' => round($s['bytes'] / 1048576, 1)])
             ->values()->all();
+    }
+
+    /** What the device calls itself (its DHCP name), or null. */
+    private function deviceName(string $ip): ?string
+    {
+        $lease = collect($this->opnsense->getDhcpLeases())->firstWhere('address', $ip);
+
+        return ($lease['hostname'] ?? '') ?: null;
     }
 
     /** @return array<string, string> infrastructure ip => readable name */

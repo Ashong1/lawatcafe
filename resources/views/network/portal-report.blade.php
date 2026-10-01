@@ -26,7 +26,7 @@
     {{-- Headline numbers --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         @foreach([
-            ['Codes used', $vouchersUsed, 'Vouchers that got a guest online'],
+            ['Codes used', $vouchersUsed, 'Codes that got a guest online'],
             ['Average plan', $avgMinutes ? ($avgMinutes >= 60 ? round($avgMinutes / 60, 1).' hr' : $avgMinutes.' min') : '—', 'Time bought per code'],
             ['Wrong codes', $wrongCodes, 'Typed codes that were refused'],
             ['Asked for more time', $moreTime, $timeAdded->count().' got time added by staff'],

@@ -9,6 +9,27 @@ the history was rewritten.
 
 ---
 
+## 1.20.1 — Wi-Fi pages in plain words
+*build 189*
+
+- **Who's Online**: devices show their real names (App server, Pi-hole, the
+  owner's laptop, the phone's own name) instead of "Unknown Device", and MAC
+  addresses read AA:BB:CC:DD:EE:FF. Trusted phones and laptops are labelled
+  "Trusted device", separately from the shop's equipment. The internet
+  provider's router and the firewall's outside address no longer appear as
+  guests or unknown devices. Idle devices read "idle", not "0 bps".
+- **Network Status**: checks are named Internet, Router, Website filter,
+  Wi-Fi addresses, Wi-Fi sign-in page, Shop equipment and Internet use, and
+  their messages say what is wrong in plain words. The list of heaviest users
+  shows device names.
+- **Wi-Fi Speed**: "Fair-use ceiling" is now "Speed limit per device" and
+  "Adaptive ceiling" is "Automatic speed limit", with plain explanations.
+- **Wi-Fi Prices**: plain names. Fixed: the first paid price showed Free-plan
+  speeds, though every code sold at the register runs at Premium speed.
+- **Wi-Fi Codes** and **Blocked Devices**: plain buttons and confirmations
+  ("Make Codes", "Clear Used Codes", "Block Device"), and the hand-entry form
+  says where to find a phone's MAC address.
+
 ## 1.20.0 — Plain-language menus for the owner and staff
 *build 188*
 

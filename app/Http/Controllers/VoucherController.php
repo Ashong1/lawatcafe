@@ -97,7 +97,7 @@ class VoucherController extends Controller
             $request->input('tier', 'free'),
         );
 
-        return redirect()->back()->with('success', "{$result['count']} new vouchers generated successfully!");
+        return redirect()->back()->with('success', "{$result['count']} new Wi-Fi codes made. Print them from the list below.");
     }
 
     /**
@@ -114,7 +114,7 @@ class VoucherController extends Controller
         $voucher = Voucher::where('code', $validated['voucher_code'])->first();
 
         if (! $voucher) {
-            return redirect()->back()->with('error', 'No matching voucher found.');
+            return redirect()->back()->with('error', 'No Wi-Fi code found for that device.');
         }
 
         $voucher->tier = $validated['tier'];
@@ -125,7 +125,7 @@ class VoucherController extends Controller
             $shaping->assignTier($voucher, $voucher->ip_address, $opnsense);
         }
 
-        return redirect()->back()->with('success', "Voucher {$voucher->code} moved to the {$validated['tier']} tier.");
+        return redirect()->back()->with('success', "{$voucher->code} now gets ".ucfirst($validated['tier']).' plan speeds.');
     }
 
     /**
@@ -204,7 +204,7 @@ class VoucherController extends Controller
         // Clear dashboard cache
         Cache::forget('dashboard_stats_today');
 
-        return redirect()->back()->with('success', 'Voucher removed from the system.');
+        return redirect()->back()->with('success', 'Code deleted.');
     }
 
     /**
@@ -219,7 +219,7 @@ class VoucherController extends Controller
 
         $this->vouchers->deleteVouchers($request->ids);
 
-        return redirect()->back()->with('success', 'Selected vouchers have been removed.');
+        return redirect()->back()->with('success', 'Selected codes deleted.');
     }
 
     /**
@@ -229,7 +229,7 @@ class VoucherController extends Controller
     {
         $usedCount = $this->vouchers->purgeUsed();
 
-        return redirect()->back()->with('success', "Cleaned up {$usedCount} used/expired vouchers.");
+        return redirect()->back()->with('success', "Cleared {$usedCount} used or expired codes.");
     }
 
     /**
@@ -252,7 +252,7 @@ class VoucherController extends Controller
     {
         // 1. Get real-time sessions from OPNsense
         $opnSessions = collect($opnsense->listSessions());
-        $arpTable = collect($opnsense->getArpTable());
+        $arpTable = collect(OpnSenseService::withoutWan($opnsense->getArpTable()));
         $dhcpLeases = collect($opnsense->getDhcpLeases());
 
         // 2. Identify ignored and VIP IPs
@@ -269,6 +269,14 @@ class VoucherController extends Controller
 
         $normalizeMac = fn ($mac) => strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac ?? ''));
         $trustedMacs = array_map($normalizeMac, $opnsense->getAllowedAddresses()['macs'] ?? []);
+
+        // Names people recognise, best first: the shop's own name for a piece
+        // of equipment, then the name saved with its fixed address, then what
+        // the device calls itself (below).
+        $labelByIp = config('services.network.labels', []);
+        $staticNameByMac = $staticAssignments
+            ->mapWithKeys(fn ($a) => [$normalizeMac($a->mac_address) => $a->hostname])
+            ->filter();
 
         // 3. Create maps for quick lookup
         $arpByMac = $arpTable->keyBy(fn ($item) => $normalizeMac($item['mac'] ?? ''));
@@ -292,11 +300,14 @@ class VoucherController extends Controller
         // (allowed-IP passthrough) report an ip but an EMPTY macAddress. This
         // closure builds the shared row shape and resolves whichever half is
         // missing via the other lookup rather than rendering a blank cell.
-        $buildRow = function (?array $cp, ?array $arp, string $mac, ?string $ip) use ($hostnameByMac) {
+        $buildRow = function (?array $cp, ?array $arp, string $mac, ?string $ip) use ($hostnameByMac, $labelByIp, $staticNameByMac) {
             return [
                 'ipAddress' => $ip ?? 'N/A',
                 'macAddress' => $mac !== '' ? $mac : 'N/A',
-                'hostname' => $hostnameByMac->get($mac) ?: ($arp['hostname'] ?? 'Unknown'),
+                'hostname' => ($ip !== null ? ($labelByIp[$ip] ?? null) : null)
+                    ?: $staticNameByMac->get($mac)
+                    ?: $hostnameByMac->get($mac)
+                    ?: ($arp['hostname'] ?? 'Unknown'),
                 'manufacturer' => $arp['manufacturer'] ?? 'Generic',
                 'cpSession' => $cp,
                 'isAuthorized' => $cp && (
@@ -409,7 +420,8 @@ class VoucherController extends Controller
                     return round($bps / 1024, 1).' Kbps';
                 }
 
-                return round($bps).' bps';
+                // Under 1 Kbps is background chatter, not use.
+                return 'idle';
             };
 
             // Check if this is a VIP (statically-assigned) device, by IP or MAC.
@@ -509,7 +521,13 @@ class VoucherController extends Controller
         // whether their IP happens to also be in the network_infrastructure_ips
         // list (the allow-list is a separate, OPNsense-side list — a device
         // can be on it without ever being added to the app's own IP list).
-        $infrastructureSessions = $sessions->filter(fn ($s) => in_array($s->ip_address, $infraIps) || $s->is_system);
+        $infrastructureSessions = $sessions->filter(fn ($s) => in_array($s->ip_address, $infraIps) || $s->is_system)
+            ->each(function ($s) use ($infraIps, $trustedMacs) {
+                // A staff phone or laptop someone trusted, as opposed to the
+                // shop's servers, router and access point.
+                $s->is_trusted_device = ! in_array($s->ip_address, $infraIps, true) && ! isset(config('services.network.labels', [])[$s->ip_address])
+                    && ($s->mac_address && in_array($s->mac_address, $trustedMacs, true) || ($s->code ?? null) === 'SYSTEM VIP');
+            });
         $activeSessions = $sessions->filter(fn ($s) => ! in_array($s->ip_address, $infraIps) && ! $s->is_system && ! $s->is_unauthorized);
         $pendingSessions = $sessions->filter(fn ($s) => ! in_array($s->ip_address, $infraIps) && ! $s->is_system && $s->is_unauthorized);
 

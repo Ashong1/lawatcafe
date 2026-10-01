@@ -11,7 +11,7 @@
                     <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                     <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Wi-Fi Speed</span>
                 </h2>
-                <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Live throughput across the guest network.</p>
+                <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">How fast each Wi-Fi plan is, and the speed limit that stops one device slowing everyone down.</p>
             </div>
             
             <!-- Live Indicator -->
@@ -29,12 +29,12 @@
                          The skeleton is the same width as the figure it
                          becomes, so nothing shifts when it lands. --}}
                     <div class="flex flex-col">
-                        <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-tighter">Down</span>
+                        <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-tighter">Download</span>
                         <x-skeleton x-show="!hasRate" variant="block" size="h-4" class="w-16 mt-0.5" />
                         <span x-show="hasRate" x-cloak class="text-xs font-bold text-[#3E2723]" x-text="downSpeed"></span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-tighter">Up</span>
+                        <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-tighter">Upload</span>
                         <x-skeleton x-show="!hasRate" variant="block" size="h-4" class="w-16 mt-0.5" />
                         <span x-show="hasRate" x-cloak class="text-xs font-bold text-[#3E2723]" x-text="upSpeed"></span>
                     </div>
@@ -56,7 +56,7 @@
                         <x-lucide-gauge class="w-6 h-6" />
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Plan Speeds</h3>
+                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Plan speeds</h3>
                         <p class="text-xs text-[#6D4C41] font-medium leading-relaxed mt-1">
                             The top speed each guest gets on their plan, per device. These are the limits a
                             speed test on a guest's phone will show.
@@ -68,7 +68,7 @@
                     <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
                         <x-lucide-triangle-alert class="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                         <p class="text-xs text-amber-900 font-medium leading-relaxed">
-                            Couldn't reach the gateway, so these are the last saved speeds, not confirmed live ones.
+                            Couldn't reach the router, so these are the last saved speeds, not confirmed.
                         </p>
                     </div>
                 @endunless
@@ -86,7 +86,7 @@
                                 @else
                                     <span class="flex items-center gap-1.5 text-xs font-bold text-green-700">
                                         <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                                        In force &middot; {{ $plan['guests'] }} {{ Str::plural('device', $plan['guests']) }}
+                                        Working &middot; {{ $plan['guests'] }} {{ Str::plural('guest', $plan['guests']) }} on it
                                     </span>
                                 @endif
                             </div>
@@ -117,8 +117,8 @@
                 </div>
 
                 <p class="text-xs text-[#6D4C41] font-medium leading-relaxed">
-                    A guest is placed on their plan's limit as soon as they connect. Plan limits take
-                    priority over the fair-use ceiling below. Shop equipment is never put on a plan.
+                    A guest gets their plan's speed as soon as they connect. Shop equipment is never
+                    put on a plan.
                 </p>
 
                 <button type="button"
@@ -130,7 +130,7 @@
                             callback: () => document.getElementById('plan-speeds-form').submit()
                         })"
                         class="w-full py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg active:scale-[0.98]">
-                    Apply Plan Speeds
+                    Save Plan Speeds
                 </button>
             </form>
 
@@ -145,7 +145,7 @@
                 <div>
                     <h4 class="text-xs font-bold text-green-800 uppercase tracking-wide mb-2 flex items-center gap-2">
                         <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                        Fair-Use Ceiling &mdash;
+                        Speed limit per device &mdash;
                         @if($live['fair_use']['enforced'])
                             On
                         @elseif($live['reachable'])
@@ -155,9 +155,9 @@
                         @endif
                     </h4>
                     <p class="text-xs text-[#6D4C41] font-medium leading-relaxed">
-                        Every device on the guest network is capped at this rate each way, so no single
-                        guest can saturate the line. It is a ceiling <span class="font-bold">per device</span>,
-                        not a total shared between them.
+                        No device can go faster than this, so one person streaming can't slow the Wi-Fi
+                        for everyone. It is a limit <span class="font-bold">per device</span>, not a total
+                        shared between them. Guests on a plan get their plan's speed instead.
                     </p>
                     @if($live['reachable'] && ! $live['fair_use']['enforced'])
                         <p class="text-xs text-[#6D4C41] font-medium leading-relaxed mt-2">
@@ -171,15 +171,15 @@
                 <div class="p-4 bg-white border border-green-200 rounded-2xl flex items-start gap-3">
                     <x-lucide-triangle-alert class="w-4 h-4 text-green-700 shrink-0 mt-0.5" />
                     <p class="text-xs text-[#6D4C41] font-medium leading-relaxed">
-                        <span class="font-bold uppercase tracking-wide text-green-800">Applies to the whole interface.</span><br>
-                        The POS, the kitchen display and this server sit on the same interface as the
-                        guests, so this cap holds them too. Keep it well above what they need &mdash;
-                        set it low and orders start crawling along with the streaming.
+                        <span class="font-bold uppercase tracking-wide text-green-800">It also limits the shop's own devices.</span><br>
+                        The register, the kitchen display and the server use the same network as guests.
+                        Keep this well above what they need &mdash; set it too low and taking orders
+                        slows down too.
                     </p>
                 </div>
 
                 <div>
-                    <label for="bw-fair-use" class="block text-xs font-bold text-[#3E2723] uppercase mb-2">Ceiling per device (Mbps, each way)</label>
+                    <label for="bw-fair-use" class="block text-xs font-bold text-[#3E2723] uppercase mb-2">Limit per device (Mbps, download and upload)</label>
                     <input type="number" id="bw-fair-use" name="bw_fair_use_mbps"
                            step="0.5" min="5" max="1000" required
                            value="{{ old('bw_fair_use_mbps', $settings['bw_fair_use_mbps']) }}"
@@ -194,18 +194,18 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <button type="button"
                                 onclick="window.confirmAction({
-                                    title: 'Change the ceiling?',
-                                    text: 'Every device not on a plan, including the POS and this server, gets the new limit right away.',
+                                    title: 'Change the speed limit?',
+                                    text: 'Every device not on a plan, including the register and the server, gets the new limit right away.',
                                     icon: 'warning',
                                     confirmText: 'Yes, apply it',
                                     callback: () => document.getElementById('fair-use-form').submit()
                                 })"
                                 class="sm:col-span-2 py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg active:scale-[0.98]">
-                            Update Ceiling
+                            Change Limit
                         </button>
                         <button type="button"
                                 onclick="window.confirmAction({
-                                    title: 'Turn off the ceiling?',
+                                    title: 'Turn off the speed limit?',
                                     text: 'Guests keep their plan speeds. Staff, trusted and shop devices will have no limit.',
                                     icon: 'warning',
                                     confirmText: 'Yes, turn it off',
@@ -218,14 +218,14 @@
                 @else
                     <button type="button"
                             onclick="window.confirmAction({
-                                title: 'Turn on the ceiling?',
-                                text: 'Every device not on a plan, including the POS and this server, will be limited to this speed.',
+                                title: 'Turn on the speed limit?',
+                                text: 'Every device not on a plan, including the register and the server, will be limited to this speed.',
                                 icon: 'warning',
                                 confirmText: 'Yes, turn it on',
                                 callback: () => document.getElementById('fair-use-form').submit()
                             })"
                             class="w-full py-4 bg-green-700 hover:bg-green-800 text-white rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg active:scale-[0.98]">
-                        Turn On Fair-Use Ceiling
+                        Turn On Speed Limit
                     </button>
                 @endif
             </form>
@@ -249,15 +249,15 @@
                         <x-lucide-bot class="w-6 h-6" />
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Adaptive Ceiling</h3>
+                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Automatic speed limit</h3>
                         <p class="text-xs text-[#6D4C41] font-medium leading-relaxed mt-1">
-                            Barista AI lowers the cap as the room fills so no one device crowds the others out,
-                            and raises it again when the shop is quiet. It learns the line speed and the busy
-                            hours from what it measures &mdash; nothing to configure but the bounds.
+                            Barista AI lowers the limit as the shop fills up and raises it again when it's quiet.
+                            It learns your internet speed and busy hours by itself &mdash; you only set the
+                            lowest and highest limit it may use.
                         </p>
                         @unless($live['fair_use']['enforced'])
                             <p class="text-xs text-amber-800 font-bold leading-relaxed mt-2">
-                                Paused while the fair-use ceiling is off. It won't turn the ceiling on by itself.
+                                Paused while the speed limit is off. It won't turn the limit on by itself.
                             </p>
                         @endunless
                     </div>
@@ -271,13 +271,13 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-wide text-[#795548]">Line speed</p>
+                            <p class="text-xs font-bold uppercase tracking-wide text-[#795548]">Internet speed</p>
                             @if($learned['capacity']['learned'])
                                 <p class="text-sm font-bold text-[#3E2723] whitespace-nowrap">{{ $learned['capacity']['down'] }} Mbps down</p>
-                                <p class="text-xs text-[#6D4C41] font-medium">{{ $learned['capacity']['up'] }} Mbps up · from {{ $learned['capacity']['informative'] }} usable samples</p>
+                                <p class="text-xs text-[#6D4C41] font-medium">{{ $learned['capacity']['up'] }} Mbps up · from {{ $learned['capacity']['informative'] }} measurements</p>
                             @else
                                 <p class="text-sm font-bold text-[#795548]">Still measuring</p>
-                                <p class="text-xs text-[#6D4C41] font-medium">{{ $learned['capacity']['informative'] }} usable of {{ $learned['capacity']['samples'] }} samples &mdash; needs 12</p>
+                                <p class="text-xs text-[#6D4C41] font-medium">{{ $learned['capacity']['informative'] }} of the 12 good measurements it needs</p>
                             @endif
                         </div>
                         <div>
@@ -286,7 +286,7 @@
                                 <p class="text-sm font-bold text-[#3E2723]">
                                     {{ collect($learned['peak_hours'])->map(fn ($h) => sprintf('%02d:00', $h))->join(', ') }}
                                 </p>
-                                <p class="text-xs text-[#6D4C41] font-medium">Shared strictly during these; more generous outside them</p>
+                                <p class="text-xs text-[#6D4C41] font-medium">A stricter limit in these hours, more generous outside them</p>
                             @else
                                 <p class="text-sm font-bold text-[#795548]">Not yet known</p>
                                 <p class="text-xs text-[#6D4C41] font-medium">Learned from guest counts by hour of day</p>
@@ -317,7 +317,7 @@
                     <input type="checkbox" id="bw-adaptive-enabled" name="bw_adaptive_enabled" value="1"
                            @checked(old('bw_adaptive_enabled', $settings['bw_adaptive_enabled']) === '1' || old('bw_adaptive_enabled') === '1')
                            class="w-5 h-5 rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
-                    <span class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Let Barista AI adjust the ceiling</span>
+                    <span class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Let Barista AI adjust the limit</span>
                 </label>
 
                 <div class="grid grid-cols-2 gap-4 md:gap-6">
@@ -344,16 +344,16 @@
                 </p>
 
                 <button type="submit" class="w-full py-4 bg-white border-2 border-[#3E2723] hover:bg-[#FDF8F5] text-[#3E2723] rounded-xl font-bold text-xs uppercase tracking-wide transition-all active:scale-[0.98]">
-                    Save Adaptive Settings
+                    Save Automatic Settings
                 </button>
             </form>
 
             <div class="bg-white p-6 rounded-2xl border border-[#F0E6D2] shadow-sm">
-                <h4 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-4">Real-time Network Impact</h4>
+                <h4 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-4">Right now</h4>
                 <div class="space-y-6">
                     <div>
                         <div class="flex justify-between text-xs font-bold text-[#795548] uppercase mb-2">
-                            <span>Throughput vs Per-Device Ceiling</span>
+                            <span>Wi-Fi use compared with the limit</span>
                             <x-skeleton x-show="!hasRate" variant="block" size="h-3" class="w-10" />
                             <span x-show="hasRate" x-cloak x-text="utilization + '%'"></span>
                         </div>
@@ -374,8 +374,8 @@
                         </div>
                     </div>
                     <p class="text-xs text-[#6D4C41] font-medium italic leading-relaxed">
-                        The ceiling keeps a "bandwidth hog" from crowding out the POS and KDS, so orders
-                        keep going through while the room is busy.
+                        The limit stops one heavy user from slowing down the register and the kitchen
+                        display when the shop is busy.
                     </p>
                 </div>
             </div>

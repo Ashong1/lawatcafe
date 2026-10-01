@@ -17,13 +17,13 @@
         <div x-data="{ showModal: false, submitting: false }">
             <button @click="submitting = false; showModal = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-lg flex items-center gap-2 text-xs uppercase tracking-wide">
                 <x-lucide-user-x class="w-4 h-4" />
-                <span>Block a device by MAC</span>
+                <span>Block a device by hand</span>
             </button>
 
             <!-- Ban Modal -->
             <x-modal-shell show="showModal" max-width="xl" panel-class="p-5 sm:p-8 border-t-8 border-red-600" labelled-by="ban-device-heading">
                     <h3 id="ban-device-heading" class="text-xl font-bold text-[#3E2723] mb-2 uppercase tracking-tight">Block a device</h3>
-                    <p class="text-xs text-[#795548] mb-8 font-medium leading-relaxed">Enter the device details to permanently block it from connecting to the guest Wi-Fi.</p>
+                    <p class="text-xs text-[#795548] mb-8 font-medium leading-relaxed">For a device that isn't online right now. Its MAC address is in the phone's Wi-Fi settings (Android: Wi-Fi → the network → MAC address; iPhone: Wi-Fi → ⓘ → Wi-Fi Address).</p>
 
                     <form action="{{ route('network.blocklist.store') }}" method="POST" class="space-y-6" @submit="submitting = true">
                         @csrf
@@ -42,7 +42,7 @@
 
                         <div class="flex gap-3 pt-4">
                             <button type="button" @click="showModal = false" class="flex-1 py-4 bg-[#FDF8F5] text-[#795548] rounded-xl font-bold text-xs uppercase tracking-wide hover:bg-[#F0E6D2] transition">Cancel</button>
-                            <x-submit-button label="Confirm Ban" variant="danger" />
+                            <x-submit-button label="Block Device" variant="danger" />
                         </div>
                     </form>
             </x-modal-shell>
@@ -57,7 +57,7 @@
             </div>
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Blocked devices</h3>
-                <p class="text-xs text-[#6D4C41] font-medium">The firewall drops anything from these devices. Unblock to let one back on.</p>
+                <p class="text-xs text-[#6D4C41] font-medium">These devices can't use the Wi-Fi at all. Unblock one to let it back on.</p>
             </div>
         </div>
 
@@ -77,7 +77,7 @@
                     <tr class="border-b border-[#FAFAFA] group hover:bg-red-50/30 transition-colors">
                         <td class="py-4">
                             <span class="font-bold text-red-700 text-sm tracking-widest font-mono uppercase">
-                                {{ $device->mac_address }}
+                                {{ \App\Support\Mac::format($device->mac_address) }}
                             </span>
                         </td>
                         <td class="py-4">
@@ -96,13 +96,13 @@
                                 @method('DELETE')
                                 <button type="button" 
                                         onclick="window.confirmAction({
-                                            title: 'Unban Device?',
-                                            text: 'This device will be allowed to connect to the network again.',
+                                            title: 'Unblock this device?',
+                                            text: 'It will be able to use the Wi-Fi again with a code.',
                                             icon: 'info',
-                                            confirmText: 'Yes, Unban',
+                                            confirmText: 'Yes, unblock',
                                             callback: () => document.getElementById('unban-form-{{ $device->id }}').submit()
                                         })"
-                                        aria-label="Unban device"
+                                        aria-label="Unblock device"
                                         class="p-2 text-green-500 hover:text-green-700 hover:bg-green-50 rounded-xl transition-all">
                                     <x-lucide-shield-check class="w-5 h-5" />
                                 </button>

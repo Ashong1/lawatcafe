@@ -24,16 +24,16 @@
     $isAdmin = auth()->user()->isAdminOrAbove();
     // Where to act on each check. Admin-only pages appear only for admins.
     $goTo = array_filter([
-        'dns' => $isAdmin ? [route('network.site-blocking'), 'Site blocking'] : null,
+        'dns' => $isAdmin ? [route('network.site-blocking'), 'Blocked websites'] : null,
         'dhcp' => [route('network.sessions'), 'See connected devices'],
-        'portal' => [route('network.vouchers.index'), 'Vouchers'],
+        'portal' => [route('network.vouchers.index'), 'Wi-Fi codes'],
         'infrastructure' => auth()->user()->isSuperAdmin() ? [route('admin.settings.network'), 'Equipment list'] : [route('network.sessions'), 'Shop equipment'],
-        'bandwidth' => $isAdmin ? [route('network.traffic'), 'Speed limits'] : [route('network.sessions'), 'Guests online'],
+        'bandwidth' => $isAdmin ? [route('network.traffic'), 'Wi-Fi speed'] : [route('network.sessions'), "Who's online"],
         'unknown_devices' => [route('network.sessions'), 'Review devices'],
     ]);
     $tips = [
-        'internet' => 'If this fails: check the ISP router and its cables, then restart it.',
-        'firewall' => 'If this fails: check that the OPNsense box is powered on and its LAN cable is in.',
+        'internet' => "If this fails: check the internet provider's router and its cables, then switch it off and on.",
+        'firewall' => 'If this fails: check that the server is switched on and its network cables are plugged in.',
     ];
     $checkedAt = \Carbon\Carbon::parse($latest['checked_at']);
 @endphp
@@ -54,7 +54,7 @@
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Network Status</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-1 font-medium">Internet, firewall, DNS, DHCP, the Wi-Fi login page and your equipment — checked every minute.</p>
+            <p class="text-sm text-[#795548] mt-1 font-medium">The internet, the router, the website filter, the Wi-Fi sign-in page and the shop's equipment, checked every minute.</p>
         </div>
         <form action="{{ route('network.health.run') }}" method="POST" x-data="{ submitting: false }" @submit="submitting = true">
             @csrf
@@ -102,13 +102,13 @@
     {{-- History --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-8">
         <section class="bg-white rounded-2xl border border-[#F0E6D2] shadow-sm p-5">
-            <h3 class="text-sm font-bold text-[#3E2723] mb-1">Internet speed to the outside world (last 24 hours)</h3>
-            <p class="text-xs text-[#6D4C41] mb-3">Response time in milliseconds — lower is better. Spikes line up with slow-Wi-Fi complaints.</p>
+            <h3 class="text-sm font-bold text-[#3E2723] mb-1">How fast the internet answers (last 24 hours)</h3>
+            <p class="text-xs text-[#6D4C41] mb-3">Lower is better. A spike usually lines up with guests saying the Wi-Fi is slow.</p>
             <div class="relative h-56"><canvas id="latencyChart" aria-label="Internet response time over the last 24 hours" role="img"></canvas></div>
         </section>
         <section class="bg-white rounded-2xl border border-[#F0E6D2] shadow-sm p-5">
             <h3 class="text-sm font-bold text-[#3E2723] mb-1">Guests online (last 24 hours)</h3>
-            <p class="text-xs text-[#6D4C41] mb-3">Signed-in guests on the Wi-Fi, from the firewall's session list.</p>
+            <p class="text-xs text-[#6D4C41] mb-3">Guests signed in to the Wi-Fi.</p>
             <div class="relative h-56"><canvas id="guestsChart" aria-label="Guests online over the last 24 hours" role="img"></canvas></div>
         </section>
     </div>
@@ -116,7 +116,7 @@
     {{-- Detail tables --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
         <section class="bg-white rounded-2xl border border-[#F0E6D2] shadow-sm p-5">
-            <h3 class="text-sm font-bold text-[#3E2723] mb-3">Network equipment</h3>
+            <h3 class="text-sm font-bold text-[#3E2723] mb-3">Shop equipment</h3>
             @php($down = collect($checks['infrastructure']['details']['down'] ?? [])->pluck('ip')->all())
             <ul class="divide-y divide-[#F0E6D2]">
                 @forelse($checks['infrastructure']['details']['devices'] ?? [] as $ip => $label)
@@ -129,17 +129,17 @@
                         @endif
                     </li>
                 @empty
-                    <li class="py-2 text-sm text-[#6D4C41]">No equipment configured.</li>
+                    <li class="py-2 text-sm text-[#6D4C41]">No shop equipment is set up to be checked.</li>
                 @endforelse
             </ul>
         </section>
 
         <section class="bg-white rounded-2xl border border-[#F0E6D2] shadow-sm p-5">
-            <h3 class="text-sm font-bold text-[#3E2723] mb-3">Top data users this session</h3>
+            <h3 class="text-sm font-bold text-[#3E2723] mb-3">Guests using the most data</h3>
             <ul class="divide-y divide-[#F0E6D2]">
                 @forelse($checks['bandwidth']['details']['top_users'] ?? [] as $user)
                     <li class="py-2 flex items-center justify-between text-sm">
-                        <span class="font-mono text-[#3E2723]">{{ $user['ip'] }}</span>
+                        <span class="text-[#3E2723] min-w-0 truncate">@if(! empty($user['name']))<span class="font-bold">{{ $user['name'] }}</span> @endif<span class="font-mono text-xs text-[#6D4C41]">{{ $user['ip'] }}</span></span>
                         <span class="font-bold text-[#3E2723]">{{ $user['mb'] }} MB</span>
                     </li>
                 @empty
@@ -149,10 +149,10 @@
         </section>
 
         <section class="bg-white rounded-2xl border border-[#F0E6D2] shadow-sm p-5">
-            <h3 class="text-sm font-bold text-[#3E2723] mb-3">Most blocked lookups today</h3>
+            <h3 class="text-sm font-bold text-[#3E2723] mb-3">Most blocked today</h3>
             @php($dns = $checks['dns']['details']['stats'] ?? null)
             @if($dns)
-                <p class="text-xs text-[#6D4C41] mb-2">{{ number_format($dns['domains_on_blocklists']) }} domains on the block lists · {{ $dns['clients'] }} devices using Pi-hole.</p>
+                <p class="text-xs text-[#6D4C41] mb-2">Mostly ads and trackers. {{ number_format($dns['domains_on_blocklists']) }} websites on the block lists · {{ $dns['clients'] }} devices filtered.</p>
                 <ul class="divide-y divide-[#F0E6D2]">
                     @forelse($dns['top_blocked'] as $d)
                         <li class="py-2 flex items-center justify-between gap-3 text-sm">
@@ -164,7 +164,7 @@
                     @endforelse
                 </ul>
             @else
-                <p class="text-sm text-[#6D4C41]">Pi-hole's statistics aren't available right now.</p>
+                <p class="text-sm text-[#6D4C41]">The website filter's numbers aren't available right now.</p>
             @endif
         </section>
     </div>

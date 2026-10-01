@@ -29,7 +29,7 @@ class PortalReportController extends Controller
 
         $devices = fn (string ...$types) => (clone $events)->whereIn('type', $types)->distinct()->count('ip_address');
         $funnel = [
-            ['label' => 'Opened the portal', 'value' => $devices(PortalEvent::VISIT, PortalEvent::TIME_UP, PortalEvent::CODE_TRIED, PortalEvent::CONNECTED)],
+            ['label' => 'Opened the sign-in page', 'value' => $devices(PortalEvent::VISIT, PortalEvent::TIME_UP, PortalEvent::CODE_TRIED, PortalEvent::CONNECTED)],
             ['label' => 'Typed a code', 'value' => $devices(PortalEvent::CODE_TRIED)],
             ['label' => 'Got online', 'value' => $devices(PortalEvent::CONNECTED)],
         ];

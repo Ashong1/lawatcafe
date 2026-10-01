@@ -277,6 +277,19 @@ class OpnSenseService
     }
 
     /**
+     * ARP entries without the internet provider's side of the firewall (the
+     * ISP router and the firewall's own outside address). Those are not Wi-Fi
+     * devices, so lists of who is on the Wi-Fi leave them out.
+     */
+    public static function withoutWan(array $arpTable): array
+    {
+        return array_values(array_filter(
+            $arpTable['arp'] ?? $arpTable,
+            fn ($entry) => is_array($entry) && strcasecmp((string) ($entry['intf_description'] ?? ''), 'WAN') !== 0
+        ));
+    }
+
+    /**
      * Current Kea DHCPv4 leases — the reliable source for a device's hostname
      * (what the client sent in its DHCP request); the ARP endpoint's
      * 'hostname' is nearly always empty. Some devices send none at all.

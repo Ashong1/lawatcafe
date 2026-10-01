@@ -11,14 +11,14 @@
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Wi-Fi Codes</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Manage, generate, and track the status of all your network access codes.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Make Wi-Fi codes to hand out, print slips, and see which codes have been used.</p>
         </div>
     </div>
 
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
         <form action="{{ route('network.vouchers.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="md:col-span-2">
-                <label for="search" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Search Code</label>
+                <label for="search" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Find a code</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6D4C41]">
                         <x-lucide-search class="w-4 h-4" />
@@ -29,7 +29,7 @@
             <div>
                 <label for="status" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Status</label>
                 <select id="status" name="status" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
-                    <option value="">All Vouchers</option>
+                    <option value="">All codes</option>
                     <option value="available" {{ request('status') === 'available' ? 'selected' : '' }}>Available</option>
                     <option value="used" {{ request('status') === 'used' ? 'selected' : '' }}>Used</option>
                 </select>
@@ -44,8 +44,8 @@
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Generated Vouchers</h3>
-                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Manage and track the status of all WiFi access codes.</p>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">All codes</h3>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Newest first. Print a slip, or delete codes you no longer need.</p>
             </div>
             
             <div class="flex items-center gap-3 flex-wrap">
@@ -62,7 +62,7 @@
                 <!-- Bulk Delete -->
                 <button @click="deleteSelected()"
                         x-show="selectedVouchers.length > 0"
-                        aria-label="Delete selected vouchers"
+                        aria-label="Delete selected codes"
                         class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-red-500/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2"
                         style="display: none;">
                     <x-lucide-trash-2 class="w-3.5 h-3.5" />
@@ -73,24 +73,24 @@
                     @csrf
                     <button type="button" 
                             @click="window.confirmAction({
-                                title: 'Purge Vouchers?',
-                                text: 'This will permanently remove all used and expired vouchers from your database.',
+                                title: 'Clear out used codes?',
+                                text: 'Deletes every used and expired code from the list. Unused codes are kept. This can\'t be undone.',
                                 icon: 'warning',
-                                confirmText: 'Yes, Purge Now',
+                                confirmText: 'Yes, clear them',
                                 callback: () => document.getElementById('purge-form').submit()
                             })"
                             class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                         <x-lucide-trash-2 class="w-3.5 h-3.5" />
-                        Purge Used
+                        Clear Used Codes
                     </button>
                 </form>
                 @endif
 
-                <x-ask-ai-button prompt="Generate a new voucher batch." label="Ask AI to generate" />
+                <x-ask-ai-button prompt="Make a new batch of Wi-Fi codes." label="Ask Barista AI" />
 
                 <button @click="submitting = false; isModalOpen = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                     <x-lucide-plus class="w-4 h-4" />
-                    <span>Generate Vouchers</span>
+                    <span>Make Codes</span>
                 </button>
             </div>
         </div>
@@ -104,11 +104,11 @@
                             <input type="checkbox" @change="toggleAll()" :checked="allSelected" class="rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
                         </th>
                         @endif
-                        <th class="pb-4 font-bold">Voucher Code</th>
-                        <th class="pb-4 font-bold hidden md:table-cell">Duration</th>
-                        <th class="pb-4 font-bold hidden md:table-cell">Tier</th>
+                        <th class="pb-4 font-bold">Code</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Time</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Plan</th>
                         <th class="pb-4 font-bold text-center">Status</th>
-                        <th class="pb-4 font-bold hidden md:table-cell">Created At</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Made</th>
                         <th class="pb-4 font-bold text-right">Actions</th>
                     </tr>
                 </thead>
@@ -162,8 +162,8 @@
                                         @method('DELETE')
                                         <button type="button" 
                                                 @click="window.confirmAction({
-                                                    title: 'Delete Voucher?',
-                                                    text: 'Delete this voucher forever? This cannot be undone.',
+                                                    title: 'Delete this code?',
+                                                    text: 'It will stop working and can\'t be brought back.',
                                                     icon: 'warning',
                                                     confirmText: 'Yes, Delete',
                                                     callback: () => document.getElementById('delete-voucher-{{ $voucher->id }}').submit()
@@ -182,7 +182,7 @@
                             <td colspan="{{ auth()->user()->isAdminOrAbove() ? 7 : 6 }}" class="py-16 text-center">
                                 <div class="flex flex-col items-center opacity-30">
                                     <x-lucide-ticket class="w-10 h-10 mb-3" />
-                                    <p class="text-[#6D4C41] text-sm font-medium">No vouchers found.</p>
+                                    <p class="text-[#6D4C41] text-sm font-medium">No codes found.</p>
                                 </div>
                             </td>
                         </tr>
@@ -207,18 +207,18 @@
 
     <!-- Generation Modal -->
     <x-modal-shell show="isModalOpen" max-width="xl" panel-class="rounded-2xl p-5 sm:p-8 border-t-8 border-[#3E2723]" labelled-by="generate-vouchers-heading">
-            <h2 id="generate-vouchers-heading" class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-wide">Generate Vouchers</h2>
+            <h2 id="generate-vouchers-heading" class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-wide">Make Wi-Fi Codes</h2>
 
             <form action="{{ route('network.vouchers.generate') }}" method="POST" @submit="submitting = true">
                 @csrf
                 <div class="mb-4">
-                    <label for="quantity" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2">Quantity (Max 100)</label>
+                    <label for="quantity" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2">How many (up to 100)</label>
                     <input type="number" id="quantity" name="quantity" required min="1" max="100" value="5" class="w-full p-3 border @error('quantity') border-red-500 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all">
                     <x-field-error name="quantity" />
                 </div>
 
                 <div class="mb-8">
-                    <label for="duration_minutes" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2">Voucher Duration</label>
+                    <label for="duration_minutes" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2">Wi-Fi time</label>
                     {{-- The presets stay a plain named select, so this still works
                          with no JS at all; "custom" is the only branch that needs
                          Alpine, and it reveals a second field rather than trying to
@@ -248,7 +248,7 @@
                 </div>
 
                 <div class="mb-8">
-                    <label for="tier" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2">Bandwidth Tier</label>
+                    <label for="tier" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2">Plan (speed)</label>
                     <select id="tier" name="tier" required class="w-full p-3 border @error('tier') border-red-500 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
                         <option value="free">Free</option>
                         <option value="premium">Premium</option>
@@ -258,7 +258,7 @@
 
                 <div class="flex gap-4">
                     <button type="button" @click="isModalOpen = false" class="flex-1 py-3.5 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#795548] hover:bg-[#FDF8F5] font-bold transition text-sm tracking-wide">Cancel</button>
-                    <x-submit-button label="Generate Now" />
+                    <x-submit-button label="Make Codes" />
                 </div>
             </form>
     </x-modal-shell>
@@ -289,10 +289,10 @@
             },
             deleteSelected() {
                 window.confirmAction({
-                    title: 'Delete Selected?',
-                    text: `Are you sure you want to delete ${this.selectedVouchers.length} selected vouchers?`,
+                    title: 'Delete the selected codes?',
+                    text: `${this.selectedVouchers.length} code(s) will stop working and can't be brought back.`,
                     icon: 'warning',
-                    confirmText: 'Yes, Delete All',
+                    confirmText: 'Yes, delete them',
                     callback: () => document.getElementById('bulk-delete-form').submit()
                 });
             },

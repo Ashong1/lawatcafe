@@ -60,12 +60,12 @@ class VoucherSessionsTest extends TestCase
         $response = $this->actingAs($admin)->get(route('network.sessions'));
 
         $response->assertOk();
-        // ---mac--- entry: MAC shows (app renders MACs with separators stripped),
+        // ---mac--- entry: MAC shows, formatted the way phones show it;
         // IP is unresolvable anywhere -> honest "N/A", not blank.
-        $response->assertSee('782B46CFBB42');
+        $response->assertSee('78:2B:46:CF:BB:42');
         // ---ip--- entry resolved via ARP: both real IP and real MAC show.
         $response->assertSee('192.168.2.99');
-        $response->assertSee('3C7C3F5E854E');
+        $response->assertSee('3C:7C:3F:5E:85:4E');
         // ---ip--- entry with no ARP match: IP still shows rather than being dropped.
         $response->assertSee('192.168.2.199');
     }
@@ -238,5 +238,37 @@ class VoucherSessionsTest extends TestCase
         $response->assertOk();
         $response->assertViewHas('pendingSessions', fn ($sessions) => ! $sessions->contains('ip_address', '192.168.2.110'));
         $response->assertViewHas('infrastructureSessions', fn ($sessions) => $sessions->contains('mac_address', '52A3C5052B20'));
+    }
+
+    public function test_the_providers_side_is_hidden_and_devices_show_their_real_names(): void
+    {
+        config(['services.network.labels' => ['192.168.2.100' => 'App server']]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('listSessions')->andReturn([
+                ['sessionId' => 's1', 'authenticated_via' => '---ip---', 'ipAddress' => '192.168.2.100/32', 'macAddress' => ''],
+            ]);
+            $mock->shouldReceive('getArpTable')->andReturn([
+                ['mac' => 'bc:24:11:12:72:f0', 'ip' => '192.168.2.100', 'intf_description' => 'MANAGEMENT', 'manufacturer' => 'Proxmox'],
+                ['mac' => '52:a3:c5:05:2b:20', 'ip' => '192.168.2.110', 'intf_description' => 'MANAGEMENT', 'manufacturer' => ''],
+                // The firewall's own outside address and the ISP router: not Wi-Fi devices.
+                ['mac' => 'bc:24:11:fe:97:de', 'ip' => '192.168.254.103', 'intf_description' => 'WAN', 'manufacturer' => 'Proxmox'],
+                ['mac' => 'd8:42:f7:e7:e4:b4', 'ip' => '192.168.254.254', 'intf_description' => 'WAN', 'manufacturer' => 'Tozed'],
+            ]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([
+                ['address' => '192.168.2.110', 'hwaddr' => '52:a3:c5:05:2b:20', 'hostname' => 'xiaomi-15-pro'],
+            ]);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => ['192.168.2.100/32'], 'macs' => ['52:A3:C5:05:2B:20']]);
+        });
+
+        $html = $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get(route('network.sessions'))->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('192.168.254.103', $html);
+        $this->assertStringNotContainsString('192.168.254.254', $html);
+        $this->assertStringContainsString('App server', $html);
+        $this->assertStringContainsString('xiaomi-15-pro', $html);
+        $this->assertStringContainsString('Trusted device', $html);
+        $this->assertStringContainsString('Shop equipment — never blocked', $html);
     }
 }

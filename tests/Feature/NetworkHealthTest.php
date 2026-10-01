@@ -79,7 +79,7 @@ class NetworkHealthTest extends TestCase
         $r = $this->service()->run();
 
         $this->assertSame('ok', $r['overall']);
-        $this->assertSame('Internet OK — 9 ms, no packet loss.', $r['checks']['internet']['summary']);
+        $this->assertSame('Working well — answers in 9 ms.', $r['checks']['internet']['summary']);
         $this->assertStringContainsString('2 guest(s) online', $r['checks']['portal']['summary']);
     }
 
@@ -170,7 +170,7 @@ class NetworkHealthTest extends TestCase
         $prompt = app(AIService::class)->buildAdminSystemPrompt();
         $this->assertStringContainsString('NETWORK LAYOUT', $prompt);
         $this->assertStringContainsString('LIVE NETWORK STATUS', $prompt);
-        $this->assertStringContainsString('Internet link: OK', $prompt);
+        $this->assertStringContainsString('Internet: OK', $prompt);
         $this->assertLessThan(strpos($prompt, 'SHOP (secondary)'), strpos($prompt, 'LIVE NETWORK STATUS'));
     }
 
@@ -195,7 +195,7 @@ class NetworkHealthTest extends TestCase
                 ->get(route('network.health'))
                 ->assertOk()
                 ->assertSee('Everything on the network is working.')
-                ->assertSee('Internet link');
+                ->assertSee('Website filter (Pi-hole)');
         }
 
         $this->getJson(route('network.health.status'))->assertOk()->assertJsonStructure(['checked_at']);

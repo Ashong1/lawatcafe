@@ -28,8 +28,7 @@ class GhostDeviceDetectionService
     {
         $normalizeMac = fn (?string $mac) => strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac ?? ''));
 
-        $arpRaw = $this->opnsense->getArpTable();
-        $arpEntries = collect($arpRaw['arp'] ?? $arpRaw)->filter(fn ($e) => is_array($e));
+        $arpEntries = collect(OpnSenseService::withoutWan($this->opnsense->getArpTable()));
         $dhcpLeases = collect($this->opnsense->getDhcpLeases());
         $sessions = collect($this->opnsense->listSessions());
         $allowed = $this->opnsense->getAllowedAddresses();

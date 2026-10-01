@@ -200,7 +200,7 @@ class FairUseCapTest extends TestCase
             ->get(route('network.traffic'));
 
         $response->assertOk();
-        $response->assertSee('Fair-Use Ceiling', false);
+        $response->assertSee('Speed limit per device', false);
         // Editable, and seeded with what is actually in force.
         $response->assertSee('name="bw_fair_use_mbps"', false);
         $response->assertSee('value="20"', false);
@@ -217,7 +217,7 @@ class FairUseCapTest extends TestCase
     {
         $this->actingAs(User::factory()->create(['role' => 'admin']))
             ->get(route('network.traffic'))
-            ->assertSee('Applies to the whole interface', false);
+            ->assertSee("It also limits the shop's own devices.", false);
     }
 
     /** Saving applies the cap to the gateway, then records it. */

@@ -97,8 +97,8 @@ class TrafficPlanSpeedsTest extends TestCase
         $response->assertSee('id="bw_free_down" name="bw_free_down"', false);
         $response->assertSeeInOrder(['bw_free_down', 'value="5"', 'bw_free_up', 'value="3"'], false);
         $response->assertSeeInOrder(['bw_premium_down', 'value="15"', 'bw_premium_up', 'value="6"'], false);
-        $response->assertSee('1 device', false);
-        $response->assertSee('2 devices', false);
+        $response->assertSee('1 guest on it', false);
+        $response->assertSee('2 guests on it', false);
     }
 
     /** A disabled fair-use rule must not be labelled as in force. */
@@ -176,7 +176,7 @@ class TrafficPlanSpeedsTest extends TestCase
         $this->fakeLiveGateway();
 
         $this->actingAs($this->admin())->get(route('network.traffic'))
-            ->assertSee('Turn On Fair-Use Ceiling', false)
+            ->assertSee('Turn On Speed Limit', false)
             ->assertDontSee('fair-use-off-form', false);
     }
 
