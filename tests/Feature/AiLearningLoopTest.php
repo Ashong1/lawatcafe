@@ -543,7 +543,7 @@ class AiLearningLoopTest extends TestCase
             ->get(route('admin.ai.lessons.index'));
 
         $response->assertOk();
-        $response->assertSee('Awaiting Your Decision', false);
+        $response->assertSee('Waiting for your OK', false);
         $response->assertSee('50%', false);
     }
 
@@ -591,7 +591,7 @@ class AiLearningLoopTest extends TestCase
             ->get(route('admin.ai.lessons.index'));
 
         $response->assertOk();
-        $response->assertSee('Evidence Waiting', false);
+        $response->assertSee('New feedback to read', false);
         $response->assertDontSee('Waiting for its first rating', false);
         $response->assertSee(DistilAiLessons::MIN_EVIDENCE_FOR_A_RUN - 1 .' more before it can generalise', false);
     }
@@ -615,7 +615,7 @@ class AiLearningLoopTest extends TestCase
         // but the distilled row is spent, so it must not be counted as evidence
         // still waiting.
         $response->assertDontSee('Waiting for its first rating', false);
-        $response->assertSee('Evidence Waiting', false);
+        $response->assertSee('New feedback to read', false);
         $response->assertSee(DistilAiLessons::MIN_EVIDENCE_FOR_A_RUN.' more before it can generalise', false);
     }
 }

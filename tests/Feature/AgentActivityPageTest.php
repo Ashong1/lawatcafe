@@ -58,8 +58,8 @@ class AgentActivityPageTest extends TestCase
 
         $response = $this->actingAs($admin)->get(route('admin.ai.actions.index'))->assertOk();
 
-        $response->assertSeeInOrder(['Waiting for your OK', 'Wants to create Wi-Fi vouchers', 'Approve', 'Decline', 'What it did', 'Blocked websites for guests']);
-        $response->assertSee('Speed tier: free · Minutes each: 60 · How many: 10', false);
+        $response->assertSeeInOrder(['Waiting for your OK', 'Wants to make Wi-Fi codes', 'Approve', 'Decline', 'What it did', 'Blocked websites for guests']);
+        $response->assertSee('Wi-Fi plan: free · Minutes each: 60 · How many: 10', false);
     }
 
     public function test_routine_lookups_are_hidden_until_asked_for(): void
@@ -99,5 +99,18 @@ class AgentActivityPageTest extends TestCase
             ->get(route('admin.ai.actions.index'))
             ->assertOk()
             ->assertSee('Nothing here yet');
+    }
+
+    /**
+     * A tool missing from AgentActivityEntry's list showed on the owner's
+     * activity page as "Tried an action that doesn't exist" although it ran.
+     */
+    public function test_every_tool_has_a_plain_activity_label(): void
+    {
+        $known = (new \ReflectionClassConstant(\App\Support\AgentActivityEntry::class, 'TOOLS'))->getValue();
+
+        foreach (array_keys(app(\App\Services\Agent\ToolRegistry::class)->forAudience('super_admin')) as $tool) {
+            $this->assertArrayHasKey($tool, $known, "{$tool} has no label on the activity page");
+        }
     }
 }

@@ -12,12 +12,15 @@
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Sales Forecast</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Sales trends and forecasts from Barista AI.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">How sales are going, and what Barista AI expects over the next week.</p>
         </div>
+        {{-- Which AI model answered matters to the system administrator, not the owner. --}}
+        @if(auth()->user()->isSuperAdmin())
         <div class="flex items-center gap-2 px-4 py-2 bg-[#3E2723] rounded-xl shadow-lg shadow-amber-900/10">
-            <x-lucide-sparkles class="w-4 h-4 text-amber-500 animate-pulse" />
+            <x-lucide-sparkles class="w-4 h-4 text-amber-500" />
             <span class="text-xs font-bold text-white uppercase tracking-wide">Model: {{ $activeModel }}</span>
         </div>
+        @endif
     </div>
 
     <!-- AI Intelligence Grid -->
@@ -51,7 +54,7 @@
                             </p>
                             
                             <div class="bg-[#FAFAFA] rounded-2xl p-5 border border-[#F0E6D2]">
-                                <h4 class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-4">Daily Projections</h4>
+                                <h4 class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-4">Day by day</h4>
                                 <div class="grid grid-cols-4 md:grid-cols-7 gap-2">
                                     @foreach($aiForecast['daily_forecast'] ?? [] as $day)
                                         <div class="text-center">
@@ -71,7 +74,7 @@
                                 </div>
                                 <div class="h-[1px] w-full bg-[#F0E6D2]"></div>
                                 <div class="flex justify-between items-center">
-                                    <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">Confidence Score</span>
+                                    <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">How sure it is</span>
                                     @php
                                         $confScore = $aiForecast['meta']['confidence_score'] ?? 1;
                                         $confStars = ceil(($confScore / 7) * 5);
@@ -118,7 +121,7 @@
                         <x-lucide-lightbulb class="w-10 h-10 text-[#3E2723]" />
                     </div>
                     <div>
-                        <h3 class="text-amber-200 text-xs font-bold uppercase tracking-wide mb-4">Barista AI Strategic Growth Tip</h3>
+                        <h3 class="text-amber-200 text-xs font-bold uppercase tracking-wide mb-4">Barista AI's tip</h3>
                         <p class="text-lg md:text-xl text-white font-medium italic leading-relaxed">
                             "{{ $aiForecast['strategic_advice'] ?? 'Focus on gathering more sales data to unlock advanced AI-driven business strategies tailored to Lawa\'t Kape.' }}"
                         </p>
@@ -137,7 +140,7 @@
                 <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center border border-amber-100">
                     <x-lucide-brain-circuit class="w-5 h-5 text-amber-700" />
                 </div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Market Projections</h3>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">What to expect</h3>
             </div>
 
             <div class="space-y-10 flex-1">

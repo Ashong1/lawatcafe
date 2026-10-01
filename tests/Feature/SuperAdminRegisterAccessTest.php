@@ -105,15 +105,15 @@ class SuperAdminRegisterAccessTest extends TestCase
     {
         $superAdminSidebar = $this->actingAs($this->superAdmin())->get(route('dashboard'));
         $superAdminSidebar->assertOk();
-        $superAdminSidebar->assertDontSee('POS Register', false);
-        $superAdminSidebar->assertDontSee('Open POS', false);
+        $superAdminSidebar->assertDontSee('href="/pos"', false);
+        $superAdminSidebar->assertDontSee('Open Register', false);
         $superAdminSidebar->assertDontSee('Kitchen Display', false);
 
         // The same layout must still render them for an ordinary admin,
         // otherwise these assertions would pass for the wrong reason.
         $adminSidebar = $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('dashboard'));
-        $adminSidebar->assertSee('POS Register', false);
-        $adminSidebar->assertSee('Open POS', false);
+        $adminSidebar->assertSee('href="/pos"', false);
+        $adminSidebar->assertSee('Open Register', false);
         $adminSidebar->assertSee('Kitchen Display', false);
     }
 }

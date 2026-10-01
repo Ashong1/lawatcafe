@@ -25,8 +25,8 @@
             </div>
             <div class="text-xs text-blue-900 font-medium leading-relaxed">
                 <p class="font-bold uppercase tracking-wide text-xs mb-1">How this learns</p>
-                <p>Every rating, correction and failed tool call is recorded. Once an hour the assistant reads what is new and proposes lessons below. Approved lessons are added to the assistant's instructions, and approved worked examples are retrieved when a similar question comes in. The underlying model is not retrained &mdash; the assistant improves by accumulating reviewed experience.</p>
-                <p class="mt-2">When it tells staff or an admin it <em>can't</em> do something, it works out how it could have: a <span class="font-bold">skill</span> (steps using tools it already has) or a pointer to the right page is applied automatically &mdash; revoke it here if it's wrong &mdash; and anything genuinely missing becomes a <span class="font-bold">tool request</span> for the developer. It never writes or runs code itself.</p>
+                <p>Every thumbs up, thumbs down and correction is kept. Once an hour Barista AI reads what's new and suggests lessons below. Only the lessons you approve change how it answers, and you can withdraw one at any time.</p>
+                <p class="mt-2">When it tells someone it <em>can't</em> do something, it works out how it could: steps using what it can already do, or which page to point people to. Those are used straight away (withdraw any that are wrong). Anything it genuinely can't do is passed to the system administrator. It never writes or runs code itself.
             </div>
         </div>
 
@@ -39,7 +39,7 @@
              which one it is. --}}
         <div class="bg-white border border-[#F0E6D2] rounded-3xl p-6 mb-8">
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Loop Status</h3>
+                <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Learning status</h3>
                 <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">
                     @if($pipeline['lastRun'])
                         Last checked {{ $pipeline['lastRun'] }}
@@ -70,7 +70,7 @@
             @else
                 <div class="flex flex-wrap items-center gap-x-8 gap-y-4">
                     <div>
-                        <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Evidence Waiting</p>
+                        <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">New feedback to read</p>
                         <p class="text-2xl font-bold tracking-tighter text-[#3E2723] mt-1">
                             {{ $pipeline['evidence'] }}<span class="text-sm text-[#795548]"> / {{ $pipeline['needed'] }}</span>
                         </p>
@@ -89,7 +89,7 @@
                     </div>
                     <div class="h-10 w-[1px] bg-[#F0E6D2] hidden sm:block"></div>
                     <div>
-                        <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">In Force</p>
+                        <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Approved</p>
                         <p class="text-2xl font-bold tracking-tighter text-[#3E2723] mt-1">{{ $approved->count() }}</p>
                     </div>
                 </div>
@@ -127,7 +127,7 @@
         {{-- Awaiting a decision --}}
         <div class="bg-white rounded-[2rem] shadow-sm border border-[#F0E6D2] p-6 md:p-8 mb-8">
             <div class="flex items-center justify-between mb-5">
-                <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Awaiting Your Decision</h3>
+                <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Waiting for your OK</h3>
                 <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">{{ $ratingsThisWeek }} ratings this week</span>
             </div>
 
@@ -175,7 +175,7 @@
 
         {{-- In force --}}
         <div class="bg-white rounded-[2rem] shadow-sm border border-[#F0E6D2] p-6 md:p-8 mb-8">
-            <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-5">In Force</h3>
+            <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-5">Approved lessons</h3>
 
             <div class="space-y-3">
                 @forelse($approved as $lesson)
@@ -212,7 +212,7 @@
              re-proposing what has already been turned down. --}}
         @if($rejected->isNotEmpty())
             <div class="bg-white rounded-[2rem] shadow-sm border border-[#F0E6D2] p-6 md:p-8">
-                <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-2">Turned Down</h3>
+                <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-2">Declined</h3>
                 <p class="text-xs text-[#795548] font-medium mb-4">Kept on purpose &mdash; the assistant is shown these so it stops suggesting them again.</p>
                 <div class="space-y-2">
                     @foreach($rejected as $lesson)

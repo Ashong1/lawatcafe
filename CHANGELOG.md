@@ -9,6 +9,23 @@ the history was rewritten.
 
 ---
 
+## 1.20.2 — Dashboard and Barista AI pages in plain words
+*build 190*
+
+- Dashboard: the "Revenue split" against E-wallet (no longer taken) is now a
+  single "Cash taken" figure. The firewall's gateway names are replaced by
+  "Internet connected" / "Internet down". Buttons read Open Register, Make
+  Wi-Fi Codes and Download Today's Sales. The sales outlook uses plain
+  headings: The next 7 days, Expected sales, How sure it is, Watch out for,
+  Suggestions, Selling well, Selling slowly.
+- Sales Forecast: plain headings. The AI model name shows only to the system
+  administrator.
+- Fixed: Actions & Approvals said "Tried an action that doesn't exist" for
+  four real Barista AI tools (network status, device lookup, top data users,
+  website filter) that were missing from its list. A test now checks that
+  every tool has a label.
+- What It Noticed and What It Learned explain themselves in plain words.
+
 ## 1.20.1 — Wi-Fi pages in plain words
 *build 189*
 

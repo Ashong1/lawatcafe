@@ -401,7 +401,7 @@ class DashboardController extends Controller
         $latestAiRun = AiAnalysisRun::latest()->first();
 
         return [
-            'aiBrief' => Cache::get('barista_ai_brief', 'Store data is being analyzed for strategic insights...'),
+            'aiBrief' => Cache::get('barista_ai_brief', "Barista AI is reading today's sales. Its notes will appear here shortly."),
             'aiFindings' => $aiFindings,
             'latestAiNarrative' => $latestAiRun?->narrative,
         ];

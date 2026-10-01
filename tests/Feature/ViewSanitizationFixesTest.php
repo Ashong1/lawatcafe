@@ -39,13 +39,13 @@ class ViewSanitizationFixesTest extends TestCase
         $response = $this->actingAs($admin)->get(route('dashboard'))->assertOk();
 
         // A stray </div> used to close the "Results State" container right
-        // after the Demand Risk Alerts block, pushing Strategic Advice and
-        // Hot/Cold Items outside the x-show guard so they rendered
+        // after the risk alerts block, pushing the suggestions and the
+        // selling-well/slowly lists outside the x-show guard so they rendered
         // unconditionally. Both sections must still be inside that div.
         $html = $response->getContent();
         $resultsStateStart = strpos($html, '!loadingInsights && !errorInsights && insights');
-        $strategicAdvicePos = strpos($html, 'Strategic Advice');
-        $hotItemsPos = strpos($html, 'Hot Items');
+        $strategicAdvicePos = strpos($html, '>Suggestions</p>');
+        $hotItemsPos = strpos($html, 'Selling well');
 
         $this->assertNotFalse($resultsStateStart);
         $this->assertNotFalse($strategicAdvicePos);

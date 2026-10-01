@@ -48,10 +48,10 @@
 <div class="flex flex-row flex-wrap items-center gap-3 mb-6">
     @php
         $quickActions = array_filter([
-            auth()->user()->isSuperAdmin() ? null : ['route' => route('pos'), 'icon' => 'lucide-shopping-cart', 'label' => 'Open POS'],
-            ['route' => route('network.vouchers.index', ['action' => 'generate']), 'icon' => 'lucide-ticket', 'label' => 'Issue Voucher'],
+            auth()->user()->isSuperAdmin() ? null : ['route' => route('pos'), 'icon' => 'lucide-shopping-cart', 'label' => 'Open Register'],
+            ['route' => route('network.vouchers.index', ['action' => 'generate']), 'icon' => 'lucide-ticket', 'label' => 'Make Wi-Fi Codes'],
             ['route' => route('inventory.deliveries.index', ['action' => 'receive']), 'icon' => 'lucide-truck', 'label' => 'Receive Supplies'],
-            ['route' => route('sales.export'), 'icon' => 'lucide-file-text', 'label' => 'Export Daily'],
+            ['route' => route('sales.export'), 'icon' => 'lucide-file-text', 'label' => "Download Today's Sales"],
             ['route' => route('network.traffic'), 'icon' => 'lucide-activity', 'label' => 'Traffic & Bandwidth'],
         ]);
     @endphp
@@ -126,19 +126,20 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-8">
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col">
         <div class="flex justify-between items-center mb-5 gap-3">
-            <h3 class="text-sm font-bold text-[#3E2723]">Network throughput</h3>
+            <h3 class="text-sm font-bold text-[#3E2723]">Internet speed right now</h3>
             <div class="flex items-center gap-3">
-                @forelse($gateways ?? [] as $gw)
-                    <div class="flex items-center gap-1.5" title="{{ $gw['name'] }}: {{ $gw['status'] }}">
-                        <div class="w-2 h-2 rounded-full {{ $gw['status'] === 'none' || $gw['status'] === 'online' ? 'bg-green-500' : 'bg-red-500' }}"></div>
-                        <span class="text-xs font-bold text-[#6D4C41]">{{ $gw['name'] }}</span>
+                @php($internetUp = collect($gateways ?? [])->contains(fn ($gw) => in_array($gw['status'], ['none', 'online'], true)))
+                @if(! empty($gateways))
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2 h-2 rounded-full {{ $internetUp ? 'bg-green-500' : 'bg-red-500' }}"></div>
+                        <span class="text-xs font-bold text-[#6D4C41]">{{ $internetUp ? 'Internet connected' : 'Internet down' }}</span>
                     </div>
-                @empty
+                @else
                     <div class="flex items-center gap-2">
                         <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                         <span class="text-xs font-bold text-[#6D4C41]">Live</span>
                     </div>
-                @endforelse
+                @endif
             </div>
         </div>
 
@@ -165,14 +166,14 @@
             </div>
             <div>
                 <span class="text-2xl font-bold text-[#3E2723]">{{ $vouchersRedeemed ?? 0 }}</span>
-                <span class="block text-xs font-medium text-[#6D4C41]">Wi-Fi redeemed ({{ strtolower(request('range', 'today')) }})</span>
+                <span class="block text-xs font-medium text-[#6D4C41]">Wi-Fi codes used ({{ strtolower(request('range', 'today')) }})</span>
             </div>
         </div>
     </div>
 
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2]">
         <div class="flex justify-between items-center mb-4">
-            <h3 class="text-sm font-bold text-[#3E2723]">Recent vouchers</h3>
+            <h3 class="text-sm font-bold text-[#3E2723]">Recent Wi-Fi codes</h3>
             <a href="{{ route('network.vouchers.index') }}" class="min-h-[44px] inline-flex items-center text-sm font-bold text-amber-800 hover:text-amber-900">Manage all &rarr;</a>
         </div>
         <table class="w-full text-left border-collapse">
@@ -222,8 +223,8 @@
             <button @click="getInsights()" class="min-h-[44px] bg-amber-500 hover:bg-amber-400 text-[#3E2723] px-5 rounded-xl text-sm font-bold flex items-center gap-2 transition">
                 <x-lucide-brain-circuit class="w-4 h-4" /> Full AI report
             </button>
-            <a href="{{ route('ai.analysis.index') }}" class="min-h-[44px] px-4 rounded-xl text-sm font-bold text-amber-100 hover:bg-white/10 inline-flex items-center transition">Findings history</a>
-            <a href="{{ route('admin.ai.actions.index') }}" class="min-h-[44px] px-4 rounded-xl text-sm font-bold text-amber-100 hover:bg-white/10 inline-flex items-center transition">Agent activity</a>
+            <a href="{{ route('ai.analysis.index') }}" class="min-h-[44px] px-4 rounded-xl text-sm font-bold text-amber-100 hover:bg-white/10 inline-flex items-center transition">What it noticed</a>
+            <a href="{{ route('admin.ai.actions.index') }}" class="min-h-[44px] px-4 rounded-xl text-sm font-bold text-amber-100 hover:bg-white/10 inline-flex items-center transition">Actions &amp; approvals</a>
         </div>
     </div>
 
@@ -257,27 +258,9 @@
 
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col gap-6">
         <div>
-            <h3 class="text-sm font-bold text-[#3E2723] mb-4">Revenue split</h3>
-            <div class="space-y-4">
-                <div>
-                    <div class="flex justify-between text-sm mb-1.5 font-bold">
-                        <span class="text-[#6D4C41]">Cash</span>
-                        <span class="text-[#3E2723]" x-text="'₱' + Math.round(live.paymentBreakdown['Cash'] || 0).toLocaleString()"></span>
-                    </div>
-                    <div class="w-full bg-[#FAFAFA] rounded-full h-1.5 overflow-hidden">
-                        <div class="bg-[#3E2723] h-full w-full origin-left transition-transform duration-700" :style="'transform: scaleX(' + (cashPct() / 100) + ')'"></div>
-                    </div>
-                </div>
-                <div>
-                    <div class="flex justify-between text-sm mb-1.5 font-bold">
-                        <span class="text-[#6D4C41]">E-wallet</span>
-                        <span class="text-[#3E2723]" x-text="'₱' + Math.round(live.paymentBreakdown['E-Wallet'] || 0).toLocaleString()"></span>
-                    </div>
-                    <div class="w-full bg-[#FAFAFA] rounded-full h-1.5 overflow-hidden">
-                        <div class="bg-blue-600 h-full w-full origin-left transition-transform duration-700" :style="'transform: scaleX(' + (ewalletPct() / 100) + ')'"></div>
-                    </div>
-                </div>
-            </div>
+            <h3 class="text-sm font-bold text-[#3E2723] mb-2">Cash taken</h3>
+            <p class="text-2xl font-bold text-[#3E2723]" x-text="'₱' + Math.round(live.paymentBreakdown['Cash'] || 0).toLocaleString()"></p>
+            <p class="text-xs text-[#6D4C41] font-medium mt-1">The register takes cash only.</p>
         </div>
         <div>
             <h3 class="text-sm font-bold text-[#3E2723] mb-2">Menu mix</h3>
@@ -296,7 +279,7 @@
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2]">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-sm font-bold text-[#3E2723]">Recent orders</h3>
-            <a href="{{ route('sales.index') }}" class="min-h-[44px] inline-flex items-center text-sm font-bold text-amber-800 hover:text-amber-900">Sales journal &rarr;</a>
+            <a href="{{ route('sales.index') }}" class="min-h-[44px] inline-flex items-center text-sm font-bold text-amber-800 hover:text-amber-900">All sales &rarr;</a>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -361,8 +344,8 @@
                     <x-lucide-brain-circuit class="w-6 h-6" />
                 </div>
                 <div>
-                    <h2 id="ai-insights-heading" class="text-2xl font-bold text-[#3E2723]">Barista AI Insights</h2>
-                    <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">7-Day Predictive Forecast</p>
+                    <h2 id="ai-insights-heading" class="text-2xl font-bold text-[#3E2723]">Barista AI&rsquo;s sales outlook</h2>
+                    <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">The next 7 days</p>
                 </div>
             </div>
 
@@ -377,7 +360,7 @@
                  The wording stays: this one really is analysing, and saying so
                  is why a nine-second wait is tolerable rather than broken. --}}
             <div x-show="loadingInsights" class="flex-1 space-y-6 py-2">
-                <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Analyzing store data…</p>
+                <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Reading your sales…</p>
 
                 {{-- Forecast card: label, figure, trend sentence. --}}
                 <div class="bg-[#FDF8F5] border border-[#F0E6D2] p-4 rounded-2xl space-y-4">
@@ -419,7 +402,7 @@
                 <template x-if="insights?.meta?.transaction_count < insights?.meta?.target_transactions">
                     <div class="bg-blue-50 border border-blue-200 p-4 rounded-2xl shrink-0">
                         <div class="flex justify-between items-center mb-2">
-                            <p class="text-xs font-bold text-blue-800 uppercase tracking-wide">Learning Phase</p>
+                            <p class="text-xs font-bold text-blue-800 uppercase tracking-wide">Still learning</p>
                             <p class="text-xs font-bold text-blue-700" x-text="`${insights?.meta?.transaction_count} / ${insights?.meta?.target_transactions} Transactions`"></p>
                         </div>
                         <div class="w-full bg-blue-200/50 rounded-full h-2 overflow-hidden mb-2">
@@ -440,7 +423,7 @@
                 <div class="grid grid-cols-2 gap-4 shrink-0">
                     <div class="bg-[#FDF8F5] border border-[#F0E6D2] p-4 rounded-2xl relative">
                         <div class="flex justify-between items-start mb-2">
-                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Expected Revenue</p>
+                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Expected sales</p>
                             <!-- Confidence Meter -->
                             <div class="group relative flex items-center cursor-help">
                                 <div class="flex gap-0.5">
@@ -450,7 +433,7 @@
                                 </div>
                                 <!-- Tooltip -->
                                 <div class="absolute bottom-full right-0 mb-2 w-48 bg-[#3E2723] text-white text-xs p-2 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-lg z-10">
-                                    <p class="font-bold mb-0.5">Confidence: <span x-text="insights?.meta?.confidence_label"></span></p>
+                                    <p class="font-bold mb-0.5">How sure it is: <span x-text="insights?.meta?.confidence_label"></span></p>
                                     <p class="text-white/70">Based on <span x-text="insights?.meta?.days_of_data"></span> days of historical data.</p>
                                 </div>
                             </div>
@@ -468,15 +451,15 @@
                             <div class="absolute top-2 right-2 flex items-center justify-center pointer-events-none">
                                 <div class="bg-[#3E2723] text-white px-2 py-1 rounded-full shadow-lg border border-amber-500/30">
                                     <p class="text-xs font-bold uppercase tracking-wide flex items-center gap-1">
-                                        <x-lucide-clock class="w-2.5 h-2.5 animate-spin text-amber-500" /> Calibrating
+                                        <x-lucide-clock class="w-2.5 h-2.5 animate-spin text-amber-500" /> Needs more sales
                                     </p>
                                 </div>
                             </div>
                         </template>
-                        <p class="text-xs text-[#6D4C41] font-medium mt-1">7-Day Projected Range</p>
+                        <p class="text-xs text-[#6D4C41] font-medium mt-1">Likely range over the next 7 days</p>
                     </div>
                     <div class="bg-[#FDF8F5] border border-[#F0E6D2] p-4 rounded-2xl relative">
-                        <p class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-1">Trend Analysis</p>
+                        <p class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-1">The trend</p>
                         <p class="text-sm font-bold text-[#3E2723]" :class="(insights?.meta?.is_calibrating && !insights?.forecast_total) ? 'blur-sm select-none' : ''" x-text="insights?.trend_analysis"></p>
                     </div>
                 </div>
@@ -485,7 +468,7 @@
                 <template x-if="(insights?.demand_risk_alerts || []).length > 0">
                     <div class="space-y-3 shrink-0">
                         <h4 class="text-xs font-bold text-[#795548] uppercase tracking-wide flex items-center gap-2">
-                            <x-lucide-alert-octagon class="w-3 h-3 text-red-500" /> Demand Risk Alerts
+                            <x-lucide-alert-octagon class="w-3 h-3 text-red-500" /> Watch out for
                         </h4>
                         <div class="grid grid-cols-1 gap-3">
                             <template x-for="alert in insights.demand_risk_alerts" :key="alert.item">
@@ -510,7 +493,7 @@
                     <div class="flex items-start gap-3">
                         <x-lucide-lightbulb class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                         <div class="flex-1">
-                            <p class="text-xs font-bold text-amber-700 uppercase tracking-wide mb-1">Strategic Advice</p>
+                            <p class="text-xs font-bold text-amber-700 uppercase tracking-wide mb-1">Suggestions</p>
                             <p class="text-sm font-medium text-[#4A3B32] leading-relaxed" x-text="insights?.strategic_advice"></p>
                             <div class="mt-3 flex gap-2 flex-wrap">
                                 <!-- Context Tags -->
@@ -532,7 +515,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 shrink-0">
                     <div>
                         <h4 class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-3 flex items-center gap-2">
-                            <x-lucide-trending-up class="w-3 h-3 text-green-600" /> Hot Items
+                            <x-lucide-trending-up class="w-3 h-3 text-green-600" /> Selling well
                         </h4>
                         <ul class="space-y-2">
                             <template x-for="item in insights?.predicted_top_products || []" :key="item">
@@ -540,14 +523,14 @@
                             </template>
                             <template x-if="(insights?.predicted_top_products || []).length === 0">
                                 <li class="text-xs text-[#6D4C41] italic flex items-center gap-2">
-                                    <x-lucide-activity class="w-3 h-3 animate-pulse" /> Analyzing performance...
+                                    <x-lucide-activity class="w-3 h-3 animate-pulse" /> Checking…
                                 </li>
                             </template>
                         </ul>
                     </div>
                     <div>
                         <h4 class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-3 flex items-center gap-2">
-                            <x-lucide-trending-down class="w-3 h-3 text-red-500" /> Cold Items
+                            <x-lucide-trending-down class="w-3 h-3 text-red-500" /> Selling slowly
                         </h4>
                         <ul class="space-y-2">
                             <template x-for="item in insights?.predicted_low_products || []" :key="item">
@@ -555,7 +538,7 @@
                             </template>
                             <template x-if="(insights?.predicted_low_products || []).length === 0">
                                 <li class="text-xs text-[#6D4C41] italic flex items-center gap-2">
-                                    <x-lucide-activity class="w-3 h-3 animate-pulse" /> Analyzing performance...
+                                    <x-lucide-activity class="w-3 h-3 animate-pulse" /> Checking…
                                 </li>
                             </template>
                         </ul>
@@ -861,18 +844,6 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        cashPct() {
-            const cash = this.live.paymentBreakdown['Cash'] || 0;
-            const ewallet = this.live.paymentBreakdown['E-Wallet'] || 0;
-            const total = cash + ewallet;
-            return total > 0 ? (cash / total) * 100 : 0;
-        },
-        ewalletPct() {
-            const cash = this.live.paymentBreakdown['Cash'] || 0;
-            const ewallet = this.live.paymentBreakdown['E-Wallet'] || 0;
-            const total = cash + ewallet;
-            return total > 0 ? (ewallet / total) * 100 : 0;
-        },
         paymentMethodClass(method) {
             if (method === 'Cash') return 'bg-gray-100 text-gray-500 border-gray-200';
             if (method === 'E-Wallet' || method === 'GCash') return 'bg-blue-50 text-blue-700 border-blue-100';

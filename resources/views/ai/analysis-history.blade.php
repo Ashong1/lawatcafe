@@ -10,7 +10,7 @@
             <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
             <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">What Barista AI Noticed</span>
         </h2>
-        <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Every proactive review Barista AI has run across POS and network data, with its full narrative — not just the latest few findings.</p>
+        <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Every 15 minutes Barista AI looks at sales and the Wi-Fi together. Here is everything it noticed, newest first.</p>
     </div>
 
     <div class="space-y-6">
@@ -22,11 +22,11 @@
                         <x-lucide-radar class="w-5 h-5 text-amber-700" />
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold uppercase tracking-wide text-[#3E2723]">Analysis Run</h3>
+                        <h3 class="text-sm font-bold uppercase tracking-wide text-[#3E2723]">Check</h3>
                         <p class="text-xs text-[#6D4C41] font-bold uppercase tracking-wider">{{ $run->created_at->diffForHumans() }} &middot; {{ $run->created_at->format('M d, Y h:i A') }}</p>
                     </div>
                 </div>
-                <span class="text-xs font-bold uppercase tracking-wide text-[#795548] bg-[#FDF8F5] border border-[#F0E6D2] px-3 py-1 rounded-full">{{ $run->signal_count }} signal(s)</span>
+                <span class="text-xs font-bold uppercase tracking-wide text-[#795548] bg-[#FDF8F5] border border-[#F0E6D2] px-3 py-1 rounded-full">{{ $run->signal_count }} {{ Str::plural('thing', $run->signal_count) }} noticed</span>
             </div>
 
             @if($run->narrative)
