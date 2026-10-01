@@ -75,6 +75,12 @@
                             </div>
 
                             <div>
+                                <label for="order-wait-alert" class="block text-xs font-bold text-amber-200 uppercase mb-2 tracking-wide">Remind staff when an order waits (minutes)</label>
+                                <input id="order-wait-alert" type="number" min="1" max="60" name="order_wait_alert_minutes" value="{{ $settings['order_wait_alert_minutes'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
+                                <p class="text-xs text-amber-100/70 mt-1.5">The register and kitchen screens chime and show the order once it has waited this long, then again every 3 minutes until it's marked done.</p>
+                            </div>
+
+                            <div>
                                 <label for="receipt-header" class="block text-xs font-bold text-amber-200 uppercase mb-2 tracking-wide">Receipt Header Text</label>
                                 <input id="receipt-header" type="text" name="receipt_header" value="{{ $settings['receipt_header'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white placeholder-white/30" placeholder="Thank you for visiting!">
                             </div>

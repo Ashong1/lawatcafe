@@ -20,6 +20,7 @@ use App\Http\Controllers\NetworkDeviceController;
 use App\Http\Controllers\NetworkHealthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderHistoryController;
+use App\Http\Controllers\OrderWaitController;
 use App\Http\Controllers\PortalReportController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
@@ -116,6 +117,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/kds/data', [KdsController::class, 'data'])->name('kds.data');
         Route::post('/kds/{sale}/status', [KdsController::class, 'updateStatus'])->name('kds.update');
         Route::post('/kds/item/{item}/status', [KdsController::class, 'updateItemStatus'])->name('kds.item.update');
+        // Orders not finished within the owner's reminder time; polled by
+        // the reminder on every admin and staff screen.
+        Route::get('/orders/waiting', [OrderWaitController::class, 'index'])->name('orders.waiting');
     });
 
     // Deliberately outside the block above: the closing report is the Z-read,

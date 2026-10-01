@@ -337,6 +337,7 @@
         </header>
 
         @include('partials.offline-banner')
+        @include('partials.order-wait-reminder')
 
         {{-- Per-axis padding so the bottom can clear the floating chat button —
              see the note on the same element in layouts/admin.blade.php. --}}

@@ -9,6 +9,19 @@ the history was rewritten.
 
 ---
 
+## 1.18.0 — Waiting-order reminders
+*build 184*
+
+- When an order hasn't been marked done within 1 minute, every admin and
+  staff screen (register, kitchen display, dashboards) chimes and shows it:
+  "Order #1234 has been waiting 2 mins · Take away · 2× Latte, 1× Waffle",
+  with a button to open the kitchen display. It repeats every 3 minutes until
+  the order is done, and waits rather than covering a dialog in use.
+- The owner can change the 1 minute in Settings → Store.
+- The kitchen display marks those orders "Waiting too long".
+- Wi-Fi-only sales and orders left open from earlier in the day never trigger
+  it. New index on sales (status, created_at) keeps the check cheap.
+
 ## 1.17.0 — "Say to customer" in English and Tagalog, with a free Wi-Fi nudge
 *build 183*
 

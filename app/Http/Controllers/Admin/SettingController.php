@@ -9,6 +9,7 @@ use App\Services\Agent\PermissionResolver;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
 use App\Services\OpnSenseService;
+use App\Services\OrderWaitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -24,6 +25,7 @@ class SettingController extends Controller
             'store_open_time' => Setting::get('store_open_time', '08:00'),
             'store_close_time' => Setting::get('store_close_time', '22:00'),
             'receipt_header' => Setting::get('receipt_header', 'Thank you for visiting Lawa\'t Kape!'),
+            'order_wait_alert_minutes' => OrderWaitService::reminderMinutes(),
         ];
 
         return view('admin.settings.store', [
@@ -227,6 +229,7 @@ class SettingController extends Controller
             'receipt_header' => 'nullable|string|max:255',
             'wifi_ssid' => 'nullable|string|max:32',
             'voucher_unused_expiry_days' => 'nullable|integer|min:0|max:3650',
+            'order_wait_alert_minutes' => 'nullable|integer|min:1|max:60',
         ]);
 
         $this->applySettings($validated);

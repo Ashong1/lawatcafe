@@ -1,7 +1,9 @@
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
     @forelse($orders as $order)
         @php
-            $waitMinutes = $order->created_at->diffInMinutes(now());
+            $waitMinutes = (int) $order->created_at->diffInMinutes(now());
+            $isLate = $waitMinutes >= \App\Services\OrderWaitService::reminderMinutes()
+                && $order->items->contains(fn ($item) => $item->type !== 'wifi');
             $urgencyClass = 'bg-[#FAFAFA] border-[#FDF8F5]';
             $headerIconColor = 'text-amber-500';
 
@@ -37,6 +39,11 @@
                         <x-lucide-clock class="w-3 h-3 inline mr-0.5 -mt-0.5" />
                         {{ $order->created_at->diffForHumans() }}
                     </p>
+                    @if($isLate)
+                        <span class="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide bg-red-600 text-white">
+                            <x-lucide-bell-ring class="w-3 h-3" /> Waiting too long
+                        </span>
+                    @endif
                 </div>
                 <span class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide transition-colors duration-500 {{ $order->status === 'pending' ? 'bg-white/60 text-[#3E2723] border border-[#3E2723]/10' : 'bg-amber-500 text-white shadow-sm' }}">
                     @if($order->status === 'pending')
