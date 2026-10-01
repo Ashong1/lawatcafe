@@ -13,11 +13,20 @@ are the norm; SQLite runs the suite, MySQL runs production (a couple of
 raw-SQL spots — e.g. `DAYNAME()` in `Admin\AnalyticsController` — branch on
 `getDriverName()` to work under both).
 
-Run the whole suite:
+Run the whole suite (1,060+ tests in about 150 files, roughly 80 seconds):
 
 ```bash
+sudo -u www-data php artisan config:clear
+sudo -u www-data php artisan route:clear
 sudo -u www-data php artisan test
 ```
+
+Clear the caches first. A cached production config overrides `phpunit.xml`
+and points the tests at the real MariaDB database; `Tests\TestCase` detects
+this and fails every test with a message saying so, rather than letting
+`RefreshDatabase` touch live data. A cached route file hides routes added
+since, so new routes report "Route not defined". Re-cache both after testing
+on the live server.
 
 ## Always run Artisan as `www-data`, not root
 
@@ -88,24 +97,44 @@ mock `OpnSenseService` instead (`NetworkToolsTest`, `VoucherControllerTest`).
 ## Mocking external calls
 
 - **AI provider calls**: `$this->mock(AIService::class, fn ($mock) => $mock->shouldReceive(...))`
-  — never let a test hit a real Gemini/Groq/OpenRouter endpoint. A prior
+  — never let a test hit the real OpenRouter endpoint. `Tests\TestCase`
+  also swaps in an offline `AiBudget`, so no test asks OpenRouter for the
+  daily allowance. A prior
   session's regression: an existing, previously-passing test started making
   real AI + Mail calls after an unrelated change added a new code path the
   test's existing mocks didn't cover — watch for this whenever a shared
   service gains a new call site.
-- **Mail**: `Mail::fake()` + `Mail::assertSent()`/`assertNothingSent()`.
+- **Mail**: `Mail::fake()`. Purchase-order and shift-audit mail is queued
+  (`ShouldQueue`), so assert with `Mail::assertQueued()` and
+  `Mail::assertNothingOutgoing()`. `assertSent()` fails for queued mail, and
+  `assertNothingSent()` would pass even if mail was queued by mistake.
+- **Queued jobs**: tests run the queue synchronously (`QUEUE_CONNECTION=sync`),
+  so a dispatched job runs inside the request. Use `Queue::fake()` +
+  `Queue::assertPushed()` to prove something is queued rather than done on
+  the user's time (see `PosRegisterPerformanceTest`). Don't hand work to
+  `app()->terminating()` callbacks: they never run per request in tests and
+  pile up until teardown, when the database is already gone.
+- **Internet outages**: put a failing internet check in the cache under
+  `NetworkHealthService::LATEST_KEY` (see `OfflineModeTest`); everything
+  that asks `InternetStatus::isDown()` follows it.
 - **OPNsense**: `$this->mock(OpnSenseService::class, ...)` — every test that
   touches network/voucher tools mocks this; nothing in the suite makes a
   real OPNsense API call.
 
 ## Known test-writing gotchas
 
-- **`admin@gmail.com` always exists.** A data migration
-  (`2026_07_27_150148_promote_asherlimbo_to_super_admin`) unconditionally
-  seeds a real admin account on every migration run, including under
-  `RefreshDatabase`. A test asserting "zero admins" behavior isn't reachable
-  without explicitly deleting admin/super_admin users first — not a bug,
-  just something to remember when writing a from-scratch-state test.
+- **A fresh test database has no users.** The July 2026 data migration that
+  added the owner's account only does so on a database that already has
+  users, so tests start empty and create the accounts they need.
+- **SQLite doesn't enforce MySQL enums.** A fixture value the live column
+  would reject passes in tests. Check `SHOW COLUMNS` on the real table
+  before inventing a status value.
+- **Blade compiles braces even inside comments.** An illustrative
+  `{{ … }}` in a JavaScript comment in a view became a fatal error. Write
+  it in words instead.
+- **Tailwind only generates classes it can see as literal strings.** After
+  adding a class (especially arbitrary ones like `[&>svg]:w-10`), grep the
+  built CSS in `public/build/assets/` to confirm it is there.
 - **`Playwright`'s `.click()` auto-scrolls** (irrelevant now — no browser
   tool is in use — but documented here in case one is added later) caused a
   false-positive scroll-position finding mid-investigation in an earlier
@@ -118,10 +147,12 @@ mock `OpnSenseService` instead (`NetworkToolsTest`, `VoucherControllerTest`).
 ## Commit discipline for multi-part work
 
 Large passes (this audit, feature work spanning several files) are broken
-into one commit per logical batch/phase, each version-bumped
-(`composer.json`'s `version` field + the sidebar-footer version string in
-both `layouts/admin.blade.php` and `layouts/staff.blade.php`, 4th segment
-+1), with a full `php artisan test` run — and, since this repo added
-tooling for it, a `phpstan analyse` run — before every commit. `git status
+into one commit per logical batch/phase. Every commit bumps the build number
+in `composer.json`'s `version` field (the only place it lives; the sidebar
+reads `config('app.version')`). A new minor version needs a `## X.Y.` entry
+in `CHANGELOG.md`, which `VersioningTest` enforces. Run the full
+`php artisan test` (and `phpstan analyse`) before every commit, and rebuild
+assets (`npm run build`, then `chown -R www-data:www-data public/build`)
+when front-end files changed. `git status
 --short` gets re-checked per-file before staging: a single invalid pathspec
 in a multi-path `git add` silently drops every other path from staging too.

@@ -9,6 +9,25 @@ the history was rewritten.
 
 ---
 
+## 1.18.1 — Documentation, safer seeding, adaptive ceiling fix
+*build 185*
+
+- The README and guides were rewritten to match the system as it is: new
+  docs/FEATURES.md (every screen by role), docs/CONFIGURATION.md (every
+  `.env` variable and owner setting with defaults) and docs/OPERATIONS.md
+  (install, deploy, jobs, backups, troubleshooting). The AI, portal, POS,
+  database, architecture and testing guides were brought up to date (they
+  still described Gemini/Groq, 17 tools and the old portal flow).
+- `.env.example` now lists every setting the app reads (Pi-hole, portal
+  host, speed-plan aliases, TLS, timezone, seeded accounts).
+- No passwords in the repository: the seeder takes accounts from `.env` or
+  generates and prints a password once, and the July data migration no
+  longer contains one. A fresh `migrate --seed` also no longer fails on a
+  duplicate admin account.
+- Fixed: the adaptive fair-use ceiling's tool declared a permission tier the
+  system didn't recognise, so every change it decided on waited for an
+  admin instead of applying by itself. A test now checks every tool's tier.
+
 ## 1.18.0 — Waiting-order reminders
 *build 184*
 

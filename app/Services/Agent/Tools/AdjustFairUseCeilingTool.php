@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\AdaptiveBandwidthService;
 use App\Services\Agent\Contracts\AgentTool;
+use App\Services\Agent\PermissionResolver;
 use App\Services\Agent\ToolResult;
 use App\Services\OpnSenseService;
 use App\Services\TrafficShapingService;
@@ -19,7 +20,7 @@ use App\Services\TrafficShapingService;
  * The clamp is reported, not silent, or a loop told it set 6 when it set the
  * 5 Mbps floor keeps proposing 6.
  *
- * auto_approved so the scheduled loop can act unattended; set it to
+ * Auto tier so the scheduled loop can act unattended; set it to
  * "requires confirmation" on Agent Permissions to approve each change (read at
  * call time, no code change).
  */
@@ -66,7 +67,7 @@ class AdjustFairUseCeilingTool implements AgentTool
 
     public function permissionTier(): string
     {
-        return 'auto_approved';
+        return PermissionResolver::TIER_AUTO;
     }
 
     public function execute(array $arguments, ?User $actor, array $context = []): ToolResult

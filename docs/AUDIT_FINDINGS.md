@@ -1,5 +1,10 @@
 # Full Deep Audit — Findings & Backlog
 
+> **A record of the July–August 2026 audit (v1.3.0), kept as written.** Counts
+> and file references describe the code at that time (about 500 tests then,
+> 1,060+ now). For what changed since, see [CHANGELOG.md](../CHANGELOG.md);
+> for the current system, start at the [README](../README.md).
+
 A holistic pass across the whole codebase (Aug 2026): static analysis tooling,
 a full test-coverage sweep, a curl-based functional smoke test against the
 live app, dead-code removal, and this write-up. Prior to this pass the

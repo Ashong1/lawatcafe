@@ -3,22 +3,26 @@
 Schema overview grouped by domain, not a raw migration dump. Column lists
 below reflect the live schema (`php artisan tinker` +
 `Schema::getColumnListing()`), so they include everything later migrations
-added/changed — read this instead of chasing 47 migration files for "what
+added/changed — read this instead of chasing 59 migration files for "what
 does this table actually look like today."
+
+Migrations are additive only: nothing here is ever dropped, wiped or reset on
+the live database (see [OPERATIONS.md](OPERATIONS.md#ground-rules)).
 
 ## Accounts
 
 **`users`** — `id, name, email, email_verified_at, password, remember_token, role`.
 `role` is a plain string column (`staff` / `admin` / `super_admin`), not a
-pivot table — see [[AI_AGENT.md]] and `RoleMiddleware` for how it gates
-routes and AI tool tiers. A data migration
-(`2026_07_27_150148_promote_asherlimbo_to_super_admin`) unconditionally seeds
-a real `admin@gmail.com` row on every migration run — a test-writing gotcha
-(see `docs/TESTING.md`), not a schema concern.
+pivot table — see [AI_AGENT.md](AI_AGENT.md) and `RoleMiddleware` for how it gates
+routes and AI tool tiers. Accounts on a fresh install come from
+`DatabaseSeeder`, with emails and passwords from `.env` (or generated). A
+data migration from July 2026 promoted the live super admin and added the
+owner's admin account; on a fresh database it does nothing.
 
 ## Sales (POS)
 
 - **`sales`** — `transaction_number, total_amount, amount_received, status, payment_method, order_type, discount_type, discount_amount, user_id, shift_id`.
+  Indexed on `(status, created_at)` for the KDS and the waiting-order reminder.
   `status` is the KDS fulfillment lifecycle (`pending → preparing → completed`,
   or `cancelled` for a void) — **not** a payment-status field. Payment is
   captured in full at checkout regardless of `status`; see
@@ -44,7 +48,9 @@ a real `admin@gmail.com` row on every migration run — a test-writing gotcha
 
 - **`products`** — `name, category, price, status ('Active'|...)`. Ingredient
   composition lives in the pivot below, not here.
-- **`categories`** — `name, slug, description, icon, color, sort_order`. AI-assisted
+- **`categories`** — `name, slug, description, icon, is_food, color, sort_order`.
+  `is_food` drives the register's pairing suggestions (food with a drink,
+  a drink with food). AI-assisted
   description/icon suggestions are generated on demand (`CategoryController::suggestAi`),
   not stored elsewhere.
 - **`product_ingredients`** — pivot: `product_id, ingredient_id, quantity` (how
@@ -78,7 +84,11 @@ a real `admin@gmail.com` row on every migration run — a test-writing gotcha
 
 ## Network / captive portal
 
-- **`vouchers`** — `sale_id (nullable — null for an admin-batch-generated code), code, duration_minutes, tier ('free'|'premium'), is_used, used_at, ip_address, mac_address, mac_address_hash`.
+- **`vouchers`** — `sale_id (nullable — null for an admin-batch-generated code), code, duration_minutes, tier ('free'|'premium'), is_used, used_at, activated_at, disconnected_at, ip_address, mac_address, mac_address_hash`.
+  `used_at` is redemption (the clock starts); `activated_at` is when the
+  guest tapped Connect and the firewall opened; `disconnected_at` marks a
+  staff disconnect, so automatic reconnection doesn't undo it. See
+  [CAPTIVE_PORTAL.md](CAPTIVE_PORTAL.md).
   `mac_address` is encrypted at rest (`'encrypted'` cast); `mac_address_hash`
   is a deterministic HMAC blind index used for `WHERE`/`GROUP BY` lookups
   that encryption's random IV would otherwise make impossible — see
@@ -88,6 +98,22 @@ a real `admin@gmail.com` row on every migration run — a test-writing gotcha
   `mac_address` (encrypted) + `mac_address_hash, ip_address, hostname, kea_subnet_uuid, kea_reservation_uuid`
   (the last two tie a row back to its actual Kea DHCP reservation on OPNsense).
 
+- **`network_health_checks`** — one row per minute from `network:health`:
+  `checked_at, overall, internet_latency_ms, internet_loss_pct, dns_ok, dhcp_used, dhcp_size, guests_online, infrastructure_down, results (JSON of every check)`.
+  Kept for 7 days; feeds the Network Health charts.
+- **`portal_events`** — the guest sign-in funnel for the Portal Report:
+  `type, ip_address, voucher_code, meta (JSON), created_at`. Types: `visit`,
+  `code_tried`, `code_failed` (with the reason), `connected`, `more_time`,
+  `time_added`, `time_up`, `dropped` (cut off with time left, with idle
+  time). Kept for 90 days.
+- **`bandwidth_samples`** — throughput samples for the adaptive fair-use
+  ceiling: `sampled_at, down_mbps, up_mbps, active_guests, ceiling_mbps`.
+  The loop learns the line's speed and the busy hours from these.
+
+Trusted devices (the captive portal allow-list) and DHCP reservations live
+on the firewall itself; `static_ip_assignments` mirrors the reservations so
+the app can show and remove them.
+
 ## Settings
 
 **`settings`** — a single flat `key`/`value` table (`Setting::get()`/`::set()`),
@@ -96,6 +122,7 @@ not one column per concern. Everything from voucher pricing
 `agent_conversation_budget_seconds`) to the AI tool permission override map
 (`agent_tool_permissions`, JSON-encoded) lives here. Grep `Setting::get(` to
 find every key actually in use — there's no central enum/registry of valid keys.
+[CONFIGURATION.md](CONFIGURATION.md) lists them all with their defaults.
 
 ## Notifications
 
@@ -108,7 +135,7 @@ not the same thing as an AI action audit below.
 
 - **`ai_action_audits`** — every tool call the AI orchestrator makes or
   proposes: `tool_name, input_params, result, actor_type ('ai'), actor_user_id, approved_by_user_id, status ('proposed'|'executed'|'rejected'|'failed')`.
-  This is the confirm/reject audit trail — see [[AI_AGENT.md]].
+  This is the confirm/reject audit trail — see [AI_AGENT.md](AI_AGENT.md).
 - **`ai_analysis_runs`** / **`ai_findings`** — output of the scheduled
   `agent:analyze` cross-domain correlation pass: a run has a narrative +
   `signal_count`; each finding has `run_id, type, severity, summary, data, audience`
@@ -117,3 +144,17 @@ not the same thing as an AI action audit below.
   `user_id, context, title, messages (JSON), last_message_at`. Guest portal
   chat is deliberately excluded from this table by design (ephemeral,
   session-scoped only) — see `docs/AI_AGENT.md`.
+- **`ai_conversations.mined_at`** — set once the learning loop has read a
+  settled admin or super admin conversation, so it is used once.
+- **`ai_feedback`** — thumbs up/down and corrections on replies:
+  `audience, user_id, conversation_id, signal, sentiment, user_message, assistant_reply, note, distilled_at`.
+- **`ai_lessons`** — what the learning loop proposes and the owner approves:
+  `audience, kind, title, body, trigger, evidence, evidence_count, status, reviewed_by, reviewed_at, review_note, times_applied, fingerprint`.
+  Only approved lessons reach a prompt. See [AI_AGENT.md](AI_AGENT.md#learning).
+
+## Laravel's own tables
+
+`sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`,
+`password_reset_tokens`, `migrations`. The queue tables matter: queued email
+and AI background work live in `jobs` until the every-minute worker sends
+them, and anything that gives up lands in `failed_jobs`.

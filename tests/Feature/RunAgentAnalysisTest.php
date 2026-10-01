@@ -69,10 +69,8 @@ class RunAgentAnalysisTest extends TestCase
 
     public function test_does_not_notify_when_there_are_no_admins(): void
     {
-        // A data migration (2026_07_27_150148_promote_asherlimbo_to_super_admin)
-        // unconditionally seeds a real admin@gmail.com account on every
-        // migration run, so "zero admins" isn't reachable via RefreshDatabase
-        // without clearing it first.
+        // Cleared explicitly so the test holds whatever accounts the
+        // migrations or other setup may have created.
         User::query()->whereIn('role', ['admin', 'super_admin'])->delete();
 
         BannedDevice::create(['mac_address' => 'AA:BB:CC:DD:EE:FF']);

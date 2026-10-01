@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
@@ -18,11 +19,14 @@ return new class extends Migration
             ->where('email', 'asherlimbo@gmail.com')
             ->update(['role' => 'super_admin']);
 
-        if (! DB::table('users')->where('email', 'admin@gmail.com')->exists()) {
+        // Only when upgrading an existing deployment. A fresh install has no
+        // users yet and gets its accounts from DatabaseSeeder instead.
+        if (DB::table('users')->exists() && ! DB::table('users')->where('email', 'admin@gmail.com')->exists()) {
             DB::table('users')->insert([
                 'name' => 'Admin',
                 'email' => 'admin@gmail.com',
-                'password' => Hash::make('adminpass1234'),
+                // No password anyone knows: set one with `php artisan user:reset-password`.
+                'password' => Hash::make(Str::random(40)),
                 'role' => 'admin',
                 'created_at' => now(),
                 'updated_at' => now(),
