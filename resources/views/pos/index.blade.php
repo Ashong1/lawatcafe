@@ -5,6 +5,21 @@
 
 @section('content')
 
+@php
+    // One SVG per category, rendered once here. Each menu card shows its
+    // category's icon from this map instead of carrying every category's icon
+    // and hiding all but one: that was products x categories SVGs on screen.
+    $iconSvg = function (?string $icon) {
+        try {
+            return svg('lucide-'.($icon ?: 'coffee'))->toHtml();
+        } catch (\Throwable $e) {
+            return svg('lucide-coffee')->toHtml();
+        }
+    };
+    $categoryIcons = collect($categories)->mapWithKeys(fn ($c) => [$c['name'] => $iconSvg($c['icon'] ?? null)])->all();
+    $categoryColors = collect($dbCategories)->mapWithKeys(fn ($c) => [$c['name'] => $c['color']])->all();
+@endphp
+
 <style>
     /* This locked-viewport / fixed-height-flex-column treatment only applies at `lg` and up
        (matches Tailwind's lg breakpoint, 1024px), where the cart renders as a persistent
@@ -112,16 +127,7 @@
                     <button @click="selectedCategory = category.name" 
                             class="px-5 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border flex items-center gap-2 tracking-wide uppercase"
                             :class="selectedCategory === category.name ? 'bg-[#3E2723] text-white border-[#3E2723] shadow-md' : 'bg-[#FAFAFA] text-[#795548] border-[#F0E6D2] hover:bg-[#FDF8F5]'">
-                        {{-- Handle dynamic lucide icons in Alpine --}}
-                        <div x-show="category.icon === 'layout-grid'"><x-lucide-layout-grid class="w-3.5 h-3.5" /></div>
-                        <div x-show="category.icon === 'coffee'"><x-lucide-coffee class="w-3.5 h-3.5" /></div>
-                        <div x-show="category.icon === 'cup-soda'"><x-lucide-cup-soda class="w-3.5 h-3.5" /></div>
-                        <div x-show="category.icon === 'cookie'"><x-lucide-cookie class="w-3.5 h-3.5" /></div>
-                        <div x-show="category.icon === 'beef'"><x-lucide-beef class="w-3.5 h-3.5" /></div>
-                        <div x-show="category.icon === 'utensils'"><x-lucide-utensils class="w-3.5 h-3.5" /></div>
-                        <div x-show="category.icon === 'wifi'"><x-lucide-wifi class="w-3.5 h-3.5" /></div>
-                        <div x-show="category.icon === 'star'"><x-lucide-star class="w-3.5 h-3.5" /></div>
-                        <div x-show="category.icon === 'layers'"><x-lucide-layers class="w-3.5 h-3.5" /></div>
+                        <span class="[&>svg]:w-3.5 [&>svg]:h-3.5" x-html="categoryIcons[category.name] || ''"></span>
                         <span x-text="category.name"></span>
                     </button>
                 </template>
@@ -137,7 +143,7 @@
                 <div class="lg:absolute lg:inset-0 overflow-y-auto pb-6 pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#D7CCC8] [&::-webkit-scrollbar-thumb]:rounded-full">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         <template x-for="item in filteredProducts" :key="item.id">
-                            <div class="bg-white p-4 rounded-[1.5rem] shadow-[0_4px_15px_-3px_rgba(62,39,35,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(62,39,35,0.12)] transition-all duration-300 flex flex-col group relative border border-transparent hover:border-[#FDF8F5]">
+                            <div class="bg-white p-4 rounded-[1.5rem] shadow-[0_4px_15px_-3px_rgba(62,39,35,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(62,39,35,0.12)] transition-shadow duration-300 flex flex-col group relative border border-transparent hover:border-[#FDF8F5]">
                                 
                                 <div class="h-32 w-full bg-[#FDF8F5] rounded-xl mb-4 flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-300 border border-[#F0E6D2]/50 shrink-0 relative overflow-hidden">
                                     {{-- Visual cue based on category --}}
@@ -145,22 +151,14 @@
                                         <x-lucide-wifi class="w-10 h-10 text-blue-800/20" />
                                     </template>
                                     <template x-if="item.type !== 'wifi'">
-                                        <div class="flex items-center justify-center">
-                                            @foreach($dbCategories as $cat)
-                                                <div x-show="item.category === '{{ $cat['name'] }}'" style="color: {{ $cat['color'] }}30">
-                                                    <x-dynamic-component :component="'lucide-' . $cat['icon']" class="w-10 h-10" />
-                                                </div>
-                                            @endforeach
-                                            {{-- Fallback --}}
-                                            <template x-if="!categories.find(c => c.name === item.category)">
-                                                <x-lucide-coffee class="w-10 h-10 text-amber-800/20" />
-                                            </template>
-                                        </div>
+                                        <div class="flex items-center justify-center [&>svg]:w-10 [&>svg]:h-10"
+                                             :style="categoryColors[item.category] ? 'color: ' + categoryColors[item.category] + '30' : 'color: rgb(146 64 14 / 0.2)'"
+                                             x-html="categoryIcons[item.category] || fallbackIcon"></div>
                                     </template>
 
                                     <!-- Out of Stock Overlay -->
                                     <template x-if="item.type === 'product' && !item.inStock">
-                                        <div class="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-20">
+                                        <div class="absolute inset-0 bg-white/75 flex items-center justify-center z-20">
                                             <x-lucide-slash class="w-12 h-12 text-red-500 opacity-40 rotate-12" />
                                         </div>
                                     </template>
@@ -173,7 +171,7 @@
                                             <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wide shadow-sm">Out of Stock</span>
                                         </template>
                                         <template x-if="item.type === 'product' && item.inStock && item.isLowStock">
-                                            <span class="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wide shadow-sm animate-pulse">Low Stock</span>
+                                            <span class="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wide shadow-sm">Low Stock</span>
                                         </template>
                                     </div>
 
@@ -233,7 +231,7 @@
     </x-modal-shell>
 
     {{-- Cart Sidebar (Right) — desktop/tablet-landscape only; below `lg` the cart is a bottom-sheet, see below --}}
-    <div class="hidden lg:flex bg-white p-5 flex-col shrink-0 border-l border-[#F0E6D2] shadow-[-10px_0_30px_rgba(62,39,35,0.05)] h-full z-10 overflow-hidden lg:w-[28rem]">
+    <div data-chat-avoid class="hidden lg:flex bg-white p-5 flex-col shrink-0 border-l border-[#F0E6D2] shadow-[-10px_0_30px_rgba(62,39,35,0.05)] h-full z-10 overflow-hidden lg:w-[28rem]">
         @include('pos.partials.cart')
     </div>
 
@@ -245,6 +243,7 @@
          x-transition:leave="transition ease-in duration-300"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 translate-y-4"
+         data-chat-avoid
          class="lg:hidden fixed bottom-4 inset-x-4 z-40">
         <button type="button" @click="showMobileCart = true" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white rounded-full py-4 px-6 shadow-2xl flex items-center justify-between font-bold text-sm active:scale-[0.98] transition">
             <span class="flex items-center gap-2">
@@ -258,7 +257,11 @@
     {{-- Mobile/Tablet-Portrait Cart Bottom Sheet --}}
     <x-modal-shell show="showMobileCart" position="bottom-sheet" max-width="lg" panel-class="p-5" labelled-by="mobile-cart-title">
         <h3 id="mobile-cart-title" class="sr-only">Current Order</h3>
-        @include('pos.partials.cart')
+        <template x-if="mobileCartMounted">
+            <div class="flex flex-col flex-1 min-h-0">
+                @include('pos.partials.cart')
+            </div>
+        </template>
     </x-modal-shell>
 
     <x-modal-shell show="showModal" max-width="sm" panel-class="p-5 sm:p-8 text-center border-t-8 border-[#3E2723]" labelled-by="order-placed-modal-title">
@@ -364,6 +367,9 @@
             selectedCategory: @js(collect($categories)->pluck('name')->contains(request('category')) ? request('category') : 'All'),
             categories: @js($categories),
             products: @js($products),
+            categoryIcons: @js($categoryIcons),
+            categoryColors: @js($categoryColors),
+            fallbackIcon: @js($iconSvg('coffee')),
             cart: [],
             orderType: 'dine_in',
             discountType: 'none',
@@ -373,15 +379,37 @@
             showModal: false,
             showVariantModal: false,
             showMobileCart: false,
+            // The bottom-sheet cart is only built while open (see the x-if);
+            // kept mounted through the closing slide so it doesn't empty mid-way.
+            mobileCartMounted: false,
             pendingItem: null,
             saleId: null,
             generatedCodes: [],
             checkoutHasWifi: false,
             isProcessing: false,
             suggestion: null,
+            suggestionRequest: 0,
             freeWifiMinAmount: {{ $freeWifiMinAmount ?? 0 }},
             freeWifiDuration: {{ $freeWifiDuration ?? 0 }},
             flashKey: null,
+
+            init() {
+                this.$watch('showMobileCart', (open) => {
+                    if (open) {
+                        this.mobileCartMounted = true;
+                    } else {
+                        setTimeout(() => { if (!this.showMobileCart) this.mobileCartMounted = false; }, 250);
+                    }
+                    this.chatAvoidChanged();
+                });
+                this.$watch('cart.length', () => this.chatAvoidChanged());
+            },
+
+            // The floating Barista AI button moves off the cart and the View
+            // Cart bar (data-chat-avoid); tell it when those appear or move.
+            chatAvoidChanged() {
+                setTimeout(() => window.dispatchEvent(new CustomEvent('chat-avoid-changed')), 450);
+            },
 
             flashItem(key) {
                 this.flashKey = key;
@@ -516,6 +544,10 @@
                 // Wi-Fi add-ons aren't real Product rows — nothing to pair.
                 if (product.type !== 'product') return;
 
+                // Only the newest request may set the suggestion: a slow answer
+                // for an earlier item must not replace the current one.
+                const request = ++this.suggestionRequest;
+
                 try {
                     const response = await fetch('{{ route('pos.suggest-pairing') }}', {
                         method: 'POST',
@@ -531,7 +563,7 @@
                     });
                     if (!response.ok) return;
                     const data = await response.json();
-                    if (data.suggestion) this.suggestion = data.suggestion;
+                    if (request === this.suggestionRequest && data.suggestion && this.cart.length) this.suggestion = data.suggestion;
                 } catch (error) {
                     // Silent — a missed suggestion should never interrupt order-taking.
                 }
@@ -566,11 +598,42 @@
                 this.showMobileCart = false;
                 this.checkoutHasWifi = false;
                 this.isProcessing = false;
+                this.suggestion = null;
+                this.suggestionRequest++;
+            },
+
+            // Mirrors the server's stock deduction for a completed sale, so the
+            // next order is checked against what is actually left rather than
+            // the stock when the page loaded. Cart items share their
+            // requirement objects with the menu, so this updates both.
+            deductSoldStock(soldCart) {
+                const used = {};
+                soldCart.forEach(item => {
+                    if (item.type !== 'product' || !item.requirements) return;
+                    item.requirements.forEach(req => {
+                        used[req.id] = (used[req.id] || 0) + req.required * item.quantity;
+                    });
+                });
+
+                const adjusted = new Set();
+                this.products.forEach(product => {
+                    if (product.type !== 'product' || !product.requirements) return;
+                    product.requirements.forEach(req => {
+                        // The same requirement object can be reached twice; deduct once.
+                        if (used[req.id] && !adjusted.has(req)) {
+                            req.current -= used[req.id];
+                            adjusted.add(req);
+                        }
+                    });
+                    product.inStock = product.requirements.every(req => req.current >= req.required);
+                });
             },
 
             async submitCheckout() {
-                if (this.cart.length === 0) return;
-                
+                // A second tap while the first is still in flight would place
+                // the order twice.
+                if (this.cart.length === 0 || this.isProcessing) return;
+
                 this.isProcessing = true;
                 
                 try {
@@ -593,9 +656,22 @@
                         })
                     });
 
-                    const result = await response.json();
-                    
+                    // An expired session (419) or a server error answers with
+                    // HTML, not JSON. Say so instead of failing silently.
+                    let result;
+                    try {
+                        result = await response.json();
+                    } catch (e) {
+                        result = {
+                            success: false,
+                            message: response.status === 419
+                                ? 'Your session has expired. Reload the page and place the order again.'
+                                : 'The order could not be placed (server error ' + response.status + '). Nothing was charged. Please try again.',
+                        };
+                    }
+
                     if (result.success) {
+                        this.deductSoldStock(this.cart);
                         this.saleId = result.sale_id;
                         this.generatedCodes = result.generatedCodes || [];
                         this.checkoutHasWifi = result.hasWifi || false;
@@ -604,7 +680,7 @@
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Inventory Alert',
+                            title: 'Order not placed',
                             text: result.message || 'Failed to process order.',
                             confirmButtonColor: '#3E2723'
                         });
@@ -612,6 +688,12 @@
                     }
                 } catch (error) {
                     console.error('Checkout error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Could not reach the register server',
+                        text: 'The order was not placed. Check the connection and try again.',
+                        confirmButtonColor: '#3E2723'
+                    });
                     this.isProcessing = false;
                 }
             },

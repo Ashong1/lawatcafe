@@ -9,6 +9,26 @@ the history was rewritten.
 
 ---
 
+## 1.16.1 — Faster register; chat button and notifications no longer in the way
+*build 182*
+
+- Register: each menu card draws one icon instead of one for every category;
+  no blur or endless pulse on out-of-stock and low-stock cards; the phone-size
+  cart sheet is only built while open, so each tap updates one cart, not two.
+- Register: Place Order can't be sent twice by a double tap, and says why
+  when it fails (expired session, server error, no connection) instead of
+  doing nothing. Stock on screen goes down after each sale, so the next order
+  is checked against what is left.
+- Register: the AI "say to customer" line is remembered per pair of items, so
+  only the first add of a pairing waits on the AI. A suggestion no longer
+  carries into the next order or gets replaced by a slower, older one.
+- Low-stock alerts are sent once, when an ingredient reaches its threshold,
+  not again on every later sale.
+- The Barista AI button keeps clear of the cart and its Place Order button
+  (and the phone-size View Cart bar) until you drag it somewhere yourself.
+- The notifications and profile dropdowns open over dashboard cards instead of
+  behind them.
+
 ## 1.16.0 — Keeps working when the internet is down
 *build 181*
 

@@ -292,7 +292,11 @@
         {{-- No flex-wrap: on a phone this header wrapped onto two or three rows
              and pushed the page down. Everything here fits one row or hides
              until there is room. --}}
-        <header class="min-h-14 h-auto py-2 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center justify-between gap-3 px-4 sm:px-6 z-10 shrink-0 [view-transition-name:app-header]">
+        {{-- z-30: above page content, whose cards layer their own contents at
+             z-10/z-20 (an equal z-index loses to whatever comes later, the page),
+             so the header's dropdowns open over them. Bars (z-40) and modals (z-50)
+             still cover the header. --}}
+        <header class="min-h-14 h-auto py-2 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center justify-between gap-3 px-4 sm:px-6 z-30 shrink-0 [view-transition-name:app-header]">
 
             {{-- Below lg this opens the drawer; from lg it collapses the column. --}}
             <button @click="mobileNavOpen = ! mobileNavOpen" :aria-expanded="mobileNavOpen ? 'true' : 'false'" aria-label="Toggle menu" class="lg:hidden text-[#3E2723] hover:bg-[#FDF8F5] p-2 -ml-2 rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3E2723]/40 flex items-center justify-center shrink-0">

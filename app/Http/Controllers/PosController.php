@@ -200,7 +200,9 @@ class PosController extends Controller
             return response()->json(['success' => false, 'message' => 'Amount received is less than the total amount.'], 422);
         }
 
-        return DB::transaction(function () use ($request, $finalTotal, $products, $discountAmount) {
+        $lowStockAdmins = null;
+
+        return DB::transaction(function () use ($request, $finalTotal, $products, $discountAmount, &$lowStockAdmins) {
             // 3. Create the Sales Record
             $sale = Sale::create([
                 'transaction_number' => 'TRN-'.strtoupper(Str::random(8)),
@@ -264,6 +266,7 @@ class PosController extends Controller
                         $ingredient = Ingredient::where('id', $ingredientPivot->id)->lockForUpdate()->first();
 
                         if ($ingredient) {
+                            $wasAboveThreshold = $ingredient->current_stock > $ingredient->low_stock_threshold;
                             $ingredient->current_stock -= $quantityToDeduct;
                             $ingredient->save();
 
@@ -276,10 +279,11 @@ class PosController extends Controller
                                 'user_id' => auth()->id(),
                             ]);
 
-                            // Check for Low Stock
-                            if ($ingredient->current_stock <= $ingredient->low_stock_threshold) {
-                                $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
-                                Notification::send($admins, new SystemAlert(
+                            // Alert once, on the sale that takes it to the threshold —
+                            // not again on every later sale while it stays low.
+                            if ($wasAboveThreshold && $ingredient->current_stock <= $ingredient->low_stock_threshold) {
+                                $lowStockAdmins ??= User::whereIn('role', ['admin', 'super_admin'])->get();
+                                Notification::send($lowStockAdmins, new SystemAlert(
                                     'Inventory Warning',
                                     "{$ingredient->name} reached low stock during a sale.",
                                     'package-x',
@@ -356,8 +360,18 @@ class PosController extends Controller
         // customer — a ready sentence, not a product fact ("Pairs well with
         // X!") the barista has to turn into words in front of a waiting
         // customer.
-        $message = $ai->phraseSuggestion($itemName, $suggestion['name'])
-            ?? "Would you like a {$suggestion['name']} to go with that?";
+        // Remembered per pair: the same two items get the same line, so only the
+        // first add of a pairing waits on the AI (up to 2 s); every later one is
+        // instant. A failed phrasing isn't remembered and is tried again.
+        $cacheKey = 'pos_pairing_line_'.md5($itemName.'|'.$suggestion['name']);
+        $message = Cache::get($cacheKey);
+        if ($message === null) {
+            $message = $ai->phraseSuggestion($itemName, $suggestion['name']);
+            if ($message !== null) {
+                Cache::put($cacheKey, $message, now()->addDays(7));
+            }
+        }
+        $message ??= "Would you like a {$suggestion['name']} to go with that?";
 
         return response()->json([
             'suggestion' => [

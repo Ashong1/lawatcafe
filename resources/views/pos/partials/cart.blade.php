@@ -54,7 +54,7 @@
 {{-- min-h-0 is the CSS secret that allows flex-1 to scroll properly --}}
 <div class="flex-1 min-h-0 overflow-y-auto pr-2 my-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">
     <div class="flex flex-col">
-        <template x-for="(cartItem, index) in cart" :key="cartItem.id + '-' + index">
+        <template x-for="(cartItem, index) in cart" :key="cartItem.id + '-' + cartItem.variant">
 
             {{-- Added min-h-[5rem] (80px) to absolutely forbid the browser from squishing the item vertically --}}
             <div class="flex gap-3 items-center bg-white group shrink-0 min-h-[5rem] py-2 border-b border-[#FDF8F5] last:border-0"

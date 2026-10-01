@@ -125,6 +125,9 @@ export default function registerAgentChat(Alpine) {
         dragStartX: 0,
         dragStartY: 0,
         dragMoved: false,
+        // Set once the user drags the button: from then on it stays where they
+        // put it and never dodges the page's avoid zones.
+        userPlaced: false,
         initialX: 0,
         initialY: 0,
 
@@ -153,9 +156,13 @@ export default function registerAgentChat(Alpine) {
 
             // posY is the toggle button's own top, regardless of open state —
             // clampPosition() is the only thing that ever adjusts it now.
+            this.dodgeAvoidZones();
             this.clampPosition();
 
-            window.addEventListener('resize', () => this.clampPosition());
+            window.addEventListener('resize', () => { this.dodgeAvoidZones(); this.clampPosition(); });
+            // A page whose avoid zone appears later (the register's View Cart
+            // bar shows up with the first item) fires this after the change.
+            window.addEventListener('chat-avoid-changed', () => { this.dodgeAvoidZones(); this.clampPosition(); });
 
             this.$watch('history.length', () => this.scrollToBottom());
             this.$watch('thinking', () => this.scrollToBottom());
@@ -196,6 +203,35 @@ export default function registerAgentChat(Alpine) {
             const px = parseFloat(raw);
 
             return Number.isFinite(px) ? px : 0;
+        },
+
+        // Keeps the toggle button off controls a page marks with
+        // data-chat-avoid (the register's cart and Place Order button). Starts
+        // from the default bottom-right spot each time so the button returns
+        // there once the zone is gone. Beside a tall zone (a sidebar) it moves
+        // left of it; otherwise (a bottom bar) it moves above it.
+        dodgeAvoidZones() {
+            if (this.userPlaced || this.open) return;
+
+            const size = 64;
+            const gap = 16;
+            const width = this.chatWidth();
+            this.posX = window.innerWidth - width - 32;
+            this.posY = window.innerHeight - 80 - this.safeBottom();
+
+            for (const el of document.querySelectorAll('[data-chat-avoid]')) {
+                if (!el.getClientRects().length) continue;
+                const r = el.getBoundingClientRect();
+                const left = this.posX + width - size;
+                const overlaps = left < r.right && left + size > r.left && this.posY < r.bottom && this.posY + size > r.top;
+                if (!overlaps) continue;
+
+                if (r.height > window.innerHeight / 2 && r.left - gap - size >= gap) {
+                    this.posX = r.left - gap - width;
+                } else {
+                    this.posY = r.top - gap - size;
+                }
+            }
         },
 
         // Shared bound, used everywhere position is set WITHOUT being a direct
@@ -249,6 +285,7 @@ export default function registerAgentChat(Alpine) {
             // reachable, and it matters more now that the panel hangs above the
             // button: dragging the header toward the top of the screen would
             // otherwise push the panel off it with no way back.
+            if (this.dragMoved) this.userPlaced = true;
             setTimeout(() => {
                 this.isDragging = false;
                 this.clampPosition();

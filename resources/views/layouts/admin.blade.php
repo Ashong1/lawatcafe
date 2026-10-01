@@ -485,7 +485,11 @@
         {{-- No flex-wrap: on a phone this header used to wrap onto two or three
              rows and push the page down. Everything below is either sized to
              fit one row or hidden until there is room for it. --}}
-        <header class="min-h-14 h-auto py-2 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center justify-between gap-3 px-4 sm:px-6 z-10 shrink-0 [view-transition-name:app-header]">
+        {{-- z-30: above page content, whose cards layer their own contents at
+             z-10/z-20 (an equal z-index loses to whatever comes later, the page),
+             so the header's dropdowns open over them. Bars (z-40) and modals (z-50)
+             still cover the header. --}}
+        <header class="min-h-14 h-auto py-2 bg-white shadow-sm border-b border-[#F0E6D2] flex items-center justify-between gap-3 px-4 sm:px-6 z-30 shrink-0 [view-transition-name:app-header]">
 
             {{-- Two buttons rather than one that guesses the viewport: below lg
                  it opens the drawer, from lg it collapses the column. --}}
