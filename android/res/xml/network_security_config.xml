@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The system runs inside the shop on plain HTTP: the staff HTTPS address
+     uses a certificate phones don't trust, and no public authority issues one
+     for a private .lab name. Plain HTTP is allowed only for the shop's own
+     addresses; everything else must be HTTPS. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">192.168.2.100</domain>
+        <domain includeSubdomains="true">lawatkape.lab</domain>
+    </domain-config>
+</network-security-config>

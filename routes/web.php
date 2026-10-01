@@ -8,6 +8,7 @@ use App\Http\Controllers\AiAnalysisController;
 use App\Http\Controllers\AiConversationController;
 use App\Http\Controllers\AiFeedbackController;
 use App\Http\Controllers\AllowedAddressController;
+use App\Http\Controllers\AndroidAppController;
 use App\Http\Controllers\BlocklistController;
 use App\Http\Controllers\CaptivePortalController;
 use App\Http\Controllers\CategoryController;
@@ -137,6 +138,9 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/profile', 'update')->name('profile.update');
         Route::delete('/profile', 'destroy')->name('profile.destroy');
     });
+
+    // The Android app, offered on the Profile page.
+    Route::get('/app/android', [AndroidAppController::class, 'download'])->name('app.android');
 
     // Notification System
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

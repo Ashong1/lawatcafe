@@ -19,6 +19,7 @@ For how each piece works inside, follow the links to the other guides.
 - [Accounts and settings](#accounts-and-settings)
 - [Notifications and alerts](#notifications-and-alerts)
 - [Working without internet](#working-without-internet)
+- [Android app](#android-app)
 
 ---
 
@@ -341,3 +342,17 @@ a bell notification.
 - Guests see that the provider is down and that their code still works.
 - For the router side (OPNsense not waiting for the ISP after a power cut),
   see [OWNER_NETWORK_STEPS.md §3](OWNER_NETWORK_STEPS.md#3-start-the-shop-without-internet-after-a-power-cut-15-minutes).
+
+## Android app
+
+**Staff, admin, super admin** · download on **Profile** · details in [ANDROID_APP.md](ANDROID_APP.md)
+
+- The whole system as an app on an Android phone (7.0 and newer), full
+  screen, with the shop's icon.
+- Loads the live system over the shop Wi-Fi, so every update to the system
+  shows up without reinstalling the app.
+- Keeps the screen on, vibrates for order reminders, prints vouchers and
+  receipts through Android's print service, saves the sales export to
+  Downloads, and offers the camera or gallery for Barista AI photos.
+- Off the shop Wi-Fi it shows "Can't reach the shop system" with Try again,
+  and a way to change the server address.

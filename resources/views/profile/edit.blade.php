@@ -15,6 +15,8 @@
     </div>
 
     <div class="space-y-6 max-w-4xl mx-auto">
+        @include('profile.partials.android-app')
+
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
             <div class="max-w-xl">
                 @include('profile.partials.update-profile-information-form')

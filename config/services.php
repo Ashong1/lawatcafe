@@ -75,6 +75,11 @@ return [
         ],
     ],
 
+    // The Android app built by android/build.sh --publish (docs/ANDROID_APP.md).
+    'android' => [
+        'apk_path' => storage_path('app/android/LawatKape.apk'),
+    ],
+
     // The guest login page's hostname (plain HTTP, straight to nginx).
     'portal' => [
         'host' => env('PORTAL_HOST', 'wifi.lawatkape.lab'),

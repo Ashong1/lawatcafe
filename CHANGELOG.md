@@ -9,6 +9,23 @@ the history was rewritten.
 
 ---
 
+## 1.19.0 — Android app
+*build 186*
+
+- **Lawa't Kape for Android** (`android/`): the whole system as an app on
+  the shop phone, downloaded from the Profile page by signed-in staff. It
+  runs full screen and keeps the screen on. It vibrates for order reminders,
+  prints vouchers and receipts through Android's print service, saves the
+  sales export to Downloads, and offers the camera or gallery for Barista AI
+  photos. Off the shop Wi-Fi it shows a "can't reach" screen with Try again.
+  It loads the live system, so updates need no reinstall.
+- Uses the server's own address over plain HTTP, allowed only for the shop's
+  addresses. The staff HTTPS name's certificate isn't trusted by phones.
+- Receipt and voucher-batch pages print inside the app, and batch print
+  opens in place instead of a new tab.
+- Built with `android/build.sh` (SDK tools, no Gradle). The signing key is
+  kept outside the public repository. See docs/ANDROID_APP.md.
+
 ## 1.18.1 — Documentation, safer seeding, adaptive ceiling fix
 *build 185*
 

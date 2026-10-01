@@ -299,7 +299,13 @@
             printSelected() {
                 const params = new URLSearchParams();
                 this.selectedVouchers.forEach(id => params.append('ids[]', id));
-                window.open(`{{ route('network.vouchers.batch-print') }}?${params.toString()}`, '_blank');
+                const printUrl = `{{ route('network.vouchers.batch-print') }}?${params.toString()}`;
+                // The Android app has no tabs: open the print page in place.
+                if (window.LawatKapeApp) {
+                    window.location.href = printUrl;
+                } else {
+                    window.open(printUrl, '_blank');
+                }
             }
         }
     }

@@ -129,6 +129,14 @@ A short tour. Every feature is described in full in
   only the AI and email wait for the connection to return
   ([details](#when-the-internet-is-down)).
 
+### Android app
+
+- **Lawa't Kape for Android**: the whole system as an app on the shop phone,
+  downloaded from the Profile page. It runs full screen, keeps the screen on,
+  vibrates for order reminders, prints, saves exports and takes photos for
+  Barista AI. It loads the live system, so updates appear without
+  reinstalling. See [docs/ANDROID_APP.md](docs/ANDROID_APP.md).
+
 ### Barista AI
 
 - A chat helper on every screen, with a different set of abilities for each
@@ -204,6 +212,7 @@ flowchart LR
 |---|---|
 | Backend | PHP 8.2, Laravel 12 |
 | Frontend | Blade, Alpine.js 3, Tailwind CSS 3, Vite 7, Chart.js 4, SweetAlert2, Lucide icons |
+| Android app | Java WebView app (Android 7.0+), built with the SDK tools, no Gradle |
 | Database | MariaDB 10.11 in production (SQLite in tests) |
 | Web server | nginx + PHP-FPM |
 | Queue / cache / sessions | Laravel database queue, file cache, file sessions |
@@ -395,6 +404,7 @@ app/
                          ToolCallOrchestrator, AuditLogger, Tools/ (32 tools)
 config/services.php      OPNsense, Pi-hole, OpenRouter, portal and protected-address settings
 database/migrations/     59 migrations (additive only, never destructive)
+android/                 the Android app (WebView shell, build.sh)
 docs/                    the guides listed below
 lang/fil.json            Filipino text for the guest portal
 resources/views/         Blade views: layouts/ (admin, staff, guest, portal), pos/, kds/,
@@ -417,6 +427,7 @@ tests/Feature/           151 test files
 | [docs/DATABASE.md](docs/DATABASE.md) | Every table, grouped by area |
 | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | Every `.env` variable and every owner setting, with defaults |
 | [docs/OPERATIONS.md](docs/OPERATIONS.md) | Installing, deploying, background jobs, backups and troubleshooting |
+| [docs/ANDROID_APP.md](docs/ANDROID_APP.md) | The Android app: installing, what it adds, building and updating it |
 | [docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md) | The live network: Proxmox, OPNsense, Pi-hole, Nginx Proxy Manager |
 | [docs/OWNER_NETWORK_STEPS.md](docs/OWNER_NETWORK_STEPS.md) | Router changes the owner makes by hand, with checks and undo steps |
 | [docs/TESTING.md](docs/TESTING.md) | How the suite is run and written, and what not to do on the live system |

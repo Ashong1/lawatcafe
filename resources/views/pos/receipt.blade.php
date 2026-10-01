@@ -74,7 +74,7 @@
         }
     </style>
 </head>
-<body onload="window.print()">
+<body onload="window.LawatKapeApp ? LawatKapeApp.print() : window.print()">
 
     <div class="receipt-container">
         

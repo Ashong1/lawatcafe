@@ -146,6 +146,9 @@ Back up three things:
    are encrypted with it, and a restored database is unreadable without the
    same key.
 3. **`storage/app`**, for uploaded files.
+4. **`/opt/lawatkape-android/`**, the Android app's signing key. Without it,
+   an app update can't be installed over the existing app on the phones (see
+   [ANDROID_APP.md](ANDROID_APP.md#the-signing-key)).
 
 The firewall, Pi-hole and Nginx Proxy Manager have their own backups (the
 OPNsense config export, Pi-hole Teleporter, Proxmox snapshots). The app

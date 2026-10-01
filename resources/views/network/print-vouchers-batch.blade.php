@@ -34,7 +34,7 @@
         }
     </style>
 </head>
-<body onload="if(confirm('Start printing batch?')) window.print()">
+<body onload="if(confirm('Start printing batch?')) (window.LawatKapeApp ? LawatKapeApp.print() : window.print())">
 
     <div style="margin-bottom: 30px; text-align: center;" class="no-print">
         <button onclick="window.print()" style="cursor:pointer; padding: 12px 24px; background: #3E2723; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 14px;">
