@@ -32,6 +32,7 @@ class EnforceSessionLimitsTest extends TestCase
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
             $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession()]);
             $mock->shouldReceive('disconnectDevice')->once()->with('sess-1')->andReturn(true);
             $mock->shouldReceive('removeIpFromTierAlias')->andReturn(true);
@@ -61,6 +62,7 @@ class EnforceSessionLimitsTest extends TestCase
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('protectedIps')->andReturn(['192.168.2.251']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
             $mock->shouldReceive('listSessions')->once()->andReturn([
                 $this->fakeSession(['ipAddress' => '192.168.2.251']),
             ]);
@@ -79,6 +81,7 @@ class EnforceSessionLimitsTest extends TestCase
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
             $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession()]);
             $mock->shouldNotReceive('disconnectDevice');
         });
@@ -91,6 +94,7 @@ class EnforceSessionLimitsTest extends TestCase
         // No matching voucher at all — e.g. it was purged while still connected.
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
             $mock->shouldReceive('listSessions')->once()->andReturn([
                 $this->fakeSession(['last_accessed' => now()->subMinutes(90)->timestamp]),
             ]);
@@ -111,6 +115,7 @@ class EnforceSessionLimitsTest extends TestCase
     {
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
             $mock->shouldReceive('listSessions')->once()->andReturn([
                 $this->fakeSession(['last_accessed' => now()->subMinutes(5)->timestamp]),
             ]);
@@ -126,6 +131,7 @@ class EnforceSessionLimitsTest extends TestCase
         // not real app-authorized sessions — must never be reaped even if ancient.
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
             $mock->shouldReceive('listSessions')->once()->andReturn([
                 $this->fakeSession([
                     'authenticated_via' => '---ip---',
@@ -147,6 +153,7 @@ class EnforceSessionLimitsTest extends TestCase
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
             $mock->shouldReceive('listSessions')->once()->andReturn([
                 $this->fakeSession([
                     'ipAddress' => '192.168.2.99', // statically-assigned device
@@ -177,6 +184,7 @@ class EnforceSessionLimitsTest extends TestCase
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
             // OPNsense reports a completely unrelated (but still-recent, non-orphaned) session, not this voucher's.
             $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession(['last_accessed' => now()->subMinutes(5)->timestamp])]);
             $mock->shouldNotReceive('disconnectDevice');
@@ -209,6 +217,7 @@ class EnforceSessionLimitsTest extends TestCase
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
             $mock->shouldReceive('listSessions')->once()->andReturn([$this->fakeSession(['last_accessed' => now()->subMinutes(5)->timestamp])]);
             $mock->shouldNotReceive('disconnectDevice');
             $mock->shouldReceive('removeIpFromTierAlias')->with(\Mockery::any(), '192.168.2.61')->never();
@@ -233,6 +242,7 @@ class EnforceSessionLimitsTest extends TestCase
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => []]);
             $mock->shouldReceive('listSessions')->once()->andReturn([]);
             $mock->shouldReceive('removeIpFromTierAlias')->with('free', '192.168.2.62')->once()->andReturn(true);
             // The plan speed rules re-sync after every tier change; nothing to sync here.
@@ -250,6 +260,73 @@ class EnforceSessionLimitsTest extends TestCase
             $mock->shouldReceive('isProtectedIp')->andReturn(false)->byDefault();
         });
 
+        $this->artisan('network:enforce-sessions')->assertExitCode(0);
+    }
+
+    /**
+     * The 2026-10-01 bug: a phone trusted on Trusted Devices got its session
+     * from OPNsense's allow-list (---mac---) on 192.168.2.110, an address
+     * another guest phone had used with a voucher earlier. The job matched
+     * that voucher by IP, saw a different MAC, and disconnected the trusted
+     * phone as code sharing.
+     */
+    public function test_never_disconnects_a_trusted_device_matched_to_an_old_voucher_by_ip(): void
+    {
+        Voucher::create([
+            'code' => 'LAWA-OLD', 'duration_minutes' => 30, 'is_used' => true,
+            'used_at' => now()->subHours(3), 'ip_address' => '192.168.2.110', 'mac_address' => '728215ED5897',
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => ['52:A3:C5:05:2B:20']]);
+            $mock->shouldReceive('listSessions')->andReturn([
+                $this->fakeSession(['ipAddress' => '192.168.2.110', 'macAddress' => '52:a3:c5:05:2b:20', 'authenticated_via' => '---mac---']),
+            ]);
+            $mock->shouldReceive('getArpTable')->andReturn([['mac' => '52:a3:c5:05:2b:20', 'ip' => '192.168.2.110', 'expired' => false]]);
+            $mock->shouldNotReceive('disconnectDevice');
+            $mock->shouldNotReceive('reconfigureCaptivePortal');
+            $mock->shouldReceive('isProtectedIp')->andReturn(false)->byDefault();
+        });
+
+        $this->artisan('network:enforce-sessions')->assertExitCode(0);
+    }
+
+    public function test_an_allow_listed_mac_is_left_alone_even_on_a_voucher_session(): void
+    {
+        Voucher::create([
+            'code' => 'LAWA-EXP2', 'duration_minutes' => 30, 'is_used' => true,
+            'used_at' => now()->subMinutes(60), 'ip_address' => '192.168.2.50', 'mac_address' => 'AABBCCDDEEFF',
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['10.255.255.1']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => ['aa:bb:cc:dd:ee:ff']]);
+            $mock->shouldReceive('listSessions')->andReturn([$this->fakeSession()]);
+            $mock->shouldReceive('getArpTable')->andReturn([]);
+            $mock->shouldNotReceive('disconnectDevice');
+            $mock->shouldReceive('isProtectedIp')->andReturn(false)->byDefault();
+        });
+
+        $this->artisan('network:enforce-sessions')->assertExitCode(0);
+    }
+
+    /** A trusted device on the network without a session gets it back, at most every 10 minutes. */
+    public function test_a_trusted_device_left_without_a_session_gets_the_portal_reloaded_once(): void
+    {
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('protectedIps')->andReturn(['192.168.2.100']);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => ['192.168.2.100/32'], 'macs' => ['52:A3:C5:05:2B:20']]);
+            $mock->shouldReceive('listSessions')->andReturn([
+                $this->fakeSession(['ipAddress' => '192.168.2.100', 'macAddress' => '', 'authenticated_via' => '---ip---']),
+            ]);
+            $mock->shouldReceive('getArpTable')->andReturn([['mac' => '52:a3:c5:05:2b:20', 'ip' => '192.168.2.110', 'expired' => false]]);
+            $mock->shouldReceive('reconfigureCaptivePortal')->once()->andReturn(true);
+            $mock->shouldNotReceive('disconnectDevice');
+            $mock->shouldReceive('isProtectedIp')->andReturn(false)->byDefault();
+        });
+
+        $this->artisan('network:enforce-sessions')->assertExitCode(0);
         $this->artisan('network:enforce-sessions')->assertExitCode(0);
     }
 }

@@ -103,6 +103,9 @@ class EnforceSessionLimits extends Command
 
         $this->info('Scanning '.count($sessions).' sessions for expiration...');
 
+        $normalizeMac = fn (?string $m) => strtoupper(preg_replace('/[^a-fA-F0-9]/', '', (string) $m));
+        $trustedMacs = array_map($normalizeMac, $opnsense->getAllowedAddresses()['macs'] ?? []);
+
         foreach ($sessions as $session) {
             $ip = str_replace('/32', '', $session['ipAddress'] ?? '');
             $mac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $session['macAddress'] ?? ''));
@@ -120,6 +123,17 @@ class EnforceSessionLimits extends Command
             // check like any guest session.
             if (in_array($ip, $protectedIps, true)) {
                 $this->line(" - Session {$ip}: Protected infrastructure. Skipping.");
+
+                continue;
+            }
+
+            // A trusted device: a session OPNsense opened from its own
+            // allow-list (---mac--- / ---ip---), or any session from an
+            // allow-listed MAC. It has no voucher to expire. Matching it to
+            // an old voucher by IP, which a guest phone used earlier, is how
+            // trusted phones were being disconnected as "code sharing".
+            if (($session['authenticated_via'] ?? 'API') !== 'API' || ($mac !== '' && in_array($mac, $trustedMacs, true))) {
+                $this->line(" - Session {$ip}: Trusted device. Skipping.");
 
                 continue;
             }
@@ -185,7 +199,39 @@ class EnforceSessionLimits extends Command
             }
         }
 
+        $this->restoreTrustedSessions($opnsense, $sessions, $trustedMacs, $normalizeMac);
+
         $this->info('Session enforcement complete.');
+    }
+
+    /**
+     * OPNsense opens a session for an allow-listed MAC only when the captive
+     * portal is reloaded. A trusted device that was off the network then, or
+     * whose session was ended, stays at the sign-in page until the next
+     * reload. So when a trusted MAC is on the network with no session, reload
+     * the portal, at most every 10 minutes.
+     */
+    protected function restoreTrustedSessions(OpnSenseService $opnsense, array $sessions, array $trustedMacs, callable $normalizeMac): void
+    {
+        if ($trustedMacs === []) {
+            return;
+        }
+
+        $withSession = array_filter(array_map(fn ($s) => $normalizeMac($s['macAddress'] ?? ''), $sessions));
+        $onNetwork = collect($opnsense->getArpTable())
+            ->reject(fn ($entry) => $entry['expired'] ?? false)
+            ->map(fn ($entry) => $normalizeMac($entry['mac'] ?? ''))
+            ->all();
+
+        $stranded = array_values(array_intersect(array_diff($trustedMacs, $withSession), $onNetwork));
+        if ($stranded === [] || ! Cache::add('trusted_sessions_restore', true, now()->addMinutes(10))) {
+            return;
+        }
+
+        if ($opnsense->reconfigureCaptivePortal()) {
+            $this->info(' - Reloaded the captive portal for trusted device(s) without a session: '.implode(', ', $stranded));
+            Log::info('EnforceSessions: reloaded the captive portal so trusted device(s) get their session back: '.implode(', ', $stranded));
+        }
     }
 
     /**

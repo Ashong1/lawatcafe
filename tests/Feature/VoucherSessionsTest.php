@@ -211,4 +211,32 @@ class VoucherSessionsTest extends TestCase
         $response->assertViewHas('ghostDevices', fn ($ghosts) => $ghosts->count() === 1
             && $ghosts->first()['mac_address'] === 'AABBCCDDEE09');
     }
+
+    /**
+     * A phone trusted by MAC, on a guest-range address another guest's
+     * voucher used earlier, showed as "waiting to sign in" with Trust and
+     * Block buttons, although it is trusted.
+     */
+    public function test_a_trusted_phone_is_not_matched_to_the_last_guests_voucher_for_its_address(): void
+    {
+        \App\Models\Voucher::create([
+            'code' => 'LAWA-OLD', 'duration_minutes' => 30, 'is_used' => true,
+            'used_at' => now()->subHours(3), 'ip_address' => '192.168.2.110', 'mac_address' => '728215ED5897',
+        ]);
+
+        $this->mock(OpnSenseService::class, function ($mock) {
+            $mock->shouldReceive('listSessions')->andReturn([]);
+            $mock->shouldReceive('getArpTable')->andReturn([
+                ['mac' => '52:a3:c5:05:2b:20', 'ip' => '192.168.2.110', 'hostname' => '', 'manufacturer' => ''],
+            ]);
+            $mock->shouldReceive('getDhcpLeases')->andReturn([]);
+            $mock->shouldReceive('getAllowedAddresses')->andReturn(['ips' => [], 'macs' => ['52:A3:C5:05:2B:20']]);
+        });
+
+        $response = $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('network.sessions'));
+
+        $response->assertOk();
+        $response->assertViewHas('pendingSessions', fn ($sessions) => ! $sessions->contains('ip_address', '192.168.2.110'));
+        $response->assertViewHas('infrastructureSessions', fn ($sessions) => $sessions->contains('mac_address', '52A3C5052B20'));
+    }
 }

@@ -144,4 +144,16 @@ class TrustedDevicesTest extends TestCase
             ->post(route('network.allowed-addresses.ips.store'), ['address' => '192.168.2.130'])
             ->assertSessionHas('error');
     }
+
+    /** Re-trusting is the manual fix for a trusted device left at the sign-in page. */
+    public function test_trusting_an_already_trusted_device_reloads_the_portal(): void
+    {
+        $opn = $this->fakeNetwork(['ips' => [], 'macs' => [self::PHONE]]);
+        $opn->shouldReceive('addAllowedMac')->once()->andReturn(['success' => true]);
+        $opn->shouldReceive('reconfigureCaptivePortal')->once()->andReturn(true);
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->post(route('network.trusted-devices.store'), ['mac_address' => self::PHONE])
+            ->assertSessionHas('success');
+    }
 }

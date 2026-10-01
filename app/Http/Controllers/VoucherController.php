@@ -268,6 +268,7 @@ class VoucherController extends Controller
         $vipMacs = $staticAssignments->pluck('mac_address')->map(fn ($m) => strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $m)))->all();
 
         $normalizeMac = fn ($mac) => strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $mac ?? ''));
+        $trustedMacs = array_map($normalizeMac, $opnsense->getAllowedAddresses()['macs'] ?? []);
 
         // 3. Create maps for quick lookup
         $arpByMac = $arpTable->keyBy(fn ($item) => $normalizeMac($item['mac'] ?? ''));
@@ -380,7 +381,7 @@ class VoucherController extends Controller
         $newSnapshot = [];
 
         // 7. Map and cross-reference for the view
-        $sessions = $combinedDevices->map(function ($device) use ($voucherList, $vipIps, $vipMacs, $oldSnapshot, &$newSnapshot, $now, $normalizeMac) {
+        $sessions = $combinedDevices->map(function ($device) use ($voucherList, $vipIps, $vipMacs, $trustedMacs, $oldSnapshot, &$newSnapshot, $now, $normalizeMac) {
             $ip = $device['ipAddress'];
             $mac = $device['macAddress'];
 
@@ -411,8 +412,13 @@ class VoucherController extends Controller
                 return round($bps).' bps';
             };
 
-            // Check if this is a VIP (statically-assigned) device, by IP or MAC
-            $isVip = in_array($ip, $vipIps) || ($mac && in_array($mac, $vipMacs));
+            // Check if this is a VIP (statically-assigned) device, by IP or MAC.
+            // Trusted devices (the portal allow-list) count too: a trusted phone
+            // on a guest-range address must not be matched to the last guest's
+            // voucher for that address and shown as waiting to sign in.
+            $isVip = in_array($ip, $vipIps) || ($mac && in_array($mac, $vipMacs))
+                || ($mac && in_array($mac, $trustedMacs, true))
+                || in_array($device['authenticatedVia'], ['---mac---', '---ip---'], true);
 
             // Find the latest voucher
             $voucher = $voucherList->filter(function ($v) use ($ip, $mac, $normalizeMac) {

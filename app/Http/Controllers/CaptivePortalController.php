@@ -359,7 +359,11 @@ class CaptivePortalController extends Controller
             // VERIFY IF VOUCHER IS STILL VALID
             $voucher = $this->activeVoucherFor($ip, $mac);
 
-            if ($voucher) {
+            // A trusted device's session comes from OPNsense's allow-list, not
+            // a voucher; an old code found for its IP or MAC must not end it.
+            $voucherSession = ($activeSession['authenticated_via'] ?? 'API') === 'API';
+
+            if ($voucher && $voucherSession) {
                 $expirationTime = $voucher->used_at->addMinutes($voucher->duration_minutes);
                 if (now()->greaterThan($expirationTime)) {
                     // DISCONNECT EXPIRED SESSION — never a protected IP in

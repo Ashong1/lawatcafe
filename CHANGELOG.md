@@ -9,6 +9,22 @@ the history was rewritten.
 
 ---
 
+## 1.19.1 — Trusted phones stay online
+*build 187*
+
+- Fixed: a phone trusted on Trusted Devices was disconnected within a minute
+  if its guest-range address had been used earlier by another guest's code.
+  The expiry job matched that old code by IP, saw a different device, and
+  disconnected the trusted phone as code sharing. It now leaves alone every
+  session the firewall opened from its trusted list, and every trusted MAC.
+  The guest portal page follows the same rule.
+- A trusted device that is on the network without a session (it was off when
+  trusted, or was cut off) now gets it back by itself: the job reloads the
+  captive portal, at most every 10 minutes. Tapping Trust again on a trusted
+  device does the same at once.
+- Active Sessions shows trusted devices with the shop's equipment instead of
+  under "Waiting to sign in" with Trust and Block buttons.
+
 ## 1.19.0 — Android app
 *build 186*
 

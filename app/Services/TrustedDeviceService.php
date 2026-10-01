@@ -161,6 +161,13 @@ class TrustedDeviceService
             return ['success' => false, 'message' => $result['message'] ?? 'Could not update the firewall.'];
         }
 
+        // Already on the list: adding again changes nothing on the firewall, so
+        // reload the portal, which is what makes OPNsense open the device's
+        // session again (it does so only on a reload).
+        if ($device['trusted'] ?? false) {
+            $this->opnsense->reconfigureCaptivePortal();
+        }
+
         if ($device && $device['ip'] && $device['fixed'] && $this->opnsense->dhcpPoolContaining($device['ip']) === null) {
             $ipResult = $this->opnsense->addAllowedIp($device['ip']);
             if (! $ipResult['success']) {
