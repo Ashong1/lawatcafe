@@ -107,8 +107,9 @@ class TrafficPlanSpeedsTest extends TestCase
         $this->fakeLiveGateway();
 
         $this->actingAs($this->admin())->get(route('network.traffic'))
-            ->assertSee('switched off on the gateway', false)
-            ->assertDontSee('In Force', false);
+            ->assertSee('<span class="text-[#795548]">Off</span>', false)
+            ->assertSee('It is off right now', false)
+            ->assertDontSee('Update Ceiling', false);
     }
 
     public function test_an_unreachable_gateway_shows_the_saved_speeds_as_unconfirmed(): void
@@ -167,6 +168,62 @@ class TrafficPlanSpeedsTest extends TestCase
             ->post(route('network.traffic.plans'), ['bw_free_down' => 0, 'bw_free_up' => 3, 'bw_premium_down' => 20])
             ->assertSessionHasErrors(['bw_free_down', 'bw_premium_up']);
 
+        Http::assertNothingSent();
+    }
+
+    public function test_when_the_ceiling_is_off_the_page_offers_to_turn_it_on(): void
+    {
+        $this->fakeLiveGateway();
+
+        $this->actingAs($this->admin())->get(route('network.traffic'))
+            ->assertSee('Turn On Fair-Use Ceiling', false)
+            ->assertDontSee('fair-use-off-form', false);
+    }
+
+    public function test_turning_the_ceiling_on_records_the_switch(): void
+    {
+        Setting::set('bw_fair_use_enabled', '0');
+        $this->fakeLiveGateway();
+
+        $this->actingAs($this->admin())
+            ->post(route('network.traffic.update'), ['bw_fair_use_mbps' => 50])
+            ->assertSessionHas('success');
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'setRule/r1')
+            && $request['rule']['enabled'] === '1');
+        Cache::forget('setting.bw_fair_use_enabled');
+        $this->assertSame('1', Setting::get('bw_fair_use_enabled'));
+    }
+
+    public function test_turning_the_ceiling_off_disables_only_its_rules(): void
+    {
+        $this->fakeLiveGateway();
+
+        $this->actingAs($this->admin())
+            ->post(route('network.traffic.fair-use.off'))
+            ->assertSessionHas('success');
+
+        foreach (['r1', 'r2'] as $uuid) {
+            Http::assertSent(fn ($request) => str_contains($request->url(), "setRule/{$uuid}")
+                && $request['rule']['enabled'] === '0');
+        }
+        foreach (['r3', 'r4', 'r5', 'r6'] as $uuid) {
+            Http::assertNotSent(fn ($request) => str_contains($request->url(), "setRule/{$uuid}"));
+        }
+        Cache::forget('setting.bw_fair_use_enabled');
+        $this->assertSame('0', Setting::get('bw_fair_use_enabled'));
+    }
+
+    /** Switched off by the owner means Barista AI can't quietly switch it back on. */
+    public function test_the_ai_cannot_move_a_switched_off_ceiling(): void
+    {
+        Setting::set('bw_fair_use_enabled', '0');
+        Http::fake();
+
+        $result = app(\App\Services\Agent\Tools\AdjustFairUseCeilingTool::class)
+            ->execute(['mbps' => 30, 'reason' => 'busy'], null);
+
+        $this->assertFalse($result->success);
         Http::assertNothingSent();
     }
 }

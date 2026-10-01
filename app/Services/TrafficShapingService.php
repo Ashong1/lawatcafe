@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use App\Models\Voucher;
 use Illuminate\Support\Facades\Log;
 
@@ -97,6 +98,49 @@ class TrafficShapingService
         }
 
         return true;
+    }
+
+    /**
+     * Switch the fair-use rules off, leaving the pipes and the stored figure in
+     * place so turning it back on is one click. Plan caps are separate rules
+     * and keep working.
+     */
+    public function disableFairUseCap(OpnSenseService $opnsense): bool
+    {
+        $this->lastError = null;
+        $config = $opnsense->readShaperConfig();
+        $sequence = 10;
+
+        foreach (self::DIRECTIONS as $direction) {
+            $sequence++;
+            $name = $opnsense->shaperObjectName(self::FAIR_USE_TIER, $direction);
+            $pipe = $config['pipes'][$name] ?? null;
+            $rule = $config['rules'][$name] ?? null;
+
+            if (! $pipe || ! $rule) {
+                continue; // never set up, so already off
+            }
+
+            if (! $opnsense->upsertShaperRule(self::FAIR_USE_TIER, $direction, $pipe, null, $sequence, $rule, false)) {
+                $this->lastError = "OPNsense rejected switching off the rule '{$name}'.";
+
+                return false;
+            }
+        }
+
+        if (! $opnsense->reconfigureShaper()) {
+            $this->lastError = 'The rules were switched off but the shaper would not reload.';
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /** The owner's on/off choice; Barista AI may only move the ceiling while it is on. */
+    public static function fairUseSwitchedOn(): bool
+    {
+        return Setting::get('bw_fair_use_enabled', '1') === '1';
     }
 
     /**

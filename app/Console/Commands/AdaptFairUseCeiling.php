@@ -12,6 +12,7 @@ use App\Services\AiBudget;
 use App\Services\GuestSessionService;
 use App\Services\LinkCapacityLearner;
 use App\Services\OpnSenseService;
+use App\Services\TrafficShapingService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
@@ -78,6 +79,12 @@ class AdaptFairUseCeiling extends Command
 
         if (! $adaptive->enabled()) {
             $this->comment('Adaptive ceiling is off — sampling only. Enable it on the Traffic Shaping page.');
+
+            return self::SUCCESS;
+        }
+
+        if (! TrafficShapingService::fairUseSwitchedOn()) {
+            $this->comment('Fair-use ceiling is switched off on the Traffic page — nothing to adapt.');
 
             return self::SUCCESS;
         }

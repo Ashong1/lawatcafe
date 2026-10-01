@@ -147,7 +147,7 @@
                         <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
                         Fair-Use Ceiling &mdash;
                         @if($live['fair_use']['enforced'])
-                            In Force
+                            On
                         @elseif($live['reachable'])
                             <span class="text-[#795548]">Off</span>
                         @else
@@ -161,8 +161,7 @@
                     </p>
                     @if($live['reachable'] && ! $live['fair_use']['enforced'])
                         <p class="text-xs text-[#6D4C41] font-medium leading-relaxed mt-2">
-                            It is switched off on the gateway right now, so only the plan speeds above apply.
-                            Applying a ceiling here switches it back on.
+                            It is off right now, so only the plan speeds above apply. Set a speed and turn it on below.
                         </p>
                     @endif
                 </div>
@@ -188,21 +187,54 @@
                     <x-field-error name="bw_fair_use_mbps" />
                 </div>
 
-                {{-- A button rather than a submit: saving here rewrites live
-                     firewall rules for every device in the shop, which is not
-                     something to do on a mis-click. --}}
-                <button type="button"
-                        onclick="window.confirmAction({
-                            title: 'Apply this ceiling?',
-                            text: 'This rewrites the live shaper rules for every device on the guest interface, including the POS and this server.',
-                            icon: 'warning',
-                            confirmText: 'Yes, apply it',
-                            callback: () => document.getElementById('fair-use-form').submit()
-                        })"
-                        class="w-full py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg active:scale-[0.98]">
-                    Apply Fair-Use Ceiling
-                </button>
+                {{-- Buttons rather than submits: each one rewrites live firewall
+                     rules for every device in the shop, which is not something
+                     to do on a mis-click. --}}
+                @if($live['fair_use']['enforced'])
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button type="button"
+                                onclick="window.confirmAction({
+                                    title: 'Change the ceiling?',
+                                    text: 'Every device not on a plan, including the POS and this server, gets the new limit right away.',
+                                    icon: 'warning',
+                                    confirmText: 'Yes, apply it',
+                                    callback: () => document.getElementById('fair-use-form').submit()
+                                })"
+                                class="sm:col-span-2 py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg active:scale-[0.98]">
+                            Update Ceiling
+                        </button>
+                        <button type="button"
+                                onclick="window.confirmAction({
+                                    title: 'Turn off the ceiling?',
+                                    text: 'Guests keep their plan speeds. Staff, trusted and shop devices will have no limit.',
+                                    icon: 'warning',
+                                    confirmText: 'Yes, turn it off',
+                                    callback: () => document.getElementById('fair-use-off-form').submit()
+                                })"
+                                class="py-4 bg-white border-2 border-red-300 hover:bg-red-50 text-red-700 rounded-xl font-bold text-xs uppercase tracking-wide transition-all active:scale-[0.98]">
+                            Turn Off
+                        </button>
+                    </div>
+                @else
+                    <button type="button"
+                            onclick="window.confirmAction({
+                                title: 'Turn on the ceiling?',
+                                text: 'Every device not on a plan, including the POS and this server, will be limited to this speed.',
+                                icon: 'warning',
+                                confirmText: 'Yes, turn it on',
+                                callback: () => document.getElementById('fair-use-form').submit()
+                            })"
+                            class="w-full py-4 bg-green-700 hover:bg-green-800 text-white rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg active:scale-[0.98]">
+                        Turn On Fair-Use Ceiling
+                    </button>
+                @endif
             </form>
+
+            @if($live['fair_use']['enforced'])
+                <form action="{{ route('network.traffic.fair-use.off') }}" method="POST" id="fair-use-off-form" class="hidden">
+                    @csrf
+                </form>
+            @endif
 
             {{-- The adaptive loop. Writes no firewall itself — it sets the
                  envelope the agent may move the ceiling within, and
@@ -223,6 +255,11 @@
                             and raises it again when the shop is quiet. It learns the line speed and the busy
                             hours from what it measures &mdash; nothing to configure but the bounds.
                         </p>
+                        @unless($live['fair_use']['enforced'])
+                            <p class="text-xs text-amber-800 font-bold leading-relaxed mt-2">
+                                Paused while the fair-use ceiling is off. It won't turn the ceiling on by itself.
+                            </p>
+                        @endunless
                     </div>
                 </div>
 

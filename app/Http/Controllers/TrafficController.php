@@ -149,12 +149,27 @@ class TrafficController extends Controller
         }
 
         Setting::set('bw_fair_use_mbps', (string) $mbps);
+        Setting::set('bw_fair_use_enabled', '1');
 
         return redirect()->back()->with('success', sprintf(
             'Fair-use ceiling is live at %s Mbps per device, each way. It applies to every device on '
             .'the guest interface — the POS and this server included.',
             rtrim(rtrim(number_format($mbps, 2, '.', ''), '0'), '.')
         ));
+    }
+
+    /** Switch the ceiling off. Plan speeds keep applying to guests. */
+    public function disableFairUse(TrafficShapingService $shaper, OpnSenseService $opnsense)
+    {
+        if (! $shaper->disableFairUseCap($opnsense)) {
+            return redirect()->back()->with('error',
+                ($shaper->lastError() ?? 'OPNsense rejected the change.').' The ceiling may still be on.');
+        }
+
+        Setting::set('bw_fair_use_enabled', '0');
+
+        return redirect()->back()->with('success',
+            'Fair-use ceiling is off. Guests still get their plan speeds; other devices are no longer capped.');
     }
 
     public function stats(OpnSenseService $opnsense)

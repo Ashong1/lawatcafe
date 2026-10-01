@@ -84,6 +84,11 @@ class AdjustFairUseCeilingTool implements AgentTool
             return ToolResult::fail('A reason is required — the owner sees it on the traffic page.');
         }
 
+        if (! TrafficShapingService::fairUseSwitchedOn()) {
+            return ToolResult::fail('The owner has switched the fair-use ceiling off, so it cannot be adjusted. '
+                .'Plan speeds still apply to guests. It can be switched back on from the Traffic page.');
+        }
+
         $bounds = $this->adaptive->bounds();
         $applied = max($bounds['min'], min($bounds['max'], $requested));
         $clamped = abs($applied - $requested) > 0.001;

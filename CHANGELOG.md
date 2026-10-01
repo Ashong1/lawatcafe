@@ -9,6 +9,26 @@ the history was rewritten.
 
 ---
 
+## 1.15.1 — Fair-use ceiling on/off switch
+*build 180*
+
+- The fair-use ceiling can be turned off and back on from the Traffic page.
+  Turning it off disables only its own rules on the gateway; guests keep
+  their plan speeds.
+- While it is off, Barista AI and the adaptive loop leave it alone and can't
+  turn it back on by themselves.
+
+## 1.15.0 — Trusted devices, picked from a list
+*build 179*
+
+- New Network → Trusted Devices page for the admin and super admin: every
+  device on the network with its name, IP and MAC, and a one-tap Allow that
+  shows the IP and MAC to check before it trusts the device.
+- Trusting a device with a fixed address now allow-lists that address as well
+  as its MAC, so it keeps skipping the Wi-Fi login after its address changes.
+- Guest-range addresses can't be allow-listed, because the next guest could
+  get the same one. Shop equipment can only be removed by the super admin.
+
 ## 1.14.2 — Traffic page shows the plan speeds
 *build 178*
 

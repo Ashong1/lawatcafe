@@ -263,6 +263,7 @@ Route::middleware(['auth'])->group(function () {
             // firewall, and only records the figure once OPNsense accepts it —
             // see TrafficController::update().
             Route::post('/traffic', [TrafficController::class, 'update'])->name('traffic.update');
+            Route::post('/traffic/fair-use/off', [TrafficController::class, 'disableFairUse'])->name('traffic.fair-use.off');
             // Per-plan caps; applied to OPNsense before they are recorded.
             Route::post('/traffic/plans', [TrafficController::class, 'updatePlans'])->name('traffic.plans');
             // The adaptive loop's envelope — writes settings only. The firewall
