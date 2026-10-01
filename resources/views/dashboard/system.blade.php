@@ -22,10 +22,10 @@
                      before; below that the words drop to a second line rather than
                      running off the edge. Desktop sizes are untouched. --}}
                 <h2 class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[#3E2723]">
-                    <span class="text-2xl sm:text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                    <span class="lk-brand text-2xl sm:text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                     <span class="text-sm sm:text-lg md:text-xl font-bold tracking-wide sm:tracking-wide uppercase sm:mt-2">System Control</span>
                 </h2>
-                <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Infrastructure, network and AI stack health.</p>
+                <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Infrastructure, network and AI stack health.</p>
             </div>
             <div class="flex flex-col items-start md:items-end gap-3 min-w-0">
                 <div class="flex flex-wrap items-center gap-2 md:justify-end">

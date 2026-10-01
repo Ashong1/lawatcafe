@@ -361,7 +361,7 @@
     <div class="flex justify-end w-full">
         <button @click="toggle()"
                 @pointerdown="if(!open) startDrag($event)"
-                class="w-16 h-16 bg-[#3E2723] hover:bg-[#271815] text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group relative"
+                class="w-14 h-14 lg:w-16 lg:h-16 bg-[#3E2723] hover:bg-[#271815] text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group relative"
                 :class="!open ? 'cursor-move' : ''">
             {{-- Both icons are absolutely positioned so they occupy the same
                  spot and neither contributes to layout. As in-flow siblings the
@@ -379,7 +379,7 @@
                  x-transition:leave-start="opacity-100 rotate-0 scale-100"
                  x-transition:leave-end="opacity-0 rotate-45 scale-75"
                  class="absolute inset-0 flex items-center justify-center">
-                <x-lucide-bot class="w-8 h-8 group-hover:rotate-12 transition-transform" />
+                <x-lucide-bot class="w-7 h-7 lg:w-8 lg:h-8 group-hover:rotate-12 transition-transform" />
             </div>
             <div x-show="open"
                  x-transition:enter="transition ease-out duration-200"
@@ -389,7 +389,7 @@
                  x-transition:leave-start="opacity-100 rotate-0 scale-100"
                  x-transition:leave-end="opacity-0 -rotate-45 scale-75"
                  class="absolute inset-0 flex items-center justify-center">
-                <x-lucide-chevron-down class="w-8 h-8" />
+                <x-lucide-chevron-down class="w-7 h-7 lg:w-8 lg:h-8" />
             </div>
 
             <!-- Notification Dot -->

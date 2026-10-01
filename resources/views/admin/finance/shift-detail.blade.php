@@ -5,17 +5,17 @@
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-4xl mx-auto">
     
-    <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div class="lk-page-head mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
             <a href="{{ route('admin.finance.z-reads') }}" class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#795548] hover:text-[#3E2723] transition-all group mb-4">
                 <x-lucide-arrow-left class="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
                 Back to Z-Reads
             </a>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
-                <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Audit Detail</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Detailed performance and reconciliation for shift #{{ $shift->id }}.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Detailed performance and reconciliation for shift #{{ $shift->id }}.</p>
         </div>
     </div>
 

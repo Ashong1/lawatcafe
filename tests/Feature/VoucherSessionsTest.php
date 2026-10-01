@@ -268,7 +268,9 @@ class VoucherSessionsTest extends TestCase
         $this->assertStringNotContainsString('192.168.254.254', $html);
         $this->assertStringContainsString('App server', $html);
         $this->assertStringContainsString('xiaomi-15-pro', $html);
-        $this->assertStringContainsString('Trusted device', $html);
-        $this->assertStringContainsString('Shop equipment — never blocked', $html);
+        // The badges shorten on phones by hiding their second half in a span.
+        $text = preg_replace('/\s+/', ' ', strip_tags($html));
+        $this->assertStringContainsString('Trusted device — no code needed', $text);
+        $this->assertStringContainsString('Shop equipment — never blocked', $text);
     }
 }

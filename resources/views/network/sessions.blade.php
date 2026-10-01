@@ -5,26 +5,26 @@
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
     
-    <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div class="lk-page-head mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
-                <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Who's Online</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">See who's on the Wi-Fi, and disconnect, block or trust any device in one click.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">See who's on the Wi-Fi, and disconnect, block or trust any device in one click.</p>
         </div>
     </div>
 
     {{-- Find a device: IP, MAC, voucher code or name — same lookup as the AI's lookupDevice. --}}
     <div class="bg-white p-5 rounded-2xl shadow-sm border border-[#F0E6D2] mb-6">
-        <form action="{{ route('network.sessions') }}" method="GET" class="flex flex-col sm:flex-row gap-2">
+        <form action="{{ route('network.sessions') }}" method="GET" class="flex flex-row gap-2">
             <label for="find-device" class="sr-only">Find a device</label>
             <div class="relative flex-1">
                 <x-lucide-search class="w-4 h-4 text-[#795548] absolute left-4 top-1/2 -translate-y-1/2" />
-                <input id="find-device" type="text" name="find" value="{{ $find }}" placeholder="Name, code, IP or MAC"
-                       class="w-full min-h-[44px] bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl pl-11 pr-4 text-sm focus:outline-none focus:border-[#3E2723]">
+                <input id="find-device" type="text" name="find" value="{{ $find }}" placeholder="Find a device" title="Name, Wi-Fi code, IP or MAC"
+                       class="w-full min-h-[44px] bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl pl-11 pr-4 text-base sm:text-sm focus:outline-none focus:border-[#3E2723]">
             </div>
-            <button type="submit" class="min-h-[44px] px-6 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl text-sm font-bold transition">Find</button>
+            <button type="submit" class="min-h-[44px] px-4 sm:px-6 shrink-0 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl text-sm font-bold transition">Find</button>
         </form>
 
         @if($find !== '')

@@ -5,12 +5,12 @@
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-6xl mx-auto">
 
-    <div class="mb-8 border-b border-[#E6D5C3] pb-6">
+    <div class="lk-page-head mb-8 border-b border-[#E6D5C3] pb-6">
         <h2 class="flex items-center gap-3 text-[#3E2723]">
-            <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+            <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
             <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Trusted Devices</span>
         </h2>
-        <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Trusted devices use the Wi-Fi without a voucher. Find your device in the list below, check that its name, IP and MAC match the device in your hand, then tap Allow.</p>
+        <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Trusted devices use the Wi-Fi without a voucher. Find your device in the list below, check that its name, IP and MAC match the device in your hand, then tap Allow.</p>
     </div>
 
     {{-- Trusted now --}}

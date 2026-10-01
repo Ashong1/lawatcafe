@@ -4,9 +4,12 @@
 @section('content')
 <div x-data="accountManager()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
-        <div class="mb-8 border-b border-[#E6D5C3] pb-6">
-            <h2 class="text-3xl font-bold text-[#3E2723] tracking-wider uppercase italic" style="font-family: 'Dancing Script', cursive;">Lawa't <span class="font-sans not-italic font-bold text-[#4A3B32] text-2xl tracking-wide">STAFF ACCOUNTS</span></h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium">Add staff, change their details or password, and remove people who have left.</p>
+        <div class="lk-page-head mb-8 border-b border-[#E6D5C3] pb-6">
+            <h2 class="flex items-center gap-3 text-[#3E2723]">
+                <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Staff Accounts</span>
+            </h2>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium">Add staff, change their details or password, and remove people who have left.</p>
         </div>
 
     <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">

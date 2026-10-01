@@ -9,6 +9,21 @@ the history was rewritten.
 
 ---
 
+## 1.21.1 — Less crowded on a phone
+*build 193*
+
+- Page titles on a phone drop the script logo (it is in the menu) and sit
+  closer to the content; cards use less padding and less space between them.
+- The header shows a round initial instead of a cut-off name.
+- Register: Orders, Who's Online, Download, Cash in or out and End Shift
+  moved into one **⋮** button beside the search, so the menu starts on the
+  first screen. The extra frame around the menu is gone on phones.
+- Dashboard: four short shortcuts (Register, Wi-Fi Codes, Supplies, Today's
+  Sales) and at most three Barista AI notes on a phone.
+- Wi-Fi Codes: search and status on one row; Make Codes comes first.
+- Who's Online: shorter equipment labels; MAC and maker show from tablet size.
+- Smaller Barista AI chat button on phones.
+
 ## 1.21.0 — Phone-sized screens for the Android app
 *build 192*
 

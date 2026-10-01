@@ -5,13 +5,13 @@
 <div x-data="staffDashboard()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
     
-    <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+    <div class="lk-page-head mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
-                <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Staff Hub</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Welcome back! Here is your shift overview.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Welcome back! Here is your shift overview.</p>
         </div>
         <div class="flex items-center gap-4">
             <a href="{{ route('pos.history') }}" class="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-xl border border-[#F0E6D2] bg-white text-sm font-bold text-[#3E2723] hover:border-[#3E2723] transition whitespace-nowrap shrink-0">
@@ -177,7 +177,7 @@
                         <x-lucide-radar class="w-4 h-4" />
                     </div>
                     <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Barista AI Findings</h3>
-                    <a href="{{ route('ai.analysis.index') }}" class="ml-auto text-xs font-bold uppercase tracking-wide text-amber-700 hover:text-amber-800 transition-colors flex items-center gap-1 shrink-0">
+                    <a href="{{ route('ai.analysis.index') }}" class="ml-auto min-h-[44px] px-2 -mr-2 text-xs font-bold uppercase tracking-wide text-amber-700 hover:text-amber-800 transition-colors flex items-center gap-1 shrink-0">
                         View All <x-lucide-arrow-right class="w-3 h-3" />
                     </a>
                 </div>

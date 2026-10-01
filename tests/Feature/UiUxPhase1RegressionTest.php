@@ -43,7 +43,7 @@ class UiUxPhase1RegressionTest extends TestCase
      * two or three stacked rows shoving the page down the screen on a phone.
      * It no longer wraps: the role label hides, the logout word becomes an
      * icon, and the user's name — the one item that can grow without limit —
-     * truncates. Same goal, without spending vertical space to reach it.
+     * becomes a round initial on a phone and truncates from sm up.
      */
     public function test_admin_header_fits_one_row_at_narrow_widths(): void
     {
@@ -57,7 +57,8 @@ class UiUxPhase1RegressionTest extends TestCase
         // pass or fail for unrelated reasons.
         $this->assertStringNotContainsString('flex-wrap', $this->headerTag($response->getContent()));
         $response->assertSee('hidden lg:inline', false);
-        $response->assertSee('truncate max-w-[7rem]', false);
+        $response->assertSee('sr-only sm:not-sr-only', false);
+        $response->assertSee('truncate sm:max-w-[12rem]', false);
         // Logout: word from sm up, icon below it.
         $response->assertSee('hidden sm:inline', false);
         // The odd-one-out contrast failure on this label is fixed in the same edit.
@@ -74,7 +75,8 @@ class UiUxPhase1RegressionTest extends TestCase
         $response->assertOk();
         $this->assertStringNotContainsString('flex-wrap', $this->headerTag($response->getContent()));
         $response->assertSee('hidden lg:inline', false);
-        $response->assertSee('truncate max-w-[7rem]', false);
+        $response->assertSee('sr-only sm:not-sr-only', false);
+        $response->assertSee('truncate sm:max-w-[12rem]', false);
         $response->assertSee('hidden sm:inline', false);
     }
 

@@ -312,13 +312,14 @@
 
                 <div class="hidden lg:block h-4 w-[1px] bg-[#F0E6D2]"></div>
 
-                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group cursor-pointer min-w-0 min-h-[44px]">
+                <a href="{{ route('profile.edit') }}" aria-label="Your profile" class="flex items-center justify-center gap-2 group cursor-pointer min-w-[44px] min-h-[44px]">
                     {{-- Reads the user's actual role — see admin.blade.php's
                          matching header and User::roleLabel(). --}}
                     <span class="hidden lg:inline text-xs uppercase tracking-wide text-[#6D4C41] group-hover:text-[#3E2723] transition font-bold">{{ Auth::user()->roleLabel() }}:</span>
                     {{-- The one thing here that can grow without limit, so the
                          one thing allowed to truncate. --}}
-                    <span class="text-sm font-bold text-[#3E2723] group-hover:text-amber-700 transition truncate max-w-[7rem] sm:max-w-[12rem] lg:max-w-none">{{ Auth::user()->name }}</span>
+                    <span aria-hidden="true" class="sm:hidden w-9 h-9 rounded-full bg-[#3E2723] text-white text-sm font-bold flex items-center justify-center">{{ mb_strtoupper(mb_substr(Auth::user()->name, 0, 1)) }}</span>
+                    <span class="sr-only sm:not-sr-only text-sm font-bold text-[#3E2723] group-hover:text-amber-700 transition truncate sm:max-w-[12rem] lg:max-w-none">{{ Auth::user()->name }}</span>
                 </a>
 
                 <div class="hidden lg:block h-4 w-[1px] bg-[#F0E6D2]"></div>

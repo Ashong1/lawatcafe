@@ -196,7 +196,7 @@
                                 @endif
                             </span>
                             <span class="text-xs text-slate-500 font-mono mt-0.5">{{ $session->ip_address }}</span>
-                            <div class="flex items-center gap-2 mt-0.5">
+                            <div class="hidden sm:flex items-center gap-2 mt-0.5">
                                 <span class="text-xs text-slate-500 font-mono">{{ \App\Support\Mac::format($session->mac_address) }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
                                     <span class="text-xs px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
@@ -206,17 +206,17 @@
                     </td>
                     <td class="py-4 px-6">
                         @if($session->is_trusted_device ?? false)
-                            <span class="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg font-bold text-xs tracking-wide uppercase">
-                                Trusted device — no code needed
+                            <span class="inline-block px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg font-bold text-xs tracking-wide uppercase">
+                                Trusted<span class="hidden sm:inline"> device — no code needed</span>
                             </span>
                         @else
-                            <span class="px-3 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded-lg font-bold text-xs tracking-wide uppercase">
-                                Shop equipment — never blocked
+                            <span class="inline-block px-2.5 py-1 bg-blue-100 text-blue-800 border border-blue-200 rounded-lg font-bold text-xs tracking-wide uppercase">
+                                Shop equipment<span class="hidden sm:inline"> — never blocked</span>
                             </span>
                         @endif
                     </td>
                     <td class="py-4 px-6 text-right">
-                        <div class="flex flex-col items-end gap-1">
+                        <div class="flex flex-row flex-wrap sm:flex-col items-end gap-x-4 gap-y-1">
                             <div class="flex items-center gap-2">
                                 <span class="text-xs font-bold text-blue-500 font-mono">{{ $session->speed_in }}</span>
                                 <div class="flex items-center gap-1 text-xs font-bold text-slate-400 uppercase">

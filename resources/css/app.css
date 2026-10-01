@@ -55,3 +55,22 @@
         height: 1.5rem;
     }
 }
+
+/* Phones: the page content gets the first screen. The script logo is already
+   in the menu drawer, so the page title drops it; cards and the gaps between
+   them shrink, since desktop padding nested two or three deep leaves a 360px
+   screen with half its width for content. */
+@media (max-width: 639px) {
+    .lk-brand { display: none !important; }
+    .lk-page-head { margin-bottom: 1rem !important; padding-bottom: 0.75rem !important; gap: 0.75rem !important; }
+    .lk-page-head h2 > span { margin-top: 0 !important; font-size: 1.125rem; line-height: 1.5rem; }
+    .lk-page-desc { margin-top: 0.25rem !important; font-size: 0.8125rem; line-height: 1.25rem; letter-spacing: 0 !important; }
+
+    main [class*="rounded"].p-5,
+    main [class*="rounded"].p-6,
+    main [class*="rounded"].p-8 { padding: 1rem; }
+    main .mb-8 { margin-bottom: 1.25rem; }
+    main .mb-6 { margin-bottom: 1rem; }
+    main .gap-6, main .gap-8 { gap: 1rem; }
+    main .space-y-6 > * + *, main .space-y-8 > * + * { margin-top: 1rem; }
+}

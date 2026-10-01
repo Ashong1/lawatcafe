@@ -18,13 +18,13 @@
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-5xl mx-auto">
 
-    <div class="mb-6 border-b border-[#E6D5C3] pb-5 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+    <div class="lk-page-head mb-6 border-b border-[#E6D5C3] pb-5 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
-                <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Blocked Websites</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-1 font-medium">Tap a site to block or unblock it for every guest on the Wi-Fi.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-1 font-medium">Tap a site to block or unblock it for every guest on the Wi-Fi.</p>
         </div>
         {{-- The page's answer at a glance, instead of making the owner count red switches. --}}
         <p class="text-sm font-bold text-[#3E2723]">

@@ -5,37 +5,39 @@
 <div x-data="voucherManager()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
     <div class="max-w-7xl mx-auto">
     
-    <div class="mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div class="lk-page-head mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
-                <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Wi-Fi Codes</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Make Wi-Fi codes to hand out, print slips, and see which codes have been used.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Make Wi-Fi codes to hand out, print slips, and see which codes have been used.</p>
         </div>
     </div>
 
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
-        <form action="{{ route('network.vouchers.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="md:col-span-2">
-                <label for="search" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Find a code</label>
+        <form action="{{ route('network.vouchers.index') }}" method="GET" class="flex items-end gap-2 md:grid md:grid-cols-4 md:gap-4">
+            <div class="flex-1 min-w-0 md:col-span-2">
+                <label for="search" class="sr-only md:not-sr-only md:block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Find a code</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6D4C41]">
                         <x-lucide-search class="w-4 h-4" />
                     </div>
-                    <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="LAWA-..." class="w-full pl-10 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Find a code" class="w-full pl-10 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-base md:text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                 </div>
             </div>
-            <div>
-                <label for="status" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Status</label>
-                <select id="status" name="status" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+            <div class="w-32 shrink-0 md:w-auto">
+                <label for="status" class="sr-only md:not-sr-only md:block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Status</label>
+                <select id="status" name="status" @change="if (window.innerWidth < 768) $el.form.submit()" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-3 md:px-4 py-2.5 text-base md:text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                     <option value="">All codes</option>
                     <option value="available" {{ request('status') === 'available' ? 'selected' : '' }}>Available</option>
                     <option value="used" {{ request('status') === 'used' ? 'selected' : '' }}>Used</option>
                 </select>
             </div>
-            <div class="flex items-end">
-                <button type="submit" class="w-full bg-[#3E2723] text-white py-3 rounded-xl font-bold uppercase tracking-wide text-xs hover:bg-[#271815] transition shadow-md">Filter</button>
+            <div class="hidden md:flex items-end">
+                <button type="submit" aria-label="Filter" class="w-11 md:w-full bg-[#3E2723] text-white py-3 rounded-xl font-bold uppercase tracking-wide text-xs hover:bg-[#271815] transition shadow-md flex items-center justify-center">
+                    <x-lucide-search class="w-4 h-4 md:hidden" /><span class="hidden md:inline">Filter</span>
+                </button>
             </div>
         </form>
     </div>
@@ -48,7 +50,7 @@
                 <p class="text-xs text-[#6D4C41] mt-1 font-medium">Newest first. Print a slip, or delete codes you no longer need.</p>
             </div>
             
-            <div class="flex items-center gap-3 flex-wrap">
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap w-full md:w-auto">
                 <!-- Batch Print -->
                 <button @click="printSelected()" 
                         x-show="selectedVouchers.length > 0"
@@ -79,16 +81,16 @@
                                 confirmText: 'Yes, clear them',
                                 callback: () => document.getElementById('purge-form').submit()
                             })"
-                            class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
+                            class="bg-amber-600 hover:bg-amber-700 text-white px-4 sm:px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                         <x-lucide-trash-2 class="w-3.5 h-3.5" />
-                        Clear Used Codes
+                        Clear Used<span class="hidden sm:inline"> Codes</span>
                     </button>
                 </form>
                 @endif
 
-                <x-ask-ai-button prompt="Make a new batch of Wi-Fi codes." label="Ask Barista AI" />
+                <x-ask-ai-button prompt="Make a new batch of Wi-Fi codes." label="Ask Barista AI" class="py-2.5" />
 
-                <button @click="submitting = false; isModalOpen = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
+                <button @click="submitting = false; isModalOpen = true" class="order-first md:order-none w-full md:w-auto justify-center bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                     <x-lucide-plus class="w-4 h-4" />
                     <span>Make Codes</span>
                 </button>

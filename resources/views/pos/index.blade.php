@@ -67,23 +67,45 @@
 
     {{-- Menu Area (Left) --}}
     <div class="flex-1 min-w-0 p-3 sm:p-4 md:p-8 pb-28 lg:pb-8 flex flex-col lg:overflow-hidden">
-        <div class="flex-1 min-w-0 bg-white p-3 sm:p-6 md:p-8 rounded-2xl shadow-sm flex flex-col lg:overflow-hidden border border-[#F0E6D2]">
+        <div class="flex-1 min-w-0 sm:bg-white p-0 sm:p-6 md:p-8 rounded-2xl sm:shadow-sm flex flex-col lg:overflow-hidden sm:border border-[#F0E6D2]">
             
-            <div class="flex flex-col md:flex-row justify-between items-center mb-4 sm:mb-8 gap-3 sm:gap-4 shrink-0">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-3 sm:mb-8 gap-3 sm:gap-4 shrink-0">
                 
                 <div class="flex items-center gap-3 text-[#3E2723] hidden lg:flex shrink-0">
-                    <span class="text-3xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                    <span class="lk-brand text-3xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                     <span class="text-base font-bold tracking-wide uppercase mt-1">POS</span>
                 </div>
 
-                <div class="relative w-full max-w-md">
+                <div class="flex items-center gap-2 w-full max-w-md">
+                <div class="relative flex-1 min-w-0">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#795548]">
                         <x-lucide-search class="w-5 h-5 text-gray-400" />
                     </div>
                     <input type="text" x-model="searchQuery" placeholder="Search menu..." aria-label="Search menu" class="w-full pl-11 pr-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full focus:outline-none focus:ring-2 focus:ring-[#3E2723] transition-all text-sm font-medium placeholder-[#A1887F] text-[#3E2723]">
                 </div>
+
+                {{-- Phones: one button instead of a row of five, so the menu starts on the first screen. --}}
+                <div class="md:hidden relative shrink-0" x-data="{ more: false }" @click.outside="more = false" @keydown.escape.window="more = false">
+                    <button type="button" @click="more = !more" :aria-expanded="more ? 'true' : 'false'" aria-label="More: orders, cash, end shift"
+                            class="w-11 h-11 rounded-full bg-[#FAFAFA] border border-[#F0E6D2] text-[#3E2723] flex items-center justify-center">
+                        <x-lucide-ellipsis-vertical class="w-5 h-5" />
+                    </button>
+                    <div x-show="more" x-cloak x-transition.origin.top.right
+                         class="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#F0E6D2] py-2 z-20 overflow-hidden">
+                        <a href="{{ route('pos.history') }}" class="flex items-center gap-3 w-full min-h-[48px] px-4 text-sm font-bold text-[#3E2723] hover:bg-[#FDF8F5] text-left"><x-lucide-history class="w-4 h-4 text-[#795548]" /> Orders</a>
+                        @if(auth()->user()->isAdminOrAbove())
+                        <a href="{{ route('network.sessions') }}" class="flex items-center gap-3 w-full min-h-[48px] px-4 text-sm font-bold text-[#3E2723] hover:bg-[#FDF8F5] text-left"><x-lucide-wifi class="w-4 h-4 text-[#795548]" /> Who's Online</a>
+                        <a href="{{ route('sales.export') }}" class="flex items-center gap-3 w-full min-h-[48px] px-4 text-sm font-bold text-[#3E2723] hover:bg-[#FDF8F5] text-left"><x-lucide-download class="w-4 h-4 text-[#795548]" /> Download today's sales</a>
+                        @endif
+                        @if($activeShift)
+                        <button type="button" @click="more = false; recordCashAction()" class="flex items-center gap-3 w-full min-h-[48px] px-4 text-sm font-bold text-[#3E2723] hover:bg-[#FDF8F5] text-left"><x-lucide-banknote class="w-4 h-4 text-[#795548]" /> Cash in or out</button>
+                        <a href="{{ route('shift.closing-report', $activeShift->id) }}" class="flex items-center gap-3 w-full min-h-[48px] px-4 text-sm font-bold text-[#3E2723] hover:bg-[#FDF8F5] text-left text-amber-700 border-t border-[#F0E6D2]"><x-lucide-lock class="w-4 h-4" /> End Shift</a>
+                        @endif
+                    </div>
+                </div>
+                </div>
                 
-                <div class="w-full md:w-auto flex flex-wrap justify-center md:justify-end gap-2 sm:gap-3 items-center">
+                <div class="hidden md:flex md:w-auto flex-wrap justify-end gap-2 sm:gap-3 items-center">
                     {{-- History Access --}}
                     <a href="{{ route('pos.history') }}" class="min-h-[44px] bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#795548] hover:text-[#3E2723] px-3 sm:px-5 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center justify-center border border-[#F0E6D2] gap-2 whitespace-nowrap" title="Orders">
                         <x-lucide-history class="w-4 h-4" />
@@ -123,10 +145,10 @@
                 </div>
             </div>
 
-        <div class="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide shrink-0">
+        <div class="flex gap-2 sm:gap-3 mb-3 sm:mb-6 overflow-x-auto pb-2 scrollbar-hide shrink-0 -mx-1 px-1">
                 <template x-for="category in categories" :key="category.name">
                     <button @click="selectedCategory = category.name" 
-                            class="min-h-[44px] px-5 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border flex items-center gap-2 tracking-wide uppercase"
+                            class="min-h-[44px] px-4 sm:px-5 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border flex items-center gap-2 tracking-wide uppercase"
                             :class="selectedCategory === category.name ? 'bg-[#3E2723] text-white border-[#3E2723] shadow-md' : 'bg-[#FAFAFA] text-[#795548] border-[#F0E6D2] hover:bg-[#FDF8F5]'">
                         <span class="[&>svg]:w-3.5 [&>svg]:h-3.5" x-html="categoryIcons[category.name] || ''"></span>
                         <span x-text="category.name"></span>
@@ -134,7 +156,7 @@
                 </template>
             </div>
 
-            <h3 class="text-xl font-bold text-[#3E2723] mb-4 capitalize shrink-0" x-text="selectedCategory + ' Menu'"></h3>
+            <h3 class="hidden sm:block text-xl font-bold text-[#3E2723] mb-4 capitalize shrink-0" x-text="selectedCategory + ' Menu'"></h3>
 
             <div class="relative flex-1 w-full">
                 {{-- Below `lg` this is a normal in-flow block (the whole page scrolls naturally,
@@ -148,7 +170,7 @@
                                  :class="item.type === 'product' && !item.inStock ? 'cursor-not-allowed' : 'cursor-pointer active:scale-[0.98]'"
                                  class="bg-white p-2.5 sm:p-4 rounded-2xl sm:rounded-[1.5rem] shadow-[0_4px_15px_-3px_rgba(62,39,35,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(62,39,35,0.12)] transition duration-300 flex flex-col group relative border border-[#F0E6D2]/60 sm:border-transparent hover:border-[#FDF8F5] select-none">
                                 
-                                <div class="h-20 sm:h-32 w-full bg-[#FDF8F5] rounded-xl mb-2 sm:mb-4 flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-300 border border-[#F0E6D2]/50 shrink-0 relative overflow-hidden">
+                                <div class="h-16 sm:h-32 w-full bg-[#FDF8F5] rounded-xl mb-2 sm:mb-4 flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-300 border border-[#F0E6D2]/50 shrink-0 relative overflow-hidden">
                                     {{-- Visual cue based on category --}}
                                     <template x-if="item.type === 'wifi'">
                                         <x-lucide-wifi class="w-10 h-10 text-blue-800/20" />

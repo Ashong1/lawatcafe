@@ -11,13 +11,13 @@
 {{-- Layout, top to bottom: needs-attention -> KPIs -> Wi-Fi & network ->
      Barista AI -> sales detail. The network is the system's core, so it sits
      above the fold; there is one AI panel, not several entry points. --}}
-<div class="mb-6 border-b border-[#E6D5C3] pb-5 flex flex-col md:flex-row md:items-end justify-between gap-3">
+<div class="lk-page-head mb-6 border-b border-[#E6D5C3] pb-5 flex flex-col md:flex-row md:items-end justify-between gap-3">
     <div>
         <h2 class="flex items-center gap-3 text-[#3E2723]">
-            <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+            <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
             <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Control Center</span>
         </h2>
-        <p class="text-sm text-[#795548] mt-1 font-medium">Network and sales at a glance &mdash; {{ now()->format('l, F jS') }}</p>
+        <p class="lk-page-desc text-sm text-[#795548] mt-1 font-medium">Network and sales at a glance &mdash; {{ now()->format('l, F jS') }}</p>
     </div>
 </div>
 
@@ -48,17 +48,18 @@
 <div class="grid grid-cols-2 sm:flex sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3 mb-6">
     @php
         $quickActions = array_filter([
-            auth()->user()->isSuperAdmin() ? null : ['route' => route('pos'), 'icon' => 'lucide-shopping-cart', 'label' => 'Open Register'],
-            ['route' => route('network.vouchers.index', ['action' => 'generate']), 'icon' => 'lucide-ticket', 'label' => 'Make Wi-Fi Codes'],
-            ['route' => route('inventory.deliveries.index', ['action' => 'receive']), 'icon' => 'lucide-truck', 'label' => 'Receive Supplies'],
-            ['route' => route('sales.export'), 'icon' => 'lucide-file-text', 'label' => "Download Today's Sales"],
-            ['route' => route('network.traffic'), 'icon' => 'lucide-activity', 'label' => 'Wi-Fi Speed'],
+            auth()->user()->isSuperAdmin() ? null : ['route' => route('pos'), 'icon' => 'lucide-shopping-cart', 'label' => 'Open Register', 'short' => 'Register'],
+            ['route' => route('network.vouchers.index', ['action' => 'generate']), 'icon' => 'lucide-ticket', 'label' => 'Make Wi-Fi Codes', 'short' => 'Wi-Fi Codes'],
+            ['route' => route('inventory.deliveries.index', ['action' => 'receive']), 'icon' => 'lucide-truck', 'label' => 'Receive Supplies', 'short' => 'Supplies'],
+            ['route' => route('sales.export'), 'icon' => 'lucide-file-text', 'label' => "Download Today's Sales", 'short' => "Today's Sales"],
+            ['route' => route('network.traffic'), 'icon' => 'lucide-activity', 'label' => 'Wi-Fi Speed', 'phone' => false],
         ]);
     @endphp
     @foreach($quickActions as $action)
-        <a href="{{ $action['route'] }}" class="min-h-[48px] bg-white px-3 sm:px-4 py-2 rounded-xl border border-[#F0E6D2] hover:border-[#3E2723] transition-all flex items-center gap-2 active:scale-95 text-sm font-bold text-[#3E2723] leading-tight">
+        <a href="{{ $action['route'] }}" class="{{ ($action['phone'] ?? true) ? 'flex' : 'hidden sm:flex' }} min-h-[48px] bg-white px-3 sm:px-4 py-2 rounded-xl border border-[#F0E6D2] hover:border-[#3E2723] transition-all items-center gap-2 active:scale-95 text-sm font-bold text-[#3E2723] leading-tight">
             <x-dynamic-component :component="$action['icon']" class="w-4 h-4 text-[#795548]" />
-            {{ $action['label'] }}
+            <span class="sm:hidden">{{ $action['short'] ?? $action['label'] }}</span>
+            <span class="hidden sm:inline">{{ $action['label'] }}</span>
         </a>
     @endforeach
 </div>
@@ -235,7 +236,7 @@
     <div x-show="live.aiFindings.length > 0" x-cloak class="space-y-2 pt-4 border-t border-white/10">
         <p class="text-sm text-amber-100/90" x-show="live.latestAiNarrative" x-text="live.latestAiNarrative"></p>
         <template x-for="(finding, index) in live.aiFindings" :key="index">
-            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/5">
+            <div class="items-start gap-3 p-3 rounded-xl bg-white/5" :class="index >= 3 ? 'hidden sm:flex' : 'flex'">
                 <span class="w-2 h-2 rounded-full mt-1.5 shrink-0" :class="finding.severity === 'danger' ? 'bg-red-400' : 'bg-amber-400'"></span>
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-bold text-white" x-text="finding.summary"></p>
