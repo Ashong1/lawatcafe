@@ -68,11 +68,14 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 translate-x-0"
                  x-transition:leave-end="opacity-0 translate-x-2">
-                <div class="w-10 h-10 bg-[#FDF8F5] border border-[#F0E6D2] rounded-lg flex items-center justify-center shrink-0">
+                <div class="w-10 h-10 bg-[#FDF8F5] border border-[#F0E6D2] rounded-lg flex items-center justify-center shrink-0 overflow-hidden">
+                    <template x-if="cartItem.image">
+                        <img :src="cartItem.image" alt="" class="w-full h-full object-cover" loading="lazy">
+                    </template>
                     <template x-if="cartItem.type === 'wifi'">
                         <x-lucide-wifi class="w-5 h-5 text-amber-800/30" />
                     </template>
-                    <template x-if="cartItem.type !== 'wifi'">
+                    <template x-if="cartItem.type !== 'wifi' && !cartItem.image">
                         <x-lucide-coffee class="w-5 h-5 text-amber-800/30" />
                     </template>
                 </div>

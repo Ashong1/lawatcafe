@@ -127,8 +127,14 @@ For how each piece works inside, follow the links to the other guides.
 
 - **Ingredients** with a base unit and an optional packaging unit (add stock
   as "2 boxes", track it in grams), a low-stock threshold, and a status.
-- **Products** with a price, category and recipe (how much of each
-  ingredient one serving uses).
+- **Products** with a price, category, recipe (how much of each
+  ingredient one serving uses) and an optional **photo**. The photo shows on
+  the register's product cards and cart, the product list and the guest Wi-Fi
+  menu. On a phone, **Add a photo** offers the camera or the gallery; the
+  browser shrinks the picture to about 100 KB before uploading (the server
+  has no image library to do it). Files live in `storage/app/public/products`
+  and are deleted when replaced, removed or when the product is deleted
+  (`ProductImageService`).
 - **Categories** with an icon, colour and order. *Food* or *drink* drives
   the register's pairing suggestions. Barista AI can suggest a description
   and icon.

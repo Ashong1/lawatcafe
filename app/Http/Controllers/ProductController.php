@@ -6,10 +6,18 @@ use App\Models\Category;
 use App\Models\Ingredient;
 use App\Models\Product;
 use App\Services\AIService;
+use App\Services\ProductImageService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    private const IMAGE_MESSAGES = [
+        'image.image' => 'That file is not a photo.',
+        'image.mimes' => 'Use a JPG, PNG or WebP photo.',
+        'image.max' => 'That photo is over 2 MB. Try another one, or take it again.',
+        'image.uploaded' => 'That photo is over 2 MB. Try another one, or take it again.',
+    ];
+
     // 1. Display the products on the page
     public function index(Request $request)
     {
@@ -27,7 +35,7 @@ class ProductController extends Controller
     }
 
     // 2. Save a brand new product to the database
-    public function store(Request $request)
+    public function store(Request $request, ProductImageService $images)
     {
         // Validate the incoming data so we don't save blank/bad info
         $validated = $request->validate([
@@ -38,10 +46,13 @@ class ProductController extends Controller
             'ingredients' => 'nullable|array',
             'ingredients.*.id' => 'exists:ingredients,id',
             'ingredients.*.quantity' => 'numeric|min:0',
-        ]);
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'remove_image' => 'nullable|boolean',
+        ], self::IMAGE_MESSAGES);
 
         // Create it in the database
-        $product = Product::create($validated);
+        $product = Product::create(collect($validated)->except(['image', 'remove_image'])->all());
+        $images->replace($product, $request->file('image'));
 
         if (! empty($request->ingredients)) {
             foreach ($request->ingredients as $ing) {
@@ -62,7 +73,7 @@ class ProductController extends Controller
     }
 
     // 3. Update an existing product
-    public function update(Request $request, Product $product)
+    public function update(Request $request, Product $product, ProductImageService $images)
     {
         // Validate the new data
         $validated = $request->validate([
@@ -73,10 +84,13 @@ class ProductController extends Controller
             'ingredients' => 'nullable|array',
             'ingredients.*.id' => 'exists:ingredients,id',
             'ingredients.*.quantity' => 'numeric|min:0',
-        ]);
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'remove_image' => 'nullable|boolean',
+        ], self::IMAGE_MESSAGES);
 
         // Update the specific product in the database
-        $product->update($validated);
+        $product->update(collect($validated)->except(['image', 'remove_image'])->all());
+        $images->replace($product, $request->file('image'), $request->boolean('remove_image'));
 
         // Sync ingredients for the recipe
         $syncData = [];

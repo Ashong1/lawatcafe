@@ -48,12 +48,16 @@
                         <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                             <td class="py-4 px-6">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-10 h-10 rounded-xl bg-[#FAFAFA] border border-[#F0E6D2] flex items-center justify-center text-amber-800/30 shadow-sm shrink-0">
+                                    <div class="w-10 h-10 rounded-xl bg-[#FAFAFA] border border-[#F0E6D2] flex items-center justify-center text-amber-800/30 shadow-sm shrink-0 overflow-hidden">
+                                        @if($product->image_url)
+                                            <img src="{{ $product->image_url }}" alt="" class="w-full h-full object-cover" loading="lazy">
+                                        @else
                                         @php
                                             $cat = $categories->firstWhere('name', $product->category);
                                             $icon = $cat ? 'lucide-' . $cat->icon : 'lucide-coffee';
                                         @endphp
                                         <x-dynamic-component :component="$icon" class="w-5 h-5 text-[#795548]" />
+                                        @endif
                                     </div>
                                     <div class="flex flex-col">
                                         <span class="font-bold text-[#3E2723] text-sm">{{ $product->name }}</span>
@@ -163,7 +167,7 @@
                 </div>
             </div>
             
-            <form :action="formAction" method="POST" @submit="submitting = true">
+            <form :action="formAction" method="POST" enctype="multipart/form-data" @submit="if (photoBusy) { $event.preventDefault(); return; } submitting = true">
                 @csrf
                 <template x-if="isEditing">
                     <input type="hidden" name="_method" value="PUT">
@@ -171,6 +175,31 @@
 
                 <div class="p-8 space-y-6">
                     <div x-show="activeTab === 'general'" class="space-y-5">
+                        <div>
+                            <p class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5 ml-1">Photo <span class="normal-case font-medium">(shows on the register and the guest menu)</span></p>
+                            <div class="flex items-center gap-4">
+                                <div class="w-24 h-24 rounded-2xl bg-[#FAFAFA] border-2 border-dashed @error('image') border-red-500 @else border-[#F0E6D2] @enderror overflow-hidden flex items-center justify-center shrink-0 relative">
+                                    <img x-show="photoPreview" :src="photoPreview" alt="" class="w-full h-full object-cover">
+                                    <x-lucide-image-plus x-show="!photoPreview" class="w-8 h-8 text-[#D7CCC8]" />
+                                    <div x-show="photoBusy" x-cloak class="absolute inset-0 bg-white/70 flex items-center justify-center">
+                                        <svg class="w-5 h-5 animate-spin text-[#3E2723]" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-start gap-2 min-w-0">
+                                    {{-- accept="image/*" lets Android offer the camera as well as the gallery. --}}
+                                    <label class="cursor-pointer min-h-[44px] inline-flex items-center gap-2 px-4 rounded-xl bg-[#3E2723] hover:bg-[#271815] text-white text-xs font-bold uppercase tracking-wide transition">
+                                        <x-lucide-camera class="w-4 h-4" />
+                                        <span x-text="photoPreview ? 'Change photo' : 'Add a photo'"></span>
+                                        <input type="file" name="image" accept="image/*" class="sr-only" x-ref="photoInput" @change="pickPhoto($event)">
+                                    </label>
+                                    <button type="button" x-show="photoPreview" x-cloak @click="removePhoto()" class="min-h-[36px] text-xs font-bold text-red-600 hover:text-red-700 uppercase tracking-wide">Remove photo</button>
+                                    <p x-show="photoStatus" x-cloak x-text="photoStatus" class="text-xs font-bold text-red-600"></p>
+                                </div>
+                            </div>
+                            <input type="hidden" name="remove_image" :value="removeImage ? 1 : 0">
+                            <x-field-error name="image" />
+                        </div>
+
                         <div>
                             <label for="product-name" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5 ml-1">Product Name</label>
                             <input type="text" id="product-name" name="name" x-model="formData.name" required class="w-full bg-[#FAFAFA] border-2 @error('name') border-red-500 @enderror rounded-xl px-4 py-3 text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all" placeholder="e.g. Spanish Latte">
@@ -270,6 +299,10 @@
             formAction: '{{ route('inventory.products.store') }}',
             formData: { id: null, name: '', category: '', price: '', status: 'Active' },
             currentRecipe: [],
+            photoPreview: null,
+            photoBusy: false,
+            photoStatus: '',
+            removeImage: false,
             // Seeded from the server, not left empty. The badge's TEXT had a
             // fallback to the server value but its COLOUR did not: against an
             // empty map, `statuses[id] === 'Active'` compared undefined and
@@ -286,6 +319,7 @@
                 this.formAction = '{{ route('inventory.products.store') }}';
                 this.formData = { id: null, name: '', category: '', price: '', status: 'Active' };
                 this.currentRecipe = [];
+                this.resetPhoto(null);
                 this.submitting = false;
                 this.isModalOpen = true;
             },
@@ -296,6 +330,7 @@
                 this.modalTitle = 'Edit Product';
                 this.formAction = `/inventory/products/${product.id}`;
                 this.formData = { ...product };
+                this.resetPhoto(product.image_url);
                 this.currentRecipe = (product.ingredients || []).map(ing => ({
                     id: ing.id,
                     quantity: ing.pivot.quantity
@@ -353,6 +388,63 @@
             },
 
             closeModal() { this.isModalOpen = false; },
+
+            resetPhoto(url) {
+                this.photoPreview = url;
+                this.removeImage = false;
+                this.photoStatus = '';
+                if (this.$refs.photoInput) this.$refs.photoInput.value = '';
+            },
+
+            removePhoto() {
+                this.resetPhoto(null);
+                this.removeImage = true;
+            },
+
+            // Phone photos are 3-8 MB; the server takes 2 MB and can't resize
+            // (no GD), so the browser shrinks them to a ~100 KB JPEG first and
+            // puts that back into the file input for a normal form submit.
+            async pickPhoto(event) {
+                const input = event.target;
+                const file = input.files && input.files[0];
+                if (!file) return;
+                this.photoStatus = '';
+                if (!file.type.startsWith('image/')) {
+                    input.value = '';
+                    this.photoStatus = 'That file is not a photo.';
+                    return;
+                }
+                this.photoBusy = true;
+                try {
+                    const bitmap = await createImageBitmap(file);
+                    const render = (maxSide, quality) => new Promise((resolve, reject) => {
+                        const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.round(bitmap.width * scale);
+                        canvas.height = Math.round(bitmap.height * scale);
+                        canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                        canvas.toBlob((b) => (b ? resolve(b) : reject()), 'image/jpeg', quality);
+                    });
+                    let blob = await render(900, 0.82);
+                    if (blob.size > 1900000) blob = await render(700, 0.7);
+                    const transfer = new DataTransfer();
+                    transfer.items.add(new File([blob], 'photo.jpg', { type: 'image/jpeg' }));
+                    input.files = transfer.files;
+                    this.photoPreview = URL.createObjectURL(blob);
+                    this.removeImage = false;
+                } catch (e) {
+                    // Couldn't decode it here (some HEIC photos): send it as-is if the server will take it.
+                    if (file.size <= 2 * 1024 * 1024 && ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                        this.photoPreview = URL.createObjectURL(file);
+                        this.removeImage = false;
+                    } else {
+                        input.value = '';
+                        this.photoStatus = "Couldn't use that photo. Try another one, or take it with the camera.";
+                    }
+                } finally {
+                    this.photoBusy = false;
+                }
+            },
             addIngredientRow() { this.currentRecipe.push({ id: '', quantity: '' }); },
             removeIngredientRow(index) { this.currentRecipe.splice(index, 1); }
         }))

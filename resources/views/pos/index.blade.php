@@ -170,12 +170,17 @@
                                  :class="item.type === 'product' && !item.inStock ? 'cursor-not-allowed' : 'cursor-pointer active:scale-[0.98]'"
                                  class="bg-white p-2.5 sm:p-4 rounded-2xl sm:rounded-[1.5rem] shadow-[0_4px_15px_-3px_rgba(62,39,35,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(62,39,35,0.12)] transition duration-300 flex flex-col group relative border border-[#F0E6D2]/60 sm:border-transparent hover:border-[#FDF8F5] select-none">
                                 
-                                <div class="h-16 sm:h-32 w-full bg-[#FDF8F5] rounded-xl mb-2 sm:mb-4 flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-300 border border-[#F0E6D2]/50 shrink-0 relative overflow-hidden">
+                                <div class="h-24 sm:h-32 w-full bg-[#FDF8F5] rounded-xl mb-2 sm:mb-4 flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-300 border border-[#F0E6D2]/50 shrink-0 relative overflow-hidden">
                                     {{-- Visual cue based on category --}}
                                     <template x-if="item.type === 'wifi'">
                                         <x-lucide-wifi class="w-10 h-10 text-blue-800/20" />
                                     </template>
-                                    <template x-if="item.type !== 'wifi'">
+                                    <template x-if="item.image">
+                                        <img :src="item.image" :alt="item.name" loading="lazy" decoding="async" draggable="false"
+                                             class="absolute inset-0 w-full h-full object-cover"
+                                             :class="item.type === 'product' && !item.inStock ? 'grayscale opacity-60' : ''">
+                                    </template>
+                                    <template x-if="item.type !== 'wifi' && !item.image">
                                         <div class="flex items-center justify-center [&>svg]:w-10 [&>svg]:h-10"
                                              :style="categoryColors[item.category] ? 'color: ' + categoryColors[item.category] + '30' : 'color: rgb(146 64 14 / 0.2)'"
                                              x-html="categoryIcons[item.category] || fallbackIcon"></div>

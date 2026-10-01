@@ -9,6 +9,18 @@ the history was rewritten.
 
 ---
 
+## 1.23.0 — Product photos
+*build 195*
+
+- Products can have a **photo**: in Product Menu → Add or Edit, tap
+  **Add a photo** to take one with the camera or pick one from the gallery.
+- Photos show on the **register** (product cards and the cart), in the
+  **product list**, and on the **guest Wi-Fi menu**. Products without a
+  photo keep their category icon.
+- Phone photos are shrunk on the phone to about 100 KB before uploading, so
+  saving is quick and storage stays small. Replacing or removing a photo, or
+  deleting the product, deletes the old file.
+
 ## 1.22.0 — Adding staff by email invite
 *build 194*
 

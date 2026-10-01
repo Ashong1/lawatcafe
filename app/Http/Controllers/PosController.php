@@ -55,6 +55,7 @@ class PosController extends Controller
                 'name' => $product->name,
                 'price' => (float) $product->price, // Ensure it's a number for JS math
                 'category' => $product->category,
+                'image' => $product->image_url,
                 'type' => 'product', // Distinguishes it from Wi-Fi add-ons
                 'inStock' => $inStock,
                 'isLowStock' => $isLowStock,

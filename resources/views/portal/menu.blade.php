@@ -115,8 +115,13 @@
 
                             <div class="space-y-8">
                                 @foreach($group['items'] as $item)
-                                    <div class="group cursor-default">
-                                        <div class="flex justify-between items-baseline mb-1">
+                                    <div class="group cursor-default flex items-center gap-4">
+                                        @if($item->image_url)
+                                            {{-- Served by this server: guests have no internet before signing in. --}}
+                                            <img src="{{ $item->image_url }}" alt="{{ $item->name }}" loading="lazy" decoding="async"
+                                                 class="w-16 h-16 rounded-2xl object-cover shrink-0 border border-[#F0E6D2] bg-[#FDF8F5]">
+                                        @endif
+                                        <div class="flex-1 min-w-0 flex justify-between items-baseline mb-1">
                                             <p class="text-base font-bold text-[#3E2723]">{{ $item->name }}</p>
                                             <div class="flex-1 mx-4 border-b border-dotted border-[#E6D5C3]"></div>
                                             <span class="font-bold text-[#3E2723] text-base tabular-nums tracking-tighter block">₱{{ number_format($item->price, 2) }}</span>
