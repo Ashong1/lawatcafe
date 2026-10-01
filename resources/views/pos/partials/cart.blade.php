@@ -32,17 +32,21 @@
      x-transition:leave-start="opacity-100 translate-y-0"
      x-transition:leave-end="opacity-0 -translate-y-1"
      class="shrink-0 mb-3 p-3 rounded-xl border border-amber-200 bg-amber-50 flex items-center gap-3" style="display: none;">
-    <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-        <x-lucide-message-circle class="w-4 h-4 text-amber-700" />
+    <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0" :class="suggestion?.reason === 'free_wifi' ? 'bg-blue-100' : 'bg-amber-100'">
+        <x-lucide-wifi class="w-4 h-4 text-blue-700" x-show="suggestion?.reason === 'free_wifi'" />
+        <x-lucide-message-circle class="w-4 h-4 text-amber-700" x-show="suggestion?.reason !== 'free_wifi'" />
     </div>
     {{-- Labelled and quoted so it reads as a line to say, not a note about the
          products. A cashier glancing at this mid-order needs to know instantly
          that it is speakable as-is. --}}
     <div class="flex-1 min-w-0">
-        <span class="block text-xs font-bold uppercase tracking-wide text-amber-800 mb-0.5">Say to customer</span>
+        <span class="block text-xs font-bold uppercase tracking-wide text-amber-800 mb-0.5"
+              x-text="suggestion?.reason === 'free_wifi' ? 'Say to customer · free Wi-Fi' : 'Say to customer'"></span>
         {{-- Real quote characters, not HTML entities: x-text sets textContent,
-             so an entity would show up literally as &ldquo; on screen. --}}
+             so an entity would show up literally as &ldquo; on screen. English
+             and Tagalog both shown; the cashier says whichever fits. --}}
         <p class="text-xs font-bold text-amber-900 leading-snug" x-text="suggestion && '“' + suggestion.message + '”'"></p>
+        <p x-show="suggestion?.message_tl" class="text-xs font-medium italic text-amber-900 leading-snug mt-1" lang="tl" x-text="suggestion && '“' + suggestion.message_tl + '”'"></p>
     </div>
     <button type="button" @click="addSuggestion()" class="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full transition">Add</button>
     <button type="button" @click="dismissSuggestion()" aria-label="Dismiss suggestion" class="shrink-0 w-6 h-6 flex items-center justify-center text-amber-700 hover:text-amber-900 transition">

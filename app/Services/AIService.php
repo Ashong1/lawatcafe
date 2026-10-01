@@ -1430,14 +1430,15 @@ Return ONLY a JSON array, at most 5 items:
     }
 
     /**
-     * Ultra-low-latency, best-effort phrasing for the POS upsell suggestion
-     * toast. Tries exactly one provider with a hard ~2s cap and no cascade —
-     * this fires on every single add-to-cart, so a slow/unavailable AI must
-     * never hold up the (already-computed, always-correct) data-driven
-     * suggestion. Returns null on any failure/timeout; caller must have a
-     * simple template fallback.
+     * Best-effort English and Tagalog phrasing for the POS "say to customer"
+     * line. One model, a hard ~3s cap and no cascade: the pairing itself is
+     * already decided without AI, and the caller caches the result per pair,
+     * so only the first add of a pairing ever waits. Returns null on any
+     * failure; the caller has fixed sentences to fall back on.
+     *
+     * @return array{en: string, tl: string}|null
      */
-    public function phraseSuggestion(string $itemName, string $suggestedName): ?string
+    public function phraseSuggestion(string $itemName, string $suggestedName, int $timeout = 3): ?array
     {
         if (! $this->openRouterKey || $this->providerIsOpen('openrouter') || InternetStatus::isDown()) {
             return null;
@@ -1449,17 +1450,17 @@ Return ONLY a JSON array, at most 5 items:
                 return null;
             }
             // Written as the line the CASHIER SAYS, not a description of the
-            // pairing. The old prompt asked for "a friendly suggestion", which
-            // produced blurbs about the products — true, but nothing a barista
-            // can read out to the person in front of them. What is actually
-            // useful at a till is the sentence itself.
+            // pairing: blurbs about the products are true but nothing a barista
+            // can read out. In English and Tagalog, because customers here are
+            // served in either, and the cashier picks whichever fits.
             $prompt = 'You are helping a cashier at a Filipino coffee shop offer a customer something extra. '
                 ."The customer just ordered: {$itemName}. You want to offer them: {$suggestedName}. "
-                .'Write ONLY the one sentence the cashier should say out loud to the customer. '
-                .'Speak directly to the customer using "you". Keep it under 15 words, warm and natural, the way a real barista talks — not a slogan and not pushy. '
-                .'No markdown, no quotation marks, no emoji, no preamble.';
+                .'Write the one sentence the cashier should say out loud to the customer, once in English and once in natural, polite Tagalog (use "po"). '
+                .'Speak directly to the customer. Keep each under 15 words, warm and natural, the way a real barista talks, not a slogan and not pushy. '
+                .'Keep product names as they are. No emoji. '
+                .'Answer with ONLY this JSON: {"en": "...", "tl": "..."}';
 
-            $response = Http::timeout(2)->withHeaders([
+            $response = Http::timeout($timeout)->withHeaders([
                 'Authorization' => 'Bearer '.$this->openRouterKey,
                 'HTTP-Referer' => config('app.url'),
                 'X-Title' => config('app.name'),
@@ -1474,15 +1475,39 @@ Return ONLY a JSON array, at most 5 items:
                 return null;
             }
 
-            $text = trim($response->json('choices.0.message.content') ?? '');
-            $this->recordProviderResult('openrouter', $text !== '');
+            $lines = self::parseBilingualLines((string) ($response->json('choices.0.message.content') ?? ''));
+            $this->recordProviderResult('openrouter', $lines !== null);
 
-            return $text !== '' ? $text : null;
+            return $lines;
         } catch (\Exception $e) {
             $this->recordProviderResult('openrouter', false);
 
             return null;
         }
+    }
+
+    /**
+     * {"en": "...", "tl": "..."} from a model reply, tolerating a code fence or
+     * text around the JSON. Null unless both lines are present and short
+     * enough to say: half an answer falls back to the fixed sentences.
+     *
+     * @return array{en: string, tl: string}|null
+     */
+    public static function parseBilingualLines(string $text): ?array
+    {
+        if (! preg_match('/\{.*\}/s', $text, $m)) {
+            return null;
+        }
+        $data = json_decode($m[0], true);
+        $clean = fn ($v) => is_string($v) ? trim(str_replace(['"', '“', '”'], '', $v)) : '';
+        $en = $clean($data['en'] ?? null);
+        $tl = $clean($data['tl'] ?? null);
+
+        if ($en === '' || $tl === '' || mb_strlen($en) > 160 || mb_strlen($tl) > 160) {
+            return null;
+        }
+
+        return ['en' => $en, 'tl' => $tl];
     }
 
     /** Short-TTL cache: these run on every chat call. */

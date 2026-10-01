@@ -165,6 +165,42 @@ class PairingSuggestionService
         return $best ? $this->toArray($best) : null;
     }
 
+    /**
+     * An item that takes the order to the owner's free Wi-Fi minimum, or null
+     * when the order already qualifies, the promo is off, or no single in-stock
+     * item closes the gap. The cheapest item that is enough is the easiest yes
+     * for the customer; it is looked for first in the usual pairing's category
+     * (food with a drink), then across the menu.
+     *
+     * @param  float  $cartTotal  What the customer pays now (after any discount).
+     * @param  float  $discountRate  0.2 under the senior/PWD discount: an added item then counts at 80%.
+     * @param  array{product_id:int,name:string,price:float}|null  $pairing
+     * @return array{product_id:int,name:string,price:float}|null
+     */
+    public function freeWifiTopUp(float $cartTotal, float $discountRate, array $excludeProductIds, ?array $pairing): ?array
+    {
+        $minimum = (float) Setting::get('free_wifi_min_amount', 200);
+        if ($minimum <= 0 || $cartTotal <= 0 || $cartTotal >= $minimum) {
+            return null;
+        }
+
+        $neededPrice = round(($minimum - $cartTotal) / max(0.01, 1 - $discountRate), 2);
+
+        $candidates = Product::with('ingredients')
+            ->where('status', 'Active')
+            ->whereNotIn('id', $excludeProductIds)
+            ->where('price', '>=', $neededPrice)
+            ->orderBy('price')
+            ->orderBy('name')
+            ->get()
+            ->filter(fn (Product $p) => $p->ingredients->every(fn ($i) => $i->current_stock >= $i->pivot->quantity));
+
+        $pairingCategory = $pairing ? Product::find($pairing['product_id'])?->category : null;
+        $best = $candidates->firstWhere('category', $pairingCategory) ?? $candidates->first();
+
+        return $best ? $this->toArray($best) : null;
+    }
+
     private function toArray(Product $product): array
     {
         return ['product_id' => $product->id, 'name' => $product->name, 'price' => (float) $product->price];

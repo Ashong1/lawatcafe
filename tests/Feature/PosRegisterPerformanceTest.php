@@ -49,6 +49,7 @@ class PosRegisterPerformanceTest extends TestCase
         $this->assertCount(1, $lowStock, 'one alert when milk reaches the threshold, none for later sales');
     }
 
+    /** Asked once, after the first reply has gone out; never on the cashier's time. */
     public function test_the_ai_pairing_line_is_asked_for_once_per_pair(): void
     {
         Category::create(['name' => 'Coffee', 'icon' => 'coffee', 'is_food' => false]);
@@ -56,13 +57,34 @@ class PosRegisterPerformanceTest extends TestCase
         $latte = Product::create(['name' => 'Latte', 'category' => 'Coffee', 'price' => 120, 'status' => 'Active']);
         Product::create(['name' => 'Waffle', 'category' => 'Pastries', 'price' => 90, 'status' => 'Active']);
 
-        $this->mock(AIService::class, fn ($m) => $m->shouldReceive('phraseSuggestion')->once()->andReturn('Would you like a waffle with that?'));
+        $this->mock(AIService::class, fn ($m) => $m->shouldReceive('phraseSuggestion')->once()->andReturn(['en' => 'Would you like a waffle with that?', 'tl' => "Gusto n'yo po ba ng waffle?"]));
         $staff = User::factory()->create(['role' => 'staff']);
 
-        foreach (range(1, 3) as $i) {
+        $this->actingAs($staff)->postJson(route('pos.suggest-pairing'), ['product_id' => $latte->id])
+            ->assertJsonPath('suggestion.message', 'Would you like a Waffle to go with that?');
+
+        foreach (range(1, 2) as $i) {
             $this->actingAs($staff)->postJson(route('pos.suggest-pairing'), ['product_id' => $latte->id])
                 ->assertJsonPath('suggestion.message', 'Would you like a waffle with that?');
         }
+    }
+
+    public function test_the_ai_is_asked_on_the_queue_not_while_the_cashier_waits(): void
+    {
+        \Illuminate\Support\Facades\Queue::fake();
+        Category::create(['name' => 'Coffee', 'icon' => 'coffee', 'is_food' => false]);
+        Category::create(['name' => 'Pastries', 'icon' => 'croissant', 'is_food' => true]);
+        $latte = Product::create(['name' => 'Latte', 'category' => 'Coffee', 'price' => 120, 'status' => 'Active']);
+        Product::create(['name' => 'Waffle', 'category' => 'Pastries', 'price' => 90, 'status' => 'Active']);
+        $this->mock(AIService::class, fn ($m) => $m->shouldNotReceive('phraseSuggestion'));
+        $staff = User::factory()->create(['role' => 'staff']);
+
+        foreach (range(1, 2) as $i) {
+            $this->actingAs($staff)->postJson(route('pos.suggest-pairing'), ['product_id' => $latte->id])
+                ->assertJsonPath('suggestion.message', 'Would you like a Waffle to go with that?');
+        }
+
+        \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\PhrasePairingLine::class, 1);
     }
 
     public function test_menu_cards_share_one_icon_per_category(): void

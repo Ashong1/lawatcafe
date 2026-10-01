@@ -150,6 +150,7 @@ class PosPairingSuggestionTest extends TestCase
         $message = $response->json('suggestion.message');
 
         $this->assertSame('Would you like a Classic Waffles to go with that?', $message);
+        $this->assertSame("Gusto n'yo rin po ba ng Classic Waffles kasabay nito?", $response->json('suggestion.message_tl'));
         // The old wording described the pairing instead of offering it.
         $this->assertStringNotContainsString('Pairs well with', $message);
     }
@@ -161,12 +162,19 @@ class PosPairingSuggestionTest extends TestCase
 
         $this->mock(AIService::class, fn ($mock) => $mock->shouldReceive('phraseSuggestion')
             ->once()
-            ->andReturn('Would you like some warm waffles with that latte?'));
+            ->andReturn(['en' => 'Would you like some warm waffles with that latte?', 'tl' => 'Gusto n\'yo po ba ng mainit na waffles?']));
 
-        $response = $this->actingAs(User::factory()->create(['role' => 'staff']))
-            ->postJson(route('pos.suggest-pairing'), ['product_id' => $menu['latte']->id]);
+        $staff = User::factory()->create(['role' => 'staff']);
+
+        // The first add answers at once with the fixed sentence; the AI is
+        // asked after that reply has gone out.
+        $this->actingAs($staff)->postJson(route('pos.suggest-pairing'), ['product_id' => $menu['latte']->id])
+            ->assertJsonPath('suggestion.message', 'Would you like a Classic Waffles to go with that?');
+
+        $response = $this->actingAs($staff)->postJson(route('pos.suggest-pairing'), ['product_id' => $menu['latte']->id]);
 
         $response->assertJsonPath('suggestion.message', 'Would you like some warm waffles with that latte?');
+        $response->assertJsonPath('suggestion.message_tl', 'Gusto n\'yo po ba ng mainit na waffles?');
     }
 
     /** The prompt must ask for a spoken line, not a description. */
@@ -184,6 +192,7 @@ class PosPairingSuggestionTest extends TestCase
             $body = json_encode($request->data());
 
             return str_contains($body, 'the cashier should say out loud')
+                && str_contains($body, 'Tagalog')
                 && str_contains($body, 'Classic Latte')
                 && str_contains($body, 'Classic Waffles');
         });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\PhrasePairingLine;
 use App\Models\Category;
 use App\Models\Ingredient;
 use App\Models\InventoryLog;
@@ -13,7 +14,6 @@ use App\Models\Shift;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Notifications\SystemAlert;
-use App\Services\AIService;
 use App\Services\PairingSuggestionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -340,15 +340,31 @@ class PosController extends Controller
      * action, and routing it through ToolCallOrchestrator would add latency
      * for no benefit.
      */
-    public function suggestPairing(Request $request, PairingSuggestionService $pairing, AIService $ai)
+    public function suggestPairing(Request $request, PairingSuggestionService $pairing)
     {
         $request->validate([
             'product_id' => 'required|integer',
             'cart_product_ids' => 'nullable|array',
             'cart_product_ids.*' => 'integer',
+            'cart_total' => 'nullable|numeric|min:0',
+            'discount_rate' => 'nullable|numeric|min:0|max:0.5',
         ]);
 
-        $suggestion = $pairing->suggestFor((int) $request->product_id, $request->input('cart_product_ids', []));
+        $inCart = array_unique(array_merge($request->input('cart_product_ids', []), [(int) $request->product_id]));
+        $suggestion = $pairing->suggestFor((int) $request->product_id, $inCart);
+
+        // Short of the owner's free Wi-Fi minimum, the most useful offer is
+        // one item that gets the customer there.
+        $topUp = $pairing->freeWifiTopUp(
+            (float) $request->input('cart_total', 0),
+            (float) $request->input('discount_rate', 0),
+            $inCart,
+            $suggestion,
+        );
+
+        if ($topUp) {
+            return response()->json(['suggestion' => $topUp + ['reason' => 'free_wifi'] + $this->freeWifiLines($topUp)]);
+        }
 
         if (! $suggestion) {
             return response()->json(['suggestion' => null]);
@@ -356,31 +372,53 @@ class PosController extends Controller
 
         $itemName = Product::find($request->product_id)?->name ?? 'that item';
 
-        // Both the AI line and this fallback are things the cashier SAYS to the
-        // customer — a ready sentence, not a product fact ("Pairs well with
-        // X!") the barista has to turn into words in front of a waiting
-        // customer.
-        // Remembered per pair: the same two items get the same line, so only the
-        // first add of a pairing waits on the AI (up to 2 s); every later one is
-        // instant. A failed phrasing isn't remembered and is tried again.
-        $cacheKey = 'pos_pairing_line_'.md5($itemName.'|'.$suggestion['name']);
-        $message = Cache::get($cacheKey);
-        if ($message === null) {
-            $message = $ai->phraseSuggestion($itemName, $suggestion['name']);
-            if ($message !== null) {
-                Cache::put($cacheKey, $message, now()->addDays(7));
-            }
+        // Both the AI lines and the fallback are things the cashier SAYS to the
+        // customer, a ready sentence rather than a product fact. The free AI
+        // models take up to ~20 s, far too long at a counter, so the cashier
+        // gets the fixed sentence at once and a queued job asks the AI; once it
+        // answers, this pair uses its line. A failed phrasing isn't remembered
+        // and is tried again later.
+        $cacheKey = 'pos_pairing_lines_'.md5($itemName.'|'.$suggestion['name']);
+        $lines = Cache::get($cacheKey);
+        if ($lines === null && Cache::add($cacheKey.'_asking', true, now()->addMinutes(5))) {
+            PhrasePairingLine::dispatch($itemName, $suggestion['name'], $cacheKey);
         }
-        $message ??= "Would you like a {$suggestion['name']} to go with that?";
+        $lines ??= [
+            'en' => "Would you like a {$suggestion['name']} to go with that?",
+            'tl' => "Gusto n'yo rin po ba ng {$suggestion['name']} kasabay nito?",
+        ];
 
-        return response()->json([
-            'suggestion' => [
-                'product_id' => $suggestion['product_id'],
-                'name' => $suggestion['name'],
-                'price' => $suggestion['price'],
-                'message' => $message,
-            ],
-        ]);
+        return response()->json(['suggestion' => $suggestion + [
+            'reason' => 'pairing',
+            'message' => $lines['en'],
+            'message_tl' => $lines['tl'],
+        ]]);
+    }
+
+    /**
+     * Fixed sentences rather than AI: they carry this order's price and the
+     * owner's current promo, so there is nothing to cache and nothing to wait on.
+     *
+     * @return array{message: string, message_tl: string}
+     */
+    private function freeWifiLines(array $item): array
+    {
+        $minutes = (int) Setting::get('free_wifi_duration', 60);
+        $price = '₱'.rtrim(rtrim(number_format($item['price'], 2), '0'), '.');
+
+        if ($minutes % 60 === 0) {
+            $hours = intdiv($minutes, 60);
+            $en = $hours === 1 ? '1 hour' : "{$hours} hours";
+            $tl = "{$hours} oras";
+        } else {
+            $en = "{$minutes} minutes";
+            $tl = "{$minutes} minuto";
+        }
+
+        return [
+            'message' => "Add a {$item['name']} for {$price} and you get {$en} of free Wi-Fi!",
+            'message_tl' => "Dagdag po kayo ng {$item['name']} ({$price}), may libre na po kayong {$tl} na Wi-Fi!",
+        ];
     }
 
     public function receipt(Sale $sale)

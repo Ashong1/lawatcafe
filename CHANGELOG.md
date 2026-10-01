@@ -9,6 +9,22 @@ the history was rewritten.
 
 ---
 
+## 1.17.0 — "Say to customer" in English and Tagalog, with a free Wi-Fi nudge
+*build 183*
+
+- The register's "Say to customer" line now comes in English and Tagalog;
+  the cashier says whichever fits the customer.
+- When an order is just short of the owner's free Wi-Fi minimum, the
+  suggestion becomes one item that gets it there, e.g. "Add a Waffle for ₱90
+  and you get 1 hour of free Wi-Fi!" / "Dagdag po kayo ng Waffle (₱90), may
+  libre na po kayong 1 oras na Wi-Fi!". It picks the cheapest in-stock item
+  that is enough, preferring the kind that goes with the order (food with a
+  drink), and allows for the senior/PWD discount. It uses the minimum and
+  free time set in Settings, and goes away once the order qualifies.
+- The AI-written line no longer holds up the register: the fixed sentence
+  shows at once, and the AI's version (which the free models take up to 20
+  seconds to write) is prepared in the background and used from then on.
+
 ## 1.16.1 — Faster register; chat button and notifications no longer in the way
 *build 182*
 

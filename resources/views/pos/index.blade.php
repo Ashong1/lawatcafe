@@ -403,6 +403,10 @@
                     this.chatAvoidChanged();
                 });
                 this.$watch('cart.length', () => this.chatAvoidChanged());
+                // A "for free Wi-Fi" offer is moot once the order gets there another way.
+                this.$watch('grandTotal', (total) => {
+                    if (this.suggestion?.reason === 'free_wifi' && total >= this.freeWifiMinAmount) this.suggestion = null;
+                });
             },
 
             // The floating Barista AI button moves off the cart and the View
@@ -559,6 +563,8 @@
                         body: JSON.stringify({
                             product_id: product.id,
                             cart_product_ids: this.cart.filter(i => i.type === 'product').map(i => i.id),
+                            cart_total: this.grandTotal,
+                            discount_rate: this.discountAmount,
                         }),
                     });
                     if (!response.ok) return;
