@@ -8,7 +8,7 @@
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">KDS</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Kitchen Display</span>
             </h2>
             <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Live kitchen display for order preparation and management.</p>
         </div>

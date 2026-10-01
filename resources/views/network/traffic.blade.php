@@ -9,7 +9,7 @@
             <div>
                 <h2 class="flex items-center gap-3 text-[#3E2723]">
                     <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                    <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Traffic Shaping</span>
+                    <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Wi-Fi Speed</span>
                 </h2>
                 <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Live throughput across the guest network.</p>
             </div>
@@ -338,11 +338,9 @@
                 </div>
 
                 <p class="text-xs text-[#6D4C41] font-medium leading-relaxed">
-                    The agent can never leave these bounds, whatever it decides &mdash; a request outside them is
-                    applied at the nearest one. Every change is logged to
-                    <a href="{{ route('admin.ai.actions.index') }}" class="font-bold text-amber-700 hover:text-amber-900 underline">Agent Activity</a>
-                    and sends you a notification. To approve each change by hand instead, set
-                    "Adjust the Wi-Fi speed limit" to "Requires confirmation" on the Agent Permissions page.
+                    Barista AI never goes outside these limits. Every change shows in
+                    <a href="{{ route('admin.ai.actions.index') }}" class="font-bold text-amber-700 hover:text-amber-900 underline">Barista AI → Actions &amp; Approvals</a>
+                    and sends you a notification.
                 </p>
 
                 <button type="submit" class="w-full py-4 bg-white border-2 border-[#3E2723] hover:bg-[#FDF8F5] text-[#3E2723] rounded-xl font-bold text-xs uppercase tracking-wide transition-all active:scale-[0.98]">

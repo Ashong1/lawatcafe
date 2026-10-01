@@ -181,7 +181,7 @@
                       class="ml-3 whitespace-nowrap">Staff Hub</span>
             </a>
             
-            <a href="/pos" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('pos') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="POS Register">
+            <a href="/pos" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('pos') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Register">
                 <x-lucide-calculator class="w-6 h-6 shrink-0 {{ request()->is('pos') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
@@ -190,7 +190,7 @@
                       x-transition:leave="transition ease-in-out duration-300"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap">POS Register</span>
+                      class="ml-3 whitespace-nowrap">Register</span>
             </a>
 
             <a href="/kds" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('kds') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Kitchen Display">
@@ -205,7 +205,7 @@
                       class="ml-3 whitespace-nowrap">Kitchen Display</span>
             </a>
 
-            <a href="{{ route('pos.history') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('pos.history') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Order History">
+            <a href="{{ route('pos.history') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('pos.history') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Orders">
                 <x-lucide-history class="w-6 h-6 shrink-0 {{ request()->routeIs('pos.history') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
@@ -214,7 +214,7 @@
                       x-transition:leave="transition ease-in-out duration-300"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap">Order History</span>
+                      class="ml-3 whitespace-nowrap">Orders</span>
             </a>
 
             <a href="{{ route('staff.deliveries.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('staff.deliveries.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Receive Delivery">
@@ -229,7 +229,7 @@
                       class="ml-3 whitespace-nowrap">Receive Delivery</span>
             </a>
 
-            <a href="{{ route('network.vouchers.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.vouchers.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Vouchers">
+            <a href="{{ route('network.vouchers.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.vouchers.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Wi-Fi Codes">
                 <x-lucide-ticket class="w-6 h-6 shrink-0 {{ request()->routeIs('network.vouchers.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
@@ -238,10 +238,10 @@
                       x-transition:leave="transition ease-in-out duration-300"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap">Vouchers</span>
+                      class="ml-3 whitespace-nowrap">Wi-Fi Codes</span>
             </a>
 
-            <a href="{{ route('network.health') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.health') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Network Health">
+            <a href="{{ route('network.health') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.health') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Network Status">
                 <x-lucide-heart-pulse class="w-6 h-6 shrink-0 {{ request()->routeIs('network.health') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
@@ -250,10 +250,10 @@
                       x-transition:leave="transition ease-in-out duration-300"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap">Network Health</span>
+                      class="ml-3 whitespace-nowrap">Network Status</span>
             </a>
 
-            <a href="{{ route('network.sessions') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.sessions') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Active Sessions">
+            <a href="{{ route('network.sessions') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('network.sessions') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Who's Online">
                 <x-lucide-wifi class="w-6 h-6 shrink-0 {{ request()->routeIs('network.sessions') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
@@ -262,10 +262,10 @@
                       x-transition:leave="transition ease-in-out duration-300"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap">Active Sessions</span>
+                      class="ml-3 whitespace-nowrap">Who's Online</span>
             </a>
 
-            <a href="{{ route('ai.analysis.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('ai.analysis.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Findings History">
+            <a href="{{ route('ai.analysis.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('ai.analysis.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="What Barista AI Noticed">
                 <x-lucide-radar class="w-6 h-6 shrink-0 {{ request()->routeIs('ai.analysis.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
@@ -274,7 +274,7 @@
                       x-transition:leave="transition ease-in-out duration-300"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap">Findings History</span>
+                      class="ml-3 whitespace-nowrap">What Barista AI Noticed</span>
             </a>
 
             </nav>

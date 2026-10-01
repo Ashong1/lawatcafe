@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Store Preferences')
+@section('title', 'Store Settings')
 
 @section('content')
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
@@ -9,7 +9,7 @@
             <div>
                 <h2 class="flex items-center gap-3 text-[#3E2723]">
                     <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                    <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Store Preferences</span>
+                    <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Store Settings</span>
                 </h2>
                 <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Configure threshold alerts and default guest access.</p>
             </div>
@@ -95,7 +95,7 @@
                     </div>
 
                     <div class="pt-8 flex">
-                        <x-submit-button label="Update Store Preferences" loading-label="Saving…" />
+                        <x-submit-button label="Save Store Settings" loading-label="Saving…" />
                     </div>
                 </div>
 

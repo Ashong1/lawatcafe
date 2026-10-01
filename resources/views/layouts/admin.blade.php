@@ -6,9 +6,11 @@
     // auto-open/close). $routeDefaults only seeds the very first visit; after
     // that the cookie wins wholesale for every key it contains, so the current
     // route can never override a value the user set.
+    $aiActive = request()->is('admin/analytics') || request()->routeIs('admin.ai.*') || request()->routeIs('ai.analysis.index');
     $routeDefaults = [
         'inventory' => request()->is('inventory*'),
         'network'   => request()->is('network*'),
+        'ai'        => $aiActive,
         'finance'   => request()->is('sales*') || request()->routeIs('admin.finance.*'),
         'settings'  => request()->is('accounts*') || request()->routeIs('admin.settings.store') || request()->routeIs('admin.settings.ai-providers*'),
         'system'    => request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent'),
@@ -211,56 +213,12 @@
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Dashboard</span>
             </a>
-            <a href="{{ route('admin.analytics') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('admin/analytics') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Insights">
-                <x-lucide-brain-circuit class="w-5 h-5 shrink-0 {{ request()->is('admin/analytics') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="navLabelsVisible"
-                      x-transition:enter="transition ease-in-out duration-300"
-                      x-transition:enter-start="opacity-0"
-                      x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap text-sm">AI Insights</span>
-            </a>
-            <a href="{{ route('admin.ai.actions.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('admin.ai.actions.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Agent Activity">
-                <x-lucide-list-checks class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.ai.actions.*') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="navLabelsVisible"
-                      x-transition:enter="transition ease-in-out duration-300"
-                      x-transition:enter-start="opacity-0"
-                      x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap text-sm">Agent Activity</span>
-            </a>
-            <a href="{{ route('admin.ai.lessons.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('admin.ai.lessons.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Learning">
-                <x-lucide-graduation-cap class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.ai.lessons.*') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="navLabelsVisible"
-                      x-transition:enter="transition ease-in-out duration-300"
-                      x-transition:enter-start="opacity-0"
-                      x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap text-sm">AI Learning</span>
-            </a>
-            <a href="{{ route('ai.analysis.index') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('ai.analysis.index') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="AI Findings History">
-                <x-lucide-radar class="w-5 h-5 shrink-0 {{ request()->routeIs('ai.analysis.index') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
-                <span x-show="navLabelsVisible"
-                      x-transition:enter="transition ease-in-out duration-300"
-                      x-transition:enter-start="opacity-0"
-                      x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap text-sm">Findings History</span>
-            </a>
             {{-- Both hidden for super_admin, which is the developer/system
                  account: the register and the kitchen display are floor work,
                  not management. DenySuperAdmin enforces the same rule on the
                  routes; this just stops the sidebar offering a dead end. --}}
             @unless(auth()->user()->isSuperAdmin())
-            <a href="/pos" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('pos') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="POS Register">
+            <a href="/pos" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('pos') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Register">
                 <x-lucide-calculator class="w-5 h-5 shrink-0 {{ request()->is('pos') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
@@ -269,7 +227,7 @@
                       x-transition:leave="transition ease-in-out duration-300"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap text-sm">POS Register</span>
+                      class="ml-3 whitespace-nowrap text-sm">Register</span>
             </a>
             <a href="/kds" class="flex items-center px-3 py-2.5 rounded group {{ request()->is('kds') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Kitchen Display">
                 <x-lucide-chef-hat class="w-5 h-5 shrink-0 {{ request()->is('kds') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
@@ -283,7 +241,7 @@
                       class="ml-3 whitespace-nowrap text-sm">Kitchen Display</span>
             </a>
             @endunless
-            <a href="{{ route('pos.history') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('pos.history') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Order History">
+            <a href="{{ route('pos.history') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('pos.history') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Orders">
                 <x-lucide-history class="w-5 h-5 shrink-0 {{ request()->routeIs('pos.history') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
@@ -292,9 +250,9 @@
                       x-transition:leave="transition ease-in-out duration-300"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap text-sm">Order History</span>
+                      class="ml-3 whitespace-nowrap text-sm">Orders</span>
             </a>
-            <a href="{{ route('admin.finance.z-reads') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('admin.finance.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Z-Reads / Audits">
+            <a href="{{ route('admin.finance.z-reads') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('admin.finance.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="End of Day (Z-Reads)">
                 <x-lucide-lock class="w-5 h-5 shrink-0 {{ request()->routeIs('admin.finance.*') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
                 <span x-show="navLabelsVisible"
                       x-transition:enter="transition ease-in-out duration-300"
@@ -303,7 +261,7 @@
                       x-transition:leave="transition ease-in-out duration-300"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap text-sm">Z-Reads / Audits</span>
+                      class="ml-3 whitespace-nowrap text-sm">End of Day</span>
             </a>
 
             <!-- Inventory Dropdown -->
@@ -343,7 +301,7 @@
                             <a href="/inventory/purchase-orders" class="block py-2 text-xs {{ request()->is('inventory/purchase-orders') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Purchase Orders</a>
                             <a href="/inventory/deliveries" class="block py-2 text-xs {{ request()->is('inventory/deliveries') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Deliveries</a>
                             <a href="/inventory/wastage" class="block py-2 text-xs {{ request()->is('inventory/wastage') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Wastage</a>
-                            <a href="/inventory/logs" class="block py-2 text-xs {{ request()->is('inventory/logs') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Audit Logs</a>
+                            <a href="/inventory/logs" class="block py-2 text-xs {{ request()->is('inventory/logs') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Stock History</a>
                         </div>
                     </div>
                 </div>
@@ -353,7 +311,7 @@
             <div class="space-y-1">
                 <button @click="menus.network = !menus.network" 
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->is('network*') ? 'text-amber-400' : 'text-[#A1887F]' }}"
-                        title="Network">
+                        title="Wi-Fi & Network">
                     <div class="flex items-center">
                         <x-lucide-wifi class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
                         <span x-show="navLabelsVisible"
@@ -363,7 +321,7 @@
                       x-transition:leave="transition ease-in-out duration-300"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap text-sm">Network</span>
+                      class="ml-3 whitespace-nowrap text-sm">Wi-Fi &amp; Network</span>
                     </div>
                     <x-lucide-chevron-down x-show="navLabelsVisible"
                                      x-transition:enter="transition ease-in-out duration-300"
@@ -379,15 +337,54 @@
                      x-bind:style="(menus.network && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
-                            <a href="/network/health" class="block py-2 text-xs {{ request()->is('network/health') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Health</a>
-                            <a href="/network/sessions" class="block py-2 text-xs {{ request()->is('network/sessions') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Active Sessions</a>
-                            <a href="/network/portal-report" class="block py-2 text-xs {{ request()->is('network/portal-report') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Portal Report</a>
-                            <a href="/network/vouchers" class="block py-2 text-xs {{ request()->is('network/vouchers') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Vouchers</a>
-                            <a href="/network/traffic" class="block py-2 text-xs {{ request()->is('network/traffic') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Traffic Shaping</a>
-                            <a href="/network/blocklist" class="block py-2 text-xs {{ request()->is('network/blocklist') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Device Blocklist</a>
+                            <a href="/network/sessions" class="block py-2 text-xs {{ request()->is('network/sessions') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Who's Online</a>
+                            <a href="/network/vouchers" class="block py-2 text-xs {{ request()->is('network/vouchers') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Wi-Fi Codes</a>
+                            <a href="/network/plans" class="block py-2 text-xs {{ request()->is('network/plans') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Wi-Fi Prices</a>
+                            <a href="/network/traffic" class="block py-2 text-xs {{ request()->is('network/traffic') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Wi-Fi Speed</a>
                             <a href="/network/trusted-devices" class="block py-2 text-xs {{ request()->is('network/trusted-devices') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Trusted Devices</a>
-                            <a href="/network/site-blocking" class="block py-2 text-xs {{ request()->is('network/site-blocking') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Site Blocking</a>
-                            <a href="/network/plans" class="block py-2 text-xs {{ request()->is('network/plans') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Wi-Fi Plans</a>
+                            <a href="/network/blocklist" class="block py-2 text-xs {{ request()->is('network/blocklist') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Blocked Devices</a>
+                            <a href="/network/site-blocking" class="block py-2 text-xs {{ request()->is('network/site-blocking') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Blocked Websites</a>
+                            <a href="/network/portal-report" class="block py-2 text-xs {{ request()->is('network/portal-report') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Sign-in Report</a>
+                            <a href="/network/health" class="block py-2 text-xs {{ request()->is('network/health') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Network Status</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barista AI Dropdown -->
+            <div class="space-y-1">
+                <button @click="menus.ai = !menus.ai"
+                        class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ $aiActive ? 'text-amber-400' : 'text-[#A1887F]' }}"
+                        title="Barista AI">
+                    <div class="flex items-center">
+                        <x-lucide-sparkles class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
+                        <span x-show="navLabelsVisible"
+                      x-transition:enter="transition ease-in-out duration-300"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in-out duration-300"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">Barista AI</span>
+                    </div>
+                    <x-lucide-chevron-down x-show="navLabelsVisible"
+                                     x-transition:enter="transition ease-in-out duration-300"
+                                     x-transition:enter-start="opacity-0"
+                                     x-transition:enter-end="opacity-100"
+                                     x-transition:leave="transition ease-in-out duration-300"
+                                     x-transition:leave-start="opacity-100"
+                                     x-transition:leave-end="opacity-0"
+                                     class="w-4 h-4 transition-transform duration-700" x-bind:class="menus.ai ? 'rotate-180' : ''" />
+                </button>
+                <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
+                     style="grid-template-rows: 0fr"
+                     x-bind:style="(menus.ai && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                    <div class="overflow-hidden">
+                        <div class="pl-11 space-y-1 pt-1">
+                            <a href="{{ route('admin.analytics') }}" class="block py-2 text-xs {{ request()->is('admin/analytics') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Sales Forecast</a>
+                            <a href="{{ route('admin.ai.actions.index') }}" class="block py-2 text-xs {{ request()->routeIs('admin.ai.actions.*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Actions &amp; Approvals</a>
+                            <a href="{{ route('ai.analysis.index') }}" class="block py-2 text-xs {{ request()->routeIs('ai.analysis.index') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">What It Noticed</a>
+                            <a href="{{ route('admin.ai.lessons.index') }}" class="block py-2 text-xs {{ request()->routeIs('admin.ai.lessons.*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">What It Learned</a>
                         </div>
                     </div>
                 </div>
@@ -397,7 +394,7 @@
             <div class="space-y-1">
                 <button @click="menus.settings = !menus.settings"
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->routeIs('admin.settings.store') || request()->routeIs('admin.settings.ai-providers*') || request()->is('accounts*') ? 'text-amber-400' : 'text-[#A1887F]' }}"
-                        title="Business Settings">
+                        title="Settings">
                     <div class="flex items-center">
                         <x-lucide-settings-2 class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
                         <span x-show="navLabelsVisible"
@@ -407,7 +404,7 @@
                       x-transition:leave="transition ease-in-out duration-300"
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
-                      class="ml-3 whitespace-nowrap text-sm">Business Settings</span>
+                      class="ml-3 whitespace-nowrap text-sm">Settings</span>
                     </div>
                     <x-lucide-chevron-down x-show="navLabelsVisible"
                                      x-transition:enter="transition ease-in-out duration-300"
@@ -424,8 +421,8 @@
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
                             <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">{{ auth()->user()->isSuperAdmin() ? 'Staff & Admin Accounts' : 'Staff Accounts' }}</a>
-                            <a href="{{ route('admin.settings.store') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.store') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Store Preferences</a>
-                            <a href="{{ route('admin.settings.ai-providers') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.ai-providers*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">AI Providers</a>
+                            <a href="{{ route('admin.settings.store') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.store') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Store Settings</a>
+                            <a href="{{ route('admin.settings.ai-providers') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.ai-providers*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Barista AI Settings</a>
                         </div>
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 @extends(auth()->user()->isAdminOrAbove() ? 'layouts.admin' : 'layouts.staff')
-@section('title', 'AI Analysis History')
+@section('title', 'What Barista AI Noticed')
 
 @section('content')
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
@@ -8,7 +8,7 @@
     <div class="mb-8 border-b border-[#E6D5C3] pb-6">
         <h2 class="flex items-center gap-3 text-[#3E2723]">
             <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-            <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">AI Analysis History</span>
+            <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">What Barista AI Noticed</span>
         </h2>
         <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Every proactive review Barista AI has run across POS and network data, with its full narrative — not just the latest few findings.</p>
     </div>

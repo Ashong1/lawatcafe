@@ -11,7 +11,7 @@
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Blocked Devices</span>
             </h2>
-            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Devices that can't use the Wi-Fi. Easiest way to block one: the Block button on Network → Active Sessions.</p>
+            <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Devices that can't use the Wi-Fi. Easiest way to block one: the Block button on Wi-Fi &amp; Network → Who's Online.</p>
         </div>
 
         <div x-data="{ showModal: false, submitting: false }">

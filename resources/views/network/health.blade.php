@@ -1,5 +1,5 @@
 @extends(auth()->user()->isAdminOrAbove() ? 'layouts.admin' : 'layouts.staff')
-@section('title', 'Network Health')
+@section('title', 'Network Status')
 
 @section('content')
 @php
@@ -52,7 +52,7 @@
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Network Health</span>
+                <span class="text-lg md:text-xl font-bold tracking-[0.2em] uppercase mt-2">Network Status</span>
             </h2>
             <p class="text-sm text-[#795548] mt-1 font-medium">Internet, firewall, DNS, DHCP, the Wi-Fi login page and your equipment — checked every minute.</p>
         </div>

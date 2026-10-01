@@ -32,7 +32,7 @@ class StaffCanViewAndKickSessionsTest extends TestCase
         $response = $this->actingAs($staff)->get(route('network.sessions'));
 
         $response->assertOk();
-        $response->assertSee('Active Sessions');
+        $response->assertSee("Who's Online", false);
     }
 
     public function test_staff_can_kick_a_device(): void

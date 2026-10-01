@@ -9,6 +9,24 @@ the history was rewritten.
 
 ---
 
+## 1.20.0 — Plain-language menus for the owner and staff
+*build 188*
+
+- The admin menu puts daily work first (Dashboard, Register, Kitchen Display,
+  Orders, End of Day), then Inventory, Wi-Fi & Network, a new **Barista AI**
+  group, and Settings. The four AI pages used to sit at the top.
+- Plain names throughout: Who's Online (Active Sessions), Wi-Fi Codes
+  (Vouchers), Wi-Fi Prices (Wi-Fi Plans), Wi-Fi Speed (Traffic Shaping),
+  Blocked Devices, Blocked Websites, Sign-in Report, Network Status, Stock
+  History (Audit Logs), End of Day (Z-Reads), Sales Forecast, Actions &
+  Approvals, What It Noticed, What It Learned, Store Settings, Barista AI
+  Settings. Page headings match.
+- The staff menu uses the same names.
+- Barista AI points people to pages by these names, and now knows the Register,
+  Kitchen Display, Network Status, Trusted Devices and Sign-in Report too.
+- The Wi-Fi Speed page no longer sends the owner to a settings page only the
+  super admin can open.
+
 ## 1.19.1 — Trusted phones stay online
 *build 187*
 

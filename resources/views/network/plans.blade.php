@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Wi-Fi Plans Management')
+@section('title', 'Wi-Fi Prices')
 
 @section('content')
 <style>
@@ -33,7 +33,7 @@
             <div>
                 <h2 class="flex items-center gap-3 text-[#3E2723]">
                     <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                    <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Wi-Fi Plans</span>
+                    <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Wi-Fi Prices</span>
                 </h2>
                 <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Configure pricing tiers and session durations for your guest network.</p>
             </div>

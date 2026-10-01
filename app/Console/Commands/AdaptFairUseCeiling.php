@@ -78,7 +78,7 @@ class AdaptFairUseCeiling extends Command
         }
 
         if (! $adaptive->enabled()) {
-            $this->comment('Adaptive ceiling is off — sampling only. Enable it on the Traffic Shaping page.');
+            $this->comment('Adaptive ceiling is off — sampling only. Turn it on from Wi-Fi & Network → Wi-Fi Speed.');
 
             return self::SUCCESS;
         }

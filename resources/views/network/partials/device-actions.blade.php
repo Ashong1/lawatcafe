@@ -32,7 +32,7 @@
             <button type="button"
                     onclick="window.confirmAction({
                         title: @js('Block '.$who.'?'),
-                        text: 'It is disconnected now and can\'t use the Wi-Fi again until you unblock it (Network → Device Blocklist).',
+                        text: 'It is disconnected now and can\'t use the Wi-Fi again until you unblock it (Wi-Fi & Network → Blocked Devices).',
                         icon: 'warning',
                         confirmText: 'Yes, block it',
                         callback: () => document.getElementById('block-form-{{ $slug }}').submit()

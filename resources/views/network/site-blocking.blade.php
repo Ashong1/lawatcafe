@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Site Blocking')
+@section('title', 'Blocked Websites')
 
 @section('content')
 {{-- One card, one row per category, sites as chips — compact, so a category
@@ -22,7 +22,7 @@
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Site Blocking</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Blocked Websites</span>
             </h2>
             <p class="text-sm text-[#795548] mt-1 font-medium">Tap a site to block or unblock it for every guest on the Wi-Fi.</p>
         </div>

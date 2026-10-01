@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Portal Report')
+@section('title', 'Sign-in Report')
 
 @section('content')
 @php
@@ -12,7 +12,7 @@
 
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-[#3E2723]">Portal Report</h1>
+            <h1 class="text-2xl font-bold text-[#3E2723]">Sign-in Report</h1>
             <p class="text-sm text-[#6D4C41] mt-1">How guests use the Wi-Fi sign-in page. Counts are devices, not page loads.</p>
         </div>
         <nav class="inline-flex rounded-xl border border-[#E6D5C3] bg-white p-1" aria-label="Time range">

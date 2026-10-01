@@ -48,7 +48,7 @@ class SidebarMenuStateTest extends TestCase
         $response = $this->actingAs($admin)->get(route('inventory.categories.index'));
 
         $response->assertOk();
-        $response->assertSee('initialMenus: {"inventory":true,"network":false,"finance":false,"settings":false,"system":false}', false);
+        $response->assertSee('initialMenus: {"inventory":true,"network":false,"ai":false,"finance":false,"settings":false,"system":false}', false);
     }
 
     public function test_admin_network_page_opens_only_the_network_section_on_first_visit(): void
@@ -58,7 +58,7 @@ class SidebarMenuStateTest extends TestCase
         $response = $this->actingAs($admin)->get(route('network.sessions'));
 
         $response->assertOk();
-        $response->assertSee('initialMenus: {"inventory":false,"network":true,"finance":false,"settings":false,"system":false}', false);
+        $response->assertSee('initialMenus: {"inventory":false,"network":true,"ai":false,"finance":false,"settings":false,"system":false}', false);
     }
 
     /**
@@ -73,7 +73,7 @@ class SidebarMenuStateTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.finance.z-reads'));
 
         $response->assertOk();
-        $response->assertSee('initialMenus: {"inventory":false,"network":false,"finance":true,"settings":false,"system":false}', false);
+        $response->assertSee('initialMenus: {"inventory":false,"network":false,"ai":false,"finance":true,"settings":false,"system":false}', false);
     }
 
     public function test_admin_section_opened_via_cookie_stays_open_on_an_unrelated_page(): void
@@ -85,7 +85,7 @@ class SidebarMenuStateTest extends TestCase
             ->get(route('dashboard'));
 
         $response->assertOk();
-        $response->assertSee('initialMenus: {"inventory":true,"network":false,"finance":false,"settings":false,"system":false}', false);
+        $response->assertSee('initialMenus: {"inventory":true,"network":false,"ai":false,"finance":false,"settings":false,"system":false}', false);
     }
 
     public function test_admin_section_closed_via_cookie_stays_closed_even_on_its_own_page(): void
@@ -97,7 +97,7 @@ class SidebarMenuStateTest extends TestCase
             ->get(route('inventory.categories.index'));
 
         $response->assertOk();
-        $response->assertSee('initialMenus: {"inventory":false,"network":false,"finance":false,"settings":false,"system":false}', false);
+        $response->assertSee('initialMenus: {"inventory":false,"network":false,"ai":false,"finance":false,"settings":false,"system":false}', false);
     }
 
     public function test_staff_network_page_opens_only_the_network_section_on_first_visit(): void
@@ -148,5 +148,15 @@ class SidebarMenuStateTest extends TestCase
             // a submenu must expand there even with the desktop cookie collapsed.
             $response->assertSee("x-bind:style=\"(menus.{$section} && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'\"", false);
         }
+    }
+
+    public function test_admin_ai_page_opens_the_barista_ai_group(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get(route('ai.analysis.index'))
+            ->assertOk()
+            ->assertSee('"ai":true', false)
+            ->assertSee('What It Noticed', false);
     }
 }

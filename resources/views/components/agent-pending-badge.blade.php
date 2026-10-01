@@ -77,7 +77,7 @@
         </div>
 
         <div x-show="isAdmin && items.length > 0" class="p-3 bg-[#FDF8F5] text-center border-t border-[#F0E6D2]">
-            <a href="{{ route('admin.ai.actions.index') }}" class="text-xs font-bold text-[#3E2723] uppercase tracking-wide hover:text-amber-800 transition">View Agent Activity</a>
+            <a href="{{ route('admin.ai.actions.index') }}" class="text-xs font-bold text-[#3E2723] uppercase tracking-wide hover:text-amber-800 transition">See all actions</a>
         </div>
     </div>
 </div>
