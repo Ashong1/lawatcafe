@@ -5,7 +5,7 @@
         <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Guests online</h3>
     </div>
     <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+        <table class="lk-stack w-full text-left border-collapse">
             <thead>
                 <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                     <th class="pb-4 font-bold">Device</th>
@@ -176,7 +176,7 @@
         <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Shop equipment &amp; trusted devices</h3>
     </div>
     <div class="bg-slate-50 rounded-2xl border border-slate-200 overflow-x-auto shadow-sm">
-        <table class="w-full text-left border-collapse">
+        <table class="lk-stack w-full text-left border-collapse">
             <thead>
                 <tr class="text-slate-500 text-xs uppercase tracking-wide border-b border-slate-200 bg-slate-100/50">
                     <th class="py-3 px-6 font-bold">Device</th>
@@ -255,7 +255,7 @@
     <p class="text-sm text-[#6D4C41] mb-4 -mt-2">Joined the Wi-Fi but haven't typed a code yet. They stay offline until they do.</p>
     
     <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+        <table class="lk-stack w-full text-left border-collapse">
             <thead>
                 <tr class="text-[#6D4C41] text-xs uppercase tracking-wide border-b border-[#F0E6D2]/50">
                     <th class="pb-3 font-bold">Device</th>
@@ -314,7 +314,7 @@
     <p class="text-xs text-[#6D4C41] mb-4 -mt-2">On the network but they have never opened the Wi-Fi sign-in page. Usually a phone that joined and went idle; a <strong>blocked</strong> device here needs attention.</p>
 
     <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+        <table class="lk-stack w-full text-left border-collapse">
             <thead>
                 <tr class="text-[#6D4C41] text-xs uppercase tracking-wide border-b border-[#F0E6D2]/50">
                     <th class="pb-3 font-bold">Device</th>

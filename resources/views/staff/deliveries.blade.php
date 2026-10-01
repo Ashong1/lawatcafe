@@ -26,7 +26,7 @@
         <p class="text-xs text-[#6D4C41] mb-6 font-medium">Orders already sent to suppliers, waiting to arrive. Check delivered quantities against these before recording.</p>
 
         <div class="overflow-x-auto pr-2">
-            <table class="w-full text-left border-collapse">
+            <table class="lk-stack w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                         <th class="pb-3 font-bold">Ingredient</th>
@@ -57,7 +57,7 @@
         <p class="text-xs text-[#6D4C41] mb-6 font-medium">Deliveries you've recorded and their status.</p>
 
         <div class="overflow-x-auto pr-2">
-            <table class="w-full text-left border-collapse">
+            <table class="lk-stack w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                         <th class="pb-4 font-bold">Date</th>

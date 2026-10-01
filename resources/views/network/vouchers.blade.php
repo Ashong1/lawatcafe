@@ -96,7 +96,7 @@
         </div>
 
         <div class="overflow-x-auto pr-2">
-            <table class="w-full text-left border-collapse">
+            <table class="lk-stack w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                         @if(auth()->user()->isAdminOrAbove())
@@ -225,7 +225,7 @@
                          make one input mean two things. --}}
                     <select id="duration_minutes" name="duration_minutes" required x-model="durationChoice" class="w-full p-3 border @error('duration_minutes') border-red-500 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-[#3E2723]">
                         @foreach($durations as $price => $mins)
-                            <option value="{{ $mins }}">₱{{ $price }} - {{ $mins >= 1440 ? 'Whole Day' : ($mins >= 60 ? ($mins/60) . ' Hour(s)' : $mins . ' Mins') }}</option>
+                            <option value="{{ $mins }}">₱{{ $price }} - {{ $mins >= 1440 ? 'Whole day' : ($mins >= 60 ? ($mins / 60).' '.Str::plural('hour', $mins / 60) : $mins.' minutes') }}</option>
                         @endforeach
                         <option value="custom">Custom duration&hellip;</option>
                     </select>

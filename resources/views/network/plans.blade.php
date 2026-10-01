@@ -65,7 +65,7 @@
                 <input type="hidden" name="free_wifi_duration" :value="freeDuration">
 
                 <div class="overflow-x-auto rounded-2xl border border-[#F0E6D2] mb-8">
-                    <table class="w-full text-left border-collapse bg-[#FAFAFA]">
+                    <table class="lk-stack w-full text-left border-collapse bg-[#FAFAFA]">
                         <thead>
                             <tr class="border-b border-[#F0E6D2] bg-[#FDF8F5] text-xs font-bold text-[#795548] uppercase tracking-wide">
                                 <th class="py-4 px-6">Plan</th>

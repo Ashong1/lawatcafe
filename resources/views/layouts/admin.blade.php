@@ -490,7 +490,7 @@
 
             {{-- Two buttons rather than one that guesses the viewport: below lg
                  it opens the drawer, from lg it collapses the column. --}}
-            <button @click="mobileNavOpen = ! mobileNavOpen" :aria-expanded="mobileNavOpen ? 'true' : 'false'" aria-label="Toggle menu" class="lg:hidden text-[#3E2723] hover:bg-[#FDF8F5] p-2 -ml-2 rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3E2723]/40 flex items-center justify-center shrink-0">
+            <button @click="mobileNavOpen = ! mobileNavOpen" :aria-expanded="mobileNavOpen ? 'true' : 'false'" aria-label="Toggle menu" class="lg:hidden min-w-[44px] min-h-[44px] text-[#3E2723] hover:bg-[#FDF8F5] p-2 -ml-2 rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3E2723]/40 flex items-center justify-center shrink-0">
                 <x-lucide-menu class="w-6 h-6" />
             </button>
             <button @click="sidebarOpen = !sidebarOpen" aria-label="Toggle sidebar" class="hidden lg:flex text-[#3E2723] hover:bg-[#FDF8F5] p-2 rounded-lg transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3E2723]/40 items-center justify-center">
@@ -503,7 +503,7 @@
 
                 <div class="hidden lg:block h-4 w-[1px] bg-[#F0E6D2]"></div>
 
-                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group cursor-pointer min-w-0">
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 group cursor-pointer min-w-0 min-h-[44px]">
                     {{-- The real role, not the layout's name. This header said
                          "Admin Status:" for everyone it rendered, so the
                          super_admin account was labelled a plain admin. --}}
@@ -520,7 +520,7 @@
                     @csrf
                     {{-- Word on desktop, icon on a phone — the label is what
                          made this row wrap. --}}
-                    <button type="submit" aria-label="Log out" class="text-red-500 hover:text-red-700 transition flex items-center shrink-0 p-2 -mr-2 sm:p-0 sm:mr-0">
+                    <button type="submit" aria-label="Log out" class="text-red-500 hover:text-red-700 transition flex items-center justify-center shrink-0 min-w-[44px] min-h-[44px] p-2 -mr-2 sm:min-w-0 sm:min-h-0 sm:p-0 sm:mr-0">
                         <span class="hidden sm:inline text-xs font-bold tracking-wide uppercase">Logout</span>
                         <x-lucide-log-out class="sm:hidden w-5 h-5" />
                     </button>

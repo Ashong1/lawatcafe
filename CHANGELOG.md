@@ -9,6 +9,27 @@ the history was rewritten.
 
 ---
 
+## 1.21.0 — Phone-sized screens for the Android app
+*build 192*
+
+- Register on a phone: products sit two to a row and fit the screen. A wide
+  category bar used to stretch the page so the right-hand items and their
+  + buttons were cut off. Tapping anywhere on a product card adds it, and the
+  stock badges sit on the photo.
+- The chat button moves above the phone cart, so it no longer covers the
+  total or Place Order.
+- Lists (Wi-Fi codes, orders, sales, inventory, staff, who's online and
+  more) turn into stacked cards on narrow screens. On a phone they used to be
+  wide tables that needed sideways scrolling.
+- Buttons, menu items, quantity +/- and checkboxes are at least 44px tall on
+  touch screens, the size a thumb can hit reliably. Amount fields open the
+  number keypad.
+- Dashboard shortcuts and figures sit two to a row on a phone.
+- Wi-Fi items read "1 Hour Wi-Fi" / "30 Minutes Wi-Fi" in carts and receipts.
+- New developer tool `.claude/skills/mobile-screenshot-audit`: screenshots any
+  page as the app sees it at phone size and reports cut-off content, small
+  tap targets and tiny text.
+
 ## 1.20.3 — Finance, inventory, accounts and settings in plain words
 *build 191*
 

@@ -29,7 +29,7 @@
         </div>
 
         <div class="overflow-x-auto pr-2">
-            <table class="w-full text-left border-collapse">
+            <table class="lk-stack w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                         <th class="pb-4 font-bold w-10"></th>

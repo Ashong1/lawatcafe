@@ -3,3 +3,55 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Tables marked .lk-stack become one card per row on a phone: no sideways
+ * scrolling, and nothing hidden past the right edge. Cells that are already
+ * hidden on small screens (Tailwind's `hidden md:table-cell`) stay hidden,
+ * and a cell with data-label shows that column name above its value.
+ */
+@media (max-width: 639px) {
+    table.lk-stack thead { display: none; }
+    table.lk-stack, table.lk-stack tbody { display: block; width: 100%; }
+    /* Short cells sit side by side and wrap only when the row runs out of room. */
+    table.lk-stack tr { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid #F0E6D2; }
+    table.lk-stack tr:last-child { border-bottom: 0; }
+    table.lk-stack td:not(.hidden) { display: block; width: auto; max-width: 100%; padding: 0.125rem 0 !important; text-align: left !important; }
+    table.lk-stack td[colspan] { width: 100%; text-align: center !important; }
+    table.lk-stack td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #795548;
+    }
+    table.lk-stack td .justify-end { justify-content: flex-start; }
+    table.lk-stack td .items-end { align-items: flex-start; }
+}
+
+/*
+ * Touch screens (the Android app, phones, tablets): every control is at least
+ * 44px to tap (WCAG 2.5.5), without changing the mouse layout. Icon-only
+ * buttons (edit, delete, print) also get 44px of width.
+ */
+@media (pointer: coarse) {
+    /* !important: a control's own smaller min-h-[36px] must not win on touch. */
+    button,
+    select,
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]),
+    a[class*="rounded"],
+    a[class*="min-h-"] {
+        min-height: 44px !important;
+    }
+    button:has(> svg:only-child),
+    a:has(> svg:only-child) {
+        min-width: 44px !important;
+    }
+    input[type="checkbox"],
+    input[type="radio"] {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+}

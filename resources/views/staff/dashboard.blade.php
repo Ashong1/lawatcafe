@@ -14,8 +14,8 @@
             <p class="text-sm text-[#795548] mt-2 font-medium tracking-wide">Welcome back! Here is your shift overview.</p>
         </div>
         <div class="flex items-center gap-4">
-            <a href="{{ route('pos.history') }}" class="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-xl border border-[#F0E6D2] bg-white text-sm font-bold text-[#3E2723] hover:border-[#3E2723] transition">
-                <x-lucide-history class="w-4 h-4 text-[#795548]" /> Order history
+            <a href="{{ route('pos.history') }}" class="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-xl border border-[#F0E6D2] bg-white text-sm font-bold text-[#3E2723] hover:border-[#3E2723] transition whitespace-nowrap shrink-0">
+                <x-lucide-history class="w-4 h-4 text-[#795548]" /> Orders
             </a>
             <p class="text-sm font-medium text-[#6D4C41]" x-text="currentTime">{{ now()->format('l, F jS - h:i A') }}</p>
         </div>

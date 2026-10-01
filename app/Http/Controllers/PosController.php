@@ -68,7 +68,12 @@ class PosController extends Controller
         $index = 1;
         foreach ($durations as $price => $mins) {
             $mins = (int) $mins;
-            $name = $mins >= 1440 ? 'Whole Day Wi-Fi' : ($mins >= 60 ? ($mins / 60).' Hour(s) Wi-Fi' : $mins.' Mins Wi-Fi');
+            $hours = $mins / 60;
+            $name = match (true) {
+                $mins >= 1440 => 'Whole Day Wi-Fi',
+                $mins >= 60 => rtrim(rtrim(number_format($hours, 1), '0'), '.').($hours == 1 ? ' Hour Wi-Fi' : ' Hours Wi-Fi'),
+                default => $mins.' Minutes Wi-Fi',
+            };
             $wifiOptions[] = [
                 'id' => 'w'.$index++,
                 'name' => $name,

@@ -25,7 +25,7 @@
 
     <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="lk-stack w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                         <th class="pb-4 font-bold">Vendor Name</th>

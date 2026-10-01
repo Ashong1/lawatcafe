@@ -6,7 +6,7 @@
             <p class="text-xs font-medium text-[#795548] mt-0.5"><span x-text="cart.length"></span> items in cart</p>
         </div>
 
-        <button type="button" x-show="cart.length > 0" @click="resetCart()" class="w-9 h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center shadow-sm" title="Clear All" aria-label="Clear All">
+        <button type="button" x-show="cart.length > 0" @click="resetCart()" class="w-11 h-11 lg:w-9 lg:h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center shadow-sm" title="Clear All" aria-label="Clear All">
             <x-lucide-trash-2 class="w-4 h-4" />
         </button>
     </div>
@@ -87,11 +87,11 @@
                         <p class="font-bold text-xs text-[#795548]" x-text="'₱' + (Number(cartItem.price) * cartItem.quantity).toFixed(2)"></p>
 
                         <div class="flex items-center bg-[#FAFAFA] border border-[#F0E6D2] rounded-full px-1 py-0.5 shrink-0">
-                            <button type="button" @click="removeFromCart(index)" aria-label="Decrease quantity" class="w-5 h-5 flex items-center justify-center text-[#795548] hover:text-[#3E2723] font-bold transition text-xs">-</button>
-                            <span class="w-5 text-center text-xs font-bold transition-all duration-200"
+                            <button type="button" @click="removeFromCart(index)" aria-label="Decrease quantity" class="w-10 h-10 lg:w-5 lg:h-5 flex items-center justify-center text-[#795548] hover:text-[#3E2723] font-bold transition text-base lg:text-xs">-</button>
+                            <span class="w-6 lg:w-5 text-center text-sm lg:text-xs font-bold transition-all duration-200"
                                   :class="flashKey === (cartItem.id + '-' + cartItem.variant) ? 'text-amber-600 scale-125' : 'text-[#3E2723] scale-100'"
                                   x-text="cartItem.quantity"></span>
-                            <button type="button" @click="addToCart(cartItem)" aria-label="Increase quantity" class="w-5 h-5 flex items-center justify-center text-[#795548] hover:text-[#3E2723] font-bold transition text-xs">+</button>
+                            <button type="button" @click="addToCart(cartItem)" aria-label="Increase quantity" class="w-10 h-10 lg:w-5 lg:h-5 flex items-center justify-center text-[#795548] hover:text-[#3E2723] font-bold transition text-base lg:text-xs">+</button>
                         </div>
                     </div>
                 </div>
@@ -154,7 +154,7 @@
         </div>
         <div>
             <label class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5">Amount Tendered (₱)</label>
-            <input type="number" x-model.number="amountTendered" class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-sm font-bold text-[#3E2723]" placeholder="0.00">
+            <input type="number" inputmode="decimal" aria-label="Amount tendered in pesos" x-model.number="amountTendered" class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-sm font-bold text-[#3E2723]" placeholder="0.00">
         </div>
     </div>
 

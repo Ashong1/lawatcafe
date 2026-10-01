@@ -13,7 +13,7 @@
     $initialPendingCount = $initialPendingQuery->count();
 @endphp
 <div x-data="agentPendingBadge({ isAdmin: @js($isAdmin), initialCount: {{ $initialPendingCount }} })" x-init="init()" class="relative">
-    <button @click="toggle()" aria-label="Pending AI actions" class="p-2 text-[#795548] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-full transition relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3E2723]/40">
+    <button @click="toggle()" aria-label="Pending AI actions" class="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-[#795548] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-full transition relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3E2723]/40">
         <x-lucide-bot class="w-6 h-6" />
         <template x-if="count > 0">
             <span class="absolute top-1 right-1 w-4 h-4 bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white" x-text="count"></span>

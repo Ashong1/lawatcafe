@@ -21,7 +21,7 @@
             <label for="find-device" class="sr-only">Find a device</label>
             <div class="relative flex-1">
                 <x-lucide-search class="w-4 h-4 text-[#795548] absolute left-4 top-1/2 -translate-y-1/2" />
-                <input id="find-device" type="text" name="find" value="{{ $find }}" placeholder="Find a device — IP, MAC address, voucher code or name"
+                <input id="find-device" type="text" name="find" value="{{ $find }}" placeholder="Name, code, IP or MAC"
                        class="w-full min-h-[44px] bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl pl-11 pr-4 text-sm focus:outline-none focus:border-[#3E2723]">
             </div>
             <button type="submit" class="min-h-[44px] px-6 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl text-sm font-bold transition">Find</button>

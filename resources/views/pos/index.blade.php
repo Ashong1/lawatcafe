@@ -66,10 +66,10 @@
 <div x-data="posSystem()" class="bg-[#FDF8F5] w-full flex-1 lg:h-full flex items-stretch text-[#4A3B32] lg:overflow-hidden" style="font-family: 'Montserrat', sans-serif;">
 
     {{-- Menu Area (Left) --}}
-    <div class="flex-1 p-4 md:p-8 pb-28 lg:pb-8 flex flex-col lg:overflow-hidden">
-        <div class="flex-1 bg-white p-6 md:p-8 rounded-2xl shadow-sm flex flex-col lg:overflow-hidden border border-[#F0E6D2]">
+    <div class="flex-1 min-w-0 p-3 sm:p-4 md:p-8 pb-28 lg:pb-8 flex flex-col lg:overflow-hidden">
+        <div class="flex-1 min-w-0 bg-white p-3 sm:p-6 md:p-8 rounded-2xl shadow-sm flex flex-col lg:overflow-hidden border border-[#F0E6D2]">
             
-            <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 shrink-0">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-4 sm:mb-8 gap-3 sm:gap-4 shrink-0">
                 
                 <div class="flex items-center gap-3 text-[#3E2723] hidden lg:flex shrink-0">
                     <span class="text-3xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
@@ -83,37 +83,38 @@
                     <input type="text" x-model="searchQuery" placeholder="Search menu..." aria-label="Search menu" class="w-full pl-11 pr-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full focus:outline-none focus:ring-2 focus:ring-[#3E2723] transition-all text-sm font-medium placeholder-[#A1887F] text-[#3E2723]">
                 </div>
                 
-                <div class="flex gap-3 shrink-0 items-center">
+                <div class="w-full md:w-auto flex flex-wrap justify-center md:justify-end gap-2 sm:gap-3 items-center">
                     {{-- History Access --}}
-                    <a href="{{ route('pos.history') }}" class="bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#795548] hover:text-[#3E2723] px-5 py-3 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center border border-[#F0E6D2] gap-2" title="Order History">
+                    <a href="{{ route('pos.history') }}" class="min-h-[44px] bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#795548] hover:text-[#3E2723] px-3 sm:px-5 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center justify-center border border-[#F0E6D2] gap-2 whitespace-nowrap" title="Orders">
                         <x-lucide-history class="w-4 h-4" />
-                        <span>History</span>
+                        <span>Orders</span>
                     </a>
 
                     {{-- Admin Actions --}}
                     @if(auth()->user()->isAdminOrAbove())
-                    <div class="flex gap-2 shrink-0">
-                        <a href="{{ route('network.sessions') }}" class="bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#795548] hover:text-[#3E2723] px-4 py-3 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center border border-[#F0E6D2] gap-2" title="Active Sessions">
+                    <div class="contents md:flex md:gap-2 md:shrink-0">
+                        <a href="{{ route('network.sessions') }}" class="min-h-[44px] min-w-[44px] bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#795548] hover:text-[#3E2723] px-3 sm:px-4 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center justify-center border border-[#F0E6D2] gap-2" title="Who's Online" aria-label="Who's Online">
                             <x-lucide-wifi class="w-4 h-4" />
-                            <span class="hidden xl:inline">Sessions</span>
+                            <span class="hidden xl:inline">Who's Online</span>
                         </a>
-                        <a href="{{ route('sales.export') }}" class="bg-[#3E2723] hover:bg-[#271815] text-white px-4 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center gap-2" title="Export Sales">
+                        <a href="{{ route('sales.export') }}" class="min-h-[44px] min-w-[44px] bg-[#3E2723] hover:bg-[#271815] text-white px-3 sm:px-4 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center justify-center gap-2" title="Download today's sales" aria-label="Download today's sales">
                             <x-lucide-download class="w-4 h-4" />
-                            <span class="hidden xl:inline">Export</span>
+                            <span class="hidden xl:inline">Download</span>
                         </a>
                     </div>
                     @endif
 
                     {{-- Shift Management --}}
                     @if($activeShift)
-                    <div class="flex gap-2 shrink-0">
+                    <div class="contents md:flex md:gap-2 md:shrink-0">
                         <button type="button" 
                                 @click="recordCashAction()"
-                                class="bg-white hover:bg-[#FDF8F5] text-[#3E2723] px-4 py-3 rounded-full font-bold transition border border-[#F0E6D2] text-xs tracking-wider inline-flex items-center gap-2">
+                                title="Cash in or out" aria-label="Cash in or out"
+                                class="min-h-[44px] min-w-[44px] bg-white hover:bg-[#FDF8F5] text-[#3E2723] px-3 sm:px-4 rounded-full font-bold transition border border-[#F0E6D2] text-xs tracking-wider inline-flex items-center justify-center gap-2">
                             <x-lucide-banknote class="w-4 h-4" />
                             <span class="hidden xl:inline">Cash</span>
                         </button>
-                        <a href="{{ route('shift.closing-report', $activeShift->id) }}" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-3 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wider inline-flex items-center gap-2">
+                        <a href="{{ route('shift.closing-report', $activeShift->id) }}" class="min-h-[44px] bg-amber-600 hover:bg-amber-700 text-white px-3 sm:px-5 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wider inline-flex items-center justify-center gap-2 whitespace-nowrap">
                             <x-lucide-lock class="w-4 h-4" />
                             <span>End Shift</span>
                         </a>
@@ -125,7 +126,7 @@
         <div class="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide shrink-0">
                 <template x-for="category in categories" :key="category.name">
                     <button @click="selectedCategory = category.name" 
-                            class="px-5 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border flex items-center gap-2 tracking-wide uppercase"
+                            class="min-h-[44px] px-5 py-2.5 rounded-full text-xs font-bold transition-all whitespace-nowrap border flex items-center gap-2 tracking-wide uppercase"
                             :class="selectedCategory === category.name ? 'bg-[#3E2723] text-white border-[#3E2723] shadow-md' : 'bg-[#FAFAFA] text-[#795548] border-[#F0E6D2] hover:bg-[#FDF8F5]'">
                         <span class="[&>svg]:w-3.5 [&>svg]:h-3.5" x-html="categoryIcons[category.name] || ''"></span>
                         <span x-text="category.name"></span>
@@ -141,11 +142,13 @@
                      for a precisely bounded internal scroll region only makes sense once the
                      ancestor chain is forced to viewport height, which only happens at `lg:` up. --}}
                 <div class="lg:absolute lg:inset-0 overflow-y-auto pb-6 pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#D7CCC8] [&::-webkit-scrollbar-thumb]:rounded-full">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                         <template x-for="item in filteredProducts" :key="item.id">
-                            <div class="bg-white p-4 rounded-[1.5rem] shadow-[0_4px_15px_-3px_rgba(62,39,35,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(62,39,35,0.12)] transition-shadow duration-300 flex flex-col group relative border border-transparent hover:border-[#FDF8F5]">
+                            <div @click="(item.type !== 'product' || item.inStock) && addToCart(item)"
+                                 :class="item.type === 'product' && !item.inStock ? 'cursor-not-allowed' : 'cursor-pointer active:scale-[0.98]'"
+                                 class="bg-white p-2.5 sm:p-4 rounded-2xl sm:rounded-[1.5rem] shadow-[0_4px_15px_-3px_rgba(62,39,35,0.05)] hover:shadow-[0_10px_25px_-5px_rgba(62,39,35,0.12)] transition duration-300 flex flex-col group relative border border-[#F0E6D2]/60 sm:border-transparent hover:border-[#FDF8F5] select-none">
                                 
-                                <div class="h-32 w-full bg-[#FDF8F5] rounded-xl mb-4 flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-300 border border-[#F0E6D2]/50 shrink-0 relative overflow-hidden">
+                                <div class="h-20 sm:h-32 w-full bg-[#FDF8F5] rounded-xl mb-2 sm:mb-4 flex items-center justify-center group-hover:scale-[1.02] transition-transform duration-300 border border-[#F0E6D2]/50 shrink-0 relative overflow-hidden">
                                     {{-- Visual cue based on category --}}
                                     <template x-if="item.type === 'wifi'">
                                         <x-lucide-wifi class="w-10 h-10 text-blue-800/20" />
@@ -156,6 +159,15 @@
                                              x-html="categoryIcons[item.category] || fallbackIcon"></div>
                                     </template>
 
+                                    <div class="absolute top-1.5 right-1.5 z-10 flex flex-col gap-1 items-end">
+                                        <template x-if="item.type === 'product' && !item.inStock">
+                                            <span class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shadow-sm">Out of Stock</span>
+                                        </template>
+                                        <template x-if="item.type === 'product' && item.inStock && item.isLowStock">
+                                            <span class="bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shadow-sm">Low Stock</span>
+                                        </template>
+                                    </div>
+
                                     <!-- Out of Stock Overlay -->
                                     <template x-if="item.type === 'product' && !item.inStock">
                                         <div class="absolute inset-0 bg-white/75 flex items-center justify-center z-20">
@@ -165,30 +177,20 @@
                                 </div>
 
                                 <div class="flex flex-col flex-1 relative">
-                                    <!-- Status Badges -->
-                                    <div class="absolute -top-32 right-0 z-10 flex flex-col gap-1 items-end">
-                                        <template x-if="item.type === 'product' && !item.inStock">
-                                            <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wide shadow-sm">Out of Stock</span>
-                                        </template>
-                                        <template x-if="item.type === 'product' && item.inStock && item.isLowStock">
-                                            <span class="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-md uppercase tracking-wide shadow-sm">Low Stock</span>
-                                        </template>
-                                    </div>
-
-                                    <h4 class="font-bold text-[#3E2723] text-base leading-tight mb-1" x-text="item.name"></h4>
-                                    <p class="text-xs text-[#6D4C41] font-medium mb-3 line-clamp-2" x-text="item.type === 'wifi' ? 'Seamless high-speed internet access.' : 'Freshly prepared for your enjoyment.'"></p>
+                                    <h4 class="font-bold text-[#3E2723] text-sm sm:text-base leading-tight mb-0.5 sm:mb-1 line-clamp-2" x-text="item.name"></h4>
+                                    <p class="text-xs text-[#6D4C41] font-medium mb-2 sm:mb-3 truncate" x-text="item.type === 'wifi' ? 'Wi-Fi code' : item.category"></p>
                                     
-                                    <div class="mt-auto flex justify-between items-center pt-2">
-                                        <div class="flex flex-col">
-                                            <span class="text-xs uppercase font-bold tracking-wider text-[#6D4C41]">Price</span>
-                                            <span class="font-bold text-[#3E2723] text-lg" x-text="'₱' + Number(item.price).toFixed(2)"></span>
+                                    <div class="mt-auto flex justify-between items-center gap-2 pt-1 sm:pt-2">
+                                        <div class="flex flex-col min-w-0">
+                                            <span class="hidden sm:block text-xs uppercase font-bold tracking-wider text-[#6D4C41]">Price</span>
+                                            <span class="font-bold text-[#3E2723] text-base sm:text-lg" x-text="'₱' + Number(item.price).toFixed(2)"></span>
                                         </div>
                                         
                                         <button type="button"
-                                                @click="addToCart(item)"
+                                                @click.stop="addToCart(item)"
                                                 :disabled="item.type === 'product' && !item.inStock"
                                                 :aria-label="'Add ' + item.name + ' to cart'"
-                                                class="w-11 h-11 rounded-full bg-[#3E2723] text-white flex items-center justify-center hover:bg-[#271815] transition-all active:scale-90 shadow-md shadow-[#3E2723]/30 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed">
+                                                class="w-11 h-11 shrink-0 rounded-full bg-[#3E2723] text-white flex items-center justify-center hover:bg-[#271815] transition-all active:scale-90 shadow-md shadow-[#3E2723]/30 disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed">
                                             <x-lucide-plus class="w-5 h-5" />
                                         </button>
                                     </div>
@@ -258,7 +260,7 @@
     <x-modal-shell show="showMobileCart" position="bottom-sheet" max-width="lg" panel-class="p-5" labelled-by="mobile-cart-title">
         <h3 id="mobile-cart-title" class="sr-only">Current Order</h3>
         <template x-if="mobileCartMounted">
-            <div class="flex flex-col flex-1 min-h-0">
+            <div data-chat-avoid class="flex flex-col flex-1 min-h-0">
                 @include('pos.partials.cart')
             </div>
         </template>

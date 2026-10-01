@@ -45,18 +45,18 @@
 {{-- Quick actions: one neutral style. Each used to have its own hover color
      (amber, blue, slate, indigo), which spent color on decoration and left
      nothing to signal an actual problem. --}}
-<div class="flex flex-row flex-wrap items-center gap-3 mb-6">
+<div class="grid grid-cols-2 sm:flex sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3 mb-6">
     @php
         $quickActions = array_filter([
             auth()->user()->isSuperAdmin() ? null : ['route' => route('pos'), 'icon' => 'lucide-shopping-cart', 'label' => 'Open Register'],
             ['route' => route('network.vouchers.index', ['action' => 'generate']), 'icon' => 'lucide-ticket', 'label' => 'Make Wi-Fi Codes'],
             ['route' => route('inventory.deliveries.index', ['action' => 'receive']), 'icon' => 'lucide-truck', 'label' => 'Receive Supplies'],
             ['route' => route('sales.export'), 'icon' => 'lucide-file-text', 'label' => "Download Today's Sales"],
-            ['route' => route('network.traffic'), 'icon' => 'lucide-activity', 'label' => 'Traffic & Bandwidth'],
+            ['route' => route('network.traffic'), 'icon' => 'lucide-activity', 'label' => 'Wi-Fi Speed'],
         ]);
     @endphp
     @foreach($quickActions as $action)
-        <a href="{{ $action['route'] }}" class="min-h-[44px] bg-white px-4 rounded-xl border border-[#F0E6D2] hover:border-[#3E2723] transition-all flex items-center gap-2 active:scale-95 text-sm font-bold text-[#3E2723]">
+        <a href="{{ $action['route'] }}" class="min-h-[48px] bg-white px-3 sm:px-4 py-2 rounded-xl border border-[#F0E6D2] hover:border-[#3E2723] transition-all flex items-center gap-2 active:scale-95 text-sm font-bold text-[#3E2723] leading-tight">
             <x-dynamic-component :component="$action['icon']" class="w-4 h-4 text-[#795548]" />
             {{ $action['label'] }}
         </a>
@@ -64,42 +64,42 @@
 </div>
 
 {{-- 2. Key metrics --}}
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-    <a href="{{ route('network.sessions') }}" class="dash-card-in bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md hover:border-[#3E2723]/30 transition-all">
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8">
+    <a href="{{ route('network.sessions') }}" class="dash-card-in bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md hover:border-[#3E2723]/30 transition-all">
         <div class="flex justify-between items-start mb-3">
             <h3 class="text-sm font-bold text-[#795548]">Guests online</h3>
             <x-lucide-users class="w-5 h-5 text-blue-700" />
         </div>
-        <p class="text-4xl font-bold text-[#1565C0]" x-text="liveData.activeGuests" aria-live="polite" aria-atomic="true">{{ $activeGuests ?? 0 }}</p>
+        <p class="text-3xl sm:text-4xl font-bold text-[#1565C0]" x-text="liveData.activeGuests" aria-live="polite" aria-atomic="true">{{ $activeGuests ?? 0 }}</p>
         <p class="text-xs text-[#6D4C41] font-medium mt-1">paying guests on the Wi-Fi</p>
     </a>
 
-    <a href="{{ route('sales.index') }}" class="dash-card-in [animation-delay:75ms] bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md hover:border-[#3E2723]/30 transition-all">
+    <a href="{{ route('sales.index') }}" class="dash-card-in [animation-delay:75ms] bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md hover:border-[#3E2723]/30 transition-all">
         <div class="flex justify-between items-start mb-3">
             <h3 class="text-sm font-bold text-[#795548]">Today's revenue</h3>
             <x-lucide-banknote class="w-5 h-5 text-green-700" />
         </div>
-        <p class="text-4xl font-bold text-[#2E7D32]" x-text="'₱' + Math.round(live.todaysSales).toLocaleString()">₱{{ number_format($todaysSales, 0) }}</p>
+        <p class="text-3xl sm:text-4xl font-bold text-[#2E7D32]" x-text="'₱' + Math.round(live.todaysSales).toLocaleString()">₱{{ number_format($todaysSales, 0) }}</p>
         <p class="text-xs text-[#6D4C41] font-medium mt-1"
            x-text="Math.round(live.todaysOrders) + ' orders · ₱' + (live.todaysOrders > 0 ? Math.round(live.todaysSales / live.todaysOrders).toLocaleString() : 0) + ' avg'">{{ $todaysOrders }} orders · ₱{{ $todaysOrders > 0 ? number_format($todaysSales / $todaysOrders, 0) : 0 }} avg</p>
     </a>
 
-    <a href="{{ route('network.vouchers.index') }}" class="dash-card-in [animation-delay:150ms] bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md hover:border-[#3E2723]/30 transition-all">
+    <a href="{{ route('network.vouchers.index') }}" class="dash-card-in [animation-delay:150ms] bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md hover:border-[#3E2723]/30 transition-all">
         <div class="flex justify-between items-start mb-3">
             <h3 class="text-sm font-bold text-[#795548]">Voucher stock</h3>
             <x-lucide-ticket class="w-5 h-5 text-amber-700" />
         </div>
-        <p class="text-4xl font-bold text-[#3E2723]" x-text="Math.round(live.availableVouchers)">{{ $availableVouchers ?? 0 }}</p>
+        <p class="text-3xl sm:text-4xl font-bold text-[#3E2723]" x-text="Math.round(live.availableVouchers)">{{ $availableVouchers ?? 0 }}</p>
         <p class="text-xs text-[#6D4C41] font-medium mt-1">codes ready to hand out</p>
     </a>
 
-    <a href="{{ route('inventory.ingredients.index') }}" class="dash-card-in [animation-delay:225ms] bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md transition-all"
+    <a href="{{ route('inventory.ingredients.index') }}" class="dash-card-in [animation-delay:225ms] bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md transition-all"
        :class="[live.lowStockCount > 0 ? 'border-red-200 bg-red-50/40' : 'hover:border-[#3E2723]/30', flash.lowStockCount ? 'ring-2 ring-red-300' : '']">
         <div class="flex justify-between items-start mb-3">
             <h3 class="text-sm font-bold text-[#795548]">Low stock</h3>
             <x-lucide-alert-triangle class="w-5 h-5" x-bind:class="live.lowStockCount > 0 ? 'text-red-600' : 'text-green-700'" />
         </div>
-        <p class="text-4xl font-bold" :class="live.lowStockCount > 0 ? 'text-[#C62828]' : 'text-green-700'" x-text="Math.round(live.lowStockCount)">{{ $lowStockCount ?? 0 }}</p>
+        <p class="text-3xl sm:text-4xl font-bold" :class="live.lowStockCount > 0 ? 'text-[#C62828]' : 'text-green-700'" x-text="Math.round(live.lowStockCount)">{{ $lowStockCount ?? 0 }}</p>
         <p class="text-xs font-medium mt-1" :class="live.lowStockCount > 0 ? 'text-red-800' : 'text-green-800'" x-text="live.lowStockCount > 0 ? 'ingredients need restocking' : 'inventory healthy'">{{ ($lowStockCount ?? 0) > 0 ? 'ingredients need restocking' : 'inventory healthy' }}</p>
     </a>
 </div>
