@@ -40,6 +40,10 @@ class EndOfDayController extends Controller
         $summary = [
             'starting_cash' => (float) $shift->starting_cash,
             'cash_sales' => (float) $shift->sales()->revenue()->where('payment_method', 'Cash')->sum('total_amount'),
+            // Per e-wallet, so the cashier knows this money is in the shop's account, not the drawer.
+            'ewallet_sales' => $shift->sales()->revenue()->where('payment_method', '!=', 'Cash')
+                ->selectRaw('payment_method, SUM(total_amount) as total')->groupBy('payment_method')
+                ->pluck('total', 'payment_method')->map(fn ($t) => (float) $t)->all(),
             'total_sales' => (float) $shift->sales()->revenue()->sum('total_amount'),
             'pay_ins' => (float) $shift->transactions()->where('type', 'pay_in')->sum('amount'),
             'pay_outs' => (float) $shift->transactions()->where('type', 'pay_out')->sum('amount'),

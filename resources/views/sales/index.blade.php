@@ -88,6 +88,9 @@
                                 <span class="px-2 py-1 bg-[#FDF8F5] border border-[#E6D5C3] text-xs font-bold uppercase rounded text-[#795548]">
                                     {{ $sale->payment_method }}
                                 </span>
+                                @if($sale->payment_reference)
+                                    <span class="block text-xs font-mono text-[#6D4C41] mt-1">Ref {{ $sale->payment_reference }}</span>
+                                @endif
                             </td>
                             <td class="py-4 text-right font-bold text-[#2E7D32]">₱{{ number_format($sale->total_amount, 2) }}</td>
                         </tr>

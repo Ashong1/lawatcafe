@@ -31,6 +31,7 @@ class SettingController extends Controller
         return view('admin.settings.store', [
             'settings' => $settings,
             'receiptPrintingEnabled' => Setting::receiptPrintingEnabled(),
+            'wallets' => app(\App\Services\EwalletPaymentService::class)->all(),
         ]);
     }
 

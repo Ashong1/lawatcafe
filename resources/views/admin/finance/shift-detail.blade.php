@@ -55,6 +55,12 @@
                         <span class="text-sm font-medium text-[#795548]">Cash</span>
                         <span class="font-bold text-[#3E2723]">₱{{ number_format($summary['cash_sales'], 2) }}</span>
                     </div>
+                    @foreach($summary['ewallet_sales'] ?? [] as $method => $amount)
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-[#795548]">{{ $method }}</span>
+                            <span class="font-bold text-blue-700">₱{{ number_format($amount, 2) }}</span>
+                        </div>
+                    @endforeach
                 </div>
             </div>
 

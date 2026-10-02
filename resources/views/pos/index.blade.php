@@ -300,7 +300,8 @@
 
             <h2 id="order-placed-modal-title" class="text-2xl font-bold text-[#3E2723] mb-2">Order Placed!</h2>
             <p class="text-sm text-[#795548] mb-2">Payment completed for ₱<span x-text="grandTotal.toFixed(2)"></span>.</p>
-            <p class="text-sm font-bold text-green-600 mb-8" x-show="amountTendered > 0">Change: ₱<span x-text="Math.max(0, amountTendered - grandTotal).toFixed(2)"></span></p>
+            <p class="text-sm font-bold text-green-600 mb-8" x-show="paymentMethod === 'Cash' && amountTendered > 0">Change: ₱<span x-text="Math.max(0, amountTendered - grandTotal).toFixed(2)"></span></p>
+            <p class="text-sm font-bold text-blue-700 mb-8" x-show="paymentMethod !== 'Cash'" x-text="'Paid by ' + paymentMethod + ' · Ref ' + paymentReference.trim().toUpperCase()"></p>
 
             <template x-if="checkoutHasWifi">
                 <div class="border border-[#E3F2FD] rounded-2xl p-6 mb-8 bg-[#F3F9FF] space-y-3">
@@ -346,6 +347,37 @@
                     Sale recorded. Receipt printing is off pending BIR registration.
                 </p>
             @endunless
+    </x-modal-shell>
+
+    {{-- After the phone cart sheet in the page, so it opens on top of it. --}}
+    <x-modal-shell show="showQrModal" max-width="sm" panel-class="p-5 sm:p-6 text-center border-t-8 border-blue-700" labelled-by="qr-modal-title">
+        <template x-if="selectedWallet">
+            <div>
+                <p class="text-xs font-bold text-blue-700 uppercase tracking-wide">Scan to pay with any e-wallet or bank app</p>
+                <h2 id="qr-modal-title" class="text-xl font-bold text-[#3E2723] mt-1" x-text="selectedWallet.label"></h2>
+                <p class="text-4xl font-bold text-[#3E2723] mt-2 tabular-nums" x-text="'₱' + grandTotal.toFixed(2)"></p>
+                <img :src="selectedWallet.qr" :alt="selectedWallet.label + ' QR code'" class="w-full max-w-[17rem] aspect-square object-contain mx-auto my-4 rounded-xl border border-[#F0E6D2] bg-white">
+                <p x-show="selectedWallet.account_name" class="text-sm font-bold text-[#3E2723]" x-text="'Account: ' + selectedWallet.account_name"></p>
+                <ol class="text-left text-xs text-[#6D4C41] mt-3 space-y-1 list-decimal ml-5">
+                    <li>The customer scans the QR and pays exactly <span class="font-bold" x-text="'₱' + grandTotal.toFixed(2)"></span>.</li>
+                    <li>Check their "sent" screen: the amount and the account name match.</li>
+                    <li>Type the reference number from that screen.</li>
+                </ol>
+                <div class="mt-4 text-left">
+                    <label for="qr-ref" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5">Reference no.</label>
+                    <input id="qr-ref" type="text" x-model="paymentReference" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40"
+                           class="w-full py-3 px-4 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-[#3E2723] bg-[#FAFAFA] text-base font-bold font-mono text-[#3E2723]" placeholder="e.g. 1234 567 890123">
+                </div>
+                <div class="flex gap-3 mt-5">
+                    <button type="button" @click="showQrModal = false" class="flex-1 min-h-[48px] bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#795548] text-xs font-bold uppercase tracking-wide">Back</button>
+                    <button type="button" @click="submitCheckout()" :disabled="isProcessing || !paymentReady || cart.length === 0"
+                            class="flex-[2] min-h-[48px] bg-[#3E2723] hover:bg-[#271815] text-white rounded-full text-xs font-bold uppercase tracking-wide disabled:opacity-50">
+                        <span x-text="isProcessing ? 'Processing...' : (paymentReady ? 'Paid — Place Order' : 'Type the reference no.')"></span>
+                    </button>
+                </div>
+                <button type="button" @click="choosePayment('Cash'); showQrModal = false" class="mt-3 text-xs font-bold text-[#795548] underline underline-offset-4">Customer will pay cash instead</button>
+            </div>
+        </template>
     </x-modal-shell>
 
     @if(!$activeShift)
@@ -405,6 +437,10 @@
             discountAmount: 0,
             amountTendered: 0,
             paymentMethod: 'Cash',
+            paymentReference: '',
+            // E-wallets with a QR set up in Store Settings → E-wallet payments.
+            wallets: @js($wallets),
+            showQrModal: false,
             showModal: false,
             showVariantModal: false,
             showMobileCart: false,
@@ -432,6 +468,7 @@
                     this.chatAvoidChanged();
                 });
                 this.$watch('cart.length', () => this.chatAvoidChanged());
+                this.$watch('showQrModal', (open) => window.dispatchEvent(new CustomEvent('chat-step-aside', { detail: open })));
                 // A "for free Wi-Fi" offer is moot once the order gets there another way.
                 this.$watch('grandTotal', (total) => {
                     if (this.suggestion?.reason === 'free_wifi' && total >= this.freeWifiMinAmount) this.suggestion = null;
@@ -627,6 +664,8 @@
             resetCart() {
                 this.cart = [];
                 this.amountTendered = 0;
+                this.paymentMethod = 'Cash';
+                this.paymentReference = '';
                 this.discountType = 'none';
                 this.discountAmount = 0;
                 this.showModal = false;
@@ -664,6 +703,28 @@
                 });
             },
 
+            get paymentOptions() {
+                return ['Cash', ...this.wallets.map((w) => w.label)];
+            },
+
+            get selectedWallet() {
+                return this.wallets.find((w) => w.label === this.paymentMethod) || null;
+            },
+
+            // Cash: enough tendered (or blank = exact). E-wallet: the reference
+            // number from the customer's "sent" screen.
+            get paymentReady() {
+                if (this.paymentMethod === 'Cash') return !(this.amountTendered > 0 && this.amountTendered < this.grandTotal);
+                return this.paymentReference.trim().length >= 4;
+            },
+
+            choosePayment(method) {
+                this.paymentMethod = method;
+                if (method === 'Cash') { this.paymentReference = ''; return; }
+                this.amountTendered = 0;
+                this.showQrModal = true;
+            },
+
             async submitCheckout() {
                 // A second tap while the first is still in flight would place
                 // the order twice.
@@ -685,7 +746,8 @@
                             discount_type: this.discountType,
                             discount_amount: this.calculatedDiscount,
                             payment_method: this.paymentMethod,
-                            amount_received: this.amountTendered || this.grandTotal,
+                            payment_reference: this.paymentMethod === 'Cash' ? null : this.paymentReference.trim(),
+                            amount_received: this.paymentMethod === 'Cash' ? (this.amountTendered || this.grandTotal) : this.grandTotal,
                             order_type: this.orderType,
                             shift_id: {{ $activeShift ? $activeShift->id : 'null' }}
                         })
@@ -711,6 +773,7 @@
                         this.generatedCodes = result.generatedCodes || [];
                         this.checkoutHasWifi = result.hasWifi || false;
                         this.showMobileCart = false;
+                        this.showQrModal = false;
                         this.showModal = true;
                     } else {
                         Swal.fire({

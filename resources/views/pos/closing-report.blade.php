@@ -24,6 +24,12 @@
                     <span class="text-sm font-bold text-[#4A3B32]">Cash Sales</span>
                     <span class="font-bold text-[#3E2723]">₱{{ number_format($summary['cash_sales'], 2) }}</span>
                 </div>
+                @foreach($summary['ewallet_sales'] ?? [] as $method => $amount)
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm font-bold text-[#4A3B32]">{{ $method }} <span class="text-xs font-medium text-[#6D4C41]">(in the shop's account, not the drawer)</span></span>
+                        <span class="font-bold text-blue-700">₱{{ number_format($amount, 2) }}</span>
+                    </div>
+                @endforeach
                 <div class="pt-4 border-t border-[#FDF8F5] flex justify-between items-center">
                     <span class="text-xs font-bold text-amber-800 uppercase tracking-wide">Total Sales</span>
                     <span class="text-xl font-bold text-[#3E2723]">₱{{ number_format($summary['total_sales'], 2) }}</span>

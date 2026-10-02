@@ -153,6 +153,8 @@
      @pointermove.window="onDrag($event)"
      @pointerup.window="stopDrag()"
      @pointercancel.window="stopDrag()"
+     x-show="!steppedAside"
+     @chat-step-aside.window="steppedAside = !!$event.detail"
      @open-agent-chat.window="handleExternalOpen($event.detail.prompt)">
 
     {{-- Chat Window: absolutely positioned above the toggle button, not in flow.

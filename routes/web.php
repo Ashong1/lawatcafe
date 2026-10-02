@@ -334,6 +334,8 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('settings')->name('admin.settings.')->group(function () {
             Route::get('/store', [SettingController::class, 'store'])->name('store');
             Route::post('/store', [SettingController::class, 'updateStore'])->name('store.update');
+            Route::post('/payment-qr/{wallet}', [\App\Http\Controllers\Admin\PaymentQrController::class, 'update'])->name('payment-qr.update');
+            Route::delete('/payment-qr/{wallet}', [\App\Http\Controllers\Admin\PaymentQrController::class, 'destroy'])->name('payment-qr.destroy');
             Route::get('/ai-providers', [SettingController::class, 'aiProviders'])->name('ai-providers');
             Route::post('/ai-providers', [SettingController::class, 'updateAiProviders'])->name('ai-providers.update');
 

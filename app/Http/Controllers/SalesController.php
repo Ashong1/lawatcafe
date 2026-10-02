@@ -101,7 +101,7 @@ class SalesController extends Controller
             $file = fopen('php://output', 'w');
 
             // Add the CSV Header Row
-            fputcsv($file, ['Transaction Number', 'Total Amount', 'Payment Method', 'Time of Sale']);
+            fputcsv($file, ['Transaction Number', 'Total Amount', 'Payment Method', 'Reference No.', 'Time of Sale']);
 
             // Loop through each sale and add it as a row
             foreach ($sales as $sale) {
@@ -109,6 +109,7 @@ class SalesController extends Controller
                     $sale->transaction_number,
                     $sale->total_amount,
                     $sale->payment_method,
+                    $sale->payment_reference,
                     $sale->created_at->format('h:i A'), // Formats time nicely (e.g., 02:30 PM)
                 ]);
             }

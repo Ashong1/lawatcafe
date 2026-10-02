@@ -102,6 +102,92 @@
             </div>
         </form>
 
+        {{-- One form per wallet: each uploads its own file. --}}
+        <div id="ewallet" class="mt-8 bg-white rounded-3xl shadow-sm border border-[#F0E6D2] p-6 md:p-8">
+            <div class="flex items-start gap-4 mb-6">
+                <div class="p-2 rounded-xl shrink-0 bg-blue-50 text-blue-700"><x-lucide-qr-code class="w-5 h-5" /></div>
+                <div>
+                    <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">E-wallet payments (QR)</h3>
+                    <p class="text-xs text-[#6D4C41] mt-1">Upload the shop's own receive-money QR. The register then offers it: the customer scans it, pays, and shows you the "sent" screen. The money goes straight to your account.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                @foreach($wallets as $wallet)
+                    <form method="POST" action="{{ route('admin.settings.payment-qr.update', $wallet['key']) }}" enctype="multipart/form-data"
+                          x-data="qrUpload(@js($wallet['qr']))" @submit="if (busy) { $event.preventDefault(); return; } submitting = true"
+                          class="rounded-2xl border-2 {{ $wallet['qr'] ? 'border-green-200 bg-green-50/30' : 'border-[#F0E6D2]' }} p-4 flex flex-col gap-3">
+                        @csrf
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="text-sm font-bold text-[#3E2723]">{{ $wallet['label'] }}</p>
+                            <span class="text-xs font-bold {{ $wallet['qr'] ? 'text-green-700' : 'text-[#795548]' }}">{{ $wallet['qr'] ? 'On' : 'Not set up' }}</span>
+                        </div>
+                        <div class="aspect-square w-full max-w-[12rem] mx-auto rounded-xl bg-[#FAFAFA] border border-dashed border-[#E6D5C3] overflow-hidden flex items-center justify-center">
+                            <img x-show="preview" :src="preview" alt="{{ $wallet['label'] }} QR code" class="w-full h-full object-contain">
+                            <x-lucide-qr-code x-show="!preview" class="w-12 h-12 text-[#D7CCC8]" />
+                        </div>
+                        <p class="text-xs text-[#6D4C41]">{{ $wallet['help'] }}</p>
+                        <label class="cursor-pointer min-h-[44px] inline-flex items-center justify-center gap-2 px-4 rounded-xl bg-[#3E2723] hover:bg-[#271815] text-white text-xs font-bold uppercase tracking-wide">
+                            <x-lucide-upload class="w-4 h-4" />
+                            <span x-text="preview ? 'Change QR picture' : 'Upload QR picture'"></span>
+                            <input type="file" name="qr" accept="image/*" class="sr-only" @change="pick($event)">
+                        </label>
+                        <div>
+                            <label for="qr-name-{{ $wallet['key'] }}" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1">Account name (shown to the customer)</label>
+                            <input id="qr-name-{{ $wallet['key'] }}" type="text" name="account_name" value="{{ $wallet['account_name'] }}" maxlength="80" placeholder="e.g. JU*N D. — Lawa't Kape"
+                                   class="w-full bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-3 py-2.5 text-base sm:text-sm font-bold focus:outline-none focus:border-[#3E2723]">
+                        </div>
+                        <p x-show="error" x-cloak x-text="error" class="text-xs font-bold text-red-600"></p>
+                        @if($errors->has('qr') && old('_wallet') === $wallet['key'])
+                            <p class="text-xs font-bold text-red-600">{{ $errors->first('qr') }}</p>
+                        @endif
+                        <input type="hidden" name="_wallet" value="{{ $wallet['key'] }}">
+                        <div class="flex gap-2 mt-auto">
+                            <button type="submit" :disabled="submitting || busy" class="flex-1 min-h-[44px] rounded-xl bg-green-700 hover:bg-green-800 text-white text-xs font-bold uppercase tracking-wide disabled:opacity-60">Save</button>
+                            @if($wallet['qr'])
+                                <button type="button" class="min-h-[44px] px-4 rounded-xl border-2 border-[#E6D5C3] text-xs font-bold uppercase tracking-wide text-[#6D4C41] hover:border-red-300 hover:text-red-700"
+                                        @click="window.confirmAction({ title: 'Turn off {{ $wallet['label'] }}?', text: 'The register stops offering it. Past sales are kept.', icon: 'warning', confirmText: 'Yes, turn off', callback: () => document.getElementById('qr-off-{{ $wallet['key'] }}').submit() })">Turn off</button>
+                            @endif
+                        </div>
+                    </form>
+                    <form id="qr-off-{{ $wallet['key'] }}" method="POST" action="{{ route('admin.settings.payment-qr.destroy', $wallet['key']) }}" class="hidden">@csrf @method('DELETE')</form>
+                @endforeach
+            </div>
+        </div>
+
+        <script>
+            // A QR must stay sharp to scan, so only a very large photo is
+            // shrunk (to 1400px) to fit the server's 2 MB limit; screenshots go as they are.
+            function qrUpload(initial) {
+                return {
+                    preview: initial, busy: false, submitting: false, error: '',
+                    async pick(event) {
+                        const input = event.target, file = input.files && input.files[0];
+                        this.error = '';
+                        if (!file) return;
+                        if (!file.type.startsWith('image/')) { input.value = ''; this.error = 'That file is not a picture.'; return; }
+                        if (file.size <= 1900000) { this.preview = URL.createObjectURL(file); return; }
+                        this.busy = true;
+                        try {
+                            const bitmap = await createImageBitmap(file);
+                            const scale = Math.min(1, 1400 / Math.max(bitmap.width, bitmap.height));
+                            const canvas = document.createElement('canvas');
+                            canvas.width = Math.round(bitmap.width * scale);
+                            canvas.height = Math.round(bitmap.height * scale);
+                            canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                            const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', 0.92));
+                            const t = new DataTransfer();
+                            t.items.add(new File([blob], 'qr.jpg', { type: 'image/jpeg' }));
+                            input.files = t.files;
+                            this.preview = URL.createObjectURL(blob);
+                        } catch (e) {
+                            input.value = '';
+                            this.error = "Couldn't use that picture. Take a screenshot of the QR instead.";
+                        } finally { this.busy = false; }
+                    },
+                };
+            }
+        </script>
+
         {{-- Outside the Store Preferences form on purpose: it posts to its own
              super_admin-only route, so an admin cannot flip it by editing the
              form they DO have access to. --}}

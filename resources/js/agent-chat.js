@@ -82,6 +82,8 @@ export default function registerAgentChat(Alpine) {
         conversationIdStorageKey: 'agentChatConversationId:' + config.anchorId,
 
         open: false,
+        // A full-screen moment (the register's pay-by-QR screen) hides the widget via chat-step-aside.
+        steppedAside: false,
         message: '',
         // Attached photo: the full downscaled data URL (sent once, never
         // saved) and a small thumbnail (shown in the bubble, saved in history).

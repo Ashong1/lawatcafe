@@ -123,6 +123,9 @@
                             <span class="px-3 py-1 bg-gray-50 border border-gray-200 text-[#795548] text-xs font-bold uppercase tracking-wide rounded-md">
                                 {{ $sale->payment_method }}
                             </span>
+                            @if($sale->payment_reference)
+                                <span class="block text-xs font-mono text-[#6D4C41] mt-1">Ref {{ $sale->payment_reference }}</span>
+                            @endif
                         </td>
                         <td class="py-4 text-center">
                             @if($sale->status === 'completed')

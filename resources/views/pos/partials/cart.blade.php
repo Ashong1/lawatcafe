@@ -150,15 +150,34 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-3">
-        <div>
-            <label class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5">Payment Method</label>
-            <div class="w-full py-2 px-2 border border-[#F0E6D2] rounded-lg bg-[#FAFAFA] text-xs font-bold text-[#3E2723]">Cash</div>
+    <div>
+        <p class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5">Payment</p>
+        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Payment method">
+            <template x-for="method in paymentOptions" :key="method">
+                <button type="button" role="radio" :aria-checked="paymentMethod === method ? 'true' : 'false'" @click="choosePayment(method)"
+                        class="flex-1 min-w-[4.5rem] py-1.5 rounded-md text-xs font-bold transition border inline-flex items-center justify-center gap-1"
+                        :class="paymentMethod === method ? 'bg-[#3E2723] text-white border-[#3E2723]' : 'bg-[#FAFAFA] text-[#795548] border-[#F0E6D2] hover:bg-[#FDF8F5]'">
+                    <template x-if="method !== 'Cash'"><x-lucide-qr-code class="w-3.5 h-3.5" /></template>
+                    <span x-text="method"></span>
+                </button>
+            </template>
         </div>
-        <div>
-            <label class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5">Amount Tendered (₱)</label>
-            <input type="number" inputmode="decimal" aria-label="Amount tendered in pesos" x-model.number="amountTendered" class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-sm font-bold text-[#3E2723]" placeholder="0.00">
+    </div>
+
+    <div x-show="paymentMethod === 'Cash'">
+        <label class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5">Amount Tendered (₱)</label>
+        <input type="number" inputmode="decimal" aria-label="Amount tendered in pesos" x-model.number="amountTendered" class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-sm font-bold text-[#3E2723]" placeholder="0.00">
+    </div>
+
+    <div x-show="paymentMethod !== 'Cash'" x-cloak x-id="['payref']" class="flex gap-2 items-end">
+        <div class="flex-1 min-w-0">
+            <label class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5" :for="$id('payref')">Reference no.</label>
+            <input :id="$id('payref')" type="text" x-model="paymentReference" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40"
+                   class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] text-sm font-bold font-mono text-[#3E2723]" placeholder="From their sent screen">
         </div>
+        <button type="button" @click="showQrModal = true" class="shrink-0 py-2 px-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 text-xs font-bold inline-flex items-center gap-1.5">
+            <x-lucide-scan-line class="w-4 h-4" /> Show QR
+        </button>
     </div>
 
     <div class="space-y-1">
@@ -178,19 +197,19 @@
             <span>Total</span>
             <span x-text="'₱' + grandTotal.toFixed(2)"></span>
         </div>
-        <div class="flex justify-between text-xs font-bold text-green-600 pt-1 border-t border-[#FDF8F5]" x-show="amountTendered > 0">
+        <div class="flex justify-between text-xs font-bold text-green-600 pt-1 border-t border-[#FDF8F5]" x-show="paymentMethod === 'Cash' && amountTendered > 0">
             <span>Change</span>
             <span x-text="'₱' + Math.max(0, amountTendered - grandTotal).toFixed(2)"></span>
         </div>
     </div>
 
-    <button type="button" @click="submitCheckout()" :disabled="cart.length === 0 || isProcessing || (amountTendered > 0 && amountTendered < grandTotal)" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-3 rounded-full font-bold uppercase tracking-wide transition shadow-lg shadow-[#3E2723]/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center text-xs gap-2 shrink-0">
+    <button type="button" @click="submitCheckout()" :disabled="cart.length === 0 || isProcessing || !paymentReady" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-3 rounded-full font-bold uppercase tracking-wide transition shadow-lg shadow-[#3E2723]/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center text-xs gap-2 shrink-0">
         <template x-if="!isProcessing">
             <x-lucide-send class="w-4 h-4" />
         </template>
         <template x-if="isProcessing">
             <x-lucide-loader-2 class="w-4 h-4 animate-spin" />
         </template>
-        <span x-text="isProcessing ? 'Processing...' : (amountTendered > 0 && amountTendered < grandTotal ? 'Insufficient Funds' : 'Place Order')"></span>
+        <span x-text="isProcessing ? 'Processing...' : (paymentMethod !== 'Cash' && !paymentReady ? 'Type the reference no.' : (amountTendered > 0 && amountTendered < grandTotal ? 'Insufficient Funds' : 'Place Order'))"></span>
     </button>
 </div>

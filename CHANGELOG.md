@@ -9,6 +9,19 @@ the history was rewritten.
 
 ---
 
+## 1.24.0 — E-wallet QR payments
+*build 196*
+
+- **Store Settings → E-wallet payments (QR)**: upload the shop's GCash,
+  Maya or QR Ph (InstaPay) receive QR and the account name.
+- **Register**: Payment now offers Cash plus each wallet that is set up.
+  Picking one shows the QR full screen with the amount; the cashier types the
+  reference number from the customer's "sent" screen before the order goes
+  through.
+- The reference number shows in Orders, Sales Reports and the sales CSV.
+  The end-of-shift report lists e-wallet money on its own line, outside the
+  drawer count.
+
 ## 1.23.0 — Product photos
 *build 195*
 

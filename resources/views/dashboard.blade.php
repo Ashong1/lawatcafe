@@ -847,7 +847,7 @@ document.addEventListener('alpine:init', () => {
 
         paymentMethodClass(method) {
             if (method === 'Cash') return 'bg-gray-100 text-gray-500 border-gray-200';
-            if (method === 'E-Wallet' || method === 'GCash') return 'bg-blue-50 text-blue-700 border-blue-100';
+            if (['GCash', 'Maya', 'QR Ph'].includes(method)) return 'bg-blue-50 text-blue-700 border-blue-100';
             return 'bg-amber-50 text-amber-700 border-amber-100';
         },
 

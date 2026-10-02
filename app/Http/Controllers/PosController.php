@@ -14,12 +14,14 @@ use App\Models\Shift;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Notifications\SystemAlert;
+use App\Services\EwalletPaymentService;
 use App\Services\PairingSuggestionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class PosController extends Controller
 {
@@ -118,6 +120,7 @@ class PosController extends Controller
             'freeWifiMinAmount' => $freeWifiMinAmount,
             'freeWifiDuration' => $freeWifiDuration,
             'receiptPrintingEnabled' => Setting::receiptPrintingEnabled(),
+            'wallets' => app(EwalletPaymentService::class)->enabled(),
         ]);
     }
 
@@ -128,11 +131,18 @@ class PosController extends Controller
             'total_amount' => 'required|numeric',
             'amount_received' => 'required|numeric',
             'cart' => 'required|array',
-            'payment_method' => 'nullable|in:Cash',
+            'payment_method' => ['nullable', Rule::in(app(EwalletPaymentService::class)->acceptedMethods())],
+            // Read off the customer's "sent" screen; the only proof an e-wallet payment happened.
+            'payment_reference' => ['nullable', 'required_unless:payment_method,Cash,null', 'string', 'min:4', 'max:40', 'regex:/^[A-Za-z0-9 -]+$/'],
             'order_type' => 'required|in:dine_in,takeaway',
             'discount_type' => 'nullable|string|max:50',
             'discount_amount' => 'nullable|numeric',
             'shift_id' => 'required|exists:shifts,id',
+        ], [
+            'payment_method.in' => 'That payment method is not set up. Reload the register.',
+            'payment_reference.required_unless' => 'Type the reference number from the customer\'s "sent" screen.',
+            'payment_reference.min' => 'The reference number looks too short. Check the customer\'s screen.',
+            'payment_reference.regex' => 'The reference number can only have letters and numbers.',
         ]);
 
         // Pre-fetch all products in the cart with ingredients to avoid N+1
@@ -201,21 +211,25 @@ class PosController extends Controller
 
         $finalTotal = max(0, $calculatedTotal - $discountAmount);
 
-        // Optional: Validate that amount_received >= finalTotal (unless it's a non-cash payment that might be handled differently, but usually it should match)
-        if ($request->amount_received < $finalTotal) {
+        // An e-wallet transfer is for the exact total: there is no change to give.
+        $isCash = ($request->payment_method ?? 'Cash') === 'Cash';
+        $amountReceived = $isCash ? (float) $request->amount_received : $finalTotal;
+
+        if ($amountReceived < $finalTotal) {
             return response()->json(['success' => false, 'message' => 'Amount received is less than the total amount.'], 422);
         }
 
         $lowStockAdmins = null;
 
-        return DB::transaction(function () use ($request, $finalTotal, $products, $discountAmount, &$lowStockAdmins) {
+        return DB::transaction(function () use ($request, $finalTotal, $products, $discountAmount, $isCash, $amountReceived, &$lowStockAdmins) {
             // 3. Create the Sales Record
             $sale = Sale::create([
                 'transaction_number' => 'TRN-'.strtoupper(Str::random(8)),
                 'total_amount' => $finalTotal,
-                'amount_received' => $request->amount_received,
+                'amount_received' => $amountReceived,
                 'status' => 'pending',
                 'payment_method' => $request->payment_method ?? 'Cash',
+                'payment_reference' => $isCash ? null : strtoupper(trim($request->payment_reference)),
                 'order_type' => $request->order_type,
                 'discount_type' => $request->discount_type,
                 'discount_amount' => $discountAmount,

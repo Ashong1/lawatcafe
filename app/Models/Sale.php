@@ -16,6 +16,7 @@ class Sale extends Model
         'amount_received',
         'status',
         'payment_method',
+        'payment_reference',
         'order_type',
         'discount_type',
         'discount_amount',

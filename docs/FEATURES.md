@@ -291,6 +291,23 @@ Details in [AI_AGENT.md](AI_AGENT.md).
   request for a new tool.
 - **Thumbs up/down and corrections** on replies feed the learning loop.
 
+## E-wallet payments (QR)
+
+- **Set up** in Settings → Store Settings → *E-wallet payments (QR)*: upload
+  the shop's own receive-money QR for **GCash**, **Maya** and/or **QR Ph**
+  (InstaPay; any bank or e-wallet app can pay it), plus the account name
+  shown to the customer. **Turn off** removes it from the register.
+- **At the register** the Payment row shows Cash plus each wallet that has a
+  QR. Picking one opens a full-screen QR with the amount; the customer pays,
+  the cashier checks their "sent" screen and types the **reference number**
+  (required). The sale is for the exact total, with no change.
+- The reference shows in Orders, Sales Reports and the CSV export. The shift
+  report lists e-wallet money separately and keeps it out of the expected
+  drawer cash.
+- There is no payment-provider connection: nothing confirms the transfer
+  automatically, which is why the reference number is recorded. Code:
+  `EwalletPaymentService`, `Admin\PaymentQrController`.
+
 ## Accounts and settings
 
 - **Accounts** (`/accounts`): an admin adds, edits and removes staff
