@@ -331,6 +331,10 @@
                     <x-lucide-plus-circle class="w-4 h-4" />
                     <span>New Order</span>
                 </button>
+                <button type="button" x-show="hasKitchenItems" @click="printKitchenSlip()" class="flex-1 py-4 bg-white border-2 border-[#3E2723] text-[#3E2723] rounded-full hover:bg-[#FDF8F5] font-bold transition flex items-center justify-center gap-2">
+                    <x-lucide-chef-hat class="w-4 h-4" />
+                    <span>Kitchen Slip</span>
+                </button>
                 @if($receiptPrintingEnabled)
                     <a :href="'/pos/receipt/' + saleId" target="_blank" class="flex-1 py-4 bg-[#3E2723] text-white rounded-full hover:bg-[#271815] font-bold transition shadow-md flex items-center justify-center gap-2">
                         <x-lucide-printer class="w-4 h-4" />
@@ -344,7 +348,7 @@
                      button, and knows the sale recorded fine — only printing is
                      withheld. --}}
                 <p class="mt-4 text-center text-xs font-bold uppercase tracking-wide text-[#795548] leading-relaxed">
-                    Sale recorded. Receipt printing is off pending BIR registration.
+                    Sale recorded. Customer receipts are off until BIR registration; the kitchen slip still prints.
                 </p>
             @endunless
     </x-modal-shell>
@@ -716,6 +720,19 @@
             get paymentReady() {
                 if (this.paymentMethod === 'Cash') return !(this.amountTendered > 0 && this.amountTendered < this.grandTotal);
                 return this.paymentReference.trim().length >= 4;
+            },
+
+            // Food or drinks to make, not only Wi-Fi codes.
+            get hasKitchenItems() {
+                return this.cart.some((i) => i.type === 'product');
+            },
+
+            // The app prints the page it shows, so it opens the slip in place
+            // (the slip has "Back to register"); a browser gets a new tab.
+            printKitchenSlip() {
+                const url = '/pos/kitchen-slip/' + this.saleId;
+                if (window.LawatKapeApp) { window.location.href = url; return; }
+                window.open(url, '_blank');
             },
 
             choosePayment(method) {

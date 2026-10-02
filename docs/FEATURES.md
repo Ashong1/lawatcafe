@@ -291,6 +291,14 @@ Details in [AI_AGENT.md](AI_AGENT.md).
   request for a new tool.
 - **Thumbs up/down and corrections** on replies feed the learning loop.
 
+## Kitchen order slip
+
+- **Kitchen Slip** on the Order Placed screen, and the chef-hat button in
+  Orders, print `/pos/kitchen-slip/{sale}`: order number, dine in / take
+  away, items with quantities and notes. Wi-Fi items are left off.
+- No prices or totals, marked "Kitchen copy — not a receipt", so it is not
+  gated by the BIR receipt switch (`PosController::kitchenSlip`).
+
 ## E-wallet payments (QR)
 
 - **Set up** in Settings → Store Settings → *E-wallet payments (QR)*: upload

@@ -141,6 +141,11 @@
                                 {{-- Withheld until the POS is BIR-registered.
                                      PosController::receipt() refuses too — this
                                      only removes the affordance. --}}
+                                @if(! auth()->user()->isSuperAdmin() && $sale->items->where('type', 'product')->isNotEmpty())
+                                    <a href="{{ route('pos.kitchen-slip', $sale->id) }}" @if(! str_contains(request()->userAgent() ?? '', 'LawatKapeApp')) target="_blank" @endif class="p-2 text-[#795548] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-lg transition" title="Print kitchen slip" aria-label="Print kitchen slip">
+                                        <x-lucide-chef-hat class="w-4 h-4" />
+                                    </a>
+                                @endif
                                 @if($receiptPrintingEnabled)
                                     <a href="{{ route('pos.receipt', $sale->id) }}" target="_blank" class="p-2 text-[#795548] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-lg transition" title="Reprint Receipt" aria-label="Reprint Receipt">
                                         <x-lucide-printer class="w-4 h-4" />

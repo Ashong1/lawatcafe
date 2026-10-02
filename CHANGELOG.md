@@ -9,6 +9,16 @@ the history was rewritten.
 
 ---
 
+## 1.25.0 — Kitchen order slip
+*build 197*
+
+- After an order, **Kitchen Slip** prints the kitchen's copy: order number,
+  dine in or take away, each item with its quantity and note. It has no
+  prices or totals and says "Kitchen copy — not a receipt", so it prints
+  while customer receipts stay off until BIR registration.
+- Reprint any order's slip from **Orders** (chef-hat button). In the Android
+  app the slip opens in place with **Back to register**.
+
 ## 1.24.0 — E-wallet QR payments
 *build 196*
 

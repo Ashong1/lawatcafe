@@ -105,7 +105,8 @@ class PosReceiptBirGateTest extends TestCase
         $response->assertOk();
         $response->assertDontSee("'/pos/receipt/' + saleId", false);
         // A cashier should not go hunting for a button that used to be there.
-        $response->assertSee('pending BIR registration', false);
+        $response->assertSee('Customer receipts are off until BIR registration', false);
+        $response->assertSee('Kitchen Slip', false);
     }
 
     /**

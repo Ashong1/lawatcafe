@@ -458,4 +458,16 @@ class PosController extends Controller
 
         return view('pos.receipt', compact('sale'));
     }
+
+    /**
+     * The kitchen's copy of an order: items, notes, dine-in or take-away, and
+     * no prices or totals, so it can't stand in for a customer receipt. That
+     * is why it prints while receipt printing waits on BIR registration.
+     */
+    public function kitchenSlip(Sale $sale)
+    {
+        $sale->load(['items' => fn ($q) => $q->where('type', '!=', 'wifi'), 'user']);
+
+        return view('pos.kitchen-slip', compact('sale'));
+    }
 }

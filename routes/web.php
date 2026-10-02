@@ -104,6 +104,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pos', [PosController::class, 'index'])->name('pos');
         Route::post('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
         Route::get('/pos/receipt/{sale}', [PosController::class, 'receipt'])->name('pos.receipt');
+        Route::get('/pos/kitchen-slip/{sale}', [PosController::class, 'kitchenSlip'])->name('pos.kitchen-slip');
         Route::post('/pos/suggest-pairing', [PosController::class, 'suggestPairing'])->name('pos.suggest-pairing');
 
         // Running a shift — opening the drawer, recording against it, closing
