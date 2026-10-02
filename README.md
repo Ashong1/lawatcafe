@@ -10,7 +10,7 @@
   <img alt="Version" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FAshong1%2Flawatcafe%2Fmain%2Fcomposer.json&query=%24.version&label=version&color=3E2723">
   <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white">
   <img alt="PHP" src="https://img.shields.io/badge/PHP-8.2-777BB4?logo=php&logoColor=white">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-1%2C060%2B%20passing-2E7D32">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-1%2C111%20passing-2E7D32">
   <img alt="OPNsense" src="https://img.shields.io/badge/OPNsense-25.7-D94F00">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-blue">
 </p>
@@ -28,6 +28,11 @@ audit trail.
 
 It has been in daily use on the café's own network since mid-2026, on Proxmox
 with an OPNsense firewall, Pi-hole and Nginx Proxy Manager.
+
+> **Writing the capstone paper?** The **[capstone documentation kit](docs/capstone/README.md)**
+> has material for Chapters 1–5 organised by chapter: objectives with evidence, real
+> delimitations, methodology and diagrams, a generated data dictionary, ERD and test
+> inventory, an ISO/IEC 25010 questionnaire, and the screenshot list.
 
 ## Contents
 
@@ -56,8 +61,12 @@ A short tour. Every feature is described in full in
 
 ### Register and kitchen
 
-- **Point of sale** for dine-in and take-away, cash only. Senior/PWD 20%
-  discount, item notes, hot/iced choice, and change calculation. Every price,
+- **Point of sale** for dine-in and take-away. Senior/PWD 20% discount, item
+  notes, hot/iced choice, product photos, and change calculation.
+- **Cash or e-wallet**: GCash, Maya and QR Ph (InstaPay). The owner uploads
+  the shop's own receive QR; the register shows it full screen with the
+  amount, and the cashier records the transfer's reference number. E-wallet
+  money is kept out of the drawer count. Every price,
   discount and stock level is checked again on the server; the total the
   browser sends is never trusted.
 - **"Say to customer" suggestions** in English and Tagalog: after an item is
@@ -78,6 +87,9 @@ A short tour. Every feature is described in full in
 - **Z-reads** (end-of-day reports) and CSV sales export.
 - Printed receipts stay **off until the register is BIR-registered**; one
   switch, for the super admin only, turns them on.
+- **Kitchen order slips** print regardless: the kitchen's copy of an order
+  (items, quantities, notes, dine-in or take-away) with no prices, marked
+  "not a receipt".
 
 ### Inventory and purchasing
 
@@ -161,6 +173,11 @@ A short tour. Every feature is described in full in
 | **Staff** | Baristas and cashiers | Register, kitchen display, order history, their shift, deliveries, active sessions, and Barista AI with the staff tools. |
 | **Admin** | The café owner | Everything staff sees, plus dashboard, reports, Z-reads, inventory, suppliers, Wi-Fi codes and plans, all network pages, store settings, and the void and AI-action approval queues. |
 | **Super admin** | The system administrator | Everything admin sees except the register (it has no cashier duties), plus network and AI settings, AI-tool permissions, system health tools, and the receipt-printing switch. |
+
+Accounts are invite-only: the owner enters a name, username and email, and
+the person gets an email link to choose their own password. Sign-in takes the
+username or the email. Removed staff who have sales on record are switched
+off, not deleted, so reports keep their names.
 
 The roles stack: `staff` < `admin` < `super_admin`. They are enforced on
 every route (`RoleMiddleware`, `DenySuperAdmin`), not just hidden in menus.
@@ -378,7 +395,7 @@ to come back. The shop keeps running:
 
 ```bash
 sudo -u www-data php artisan config:clear   # a cached config points tests at the live DB
-sudo -u www-data php artisan test           # 1,060+ tests, about 80 seconds
+sudo -u www-data php artisan test           # 1,111 tests, about 80 seconds
 sudo -u www-data vendor/bin/phpstan analyse # static analysis, level 5
 sudo -u www-data vendor/bin/pint --test     # code style
 ```
@@ -412,7 +429,7 @@ resources/views/         Blade views: layouts/ (admin, staff, guest, portal), po
 resources/js/            app.js, agent-chat.js (the chat widget), portal.js, charts.js
 routes/web.php           every page and endpoint, grouped by role
 routes/console.php       the schedule
-tests/Feature/           151 test files
+tests/Feature/           157 test files
 ```
 
 ## Documentation
@@ -433,6 +450,7 @@ tests/Feature/           151 test files
 | [docs/TESTING.md](docs/TESTING.md) | How the suite is run and written, and what not to do on the live system |
 | [docs/VERSIONING.md](docs/VERSIONING.md) | The version scheme and how to cut a release |
 | [docs/AUDIT_FINDINGS.md](docs/AUDIT_FINDINGS.md) | The July 2026 deep audit: every bug found and how it was fixed |
+| [docs/capstone/](docs/capstone/README.md) | **Capstone paper kit:** Chapters 1–5 material, data dictionary, ERD, test inventory, ISO/IEC 25010 instrument |
 | [CHANGELOG.md](CHANGELOG.md) | What changed in each release |
 
 ## Versioning

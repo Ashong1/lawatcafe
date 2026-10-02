@@ -52,7 +52,7 @@ Acts as the LAN's router/firewall/DHCP server and the captive-portal enforcement
 - **Captive portal**: authorizing a device's session (`authorizeDevice`), disconnecting a session (`disconnectDevice`), listing active sessions (`listSessions`), reconfiguring the captive portal zone (`reconfigureCaptivePortal`)
 - **DHCP (Kea)**: adding/updating/deleting static reservations (`addKeaReservation`, `updateKeaReservation`, `deleteKeaReservation`), reading leases (`getDhcpLeases`) — device hostnames are read from Kea leases specifically, not ARP, because ARP's hostname field is almost always empty
 - **Firewall aliases**: a MAC block alias for banned devices (`addMacToBlockAlias`/`removeMacFromBlockAlias`), per-tier IP aliases for voucher speed tiers (`addIpToTierAlias`/`removeIpFromTierAlias`), and an "allowed addresses" allow-list (infrastructure/staff devices that should never be treated as guests)
-- **Wi-Fi Speed**: dummynet pipes plus Shaper rules (`upsertShaperPipe`, `upsertShaperRule`, `reconfigureShaper`) — a per-device fair-use ceiling. Free/premium tiers are recorded but cannot be enforced on this build. See *Bandwidth shaping* below
+- **Wi-Fi Speed**: dummynet pipes plus Shaper rules (`upsertShaperPipe`, `upsertShaperRule`, `reconfigureShaper`) — a per-device fair-use ceiling, plus per-plan (free/premium) caps applied through Shaper rules that list each plan's member IPs (since v1.14.1). See *Bandwidth shaping* below
 - **Monitoring**: gateway status and interface stats (`getGatewayStatus`, `getInterfaceStats`) surfaced on the admin network dashboard
 
 **Captive portal zone: `concurrentlogins` must stay `0` (unlimited).** Found
@@ -149,10 +149,17 @@ Bandwidth values are written as whole numbers because OPNsense's pipe
 unit down (1.5 Mbit → `1500 Kbit`, the same cap) rather than rounded, so the
 figure an admin typed is the figure that is enforced.
 
-#### Per-tier caps are recorded but not enforced
+#### Per-tier caps: enforced by listing member IPs (v1.14.1)
 
-Free and premium figures are stored and vouchers carry a tier, but no rule
-enforces them. Both routes were tried and both are closed on this build:
+**Current state:** each plan has Shaper rules whose source/destination is a
+*list of addresses* (OPNsense 25.7 accepts one), holding the IPs of the
+devices on that plan. They are re-synced on connect, release, plan change and
+the 5-minute `shaper:reconcile-tiers`; a plan with nobody on it has its rules
+switched off. Verified with a speed test at 5 Mbps (free) and 15 Mbps
+(premium). See CHANGELOG 1.14.1.
+
+The history below records the approaches that did **not** work, which is why
+the IP-list method was used:
 
 1. **Shaper rules cannot target a group of devices.** `GET
    /api/trafficshaper/settings/getRule` reports `source` and `destination` as

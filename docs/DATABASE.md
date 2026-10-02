@@ -6,12 +6,16 @@ below reflect the live schema (`php artisan tinker` +
 added/changed — read this instead of chasing 59 migration files for "what
 does this table actually look like today."
 
+For a full column-by-column listing generated from the live database, see
+[capstone/DATA_DICTIONARY.md](capstone/DATA_DICTIONARY.md) and the diagrams in
+[capstone/ERD.md](capstone/ERD.md).
+
 Migrations are additive only: nothing here is ever dropped, wiped or reset on
 the live database (see [OPERATIONS.md](OPERATIONS.md#ground-rules)).
 
 ## Accounts
 
-**`users`** — `id, name, email, email_verified_at, password, remember_token, role`.
+**`users`** — `id, name, username, email, email_verified_at, password, password_set_at, deactivated_at, remember_token, role`. `password_set_at` is null while an invite is waiting; `deactivated_at` marks a removed person whose sales and shifts must stay on record.
 `role` is a plain string column (`staff` / `admin` / `super_admin`), not a
 pivot table — see [AI_AGENT.md](AI_AGENT.md) and `RoleMiddleware` for how it gates
 routes and AI tool tiers. Accounts on a fresh install come from
@@ -21,7 +25,7 @@ owner's admin account; on a fresh database it does nothing.
 
 ## Sales (POS)
 
-- **`sales`** — `transaction_number, total_amount, amount_received, status, payment_method, order_type, discount_type, discount_amount, user_id, shift_id`.
+- **`sales`** — `transaction_number, total_amount, amount_received, status, payment_method, payment_reference, order_type, discount_type, discount_amount, user_id, shift_id`. `payment_method` is `Cash`, `GCash`, `Maya` or `QR Ph`; `payment_reference` is the e-wallet transfer's reference number.
   Indexed on `(status, created_at)` for the KDS and the waiting-order reminder.
   `status` is the KDS fulfillment lifecycle (`pending → preparing → completed`,
   or `cancelled` for a void) — **not** a payment-status field. Payment is
@@ -46,7 +50,7 @@ owner's admin account; on a fresh database it does nothing.
 
 ## Inventory
 
-- **`products`** — `name, category, price, status ('Active'|...)`. Ingredient
+- **`products`** — `name, category, price, status ('Active'|...), image_path` (photo on the public disk). Ingredient
   composition lives in the pivot below, not here.
 - **`categories`** — `name, slug, description, icon, is_food, color, sort_order`.
   `is_food` drives the register's pairing suggestions (food with a drink,
