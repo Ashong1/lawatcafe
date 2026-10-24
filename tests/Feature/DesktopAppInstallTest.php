@@ -26,7 +26,7 @@ class DesktopAppInstallTest extends TestCase
     {
         $this->get('/login')->assertSee('rel="manifest"', false);
         $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('profile.edit'))
-            ->assertSee('rel="manifest"', false)->assertSee('Install on this computer');
-        $this->get(route('portal.index'))->assertDontSee('rel="manifest"', false);
+            ->assertSee('rel="manifest"', false)->assertSee('Install on this computer')->assertSee('Brave:');
+        $this->get(route('portal.index'))->assertDontSee('rel="manifest"', false)->assertDontSee('sw.js');
     }
 }

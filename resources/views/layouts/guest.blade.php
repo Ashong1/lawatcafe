@@ -12,6 +12,7 @@
     {{-- Lets Chrome/Edge on Windows and Linux install the system as an app (needs the HTTPS address). --}}
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#3B1A0E">
+    <script>if ('serviceWorker' in navigator && window.isSecureContext) navigator.serviceWorker.register('/sw.js').catch(() => {});</script>
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
     <!-- Scripts -->

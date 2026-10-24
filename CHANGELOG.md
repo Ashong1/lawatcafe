@@ -10,7 +10,7 @@ the history was rewritten.
 ---
 
 ## 1.26.0 — Security: activity log, backups, HTTPS
-*builds 201–205*
+*builds 201–206*
 
 - **Settings → Activity Log** (owner only): sign-ins, sign-outs,
   wrong-password tries, lockouts, password resets, account changes and

@@ -55,7 +55,13 @@
 
         <div x-show="!installed && !prompt" class="mt-4 text-sm text-[#4A3B32] space-y-2">
             <p x-show="!secure" x-cloak>Open <a href="https://lawatkape.aserotech.com/profile" class="font-bold underline text-[#3E2723]">https://lawatkape.aserotech.com/profile</a> in Chrome or Edge on the computer; the install button appears there.</p>
-            <p x-show="secure">Use <span class="font-bold">Chrome</span> or <span class="font-bold">Edge</span>: click the install icon at the right end of the address bar, or open the browser menu and choose <span class="font-bold">Install Lawa't Kape</span> (Chrome: <span class="font-bold">Cast, save and share → Install page as app</span>). Firefox can't install apps.</p>
+            <p x-show="secure">Click the install icon at the right end of the address bar, or open the browser menu:</p>
+            <ul x-show="secure" class="list-disc pl-5 space-y-1">
+                <li><span class="font-bold">Chrome:</span> Cast, save and share → Install page as app</li>
+                <li><span class="font-bold">Edge:</span> Apps → Install this site as an app</li>
+                <li><span class="font-bold">Brave:</span> Save and share → Install Lawa't Kape (or Create shortcut, with <span class="font-bold">Open as window</span> ticked)</li>
+            </ul>
+            <p x-show="secure" class="text-xs text-[#795548]">Firefox can't install apps. The computer must be on the shop network.</p>
         </div>
     </div>
 </div>
