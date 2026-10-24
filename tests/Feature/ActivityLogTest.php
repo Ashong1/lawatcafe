@@ -59,7 +59,7 @@ class ActivityLogTest extends TestCase
     public function test_responses_carry_security_headers(): void
     {
         $this->get('/login')
-            ->assertHeader('X-Content-Type-Options', 'nosniff')
-            ->assertHeader('X-Frame-Options', 'SAMEORIGIN');
+            ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+            ->assertHeader('Permissions-Policy', 'geolocation=(), microphone=(), payment=()');
     }
 }

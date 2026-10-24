@@ -84,9 +84,9 @@ goes through Nginx Proxy Manager with HTTPS.
 
 Done:
 - `APP_ENV=production`, `APP_DEBUG=false` (no stack traces to users).
-- Security headers on every response (`SecurityHeaders`):
-  `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`,
-  `Referrer-Policy`, `Permissions-Policy`.
+- Security headers on every response: `X-Content-Type-Options: nosniff`
+  and `X-Frame-Options: SAMEORIGIN` from nginx, `Referrer-Policy` and
+  `Permissions-Policy` from the app (`SecurityHeaders`).
 - Network: guests are behind the OPNsense captive portal; per-plan speed
   caps; device blocking; Pi-hole website filter with an adult-site list;
   the firewall, server and infrastructure are protected from the
