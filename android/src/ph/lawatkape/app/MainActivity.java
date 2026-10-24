@@ -52,9 +52,11 @@ public class MainActivity extends Activity {
 
     private static final String PREFS = "lawatkape";
     private static final String KEY_SERVER = "server_url";
-    // The app server's own address. The staff name lawatkape.lab goes through
-    // the HTTPS proxy, whose certificate phones don't trust.
-    private static final String DEFAULT_SERVER = "http://192.168.2.100";
+    // HTTPS with a publicly trusted certificate. LOCAL_SERVER is the same app
+    // over plain http on the shop Wi-Fi, used when the name can't be reached
+    // (internet down and no local DNS record) or its certificate fails.
+    private static final String DEFAULT_SERVER = "https://lawatkape.aserotech.com";
+    private static final String LOCAL_SERVER = "http://192.168.2.100";
     private static final String OFFLINE_PAGE = "file:///android_asset/offline.html";
     private static final int FILE_CHOOSER_REQUEST = 1;
 
@@ -67,6 +69,7 @@ public class MainActivity extends Activity {
             + "})();";
 
     private WebView web;
+    private boolean onLocalFallback;
     private ValueCallback<Uri[]> fileCallback;
     private Uri cameraUri;
     private boolean leavingOffline = false;
@@ -120,7 +123,27 @@ public class MainActivity extends Activity {
     // ---- Server address -------------------------------------------------
 
     private String serverUrl() {
-        return getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_SERVER, DEFAULT_SERVER);
+        String saved = getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_SERVER, DEFAULT_SERVER);
+        // 1.0 saved the old default on "Reset"; move those phones to HTTPS.
+        return saved.equals(LOCAL_SERVER) ? DEFAULT_SERVER : saved;
+    }
+
+    /** Where pages load from right now: the saved address, or the local one after a failure. */
+    private String baseUrl() {
+        return onLocalFallback ? LOCAL_SERVER : serverUrl();
+    }
+
+    /** Retry the same page from the local address, once, if the HTTPS name failed. */
+    private boolean fallBackToLocal(WebView view, Uri failed) {
+        if (onLocalFallback || failed == null || !serverUrl().equals(DEFAULT_SERVER)
+                || !Uri.parse(DEFAULT_SERVER).getHost().equals(failed.getHost())) {
+            return false;
+        }
+        onLocalFallback = true;
+        String path = failed.getEncodedPath() == null ? "/" : failed.getEncodedPath();
+        String query = failed.getEncodedQuery() == null ? "" : "?" + failed.getEncodedQuery();
+        view.loadUrl(LOCAL_SERVER + path + query);
+        return true;
     }
 
     private void saveServerUrl(String input) {
@@ -182,7 +205,7 @@ public class MainActivity extends Activity {
             String host = uri.getHost() == null ? "" : uri.getHost();
 
             if (scheme.equals("http") || scheme.equals("https")) {
-                if (host.equals(serverHost()) || host.equals("wifi.lawatkape.lab")) {
+                if (host.equals(serverHost()) || host.equals(Uri.parse(LOCAL_SERVER).getHost()) || host.equals("wifi.lawatkape.lab")) {
                     return false;
                 }
                 // The staff name goes through the HTTPS proxy, which the phone
@@ -190,7 +213,7 @@ public class MainActivity extends Activity {
                 if (host.equals("lawatkape.lab")) {
                     String path = uri.getEncodedPath() == null ? "/" : uri.getEncodedPath();
                     String query = uri.getEncodedQuery() == null ? "" : "?" + uri.getEncodedQuery();
-                    view.loadUrl(serverUrl() + path + query);
+                    view.loadUrl(baseUrl() + path + query);
                     return true;
                 }
             }
@@ -220,15 +243,18 @@ public class MainActivity extends Activity {
 
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-            if (request.isForMainFrame()) {
+            if (request.isForMainFrame() && !fallBackToLocal(view, request.getUrl())) {
                 showOffline();
             }
         }
 
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-            // Never accept a certificate the phone doesn't trust.
+            // Never accept a certificate the phone doesn't trust; use the local address instead.
             handler.cancel();
+            if (!fallBackToLocal(view, Uri.parse(error.getUrl()))) {
+                showOffline();
+            }
         }
     }
 
@@ -351,7 +377,10 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void retry() {
-            runOnUiThread(() -> web.loadUrl(MainActivity.this.serverUrl() + "/"));
+            runOnUiThread(() -> {
+                onLocalFallback = false;
+                web.loadUrl(MainActivity.this.serverUrl() + "/");
+            });
         }
 
         @JavascriptInterface

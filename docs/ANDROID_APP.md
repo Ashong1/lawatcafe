@@ -70,16 +70,19 @@ Works on Android 7.0 and newer.
 |---|---|
 | `AndroidManifest.xml` | Package `ph.lawatkape.app`, Android 7.0+ (API 24), targets API 34; permissions: internet, vibration, Downloads on Android 9 and older |
 | `src/ph/lawatkape/app/MainActivity.java` | One screen holding a WebView, plus the phone features |
-| `res/xml/network_security_config.xml` | Plain HTTP allowed **only** for the shop's own addresses (`192.168.2.100`, `*.lawatkape.lab`); everything else must be HTTPS |
+| `res/xml/network_security_config.xml` | Plain HTTP allowed **only** for the shop's own local addresses (`192.168.2.100`, `*.lawatkape.lab`), the fallback; everything else must be HTTPS |
 | `assets/offline.html` | The "can't reach the shop system" screen, with Try again and Change server address |
 | `build.sh` | Builds and signs the APK |
 
 Details:
 
-- **Address**: it opens `http://192.168.2.100` (changeable from the offline
-  screen, saved on the phone). It doesn't use `lawatkape.lab`: that name goes
-  through Nginx Proxy Manager's HTTPS, whose certificate phones don't trust.
-  A link to `lawatkape.lab` is rewritten to the same page on the server.
+- **Address**: since 1.1 it opens `https://lawatkape.aserotech.com`
+  (changeable from the offline screen, saved on the phone). If that name
+  can't be reached or its certificate fails, it loads the same page from
+  `http://192.168.2.100` instead (you sign in again there), and **Try again**
+  on the offline screen goes back to HTTPS. Phones that saved the old
+  default move to HTTPS on their own. A link to `lawatkape.lab` is rewritten
+  to the same page on the current address.
   Links to other websites, phone numbers and email open in the phone's own
   apps.
 - **Certificates**: the app never accepts a certificate the phone doesn't

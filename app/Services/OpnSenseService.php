@@ -40,8 +40,13 @@ class OpnSenseService
      */
     protected function client(?int $connectTimeout = null, ?int $timeoutSeconds = null)
     {
+        // The firewall's certificate is self-signed for OPNsense.localdomain, so
+        // its identity is checked by pinning its public key instead of by name.
+        $pin = config('services.opnsense.tls_pin');
+
         return Http::withBasicAuth($this->apiKey, $this->apiSecret)
-            ->withOptions(['verify' => config('services.opnsense.verify_tls', false)])
+            ->withOptions(['verify' => config('services.opnsense.verify_tls', false)]
+                + ($pin ? ['curl' => [CURLOPT_PINNEDPUBLICKEY => 'sha256//'.$pin]] : []))
             ->connectTimeout($connectTimeout ?? 1)
             ->timeout($timeoutSeconds ?? 2);
     }

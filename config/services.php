@@ -42,6 +42,8 @@ return [
     'opnsense' => [
         'ip' => env('OPNSENSE_IP', '192.168.2.251'),
         'url' => env('OPNSENSE_API_URL', 'https://192.168.2.251'),
+        // base64 SHA-256 of the firewall's public key; see docs/CONFIGURATION.md.
+        'tls_pin' => env('OPNSENSE_TLS_PIN'),
         'key' => env('OPNSENSE_API_KEY'),
         'secret' => env('OPNSENSE_API_SECRET'),
         'zone' => env('OPNSENSE_ZONE', 0),

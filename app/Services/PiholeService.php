@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Log;
  */
 class PiholeService
 {
+    // https in production: encrypts the app password on the LAN. Not verified,
+    // because Pi-hole regenerates its self-signed certificate on its own.
     protected string $baseUrl;
 
     protected ?string $appPassword;
@@ -40,7 +42,7 @@ class PiholeService
 
         return Cache::remember('pihole_session', 1500, function () {
             try {
-                $response = Http::timeout(5)->post("{$this->baseUrl}/api/auth", [
+                $response = Http::timeout(5)->withOptions(['verify' => false])->post("{$this->baseUrl}/api/auth", [
                     'password' => $this->appPassword,
                 ]);
 
@@ -63,7 +65,7 @@ class PiholeService
 
     protected function client(array $session)
     {
-        return Http::timeout(5)->baseUrl($this->baseUrl)->withHeaders([
+        return Http::timeout(5)->withOptions(['verify' => false])->baseUrl($this->baseUrl)->withHeaders([
             'X-FTL-SID' => $session['sid'],
             'X-FTL-CSRF' => $session['csrf'],
         ]);

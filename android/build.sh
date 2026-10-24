@@ -42,7 +42,7 @@ done
 "$BT/aapt2" compile --dir "$OUT/res" -o "$OUT/res.zip"
 "$BT/aapt2" link -o "$OUT/unsigned.apk" -I "$PLATFORM" \
     --manifest AndroidManifest.xml -A assets --java "$OUT/gen" \
-    --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" \
+    --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" --replace-version \
     "$OUT/res.zip"
 
 javac -encoding UTF-8 -nowarn --release 8 -classpath "$PLATFORM" \

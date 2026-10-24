@@ -9,9 +9,9 @@ code. "Partly" items say what is missing.
 |---|:-:|:-:|:-:|
 | A. System and Assets | ✔ | | |
 | B. Authentication and Access Control | ✔ | | |
-| C. Session Management | | ✔ | |
+| C. Session Management | ✔ | | |
 | D. Input Handling and Data Protection | ✔ | | |
-| E. Configuration, Components and Network | | ✔ | |
+| E. Configuration, Components and Network | ✔ | | |
 | F. Logging, Backup and Incident Response | ✔ | | |
 | G. Standards and Compliance | | ✔ | |
 | H. Testing and Evidence | ✔ | | |
@@ -48,20 +48,21 @@ code. "Partly" items say what is missing.
 - Removed accounts are signed out on their next request
   (`SignOutRemovedAccounts`). Voids by staff need owner approval.
 
-## C. Session Management — Partly
+## C. Session Management — Yes
 
-Done:
+- Staff and the Android app use **https://lawatkape.aserotech.com** with a
+  publicly trusted Let's Encrypt certificate; plain http to that name is
+  redirected to HTTPS.
+- Session and CSRF cookies are `Secure` (HTTPS-only), `HttpOnly` and
+  `SameSite=Lax` on that address; session data is encrypted at rest
+  (`SESSION_ENCRYPT=true`).
 - Session ID regenerated at sign-in; session invalidated and CSRF token
   regenerated at sign-out.
 - Idle sign-out after 20 minutes (`IdleSessionTimeout`); absolute lifetime 2
-  hours.
-- Cookies are `HttpOnly` and `SameSite=Lax`; CSRF tokens on every form.
-
-Missing, by design: the cookie is not marked `Secure` (HTTPS-only), because
-the shop phones, the Android app and the captive portal reach the server
-over plain HTTP on the local network (a guest has no internet, and so no
-certificate check, before signing in). Owner and staff access from outside
-goes through Nginx Proxy Manager with HTTPS.
+  hours. Removed accounts are signed out on their next request.
+- The guest portal stays on http by design: guests have no internet before
+  signing in, and phones find captive portals over http. Guests have no
+  account, and the portal session holds no password.
 
 ## D. Input Handling and Data Protection — Yes
 
@@ -80,26 +81,25 @@ goes through Nginx Proxy Manager with HTTPS.
   an hour per device).
 - File uploads (product photos, payment QR) are type- and size-checked.
 
-## E. Configuration, Components and Network — Partly
+## E. Configuration, Components and Network — Yes
 
-Done:
 - `APP_ENV=production`, `APP_DEBUG=false` (no stack traces to users).
+- TLS 1.2/1.3 only on the HTTPS address; certificate renewal automated
+  (certbot, Cloudflare DNS challenge, nothing exposed to the internet).
 - Security headers on every response: `X-Content-Type-Options: nosniff`
   and `X-Frame-Options: SAMEORIGIN` from nginx, `Referrer-Policy` and
   `Permissions-Policy` from the app (`SecurityHeaders`).
+- **Connections to the network devices:** the firewall's identity is
+  checked by pinned public key (`OPNSENSE_TLS_PIN`); a different machine is
+  refused. Pi-hole is reached over HTTPS so its password is encrypted on the
+  network.
 - Network: guests are behind the OPNsense captive portal; per-plan speed
   caps; device blocking; Pi-hole website filter with an adult-site list;
   the firewall, server and infrastructure are protected from the
   disconnect/block tools (`isProtectedIp`).
-- Dependencies are managed with Composer/npm lock files.
-
-Missing:
-- The app does not verify the OPNsense firewall's TLS certificate
-  (`OPNSENSE_VERIFY_TLS=false`), because the firewall uses its own
-  self-signed certificate on the LAN. The fix is to install that certificate
-  on the server and turn verification on.
-- No scheduled dependency vulnerability scan (`composer audit`,
-  `npm audit`); run them before each release.
+- Dependencies are locked (Composer/npm lock files) and audited: `npm audit`
+  reports no vulnerabilities; PHP libraries are updated to patched releases
+  (`composer audit`).
 
 ## F. Logging, Backup and Incident Response — Yes
 

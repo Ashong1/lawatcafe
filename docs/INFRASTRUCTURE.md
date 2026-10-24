@@ -81,11 +81,12 @@ Sits in front of the app as the actual internet/LAN-facing entry point — this 
 
 **Staff/admin only.** NPM unconditionally 301s `http://lawatkape.lab/*` to HTTPS, and that HTTPS listener serves a certificate for `CN = pve02.local` issued by the Proxmox CA — wrong hostname *and* an untrusted issuer. Staff click through it; guests cannot (see below).
 
-## The two hostnames
+## The hostnames
 
 | Hostname | Resolves to | Path | Who uses it |
 |---|---|---|---|
-| `lawatkape.lab` | 192.168.2.5 (NPM) | 301 → HTTPS, then proxied to the app | Admin and staff |
+| `lawatkape.aserotech.com` | 192.168.2.100 (app box) | HTTPS on the app box's nginx, trusted Let's Encrypt certificate; http → 301 to HTTPS | Admin, staff and the Android app (main address) |
+| `lawatkape.lab` | 192.168.2.5 (NPM) | 301 → HTTPS, then proxied to the app | Admin and staff (older address, still works) |
 | `wifi.lawatkape.lab` | 192.168.2.100 (app box) | Plain HTTP, straight to nginx | Guests, via the captive portal |
 
 The guest portal deliberately **bypasses NPM and stays on plain HTTP**. A captive-network assistant (the mini-browser Android/iOS pops up on joining Wi-Fi) will not let a user click through a certificate warning — it gives up and dumps them into the system browser, which is what made the auto-redirect look broken. `.lab` is a private TLD, so no public CA can ever issue a valid certificate for it; the portal cannot be fixed *with* a certificate, only by not needing one.
@@ -231,6 +232,17 @@ and an access point capable of tagging.
 **Known gap — DHCP option 114.** RFC 8908 lets a client learn the portal URL from DHCP option 114 (`v4-captive-portal`) instead of relying on the interception above, and the app already serves the matching `/captive-portal-api` endpoint. This OPNsense build's Kea model only exposes a fixed option list (`domain_name_servers`, `routers`, `ntp_servers`, `domain_search`, …) with no way to set an arbitrary option, via API or UI. The redirect works without it; option 114 would just make it faster and more reliable on modern clients.
 
 **Testing caveat**: 192.168.2.100 is in the captive portal's allow-list, so the guest experience can never be reproduced from the app box — it always bypasses the portal. Test from an actual phone on the guest Wi-Fi.
+
+### The staff domain and its certificate
+
+`lawatkape.aserotech.com` is a public Cloudflare record (DNS only, not proxied) pointing at the private address 192.168.2.100, plus a Pi-hole local record so it resolves when the internet is down. The certificate is a Let's Encrypt wildcard for `lawatkape.aserotech.com` and `*.lawatkape.aserotech.com`, issued on the app box by certbot's Cloudflare DNS challenge, so nothing is exposed to the internet:
+
+- credentials: `/root/lawatkape-tls/cloudflare.ini` (600, a Cloudflare token limited to DNS edits on `aserotech.com`)
+- files: `/etc/letsencrypt/live/lawatkape.aserotech.com/`
+- renewal: `certbot.timer`, twice a day; `/etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh` reloads nginx. It needs the internet at renewal time; a cert lasts 90 days and renews from day 60.
+- check: `certbot certificates`; force a test with `certbot renew --dry-run`.
+
+The firewall and Pi-hole keep their own self-signed certificates. The app checks the firewall by **pinned public key** (`OPNSENSE_TLS_PIN`; refresh it if the firewall's certificate is replaced, see CONFIGURATION.md) and talks to Pi-hole over HTTPS without verification, because Pi-hole regenerates its certificate by itself.
 
 ## Security notes
 

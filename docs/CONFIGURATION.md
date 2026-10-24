@@ -33,7 +33,7 @@ it is git-ignored.
 | `APP_ENV` | `local` | `production` on the live server |
 | `APP_KEY` | (none) | `php artisan key:generate`. **Also encrypts MAC addresses and AI audit records at rest; changing it makes those unreadable.** |
 | `APP_DEBUG` | `true` | Must be `false` in production |
-| `APP_URL` | `http://localhost` | The staff address, e.g. `http://lawatkape.lab` |
+| `APP_URL` | `http://localhost` | The staff address: `https://lawatkape.aserotech.com` |
 | `APP_TIMEZONE` | `Asia/Manila` | Sales days, shifts, reports and schedules use this |
 | `APP_LOCALE` | `en` | Staff screens. The guest portal has its own English/Filipino switch |
 
@@ -74,6 +74,7 @@ minutes for 3 days, so a send during an internet outage isn't lost.
 | `OPNSENSE_API_KEY`, `OPNSENSE_API_SECRET` | (none) | System → Access → Users → API keys |
 | `OPNSENSE_ZONE` | `0` | Captive portal zone number |
 | `OPNSENSE_VERIFY_TLS` | `false` | Same-LAN firewalls usually have a self-signed certificate |
+| `OPNSENSE_TLS_PIN` | — | Base64 SHA-256 of the firewall's public key; the app refuses any other machine. Get it with `echo \| openssl s_client -connect 192.168.2.251:443 2>/dev/null \| openssl x509 -pubkey -noout \| openssl pkey -pubin -outform der \| openssl dgst -sha256 -binary \| base64`. Must be updated if the firewall's certificate is replaced (current one expires Apr 2027). |
 | `OPNSENSE_BLOCK_ALIAS` | `guest_blocklist` | A MAC alias that a block rule on the guest interface uses. The app manages its members, not the alias or the rule |
 | `OPNSENSE_TIER_ALIAS_FREE`, `OPNSENSE_TIER_ALIAS_PREMIUM` | `lawatcafe_free_tier`, `lawatcafe_premium_tier` | Speed-plan groups; members are kept in step with who is signed in |
 | `OPNSENSE_GUEST_PASS` | (none) | **Required for guest sign-in.** Sent with each guest's own sign-in identity (`guest_<code>_<ip>`); without it the app refuses to sign guests in rather than use a default |
@@ -83,7 +84,7 @@ minutes for 3 days, so a send during an internet outage isn't lost.
 
 | Variable | Default | Notes |
 |---|---|---|
-| `PIHOLE_URL` | `http://192.168.2.4` | Pi-hole v6 |
+| `PIHOLE_URL` | `http://192.168.2.4` | Pi-hole v6; production uses `https://192.168.2.4` so the app password is encrypted on the LAN |
 | `PIHOLE_APP_PASSWORD` | (none) | Pi-hole → Settings → Web interface / API → app password. Needed for site blocking and adult-site alerts |
 
 ### Guest portal

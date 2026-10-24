@@ -9,6 +9,34 @@ the history was rewritten.
 
 ---
 
+## 1.26.0 — Security: activity log, backups, HTTPS
+*builds 201–203*
+
+- **Settings → Activity Log** (owner only): sign-ins, sign-outs,
+  wrong-password tries, lockouts, password resets, account changes and
+  backups, with time, device address and browser. Entries can't be edited.
+- **Nightly database backup** at 23:30, last 14 kept; each run is logged.
+- Staff use **https://lawatkape.aserotech.com** with a trusted Let's Encrypt
+  certificate (renews itself). Cookies are HTTPS-only there and session data
+  is encrypted. `lawatkape.lab`, the bare IP and the guest portal still work
+  on http.
+- The app checks the firewall's identity (pinned key) and talks to Pi-hole
+  over HTTPS. Extra browser security headers.
+- **Android app 1.1** opens the HTTPS address and falls back to the local one
+  on its own when it can't be reached. The build now really sets the version
+  number, so updates install over the old app.
+- Incident-response plan and restore steps in OPERATIONS.md; cybersecurity
+  checklist in docs/capstone/SECURITY_CHECKLIST.md.
+
+## 1.25.1 — Whole-system design pass and the real menu
+*builds 199–200*
+
+- Every screen polished for phones: 44px buttons, readable contrast, plain
+  wording (Who's Online, Wi-Fi code), and several small bugs fixed (blank
+  staff notice board, "Change ₱0.00" when cash was short, squashed portal
+  time card, emails showing "&amp;").
+- The register hides category tabs with nothing on sale.
+
 ## 1.25.0 — Kitchen order slip
 *build 197*
 
