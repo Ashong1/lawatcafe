@@ -10,7 +10,7 @@ the history was rewritten.
 ---
 
 ## 1.26.0 — Security: activity log, backups, HTTPS
-*builds 201–211*
+*builds 201–212*
 
 - **Settings → Activity Log** (owner only): sign-ins, sign-outs,
   wrong-password tries, lockouts, password resets, account changes and
@@ -18,7 +18,7 @@ the history was rewritten.
 - **Nightly database backup** at 23:30, last 14 kept; each run is logged.
   **Settings → Backups** makes, downloads and restores them (owner
   password; a safety backup is made before every restore).
-- **Settings → Restart & Shut Down** (owner and system admin, password
+- **Power icon in the top bar** (owner and system admin, password
   each time, all logged): restart or shut down the web app (staff see a
   "back soon" page, guest Wi-Fi keeps working, the owner keeps a Turn back
   on button), restart or shut down the server (needs a one-time sudoers

@@ -17,7 +17,7 @@ class HeaderDropdownStackingTest extends TestCase
     private const DROPDOWN_PANELS = [
         'components/notification-bell.blade.php',
         'components/agent-pending-badge.blade.php',
-        'components/dropdown.blade.php',
+        'components/power-menu.blade.php',
     ];
 
     private function headerZ(string $layout): int

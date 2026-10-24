@@ -334,7 +334,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('accounts/{account}/restore', [AccountController::class, 'restore'])->name('accounts.restore');
         Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log');
         Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
-        Route::get('system-power', [SystemPowerController::class, 'index'])->name('system-power.index');
         Route::post('system-power/start', [SystemPowerController::class, 'start'])->name('system-power.start');
         Route::post('system-power/{action}', [SystemPowerController::class, 'act'])
             ->whereIn('action', ['restart-app', 'shutdown-app', 'restart-server', 'shutdown-server'])

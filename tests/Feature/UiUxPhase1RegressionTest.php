@@ -87,8 +87,8 @@ class UiUxPhase1RegressionTest extends TestCase
         $response = $this->actingAs($admin)->get('/dashboard');
 
         $response->assertOk();
-        // Present twice: once from <x-notification-bell>, once from <x-agent-pending-badge>.
-        $this->assertSame(2, substr_count($response->getContent(), 'max-w-[calc(100vw-2rem)]'));
+        // Once each from <x-notification-bell>, <x-agent-pending-badge> and <x-power-menu>.
+        $this->assertSame(3, substr_count($response->getContent(), 'max-w-[calc(100vw-2rem)]'));
     }
 
     public function test_network_infrastructure_table_scrolls_instead_of_clipping(): void

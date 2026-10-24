@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 
@@ -27,9 +28,12 @@ class SystemPowerService
     /** Whether the one-time sudoers setup is in place (sudo -n -l lists the commands). */
     public function serverControlReady(): bool
     {
-        $result = Process::run(['sudo', '-n', '-l']);
+        // Every admin page draws the power menu; don't spawn sudo on each one.
+        return Cache::remember('system_power_ready', 300, function () {
+            $result = Process::run(['sudo', '-n', '-l']);
 
-        return $result->successful() && Str::contains($result->output(), self::COMMANDS['reboot']);
+            return $result->successful() && Str::contains($result->output(), self::COMMANDS['reboot']);
+        });
     }
 
     public function restartApp(User $by): void

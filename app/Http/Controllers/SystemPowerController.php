@@ -9,14 +9,6 @@ class SystemPowerController extends Controller
 {
     public function __construct(private SystemPowerService $power) {}
 
-    public function index()
-    {
-        return view('admin.system-power', [
-            'serverReady' => $this->power->serverControlReady(),
-            'appDown' => app()->isDownForMaintenance(),
-        ]);
-    }
-
     public function act(Request $request, string $action)
     {
         $rules = ['password' => ['required', 'current_password']];

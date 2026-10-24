@@ -427,7 +427,6 @@
                             <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">{{ auth()->user()->isSuperAdmin() ? 'Staff & Admin Accounts' : 'Staff Accounts' }}</a>
                             <a href="{{ route('activity-log') }}" class="block py-2 text-xs {{ request()->routeIs('activity-log') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Activity Log</a>
                             <a href="{{ route('backups.index') }}" class="block py-2 text-xs {{ request()->routeIs('backups.*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Backups</a>
-                            <a href="{{ route('system-power.index') }}" class="block py-2 text-xs {{ request()->routeIs('system-power.*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Restart &amp; Shut Down</a>
                             <a href="{{ route('profile.edit') }}#android-app" class="block py-2 text-xs text-[#A1887F] hover:text-white transition">Download the App</a>
                             <a href="{{ route('admin.settings.store') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.store') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Store Settings</a>
                             <a href="{{ route('admin.settings.ai-providers') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.ai-providers*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Barista AI Settings</a>
@@ -508,10 +507,7 @@
             <div class="flex items-center gap-1 sm:gap-3 lg:gap-6 min-w-0">
                 <x-notification-bell />
                 @if(auth()->user()->isAdminOrAbove())
-                    <a href="{{ route('system-power.index') }}" aria-label="Restart or shut down" title="Restart or shut down"
-                       class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-[#3E2723] hover:bg-[#FDF8F5] hover:text-red-700 transition {{ request()->routeIs('system-power.*') ? 'bg-[#FDF8F5] text-red-700' : '' }}">
-                        <x-lucide-power class="w-5 h-5" />
-                    </a>
+                    <x-power-menu />
                 @endif
                 <x-agent-pending-badge :is-admin="true" />
 

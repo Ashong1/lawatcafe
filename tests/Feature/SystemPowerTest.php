@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Services\SystemPowerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Process;
-use Mockery;
 use Tests\TestCase;
 
 /** Nothing here may really restart, power off or take the (shared) app down. */
@@ -19,13 +18,14 @@ class SystemPowerTest extends TestCase
         return User::factory()->create(['role' => 'admin']);
     }
 
-    public function test_the_owner_sees_the_page_staff_do_not(): void
+    public function test_the_power_menu_is_in_the_owners_header_not_staffs(): void
     {
         Process::fake(['*' => Process::result(output: '')]);
 
-        $this->actingAs($this->owner())->get(route('system-power.index'))->assertOk()
-            ->assertSee('Restart web app')->assertSee('Shut down server')->assertSee('One-time setup')->assertSee('aria-label="Restart or shut down"', false);
-        $this->actingAs(User::factory()->create(['role' => 'staff']))->get(route('system-power.index'))->assertRedirect();
+        $this->actingAs($this->owner())->get(route('profile.edit'))->assertOk()
+            ->assertSee('aria-label="Restart or shut down"', false)->assertSee('Shut down server')->assertSee('Needs a one-time setup');
+        $this->actingAs(User::factory()->create(['role' => 'staff']))->get(route('profile.edit'))
+            ->assertDontSee('aria-label="Restart or shut down"', false);
     }
 
     public function test_a_wrong_password_does_nothing(): void

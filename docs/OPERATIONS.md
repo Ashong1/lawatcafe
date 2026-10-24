@@ -162,7 +162,7 @@ doesn't hold their configuration.
 
 ## Restart and shut down
 
-**Settings → Restart & Shut Down** (owner and system admin; password each
+The **power icon** in the top bar (owner and system admin; password each
 time; logged in the Activity Log):
 
 | Button | What happens | How it comes back |
@@ -173,7 +173,7 @@ time; logged in the Activity Log):
 | Shut down server | `systemctl poweroff` (also needs SHUT DOWN typed) | Only from Proxmox |
 
 The server buttons (and the PHP reload) need this sudoers line, installed
-once by root; the page shows it until it's there:
+once by root; until then the power menu marks them as needing setup:
 
 ```
 www-data ALL=(root) NOPASSWD: /usr/bin/systemctl reload php8.2-fpm, /usr/bin/systemctl reboot, /usr/bin/systemctl poweroff
