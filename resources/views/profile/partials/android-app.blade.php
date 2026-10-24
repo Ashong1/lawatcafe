@@ -33,6 +33,8 @@
              prompt: null,
              installed: window.matchMedia('(display-mode: standalone)').matches,
              secure: window.isSecureContext,
+             // Brave can install sites but never lets a page open the prompt.
+             brave: !!navigator.brave,
              init() {
                  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); this.prompt = e; });
                  window.addEventListener('appinstalled', () => { this.installed = true; this.prompt = null; });
@@ -55,8 +57,11 @@
 
         <div x-show="!installed && !prompt" class="mt-4 text-sm text-[#4A3B32] space-y-2">
             <p x-show="!secure" x-cloak>Open <a href="https://lawatkape.aserotech.com/profile" class="font-bold underline text-[#3E2723]">https://lawatkape.aserotech.com/profile</a> in Chrome or Edge on the computer; the install button appears there.</p>
-            <p x-show="secure">Click the install icon at the right end of the address bar, or open the browser menu:</p>
-            <ul x-show="secure" class="list-disc pl-5 space-y-1">
+            <div x-show="secure && brave" x-cloak class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-[#3E2723]">
+                In Brave, open the menu <span class="font-bold">(≡) → Save and share → Install Lawa't Kape</span>. Brave doesn't let websites show an install button, so it's done from the menu.
+            </div>
+            <p x-show="secure && !brave">Click the install icon at the right end of the address bar, or open the browser menu:</p>
+            <ul x-show="secure && !brave" class="list-disc pl-5 space-y-1">
                 <li><span class="font-bold">Chrome:</span> Cast, save and share → Install page as app</li>
                 <li><span class="font-bold">Edge:</span> Apps → Install this site as an app</li>
                 <li><span class="font-bold">Brave:</span> Save and share → Install Lawa't Kape (or Create shortcut, with <span class="font-bold">Open as window</span> ticked)</li>
