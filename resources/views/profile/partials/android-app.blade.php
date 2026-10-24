@@ -2,7 +2,7 @@
      inside the app itself (its user agent says LawatKapeApp). --}}
 @php $inApp = str_contains((string) request()->userAgent(), 'LawatKapeApp'); @endphp
 @unless($inApp)
-<div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
+<div id="android-app" class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
     <div class="flex flex-col sm:flex-row sm:items-start gap-5">
         <img src="{{ asset('favicon.svg') }}" alt="" class="w-14 h-14 rounded-2xl shrink-0">
         <div class="flex-1 min-w-0">

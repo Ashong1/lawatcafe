@@ -143,8 +143,9 @@ Back up these things:
 1. **The database.** Done automatically every night at 23:30 by
    `backup:database`, which writes a gzipped dump to `storage/app/backups/`
    and keeps the last 14. Each run, success or failure, appears on
-   **Settings → Activity Log**, which also shows the time of the last backup. Run
-   it by hand with `sudo -u www-data php artisan backup:database`. These
+   **Settings → Activity Log**, which also shows the time of the last backup.
+   **Settings → Backups** lists them with **Make a backup now**, **Download**
+   and **Restore**. From the command line: `sudo -u www-data php artisan backup:database`. These
    copies live on the same server, so copy the newest one somewhere else
    (USB drive, another machine) every week.
 2. **`.env`, especially `APP_KEY`.** MAC addresses and AI audit records
@@ -160,6 +161,13 @@ OPNsense config export, Pi-hole Teleporter, Proxmox snapshots). The app
 doesn't hold their configuration.
 
 ## Restoring a backup
+
+**Settings → Backups → Restore** (owner password required). It first makes a
+backup of the current data, so a restore can be undone, then loads the
+chosen one, runs migrations and clears the cache. The restore is logged.
+Do it when the shop is closed.
+
+By hand, if the app itself won't start:
 
 ```bash
 gunzip -c storage/app/backups/lawat_db_<date>.sql.gz | mysql lawat_db

@@ -111,9 +111,10 @@ code. "Partly" items say what is missing.
   (`inventory_logs`), voids and their approvals, cash counts per shift with
   shortage alerts, guest portal events, network health history, blocked
   devices with reasons.
-- **Backups:** automatic nightly database backup at 23:30, last 14 kept;
-  shown on the Activity Log; restore steps in
-  [OPERATIONS.md](../OPERATIONS.md#restoring-a-backup).
+- **Backups:** automatic nightly database backup at 23:30, last 14 kept.
+  **Settings → Backups** (owner only) makes, downloads and restores them;
+  a restore needs the owner's password, makes a safety backup first and is
+  logged. Steps in [OPERATIONS.md](../OPERATIONS.md#restoring-a-backup).
 - **Incident response plan:**
   [OPERATIONS.md — Incident response](../OPERATIONS.md#incident-response).
 

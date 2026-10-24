@@ -26,6 +26,7 @@ class ActivityLog extends Model
         'account_restored' => 'Restored an account',
         'backup_made' => 'Database backup made',
         'backup_failed' => 'Database backup failed',
+        'backup_restored' => 'Restored a database backup',
     ];
 
     protected $fillable = ['user_id', 'event', 'detail', 'ip_address', 'user_agent'];
