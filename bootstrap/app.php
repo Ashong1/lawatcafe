@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\IdleSessionTimeout;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SignOutRemovedAccounts;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        $middleware->append(SecurityHeaders::class);
         // These are plain client-side JS cookies (document.cookie), not written
         // through Laravel's Cookie facade — EncryptCookies would otherwise fail
         // to decrypt them and silently null them out on every request, which is
@@ -43,7 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'portal/chat',
         ]);
         $middleware->appendToGroup('web', [
-            \App\Http\Middleware\SignOutRemovedAccounts::class,
+            SignOutRemovedAccounts::class,
             IdleSessionTimeout::class,
         ]);
     })

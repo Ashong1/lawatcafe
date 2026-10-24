@@ -55,3 +55,6 @@ Schedule::command('shaper:adapt')->everyFiveMinutes()->withoutOverlapping();
 // worker, so each minute drains the queue and exits; mail that fails during
 // an internet outage is retried every 5 minutes (see WaitsForInternet).
 Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping();
+
+// Nightly database backup after closing; see BackupDatabase.
+Schedule::command('backup:database')->dailyAt('23:30')->withoutOverlapping();

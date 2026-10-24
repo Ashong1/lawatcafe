@@ -138,10 +138,15 @@ the [README](../README.md#background-jobs). Points worth knowing:
 
 ## Backups
 
-Back up three things:
+Back up these things:
 
-1. **The database**:
-   `mysqldump --single-transaction lawat_db | gzip > lawat_db_$(date +%F).sql.gz`
+1. **The database.** Done automatically every night at 23:30 by
+   `backup:database`, which writes a gzipped dump to `storage/app/backups/`
+   and keeps the last 14. Each run, success or failure, appears on
+   **Settings → Activity Log**, which also shows the time of the last backup. Run
+   it by hand with `sudo -u www-data php artisan backup:database`. These
+   copies live on the same server, so copy the newest one somewhere else
+   (USB drive, another machine) every week.
 2. **`.env`, especially `APP_KEY`.** MAC addresses and AI audit records
    are encrypted with it, and a restored database is unreadable without the
    same key.
@@ -154,12 +159,40 @@ The firewall, Pi-hole and Nginx Proxy Manager have their own backups (the
 OPNsense config export, Pi-hole Teleporter, Proxmox snapshots). The app
 doesn't hold their configuration.
 
+## Restoring a backup
+
+```bash
+gunzip -c storage/app/backups/lawat_db_<date>.sql.gz | mysql lawat_db
+```
+
+Restore onto a server with the **same `APP_KEY`** in `.env`, or encrypted
+columns cannot be read.
+
+## Incident response
+
+What to do when something goes wrong. Note what you did and when, and keep
+the note with the Activity Log entries it refers to.
+
+| Situation | How you notice | First steps |
+|---|---|---|
+| Someone may know a staff or owner password | Activity Log shows a sign-in at an odd time, or from an unknown device | Settings → Staff Accounts → remove the account (signs them out at once), then invite them again so they set a new password. Check the Activity Log and Orders for what that account did. |
+| Someone is guessing passwords | Activity Log: many "Wrong username or password" entries, or "Locked out" | Lockout already stops them after 5 tries. Note the device address and block it on Wi-Fi & Network → Find a device if it is on the shop network. |
+| A guest device is abusing the Wi-Fi | Network Status alerts, Who's Online, adult-site alerts | Block the device (Wi-Fi & Network → Who's Online → Block). Blocks are logged with a reason. |
+| Data lost or damaged | Missing sales or stock, errors on pages | Stop using the register, take a fresh `backup:database` of the current state, then restore the last good backup (above). Re-enter sales made after it from the paper record. |
+| Server or firewall down | Network Status, the yellow offline bar | See *Troubleshooting* below. The register keeps working offline. |
+| Secret leaked (`.env`, API keys) | Found in a public place | Rotate the key at the provider (OpenRouter, Resend, OPNsense, Pi-hole), update `.env`, `config:cache`. **Do not** change `APP_KEY` without re-encrypting. |
+
+Afterwards: write down what happened, what fixed it, and what would stop it
+happening again.
+
 ## Monitoring
 
 - **Wi-Fi & Network → Network Status** shows the minute-by-minute checks with 24-hour
   history; admins are notified when a check changes state.
 - **Super admin dashboard** shows the app host, AI provider health, captive
   portal posture and infrastructure.
+- **Settings → Activity Log**: sign-ins, sign-outs, wrong-password tries,
+  lockouts, account changes and backups, with time, device address and browser.
 - **Logs**: `storage/logs/laravel.log` for the app,
   `/var/log/nginx/error.log` and `/var/log/php8.2-fpm.log` for the server.
   Super admins can ask Barista AI for recent errors

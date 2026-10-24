@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\PaymentQrController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\AiActionController;
 use App\Http\Controllers\AiAnalysisController;
@@ -14,7 +16,7 @@ use App\Http\Controllers\CaptivePortalController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EndOfDayController;
-use App\Http\Controllers\IngredientController; // <-- Added Portal Controller
+use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\IngredientDeliveryController;
 use App\Http\Controllers\KdsController;
 use App\Http\Controllers\NetworkDeviceController;
@@ -326,6 +328,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('accounts', AccountController::class)->except(['create', 'show', 'edit']);
         Route::post('accounts/{account}/send-link', [AccountController::class, 'sendLink'])->middleware('throttle:10,1')->name('accounts.send-link');
         Route::post('accounts/{account}/restore', [AccountController::class, 'restore'])->name('accounts.restore');
+        Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log');
 
         // System Settings (Consolidated) — Store Preferences and the AI Providers
         // API-key form are business-facing and stay reachable by admin-or-above
@@ -335,8 +338,8 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('settings')->name('admin.settings.')->group(function () {
             Route::get('/store', [SettingController::class, 'store'])->name('store');
             Route::post('/store', [SettingController::class, 'updateStore'])->name('store.update');
-            Route::post('/payment-qr/{wallet}', [\App\Http\Controllers\Admin\PaymentQrController::class, 'update'])->name('payment-qr.update');
-            Route::delete('/payment-qr/{wallet}', [\App\Http\Controllers\Admin\PaymentQrController::class, 'destroy'])->name('payment-qr.destroy');
+            Route::post('/payment-qr/{wallet}', [PaymentQrController::class, 'update'])->name('payment-qr.update');
+            Route::delete('/payment-qr/{wallet}', [PaymentQrController::class, 'destroy'])->name('payment-qr.destroy');
             Route::get('/ai-providers', [SettingController::class, 'aiProviders'])->name('ai-providers');
             Route::post('/ai-providers', [SettingController::class, 'updateAiProviders'])->name('ai-providers.update');
 

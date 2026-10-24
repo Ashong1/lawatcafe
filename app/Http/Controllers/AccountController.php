@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\User;
 use App\Services\AccountInviteService;
 use Illuminate\Http\Request;
@@ -67,6 +68,7 @@ class AccountController extends Controller
         ]);
 
         $user = $this->invites->invite($data, $request->getSchemeAndHttpHost());
+        ActivityLog::record('account_added', $request->user(), "{$user->name} ({$user->role})");
 
         return redirect()->route('accounts.index')
             ->with('success', "Invite sent to {$user->email}. {$user->name} chooses their own password from the email, then signs in as {$user->username}.");
@@ -90,7 +92,11 @@ class AccountController extends Controller
             'username.regex' => 'Use only small letters, numbers, dots, dashes or underscores — no spaces.',
         ]);
 
-        $account->fill($data)->save();
+        $account->fill($data);
+        if ($changed = array_keys($account->getDirty())) {
+            ActivityLog::record('account_changed', $request->user(), $account->name.': '.implode(', ', $changed));
+        }
+        $account->save();
 
         return redirect()->route('accounts.index')->with('success', "Saved {$account->name}'s details.");
     }
@@ -119,10 +125,12 @@ class AccountController extends Controller
         // movements, wastage and deliveries with it, so they are switched off.
         if ($account->hasWorkHistory()) {
             $account->forceFill(['deactivated_at' => now()])->save();
+            ActivityLog::record('account_removed', auth()->user(), $account->name);
 
             return redirect()->route('accounts.index')->with('success', "Removed {$account->name}. They can no longer sign in; their past sales and shifts stay in the reports.");
         }
 
+        ActivityLog::record('account_removed', auth()->user(), $account->name);
         $account->delete();
 
         return redirect()->route('accounts.index')->with('success', "Removed {$account->name}. They can no longer sign in.");
@@ -133,6 +141,7 @@ class AccountController extends Controller
         $this->authorizeTarget($account);
 
         $account->forceFill(['deactivated_at' => null])->save();
+        ActivityLog::record('account_restored', auth()->user(), $account->name);
 
         return redirect()->route('accounts.index')->with('success', "{$account->name} can sign in again with their old password.");
     }

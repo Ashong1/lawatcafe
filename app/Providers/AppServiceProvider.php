@@ -2,8 +2,15 @@
 
 namespace App\Providers;
 
+use App\Models\ActivityLog;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Lockout;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -35,6 +42,13 @@ class AppServiceProvider extends ServiceProvider
         // site individually — this has no downside for LAN-IP targets like
         // OpnSenseService's (an already-literal IP skips resolution entirely).
         Http::globalOptions(['force_ip_resolve' => 'v4']);
+
+        Event::listen(fn (Login $e) => ActivityLog::record('signed_in', $e->user));
+        Event::listen(fn (Logout $e) => $e->user && ActivityLog::record('signed_out', $e->user));
+        // The name they typed, never the password; $e->user is set when the name matched an account.
+        Event::listen(fn (Failed $e) => ActivityLog::record('sign_in_failed', $e->user, 'Tried: '.($e->credentials['username'] ?? $e->credentials['email'] ?? '?')));
+        Event::listen(fn (Lockout $e) => ActivityLog::record('locked_out', null, 'Tried: '.$e->request->input('email')));
+        Event::listen(fn (PasswordReset $e) => ActivityLog::record('password_reset', $e->user));
 
         // Guest captive-portal endpoints have no Laravel auth and (by design,
         // since guests land here via a cross-origin redirect) are CSRF-exempt,
