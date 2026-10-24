@@ -10,7 +10,7 @@ the history was rewritten.
 ---
 
 ## 1.26.0 — Security: activity log, backups, HTTPS
-*builds 201–207*
+*builds 201–208*
 
 - **Settings → Activity Log** (owner only): sign-ins, sign-outs,
   wrong-password tries, lockouts, password resets, account changes and
@@ -18,9 +18,9 @@ the history was rewritten.
 - **Nightly database backup** at 23:30, last 14 kept; each run is logged.
   **Settings → Backups** makes, downloads and restores them (owner
   password; a safety backup is made before every restore).
-- **Settings → Download the App**: the Android app, and for **Windows and
-  Linux** an **Install on this computer** button (Chrome or Edge, on the
-  HTTPS address) that installs the system as an app with its own window.
+- **Settings → Download the App**: the Android app, plus **Windows** (.exe)
+  and **Linux** (.AppImage) apps that open the system in their own window,
+  or install it straight from Chrome, Edge or Brave.
 - Staff use **https://lawatkape.aserotech.com** with a trusted Let's Encrypt
   certificate (renews itself). Cookies are HTTPS-only there and session data
   is encrypted. `lawatkape.lab`, the bare IP and the guest portal still work

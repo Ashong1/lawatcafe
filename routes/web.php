@@ -16,6 +16,7 @@ use App\Http\Controllers\BlocklistController;
 use App\Http\Controllers\CaptivePortalController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DesktopAppController;
 use App\Http\Controllers\EndOfDayController;
 use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\IngredientDeliveryController;
@@ -143,8 +144,9 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/profile', 'destroy')->name('profile.destroy');
     });
 
-    // The Android app, offered on the Profile page.
+    // The Android, Windows and Linux apps, offered on the Profile page.
     Route::get('/app/android', [AndroidAppController::class, 'download'])->name('app.android');
+    Route::get('/app/desktop/{os}', [DesktopAppController::class, 'download'])->whereIn('os', ['windows', 'linux'])->name('app.desktop');
 
     // Notification System
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

@@ -26,7 +26,28 @@ class DesktopAppInstallTest extends TestCase
     {
         $this->get('/login')->assertSee('rel="manifest"', false);
         $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('profile.edit'))
-            ->assertSee('rel="manifest"', false)->assertSee('Install on this computer')->assertSee('Brave:');
+            ->assertSee('rel="manifest"', false)->assertSee('Install on this computer')->assertSee('Brave:')->assertSee('Download for Windows')->assertSee('Download for Linux');
         $this->get(route('portal.index'))->assertDontSee('rel="manifest"', false)->assertDontSee('sw.js');
+    }
+
+    public function test_the_windows_and_linux_apps_download_only_for_signed_in_accounts(): void
+    {
+        $this->get(route('app.desktop', 'windows'))->assertRedirect(route('login'));
+
+        $staff = User::factory()->create(['role' => 'staff']);
+        foreach (\App\Http\Controllers\DesktopAppController::FILES as $os => $file) {
+            if (! \App\Http\Controllers\DesktopAppController::available($os)) {
+                $this->markTestSkipped('desktop apps not built on this machine');
+            }
+            $this->actingAs($staff)->get(route('app.desktop', $os))->assertOk()->assertDownload($file);
+        }
+        $this->actingAs($staff)->get('/app/desktop/macos')->assertNotFound();
+    }
+
+    public function test_the_card_is_hidden_inside_the_desktop_app(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->withHeader('User-Agent', 'Mozilla/5.0 Chrome/130 Electron/33 LawatKapeDesktop/1.0.0')
+            ->get(route('profile.edit'))->assertDontSee('Download for Windows');
     }
 }

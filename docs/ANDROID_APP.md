@@ -149,10 +149,32 @@ uninstall the app (signing out) before installing a new one.
 
 ## Windows and Linux
 
-There is no separate build. `public/manifest.json` (linked from the staff,
-admin and sign-in layouts, never the guest portal) makes the site
-installable from Chrome or Edge on `https://lawatkape.aserotech.com`;
-Profile shows **Install on this computer** when the browser offers it. The
-installed app is the live site in its own window, so it never needs an
-update. It needs the HTTPS address: browsers don't offer install on plain
-http.
+**Download** (Profile → Download the App): `desktop/` is an Electron app
+that opens the system in its own window, like the Android app. It loads
+`https://lawatkape.aserotech.com`, falls back to `http://192.168.2.100` when
+that name can't be reached, refuses untrusted certificates, opens other
+websites in the computer's browser, and adds `LawatKapeDesktop/<version>` to
+its user agent so Profile hides the download card inside it.
+
+- **Windows**: `LawatKape-win.exe`, a portable program with nothing to
+  install. It isn't code-signed, so Windows SmartScreen asks once
+  (More info → Run anyway). A real installer (NSIS) needs Wine to build on
+  Linux, which this server doesn't have.
+- **Linux**: `LawatKape-linux.AppImage`; mark it executable, then run it.
+
+Build and publish (downloads Electron the first time, ~300 MB of tools):
+
+```bash
+desktop/build.sh --publish   # → storage/app/desktop/, served by DesktopAppController
+```
+
+Only needed when `desktop/` changes; the app shows the live system, so
+system updates reach it without a rebuild. The Windows icon is written into
+the .exe by `set-windows-icon.js` (resedit), because electron-builder's own
+way (rcedit) also needs Wine.
+
+**From the browser**: `public/manifest.json` and a pass-through
+`public/sw.js` (linked from the staff, admin and sign-in layouts, never the
+guest portal) make the site installable from Chrome, Edge or Brave on the
+HTTPS address. Profile shows **Install on this computer** when the browser
+offers it; Brave never does, so it's from Brave's menu.
