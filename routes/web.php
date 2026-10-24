@@ -332,8 +332,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('accounts', AccountController::class)->except(['create', 'show', 'edit']);
         Route::post('accounts/{account}/send-link', [AccountController::class, 'sendLink'])->middleware('throttle:10,1')->name('accounts.send-link');
         Route::post('accounts/{account}/restore', [AccountController::class, 'restore'])->name('accounts.restore');
-        Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log');
-        Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
+        Route::get('security', [ActivityLogController::class, 'index'])->name('security');
         Route::post('system-power/start', [SystemPowerController::class, 'start'])->name('system-power.start');
         Route::post('system-power/{action}', [SystemPowerController::class, 'act'])
             ->whereIn('action', ['restart-app', 'shutdown-app', 'restart-server', 'shutdown-server'])

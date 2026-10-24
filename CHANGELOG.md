@@ -10,20 +10,20 @@ the history was rewritten.
 ---
 
 ## 1.26.0 — Security: activity log, backups, HTTPS
-*builds 201–212*
+*builds 201–213*
 
-- **Settings → Activity Log** (owner only): sign-ins, sign-outs,
+- **Settings → Security** (owner only): sign-ins, sign-outs,
   wrong-password tries, lockouts, password resets, account changes and
   backups, with time, device address and browser. Entries can't be edited.
 - **Nightly database backup** at 23:30, last 14 kept; each run is logged.
-  **Settings → Backups** makes, downloads and restores them (owner
+  **Settings → Security** makes, downloads and restores them (owner
   password; a safety backup is made before every restore).
 - **Power icon in the top bar** (owner and system admin, password
   each time, all logged): restart or shut down the web app (staff see a
   "back soon" page, guest Wi-Fi keeps working, the owner keeps a Turn back
   on button), restart or shut down the server (needs a one-time sudoers
   line; shutting down also needs SHUT DOWN typed).
-- **Settings → Download the App**: the Android app, plus a **Windows** setup
+- **Profile** (click your name): the Android app, plus a **Windows** setup
   wizard and a **Linux** (.AppImage) app that open the system in their own window,
   or install it straight from Chrome, Edge or Brave.
 - Staff use **https://lawatkape.aserotech.com** with a trusted Let's Encrypt

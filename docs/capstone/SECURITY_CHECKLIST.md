@@ -103,7 +103,7 @@ code. "Partly" items say what is missing.
 
 ## F. Logging, Backup and Incident Response — Yes
 
-- **Activity Log** (Settings → Activity Log, owner only): every sign-in,
+- **Activity Log** (Settings → Security, owner only): every sign-in,
   sign-out, wrong-password try (with the name typed, never the password),
   lockout, password reset, account added/changed/removed/restored and
   backup, with time, device address and browser. Entries are append-only.
@@ -112,7 +112,7 @@ code. "Partly" items say what is missing.
   shortage alerts, guest portal events, network health history, blocked
   devices with reasons.
 - **Backups:** automatic nightly database backup at 23:30, last 14 kept.
-  **Settings → Backups** (owner only) makes, downloads and restores them;
+  **Settings → Security** (owner only) makes, downloads and restores them;
   a restore needs the owner's password, makes a safety backup first and is
   logged. Steps in [OPERATIONS.md](../OPERATIONS.md#restoring-a-backup).
 - **Incident response plan:**

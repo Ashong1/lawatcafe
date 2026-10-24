@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Services\BackupService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -23,7 +24,8 @@ class ActivityLogController extends Controller
             ->paginate(30)
             ->withQueryString();
 
-        return view('admin.activity-log', [
+        return view('admin.security', [
+            'backups' => app(BackupService::class)->list(),
             'logs' => $logs,
             'users' => User::orderBy('name')->get(['id', 'name']),
             'failedToday' => ActivityLog::where('event', 'sign_in_failed')->where('created_at', '>=', today())->count(),

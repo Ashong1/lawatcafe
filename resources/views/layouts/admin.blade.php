@@ -425,9 +425,7 @@
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
                             <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">{{ auth()->user()->isSuperAdmin() ? 'Staff & Admin Accounts' : 'Staff Accounts' }}</a>
-                            <a href="{{ route('activity-log') }}" class="block py-2 text-xs {{ request()->routeIs('activity-log') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Activity Log</a>
-                            <a href="{{ route('backups.index') }}" class="block py-2 text-xs {{ request()->routeIs('backups.*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Backups</a>
-                            <a href="{{ route('profile.edit') }}#android-app" class="block py-2 text-xs text-[#A1887F] hover:text-white transition">Download the App</a>
+                            <a href="{{ route('security') }}" class="block py-2 text-xs {{ request()->routeIs('security') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Security</a>
                             <a href="{{ route('admin.settings.store') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.store') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Store Settings</a>
                             <a href="{{ route('admin.settings.ai-providers') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.ai-providers*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Barista AI Settings</a>
                         </div>

@@ -13,7 +13,7 @@ use RuntimeException;
 
 /**
  * Gzipped mysqldump backups in storage/app/backups, shared by the nightly
- * backup:database job and Settings → Backups. A restore also needs the same
+ * backup:database job and Settings → Security. A restore also needs the same
  * APP_KEY (MACs and AI audit records are encrypted with it).
  */
 class BackupService

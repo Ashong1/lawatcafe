@@ -10,11 +10,6 @@ class BackupController extends Controller
 {
     public function __construct(private BackupService $backups) {}
 
-    public function index()
-    {
-        return view('admin.backups', ['backups' => $this->backups->list()]);
-    }
-
     public function store(Request $request)
     {
         try {
@@ -48,7 +43,7 @@ class BackupController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('backups.index')
+        return redirect()->route('security')
             ->with('success', "Restored {$backup}. The data from just before is saved as {$safety}, in case you need it back.");
     }
 }

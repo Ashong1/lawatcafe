@@ -43,8 +43,8 @@ class ActivityLogTest extends TestCase
     {
         ActivityLog::record('signed_in', User::factory()->create(['name' => 'Ana']));
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('activity-log'))->assertOk()->assertSee('Ana')->assertSee('Signed in');
-        $this->actingAs(User::factory()->create(['role' => 'staff']))->get(route('activity-log'))->assertRedirect();
+        $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('security'))->assertOk()->assertSee('Ana')->assertSee('Signed in');
+        $this->actingAs(User::factory()->create(['role' => 'staff']))->get(route('security'))->assertRedirect();
     }
 
     public function test_a_failed_backup_is_logged_for_the_owner_to_see(): void

@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 /**
  * Who signed in, who failed, and who changed accounts or made backups: the
- * security trail the owner reads on Settings → Activity Log. Rows are only
+ * security trail the owner reads on Settings → Security. Rows are only
  * ever added; nothing in the app edits or deletes them.
  */
 class ActivityLog extends Model

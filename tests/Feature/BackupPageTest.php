@@ -34,9 +34,9 @@ class BackupPageTest extends TestCase
     {
         $owner = User::factory()->create(['role' => 'admin']);
 
-        $this->actingAs($owner)->get(route('backups.index'))->assertOk()->assertSee('Oct 20, 2026')->assertSee('Restore');
+        $this->actingAs($owner)->get(route('security'))->assertOk()->assertSee('Oct 20, 2026')->assertSee('Restore');
         $this->actingAs($owner)->get(route('backups.download', 'lawat_db_2026-10-20_233000.sql.gz'))->assertOk();
-        $this->actingAs(User::factory()->create(['role' => 'staff']))->get(route('backups.index'))->assertRedirect();
+        $this->actingAs(User::factory()->create(['role' => 'staff']))->get(route('security'))->assertRedirect();
     }
 
     public function test_only_listed_backup_files_can_be_downloaded(): void

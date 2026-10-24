@@ -143,8 +143,7 @@ Back up these things:
 1. **The database.** Done automatically every night at 23:30 by
    `backup:database`, which writes a gzipped dump to `storage/app/backups/`
    and keeps the last 14. Each run, success or failure, appears on
-   **Settings → Activity Log**, which also shows the time of the last backup.
-   **Settings → Backups** lists them with **Make a backup now**, **Download**
+   **Settings → Security**, which lists them with **Make a backup now**, **Download**
    and **Restore**. From the command line: `sudo -u www-data php artisan backup:database`. These
    copies live on the same server, so copy the newest one somewhere else
    (USB drive, another machine) every week.
@@ -182,7 +181,7 @@ in `/etc/sudoers.d/lawatkape-power` (mode 440; check with `visudo -c`).
 
 ## Restoring a backup
 
-**Settings → Backups → Restore** (owner password required). It first makes a
+**Settings → Security → Restore** (owner password required). It first makes a
 backup of the current data, so a restore can be undone, then loads the
 chosen one, runs migrations and clears the cache. The restore is logged.
 Do it when the shop is closed.
@@ -219,7 +218,7 @@ happening again.
   history; admins are notified when a check changes state.
 - **Super admin dashboard** shows the app host, AI provider health, captive
   portal posture and infrastructure.
-- **Settings → Activity Log**: sign-ins, sign-outs, wrong-password tries,
+- **Settings → Security**: sign-ins, sign-outs, wrong-password tries,
   lockouts, account changes and backups, with time, device address and browser.
 - **Logs**: `storage/logs/laravel.log` for the app,
   `/var/log/nginx/error.log` and `/var/log/php8.2-fpm.log` for the server.
