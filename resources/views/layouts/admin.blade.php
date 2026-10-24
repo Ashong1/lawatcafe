@@ -29,6 +29,9 @@
     
     <!-- Favicons -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
+    {{-- Lets Chrome/Edge on Windows and Linux install the system as an app (needs the HTTPS address). --}}
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3B1A0E">
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -423,7 +426,7 @@
                             <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">{{ auth()->user()->isSuperAdmin() ? 'Staff & Admin Accounts' : 'Staff Accounts' }}</a>
                             <a href="{{ route('activity-log') }}" class="block py-2 text-xs {{ request()->routeIs('activity-log') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Activity Log</a>
                             <a href="{{ route('backups.index') }}" class="block py-2 text-xs {{ request()->routeIs('backups.*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Backups</a>
-                            <a href="{{ route('profile.edit') }}#android-app" class="block py-2 text-xs text-[#A1887F] hover:text-white transition">Android App</a>
+                            <a href="{{ route('profile.edit') }}#android-app" class="block py-2 text-xs text-[#A1887F] hover:text-white transition">Download the App</a>
                             <a href="{{ route('admin.settings.store') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.store') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Store Settings</a>
                             <a href="{{ route('admin.settings.ai-providers') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.ai-providers*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Barista AI Settings</a>
                         </div>

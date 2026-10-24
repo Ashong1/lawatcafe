@@ -19,6 +19,9 @@
     
     <!-- Favicons -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
+    {{-- Lets Chrome/Edge on Windows and Linux install the system as an app (needs the HTTPS address). --}}
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#3B1A0E">
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
     <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=1">
     @vite(['resources/css/app.css', 'resources/js/app.js'])

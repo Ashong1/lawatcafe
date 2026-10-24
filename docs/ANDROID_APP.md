@@ -146,3 +146,13 @@ deliberately **outside the repository**, which is public.
 **Back that folder up.** Android only installs an update over the app if it
 is signed with the same key. With the key lost, every phone would have to
 uninstall the app (signing out) before installing a new one.
+
+## Windows and Linux
+
+There is no separate build. `public/manifest.json` (linked from the staff,
+admin and sign-in layouts, never the guest portal) makes the site
+installable from Chrome or Edge on `https://lawatkape.aserotech.com`;
+Profile shows **Install on this computer** when the browser offers it. The
+installed app is the live site in its own window, so it never needs an
+update. It needs the HTTPS address: browsers don't offer install on plain
+http.
