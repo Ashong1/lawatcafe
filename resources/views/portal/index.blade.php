@@ -265,6 +265,8 @@
                             <span class="text-base text-[#4A3B32] font-semibold leading-snug">
                                 {{ __('I agree to the') }}
                                 <a href="javascript:void(0)" @click.prevent="showTOS = true" class="text-[#3E2723] underline underline-offset-2">{{ __('Wi-Fi rules') }}</a>
+                                {{ __('and the') }}
+                                <a href="{{ route('portal.privacy') }}" class="text-[#3E2723] underline underline-offset-2">{{ __('privacy notice') }}</a>
                             </span>
                         </label>
 

@@ -127,8 +127,14 @@ code. "Partly" items say what is missing.
 - **Data Privacy Act of 2012 (RA 10173):** personal data is kept to the
   minimum (guests give no name, phone or email; MAC addresses are
   encrypted; portal events are deleted after 90 days).
-  **Missing:** a privacy notice on the guest portal telling guests what is
-  collected and why, and a named person responsible for data protection.
+  A **privacy notice** (English and Filipino) is linked in the guest's
+  "I agree" line above Connect (`/portal/privacy`): what is collected (device
+  address and name, Wi-Fi use, website lookups, chat messages), why, who sees
+  it (shop, and the AI provider for chat), how long it is kept (90 / 91
+  days; code records with sales, device addresses encrypted) and the guest's
+  rights, including complaining to the National Privacy Commission.
+  **Missing:** a named Data Protection Officer; the notice currently says
+  "ask the shop owner at the counter".
 - WCAG-style readability rules (12px minimum text, 44px touch targets) are
   enforced by tests.
 

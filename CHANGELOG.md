@@ -10,7 +10,7 @@ the history was rewritten.
 ---
 
 ## 1.26.0 — Security: activity log, backups, HTTPS
-*builds 201–213*
+*builds 201–214*
 
 - **Settings → Security** (owner only): sign-ins, sign-outs,
   wrong-password tries, lockouts, password resets, account changes and
@@ -35,6 +35,8 @@ the history was rewritten.
 - **Android app 1.1** opens the HTTPS address and falls back to the local one
   on its own when it can't be reached. The build now really sets the version
   number, so updates install over the old app.
+- **Privacy notice** on the guest Wi-Fi portal (English and Filipino), linked
+  beside the Wi-Fi rules above Connect, as the Data Privacy Act requires.
 - Incident-response plan and restore steps in OPERATIONS.md; cybersecurity
   checklist in docs/capstone/SECURITY_CHECKLIST.md.
 

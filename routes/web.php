@@ -63,7 +63,8 @@ Route::prefix('portal')->name('portal.')->middleware(PortalLocale::class)->group
     Route::post('/verify-payment', [CaptivePortalController::class, 'verifyPayment'])->name('verify-payment')->middleware('throttle:portal-payment');
     Route::post('/upload', [CaptivePortalController::class, 'uploadReceipt'])->name('upload')->middleware('throttle:portal-upload');
     Route::post('/chat', [CaptivePortalController::class, 'chat'])->name('chat')->middleware('throttle:portal-chat');
-    Route::get('/menu', [CaptivePortalController::class, 'menu'])->name('menu'); // Added menu route
+    Route::get('/menu', [CaptivePortalController::class, 'menu'])->name('menu');
+    Route::view('/privacy', 'portal.privacy')->name('privacy');
     Route::post('/disconnect', [CaptivePortalController::class, 'disconnect'])->name('disconnect')->middleware('throttle:portal-disconnect');
     Route::get('/unlock', [CaptivePortalController::class, 'unlock'])->name('unlock');
     Route::get('/success', [CaptivePortalController::class, 'success'])->name('success');
