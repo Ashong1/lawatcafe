@@ -200,6 +200,13 @@ columns cannot be read.
 What to do when something goes wrong. Note what you did and when, and keep
 the note with the Activity Log entries it refers to.
 
+**Who:** the **Data Protection Officer is the owner of Lawa't Kape**
+(named in the guest privacy notice, reached at the counter). The developer
+is the technical contact: the owner asks them to look up, export or delete a
+guest's records and to investigate incidents. A personal-data breach that
+puts people at real risk must be reported to the National Privacy
+Commission and to the affected people within 72 hours of knowing about it.
+
 | Situation | How you notice | First steps |
 |---|---|---|
 | Someone may know a staff or owner password | Activity Log shows a sign-in at an odd time, or from an unknown device | Settings → Staff Accounts → remove the account (signs them out at once), then invite them again so they set a new password. Check the Activity Log and Orders for what that account did. |

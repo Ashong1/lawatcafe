@@ -23,7 +23,7 @@ class PortalPrivacyNoticeTest extends TestCase
         $this->get(route('portal.privacy', ['lang' => 'en']))->assertOk()
             ->assertSee('Republic Act No. 10173')->assertSee('90 days')->assertSee('91 days')->assertSee('OpenRouter');
         $this->get(route('portal.privacy', ['lang' => 'fil']))->assertOk()
-            ->assertSee('Ano ang kinokolekta namin')->assertSee('National Privacy Commission');
+            ->assertSee('Ano ang kinokolekta namin')->assertSee('National Privacy Commission')->assertSee('May-ari ng Lawa\'t Kape');
     }
 
     public function test_the_notice_loads_nothing_from_outside(): void

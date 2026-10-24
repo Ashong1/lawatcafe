@@ -71,7 +71,10 @@
     </ul>
 
     <h2>{{ __('Your rights') }}</h2>
-    <p>{{ __('You can ask what we hold about your device, ask us to correct or delete it, or object to how we use it. Ask the shop owner at the counter. You can also complain to the National Privacy Commission (privacy.gov.ph).') }}</p>
+    <p>{{ __('You can ask what we hold about your device, ask us to correct or delete it, or object to how we use it. You can also complain to the National Privacy Commission (privacy.gov.ph).') }}</p>
+
+    <h2>{{ __('Data Protection Officer') }}</h2>
+    <p>{{ __('Owner, Lawa\'t Kape. Ask at the counter.') }}</p>
   </div>
 
   <p class="muted">{{ __('Last updated: October 25, 2026') }}</p>

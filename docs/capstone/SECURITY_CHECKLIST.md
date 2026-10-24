@@ -13,7 +13,7 @@ code. "Partly" items say what is missing.
 | D. Input Handling and Data Protection | ✔ | | |
 | E. Configuration, Components and Network | ✔ | | |
 | F. Logging, Backup and Incident Response | ✔ | | |
-| G. Standards and Compliance | | ✔ | |
+| G. Standards and Compliance | ✔ | | |
 | H. Testing and Evidence | ✔ | | |
 
 ---
@@ -118,7 +118,7 @@ code. "Partly" items say what is missing.
 - **Incident response plan:**
   [OPERATIONS.md — Incident response](../OPERATIONS.md#incident-response).
 
-## G. Standards and Compliance — Partly
+## G. Standards and Compliance — Yes
 
 - **OWASP Top 10 (2021)** coverage: A01 access control (B), A02 crypto (D),
   A03 injection (D), A05 misconfiguration (E), A07 authentication (B, C),
@@ -133,8 +133,10 @@ code. "Partly" items say what is missing.
   it (shop, and the AI provider for chat), how long it is kept (90 / 91
   days; code records with sales, device addresses encrypted) and the guest's
   rights, including complaining to the National Privacy Commission.
-  **Missing:** a named Data Protection Officer; the notice currently says
-  "ask the shop owner at the counter".
+  **Data Protection Officer:** the owner of Lawa't Kape, reached at the
+  counter, named in the notice. The developer is the technical contact the
+  DPO turns to for access, deletion and incident requests, not the DPO, so
+  the person who runs the system is not also the one checking it.
 - WCAG-style readability rules (12px minimum text, 44px touch targets) are
   enforced by tests.
 
