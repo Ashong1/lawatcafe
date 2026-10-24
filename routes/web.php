@@ -39,6 +39,7 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffDeliveryController;
 use App\Http\Controllers\StaticIpController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\SystemPowerController;
 use App\Http\Controllers\TrafficController;
 use App\Http\Controllers\TrustedDeviceController;
 use App\Http\Controllers\VoucherController;
@@ -333,6 +334,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('accounts/{account}/restore', [AccountController::class, 'restore'])->name('accounts.restore');
         Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log');
         Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
+        Route::get('system-power', [SystemPowerController::class, 'index'])->name('system-power.index');
+        Route::post('system-power/start', [SystemPowerController::class, 'start'])->name('system-power.start');
+        Route::post('system-power/{action}', [SystemPowerController::class, 'act'])
+            ->whereIn('action', ['restart-app', 'shutdown-app', 'restart-server', 'shutdown-server'])
+            ->middleware('throttle:5,1')->name('system-power.act');
         Route::post('backups', [BackupController::class, 'store'])->middleware('throttle:6,1')->name('backups.store');
         Route::get('backups/{backup}', [BackupController::class, 'download'])->name('backups.download');
         Route::post('backups/{backup}/restore', [BackupController::class, 'restore'])->middleware('throttle:3,1')->name('backups.restore');

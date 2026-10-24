@@ -427,6 +427,7 @@
                             <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">{{ auth()->user()->isSuperAdmin() ? 'Staff & Admin Accounts' : 'Staff Accounts' }}</a>
                             <a href="{{ route('activity-log') }}" class="block py-2 text-xs {{ request()->routeIs('activity-log') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Activity Log</a>
                             <a href="{{ route('backups.index') }}" class="block py-2 text-xs {{ request()->routeIs('backups.*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Backups</a>
+                            <a href="{{ route('system-power.index') }}" class="block py-2 text-xs {{ request()->routeIs('system-power.*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Restart &amp; Shut Down</a>
                             <a href="{{ route('profile.edit') }}#android-app" class="block py-2 text-xs text-[#A1887F] hover:text-white transition">Download the App</a>
                             <a href="{{ route('admin.settings.store') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.store') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Store Settings</a>
                             <a href="{{ route('admin.settings.ai-providers') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.ai-providers*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Barista AI Settings</a>
@@ -537,6 +538,7 @@
         </header>
 
         @include('partials.offline-banner')
+        @include('partials.maintenance-banner')
         @include('partials.order-wait-reminder')
 
         {{-- Padding is written per-axis rather than as `p-4 sm:p-6 lg:p-8` so the

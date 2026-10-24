@@ -342,6 +342,7 @@
         </header>
 
         @include('partials.offline-banner')
+        @include('partials.maintenance-banner')
         @include('partials.order-wait-reminder')
 
         {{-- Per-axis padding so the bottom can clear the floating chat button —

@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Schedule;
 
-Schedule::command('network:enforce-sessions')->everyMinute();
+Schedule::command('network:enforce-sessions')->everyMinute()->evenInMaintenanceMode();
 
 // Guest sessions were observed vanishing from OPNsense with zero
 // application-side trigger, in as little as ~25 seconds when a device sat
@@ -11,14 +11,14 @@ Schedule::command('network:enforce-sessions')->everyMinute();
 // still leave that ~25s window uncovered. withoutOverlapping is defensive —
 // the internal loop is hard-capped under 60s so a normal run should never
 // still be going when the next minute's invocation starts.
-Schedule::command('network:keepalive-guests')->everyMinute()->withoutOverlapping();
+Schedule::command('network:keepalive-guests')->everyMinute()->evenInMaintenanceMode()->withoutOverlapping();
 // Adult-site alerts read Pi-hole's query log; see WatchAdultSites. A minute is
 // as close to "when they opened it" as the scheduler gets.
-Schedule::command('network:watch-adult-sites')->everyMinute()->withoutOverlapping();
+Schedule::command('network:watch-adult-sites')->everyMinute()->evenInMaintenanceMode()->withoutOverlapping();
 // Network health every minute: history for Network > Health, instant alerts
 // when a check changes state (no AI involved), and the live status in the
 // AI's prompt. withoutOverlapping: a slow firewall mustn't stack runs.
-Schedule::command('network:health')->everyMinute()->withoutOverlapping();
+Schedule::command('network:health')->everyMinute()->evenInMaintenanceMode()->withoutOverlapping();
 Schedule::command('agent:analyze')->everyFifteenMinutes();
 
 // Every 3 hours (was every 30 min = 48 AI calls a day, most of the 50-a-day
@@ -41,7 +41,7 @@ Schedule::command('ai:resolve-gaps')->hourly()->withoutOverlapping();
 // so this only catches what that missed, and each run costs one alias read per
 // tier. See ReconcileTierMembership for why it must exist before any firewall
 // rule passes traffic based on those aliases.
-Schedule::command('shaper:reconcile-tiers')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('shaper:reconcile-tiers')->everyFiveMinutes()->evenInMaintenanceMode()->withoutOverlapping();
 
 // The adaptive fair-use loop, every five minutes (how fast a cafe fills up).
 // Most runs only take a sample — the deadband and cooldown in
@@ -54,7 +54,7 @@ Schedule::command('shaper:adapt')->everyFiveMinutes()->withoutOverlapping();
 // Queued mail (purchase orders, shift audits). There is no long-running
 // worker, so each minute drains the queue and exits; mail that fails during
 // an internet outage is retried every 5 minutes (see WaitsForInternet).
-Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping();
+Schedule::command('queue:work --stop-when-empty --max-time=50 --force')->everyMinute()->evenInMaintenanceMode()->withoutOverlapping();
 
 // Nightly database backup after closing; see BackupDatabase.
-Schedule::command('backup:database')->dailyAt('23:30')->withoutOverlapping();
+Schedule::command('backup:database')->dailyAt('23:30')->evenInMaintenanceMode()->withoutOverlapping();

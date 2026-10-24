@@ -27,6 +27,11 @@ class ActivityLog extends Model
         'backup_made' => 'Database backup made',
         'backup_failed' => 'Database backup failed',
         'backup_restored' => 'Restored a database backup',
+        'app_restarted' => 'Restarted the web app',
+        'app_shut_down' => 'Shut down the web app',
+        'app_started' => 'Turned the web app back on',
+        'server_restarting' => 'Restarted the server',
+        'server_shutting_down' => 'Shut down the server',
     ];
 
     protected $fillable = ['user_id', 'event', 'detail', 'ip_address', 'user_agent'];

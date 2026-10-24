@@ -16,6 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
         $middleware->append(SecurityHeaders::class);
+        // Settings → System Power's "shut down web app" pauses the staff system
+        // only: guests can still sign in to the Wi-Fi.
+        $middleware->preventRequestsDuringMaintenance(except: ['portal', 'portal/*', 'captive-portal-api', 'ai/feedback']);
         // These are plain client-side JS cookies (document.cookie), not written
         // through Laravel's Cookie facade — EncryptCookies would otherwise fail
         // to decrypt them and silently null them out on every request, which is

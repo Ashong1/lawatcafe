@@ -160,6 +160,26 @@ The firewall, Pi-hole and Nginx Proxy Manager have their own backups (the
 OPNsense config export, Pi-hole Teleporter, Proxmox snapshots). The app
 doesn't hold their configuration.
 
+## Restart and shut down
+
+**Settings → Restart & Shut Down** (owner and system admin; password each
+time; logged in the Activity Log):
+
+| Button | What happens | How it comes back |
+|---|---|---|
+| Restart web app | Caches rebuilt, queue restarted, PHP-FPM reloaded | By itself in seconds |
+| Shut down web app | `artisan down`: staff see `errors/503`; the guest portal, network jobs, queue and backups keep running | **Turn back on** banner for whoever shut it down, or `sudo -u www-data php artisan up` |
+| Restart server | `systemctl reboot` | By itself in about a minute |
+| Shut down server | `systemctl poweroff` (also needs SHUT DOWN typed) | Only from Proxmox |
+
+The server buttons (and the PHP reload) need this sudoers line, installed
+once by root; the page shows it until it's there:
+
+```
+www-data ALL=(root) NOPASSWD: /usr/bin/systemctl reload php8.2-fpm, /usr/bin/systemctl reboot, /usr/bin/systemctl poweroff
+```
+in `/etc/sudoers.d/lawatkape-power` (mode 440; check with `visudo -c`).
+
 ## Restoring a backup
 
 **Settings → Backups → Restore** (owner password required). It first makes a
