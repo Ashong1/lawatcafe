@@ -104,4 +104,18 @@ class PosRegisterPerformanceTest extends TestCase
         $this->assertStringNotContainsString('backdrop-blur-[2px]', $html);
         $this->assertStringContainsString('data-chat-avoid', $html);
     }
+
+    public function test_a_category_with_nothing_on_sale_gets_no_tab(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        Shift::create(['user_id' => $staff->id, 'starting_cash' => 0, 'status' => 'open', 'opened_at' => now()]);
+        Category::create(['name' => 'Pasta', 'icon' => 'utensils', 'is_food' => true]);
+        Category::create(['name' => 'Retired', 'icon' => 'coffee', 'is_food' => false]);
+        Product::create(['name' => 'Carbonara', 'category' => 'Pasta', 'price' => 140, 'status' => 'Active']);
+        Product::create(['name' => 'Old Latte', 'category' => 'Retired', 'price' => 90, 'status' => 'Out of Stock']);
+
+        $tabs = collect($this->actingAs($staff)->get(route('pos'))->assertOk()->viewData('categories'))->pluck('name');
+
+        $this->assertSame(['All', 'Pasta', 'Wi-Fi'], $tabs->all());
+    }
 }

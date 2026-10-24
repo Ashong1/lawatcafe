@@ -91,7 +91,8 @@ class PosController extends Controller
         $activeShift = Shift::where('user_id', auth()->id())->where('status', 'open')->latest()->first();
 
         // Load Categories from database, including icons and colors
-        $dbCategories = Category::orderBy('sort_order')->get()->map(function ($cat) {
+        // An empty tab is a dead end mid-rush, same rule as the guest menu.
+        $dbCategories = Category::orderBy('sort_order')->whereIn('name', $products->pluck('category'))->get()->map(function ($cat) {
             return [
                 'name' => $cat->name,
                 'icon' => $cat->icon,
