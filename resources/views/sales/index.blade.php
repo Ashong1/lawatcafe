@@ -12,7 +12,7 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Sales Reports</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium">Track your daily revenue and transaction history.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium">Every completed order, with today's total and the last 7 days.</p>
         </div>
         <!-- Date Display -->
         <div class="text-right">
@@ -24,12 +24,11 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         
         <!-- Today's Revenue Card with Sparkline -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
-            <div class="absolute -right-4 -top-4 w-16 h-16 bg-green-50 rounded-full z-0 group-hover:scale-150 transition duration-500"></div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] ">
             <div class="relative z-10 flex justify-between items-center">
                 <div>
-                    <h3 class="text-[#795548] text-xs font-bold uppercase tracking-wide mb-1">Today's Revenue</h3>
-                    <p class="text-4xl font-bold text-[#2E7D32]">₱{{ number_format($todaysRevenue ?? 0, 2) }}</p>
+                    <h3 class="text-[#795548] text-xs font-bold uppercase tracking-wide mb-1">Today's sales</h3>
+                    <p class="text-3xl sm:text-4xl font-bold text-[#2E7D32]">₱{{ number_format($todaysRevenue ?? 0, 2) }}</p>
                 </div>
                 <!-- Sparkline Canvas -->
                 <div class="w-24 h-12 relative z-10 ml-4">
@@ -39,12 +38,11 @@
         </div>
         
         <!-- Total Lifetime Sales Card with Sparkline -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] relative overflow-hidden group hover:shadow-md transition-all duration-300">
-            <div class="absolute -right-4 -top-4 w-16 h-16 bg-amber-50 rounded-full z-0 group-hover:scale-150 transition duration-500"></div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] ">
             <div class="relative z-10 flex justify-between items-center">
                 <div>
-                    <h3 class="text-[#795548] text-xs font-bold uppercase tracking-wide mb-1">Total Lifetime Sales</h3>
-                    <p class="text-4xl font-bold text-[#3E2723]">₱{{ number_format($totalRevenue ?? 0, 2) }}</p>
+                    <h3 class="text-[#795548] text-xs font-bold uppercase tracking-wide mb-1">All-time sales</h3>
+                    <p class="text-3xl sm:text-4xl font-bold text-[#3E2723]">₱{{ number_format($totalRevenue ?? 0, 2) }}</p>
                 </div>
                 <!-- Sparkline Canvas -->
                 <div class="w-24 h-12 relative z-10 ml-4">
@@ -55,31 +53,34 @@
     </div>
 
     <!-- Weekly Revenue Graph -->
-    <div class="bg-white p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
-        <h3 class="text-lg font-bold text-[#3E2723] uppercase tracking-wide mb-6 pb-4 border-b border-[#FDF8F5]">Weekly Revenue Trend</h3>
+    <div class="bg-white p-5 sm:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
+        <h3 class="text-lg font-bold text-[#3E2723] uppercase tracking-wide mb-6 pb-4 border-b border-[#FDF8F5]">Sales, last 7 days</h3>
         <div class="relative h-72 w-full">
             <canvas id="salesChart"></canvas>
+            @if(count($chartLabels ?? []) === 0)
+                <p class="absolute inset-0 flex items-center justify-center text-sm font-medium text-[#6D4C41] bg-white">No sales in the last 7 days.</p>
+            @endif
         </div>
     </div>
 
     <!-- Transactions Table -->
-    <div class="bg-white p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
-        <h3 class="text-lg font-bold text-[#3E2723] uppercase tracking-wide mb-6 pb-4 border-b border-[#FDF8F5]">Transaction History</h3>
+    <div class="bg-white p-5 sm:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
+        <h3 class="text-lg font-bold text-[#3E2723] uppercase tracking-wide mb-6 pb-4 border-b border-[#FDF8F5]">All orders</h3>
         
         <div class="overflow-x-auto">
             <table class="lk-stack w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-bold">Ref Number</th>
+                        <th class="pb-4 font-bold">Order no.</th>
                         <th class="pb-4 font-bold">Date & Time</th>
-                        <th class="pb-4 font-bold">Method</th>
+                        <th class="pb-4 font-bold">Paid by</th>
                         <th class="pb-4 font-bold text-right">Amount</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
                     @forelse($sales ?? [] as $sale)
                         <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
-                            <td class="py-4 font-bold text-[#3E2723] uppercase tracking-tighter group-hover:text-amber-700 transition-colors">{{ $sale->transaction_number }}</td>
+                            <td class="py-4 font-bold text-[#3E2723] uppercase">{{ $sale->transaction_number }}</td>
                             <td class="py-4 text-[#795548]">
                                 <span class="font-bold">{{ $sale->created_at->format('M d, Y') }}</span>
                                 <span class="block text-xs opacity-70">{{ $sale->created_at->format('h:i A') }}</span>
@@ -97,9 +98,9 @@
                     @empty
                         <tr>
                             <td colspan="4" class="py-20 text-center">
-                                <div class="flex flex-col items-center opacity-30">
-                                    <x-lucide-receipt class="w-10 h-10 mb-2" />
-                                    <p class="text-[#6D4C41] text-sm font-medium">No sales recorded yet.</p>
+                                <div class="flex flex-col items-center">
+                                    <x-lucide-receipt class="w-10 h-10 mb-2 text-[#D7CCC8]" />
+                                    <p class="text-[#6D4C41] text-sm font-medium">No sales yet. Orders from the register show up here.</p>
                                 </div>
                             </td>
                         </tr>
@@ -114,15 +115,10 @@
     </div>
 </div>
 
-<!-- Include Chart.js -->
 @vite('resources/js/charts.js')
 
-<!-- Chart Initialization -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // ----------------------------------------------------
-        // 1. MAIN WEEKLY CHART
-        // ----------------------------------------------------
         const ctx = document.getElementById('salesChart').getContext('2d');
         const labels = {!! json_encode($chartLabels ?? []) !!};
         const dataValues = {!! json_encode($chartData ?? []) !!};
@@ -136,7 +132,7 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Revenue (₱)',
+                    label: 'Sales',
                     data: dataValues,
                     borderColor: '#8D6E63',
                     backgroundColor: gradient,
@@ -168,14 +164,15 @@
                     y: {
                         beginAtZero: true,
                         ticks: {
+                            precision: 0,
                             callback: value => '₱' + value,
-                            font: { family: 'Montserrat', weight: '600', size: 11 },
+                            font: { family: 'Montserrat', weight: '600', size: 12 },
                             color: '#8D6E63'
                         },
                         grid: { color: '#FDF8F5', drawBorder: false }
                     },
                     x: {
-                        ticks: { font: { family: 'Montserrat', weight: '600', size: 11 }, color: '#8D6E63' },
+                        ticks: { font: { family: 'Montserrat', weight: '600', size: 12 }, color: '#8D6E63' },
                         grid: { display: false }
                     }
                 },
@@ -183,9 +180,6 @@
             }
         });
 
-        // ----------------------------------------------------
-        // 2. MINI SPARKLINES FOR STAT CARDS
-        // ----------------------------------------------------
         const sparklineOptions = {
             responsive: true,
             maintainAspectRatio: false,

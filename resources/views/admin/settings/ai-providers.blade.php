@@ -14,7 +14,7 @@
                 <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">
                     Barista AI runs on OpenRouter alone, falling back across its own model list if one fails.
                     @if (auth()->user()->isSuperAdmin())
-                        Status reflects real recent usage, or click "Test Now" to check right now.
+                        Each status comes from recent real use; tap Test Now to check again.
                     @else
                         Add your own OpenRouter API key below.
                     @endif
@@ -42,8 +42,8 @@
                         <div>
                             <label for="{{ $field }}" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">{{ $label }}</label>
                             <div x-data="{ show: false }" class="relative">
-                                <input id="{{ $field }}" :type="show ? 'text' : 'password'" name="{{ $field }}" value="{{ $settings[$field] }}" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all" placeholder="Enter API Key...">
-                                <button type="button" @click="show = !show" :aria-label="show ? 'Hide API key' : 'Show API key'" class="absolute right-4 top-1/2 -translate-y-1/2 text-[#6D4C41] hover:text-[#3E2723]">
+                                <input id="{{ $field }}" :type="show ? 'text' : 'password'" name="{{ $field }}" value="{{ $settings[$field] }}" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl pl-4 pr-12 py-3 text-base sm:text-sm font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all" placeholder="sk-or-…" autocomplete="off">
+                                <button type="button" @click="show = !show" :aria-label="show ? 'Hide API key' : 'Show API key'" class="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 inline-flex items-center justify-center text-[#6D4C41] hover:text-[#3E2723]">
                                     <x-lucide-eye x-show="!show" class="w-4 h-4" />
                                     <x-lucide-eye-off x-show="show" class="w-4 h-4" />
                                 </button>
@@ -123,7 +123,7 @@
                                     @if ($model['status'] === 'ok')
                                         <span class="text-xs font-bold text-green-700 uppercase tracking-wider">Healthy</span>
                                     @elseif ($model['status'] === 'failed')
-                                        <span class="text-xs font-bold text-red-600 uppercase tracking-wider">Failed{{ $model['reason'] ? ' — ' . $model['reason'] : '' }}</span>
+                                        <span class="text-xs font-bold text-red-600 uppercase tracking-wider">Failed{{ $model['reason'] ? ' — ' . str_replace('_', ' ', $model['reason']) : '' }}</span>
                                     @else
                                         <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Never tested</span>
                                     @endif

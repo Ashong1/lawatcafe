@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Batch Print Vouchers</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Print Wi-Fi codes</title>
     <style>
         body { font-family: 'Courier New', Courier, monospace; padding: 20px; background: #fff; }
         .voucher-grid {
@@ -34,27 +35,27 @@
         }
     </style>
 </head>
-<body onload="if(confirm('Start printing batch?')) (window.LawatKapeApp ? LawatKapeApp.print() : window.print())">
+<body onload="if(confirm('Print {{ count($vouchers) }} Wi-Fi code slips now?')) (window.LawatKapeApp ? LawatKapeApp.print() : window.print())">
 
     <div style="margin-bottom: 30px; text-align: center;" class="no-print">
-        <button onclick="window.print()" style="cursor:pointer; padding: 12px 24px; background: #3E2723; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 14px;">
-            Confirm Batch Print
+        <button onclick="window.LawatKapeApp ? LawatKapeApp.print() : window.print()" style="cursor:pointer; padding: 12px 24px; background: #3E2723; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 14px; min-height: 44px;">
+            Print {{ count($vouchers) }} {{ Str::plural('slip', count($vouchers)) }}
         </button>
-        <p style="font-size: 11px; color: #8D6E63; mt-2">Ready to print {{ count($vouchers) }} vouchers.</p>
+        
     </div>
 
     <div class="voucher-grid">
         @foreach($vouchers as $voucher)
             <div class="voucher-card">
                 <div class="brand">Lawa't Kape</div>
-                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">WiFi Access Voucher</div>
+                <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">Wi-Fi code</div>
                 
                 <div class="code">{{ $voucher->code }}</div>
                 
                 @include('network.partials.slip-steps', ['useBy' => $voucher->unusedExpiresAt()])
                 <div class="details">
                     {{ $voucher->duration_minutes }} minutes of Wi-Fi<br>
-                    <span style="font-size: 9px; opacity: 0.7;">Voucher ID: #{{ $voucher->id }}</span>
+                    <span style="font-size: 9px; opacity: 0.7;">Slip #{{ $voucher->id }}</span>
                 </div>
 
                 {{-- Each slip's QR carries its own code. See VoucherController::slipUrl. --}}

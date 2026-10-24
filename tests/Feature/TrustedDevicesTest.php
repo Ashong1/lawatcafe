@@ -89,7 +89,7 @@ class TrustedDevicesTest extends TestCase
 
         $this->actingAs(User::factory()->create(['role' => 'admin']))
             ->post(route('network.trusted-devices.store'), ['mac_address' => self::LAPTOP_WIFI])
-            ->assertSessionHas('success', 'Owner-Laptop-WiFi now connects without a voucher.');
+            ->assertSessionHas('success', 'Owner-Laptop-WiFi now connects without a Wi-Fi code.');
     }
 
     public function test_trusting_a_guest_range_device_never_allow_lists_its_ip(): void

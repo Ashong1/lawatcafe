@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Bandwidth Shaping')
+@section('title', 'Wi-Fi Speed')
 
 @section('content')
 <div x-data="trafficMonitor()" class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
@@ -14,20 +14,16 @@
                 <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">How fast each Wi-Fi plan is, and the speed limit that stops one device slowing everyone down.</p>
             </div>
             
-            <!-- Live Indicator -->
             <div class="flex items-center gap-4 bg-white px-4 py-2 rounded-xl border border-[#F0E6D2] shadow-sm">
                 <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <div class="w-2 h-2 bg-green-500 rounded-full motion-safe:animate-pulse"></div>
                     <span class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Live</span>
                 </div>
                 <div class="h-4 w-[1px] bg-[#F0E6D2]"></div>
                 <div class="flex items-center gap-3">
-                    {{-- A rate needs two samples two seconds apart, so for the
-                         first moments there is genuinely no number to show.
-                         Printing "0.00 Mbps" there was a measurement the app
-                         had not taken — on a busy network it read as an outage.
-                         The skeleton is the same width as the figure it
-                         becomes, so nothing shifts when it lands. --}}
+                    {{-- A rate needs two samples two seconds apart, so there is no
+                         number at first; a "0.00 Mbps" placeholder reads as an outage.
+                         The skeleton matches the figure's width so nothing shifts. --}}
                     <div class="flex flex-col">
                         <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-tighter">Download</span>
                         <x-skeleton x-show="!hasRate" variant="block" size="h-4" class="w-16 mt-0.5" />
@@ -107,7 +103,7 @@
                                         <label for="{{ $field }}" class="block text-xs font-bold text-[#795548] uppercase mb-1">{{ $dirLabel }}</label>
                                         <input type="number" id="{{ $field }}" name="{{ $field }}" step="0.5" min="0.5" max="1000" required
                                                value="{{ old($field, rtrim(rtrim(number_format($plan[$direction], 3, '.', ''), '0'), '.')) }}"
-                                               class="w-full bg-white border border-[#F0E6D2] rounded-xl px-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
+                                               class="w-full bg-white border border-[#F0E6D2] rounded-xl px-3 py-2.5 text-base sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
                                         <x-field-error :name="$field" />
                                     </div>
                                 @endforeach
@@ -183,7 +179,7 @@
                     <input type="number" id="bw-fair-use" name="bw_fair_use_mbps"
                            step="0.5" min="5" max="1000" required
                            value="{{ old('bw_fair_use_mbps', $settings['bw_fair_use_mbps']) }}"
-                           class="w-full bg-white border border-green-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-green-600">
+                           class="w-full bg-white border border-green-200 rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-green-600">
                     <x-field-error name="bw_fair_use_mbps" />
                 </div>
 
@@ -263,9 +259,8 @@
                     </div>
                 </div>
 
-                {{-- What it has worked out so far. Shown whether or not the loop
-                     is on, because sampling runs either way and this is how an
-                     owner judges whether it knows enough to be trusted yet. --}}
+                {{-- Shown whether or not the loop is on: sampling runs either way,
+                     and this is how the owner judges whether it can be trusted yet. --}}
                 <div class="p-4 bg-[#FDF8F5] border border-[#F0E6D2] rounded-2xl space-y-3">
                     <p class="text-xs font-bold uppercase tracking-wide text-[#795548]">What it has learned</p>
 
@@ -301,19 +296,19 @@
                             <p class="text-xs font-bold uppercase tracking-wide text-[#795548] mb-1">
                                 Last decision &mdash;
                                 <span class="{{ $learned['last_decision']['decision'] === 'applied' ? 'text-green-700' : ($learned['last_decision']['decision'] === 'failed' ? 'text-red-700' : 'text-amber-700') }}">
-                                    {{ $learned['last_decision']['decision'] }}
+                                    {{ ['applied' => 'changed the limit', 'proposed' => 'asked for your approval', 'failed' => "couldn't change the limit"][$learned['last_decision']['decision']] ?? 'kept the limit' }}
                                 </span>
                             </p>
                             <p class="text-xs text-[#4A3B32] font-medium leading-relaxed">{{ $learned['last_decision']['reason'] }}</p>
                             <p class="text-xs text-[#795548] font-medium mt-1">
-                                {{ $learned['last_decision']['guests'] }} guest(s) online ·
+                                {{ $learned['last_decision']['guests'] }} {{ Str::plural('guest', $learned['last_decision']['guests']) }} online ·
                                 {{ \Illuminate\Support\Carbon::parse($learned['last_decision']['at'])->diffForHumans() }}
                             </p>
                         </div>
                     @endif
                 </div>
 
-                <label for="bw-adaptive-enabled" class="flex items-center gap-3 cursor-pointer">
+                <label for="bw-adaptive-enabled" class="min-h-[44px] flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" id="bw-adaptive-enabled" name="bw_adaptive_enabled" value="1"
                            @checked(old('bw_adaptive_enabled', $settings['bw_adaptive_enabled']) === '1' || old('bw_adaptive_enabled') === '1')
                            class="w-5 h-5 rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
@@ -325,14 +320,14 @@
                         <label for="bw-adaptive-min" class="block text-xs font-bold text-[#3E2723] uppercase mb-2">Never below (Mbps)</label>
                         <input type="number" id="bw-adaptive-min" name="bw_adaptive_min" step="0.5" min="5" max="1000"
                                value="{{ old('bw_adaptive_min', $settings['bw_adaptive_min']) }}"
-                               class="w-full bg-white border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
+                               class="w-full bg-white border border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
                         <x-field-error name="bw_adaptive_min" />
                     </div>
                     <div>
                         <label for="bw-adaptive-max" class="block text-xs font-bold text-[#3E2723] uppercase mb-2">Never above (Mbps)</label>
                         <input type="number" id="bw-adaptive-max" name="bw_adaptive_max" step="0.5" min="5" max="1000"
                                value="{{ old('bw_adaptive_max', $settings['bw_adaptive_max']) }}"
-                               class="w-full bg-white border border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
+                               class="w-full bg-white border border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#3E2723]">
                         <x-field-error name="bw_adaptive_max" />
                     </div>
                 </div>
@@ -363,17 +358,17 @@
                     </div>
                     <div class="grid grid-cols-2 gap-4 mt-4">
                         <div class="p-3 bg-[#FDF8F5] rounded-xl border border-[#F0E6D2]/50 text-center">
-                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-1">Total Downloaded</p>
+                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-1">Total downloaded</p>
                             <x-skeleton x-show="!hasTotals" variant="block" size="h-4" class="w-20 mx-auto" />
                                 <p x-show="hasTotals" x-cloak class="text-sm font-bold text-[#3E2723]" x-text="totalIn"></p>
                         </div>
                         <div class="p-3 bg-[#FDF8F5] rounded-xl border border-[#F0E6D2]/50 text-center">
-                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-1">Total Uploaded</p>
+                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-1">Total uploaded</p>
                             <x-skeleton x-show="!hasTotals" variant="block" size="h-4" class="w-20 mx-auto" />
                                 <p x-show="hasTotals" x-cloak class="text-sm font-bold text-[#3E2723]" x-text="totalOut"></p>
                         </div>
                     </div>
-                    <p class="text-xs text-[#6D4C41] font-medium italic leading-relaxed">
+                    <p class="text-xs text-[#6D4C41] font-medium leading-relaxed">
                         The limit stops one heavy user from slowing down the register and the kitchen
                         display when the shop is busy.
                     </p>
@@ -410,8 +405,7 @@
                     const response = await fetch('{{ route('network.traffic.stats') }}', { headers: { 'Accept': 'application/json' } });
                     const data = await response.json();
                     
-                    // OPNsense usually returns an object where keys are interface names (wan, lan, etc.)
-                    // We'll look for 'wan' or the first interface with traffic
+                    // Keyed by interface name; prefer wan, else the first one.
                     const iface = data.wan || data[Object.keys(data)[0]];
                     
                     if (!iface) return;
@@ -426,7 +420,6 @@
                         const inDelta = currentIn - this.lastIn;
                         const outDelta = currentOut - this.lastOut;
 
-                        // Calculate Mbps: (Bytes * 8) / (1024 * 1024) / seconds
                         const mbpsIn = ((inDelta * 8) / (1024 * 1024) / deltaT).toFixed(2);
                         const mbpsOut = ((outDelta * 8) / (1024 * 1024) / deltaT).toFixed(2);
 
@@ -434,10 +427,8 @@
                         this.upSpeed = mbpsOut + ' Mbps';
                         this.hasRate = true;
 
-                        // Measured against the one figure this gateway actually
-                        // enforces — the per-device fair-use ceiling. The old
-                        // reference was the premium tier's download, a number
-                        // nothing on the network was ever held to.
+                        // Measured against the per-device speed limit, the one
+                        // figure the router actually enforces shop-wide.
                         const maxDown = {{ $settings['bw_fair_use_mbps'] }};
                         this.utilization = Math.min(100, Math.round((parseFloat(mbpsIn) / maxDown) * 100));
                     }

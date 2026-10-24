@@ -51,7 +51,7 @@
                     @else
                         <x-lucide-flame class="w-3 h-3" />
                     @endif
-                    {{ $order->status }}
+                    {{ $order->status === 'pending' ? 'New' : 'Making' }}
                 </span>
             </div>
 
@@ -114,19 +114,19 @@
                     <form action="{{ route('kds.update', $order->id) }}" method="POST" class="col-span-2" @submit.prevent="updateStatus('{{ route('kds.update', $order->id) }}', 'pending', $event)">
                         @csrf
                         <input type="hidden" name="status" value="pending">
-                        <button type="submit" class="w-full py-3 text-[#795548] font-bold transition flex items-center justify-center gap-2 hover:text-[#3E2723] text-xs uppercase tracking-wide">
+                        <button type="submit" class="w-full min-h-[44px] text-[#795548] font-bold transition flex items-center justify-center gap-2 hover:text-[#3E2723] text-xs uppercase tracking-wide">
                             <x-lucide-undo-2 class="w-3.5 h-3.5" />
-                            <span>Wait / Back to Pending</span>
+                            <span>Not started yet</span>
                         </button>
                     </form>
                 @endif
             </div>
         </div>
     @empty
-        <div class="col-span-full py-32 text-center bg-white rounded-[3rem] border border-dashed border-[#F0E6D2]">
-            <div class="flex flex-col items-center opacity-30">
-                <x-lucide-clipboard-check class="w-20 h-20 mb-6 text-green-600" />
-                <p class="text-2xl font-bold text-[#3E2723] uppercase tracking-wide">All caught up!</p>
+        <div class="col-span-full py-20 sm:py-32 px-6 text-center bg-white rounded-[3rem] border border-dashed border-[#F0E6D2]">
+            <div class="flex flex-col items-center">
+                <x-lucide-clipboard-check class="w-16 h-16 mb-6 text-green-600/50" />
+                <p class="text-2xl font-bold text-[#3E2723]">No orders waiting</p>
                 <p class="text-sm font-medium text-[#795548] mt-2">New orders will appear here automatically.</p>
             </div>
         </div>

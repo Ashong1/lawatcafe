@@ -193,8 +193,8 @@ class ShiftControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertViewHas('expectedCash', 680.0); // 500 + 300 - 120
-        $response->assertSee('Pay-Ins (+)', false);
-        $response->assertSee('Pay-Outs (−)', false);
+        $response->assertSee('Cash in (+)', false);
+        $response->assertSee('Cash out (−)', false);
         $response->assertSee("expected: '680.00'", false);
     }
 

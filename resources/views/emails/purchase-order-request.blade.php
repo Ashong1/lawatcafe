@@ -1,6 +1,12 @@
-Purchase order request:
+{{-- Plain-text email: echo with {!! !!}; {{ }} would HTML-escape "&" and apostrophes in names.
+     The draft's notes are internal (why it was drafted), so the supplier never sees them. --}}
+Hello {!! $draft->supplier->name !!},
 
-Ingredient: {{ $draft->ingredient->name }}
-Quantity: {{ $draft->suggested_quantity }}{{ $draft->ingredient->unit }}
+Lawa't Kape would like to order:
 
-{{ $draft->notes }}
+{!! $draft->ingredient->name !!}: {!! $draft->suggested_quantity !!} {!! $draft->ingredient->unit !!}
+
+Please reply to this email to confirm the order and delivery date.
+
+Thank you,
+Lawa't Kape

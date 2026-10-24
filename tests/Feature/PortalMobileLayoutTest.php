@@ -156,7 +156,7 @@ class PortalMobileLayoutTest extends TestCase
     }
 
     /**
-     * The "AI Agent Active" badge was absolutely positioned inside the chat
+     * The "Barista AI is here" badge was absolutely positioned inside the chat
      * container and reserved no space, so the oldest message in the scroll area
      * sat underneath it — and it got worse as the conversation grew, because
      * the history scrolls beneath a fixed overlay.
@@ -170,7 +170,7 @@ class PortalMobileLayoutTest extends TestCase
             ->get(route('portal.index'))
             ->getContent();
 
-        $this->assertStringContainsString('AI Agent Active', $content);
+        $this->assertStringContainsString('Barista AI is here', $content);
         $this->assertStringNotContainsString('absolute top-5 left-8', $content);
         // In flow, and not allowed to be squashed by the chat area beside it.
         $this->assertStringContainsString('shrink-0 relative z-10 mb-4 flex', $content);

@@ -10,7 +10,7 @@
             <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
             <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Trusted Devices</span>
         </h2>
-        <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Trusted devices use the Wi-Fi without a voucher. Find your device in the list below, check that its name, IP and MAC match the device in your hand, then tap Allow.</p>
+        <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Trusted devices use the Wi-Fi without a Wi-Fi code. Find your device in the list below, check that its name, IP and MAC match the device in your hand, then tap Allow.</p>
     </div>
 
     {{-- Trusted now --}}
@@ -21,7 +21,7 @@
             </div>
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Trusted now</h3>
-                <p class="text-xs text-[#6D4C41] font-medium">These skip the Wi-Fi login. Shop equipment stays on the list so the shop's own systems keep working.</p>
+                <p class="text-xs text-[#6D4C41] font-medium">These skip the sign-in page. Shop equipment stays on the list so the shop's own systems keep working.</p>
             </div>
         </div>
 
@@ -57,17 +57,17 @@
                             <button type="button"
                                     onclick="window.confirmAction({
                                         title: @js('Stop trusting '.($row['name'] ?: ($row['ip'] ?? $row['mac'])).'?'),
-                                        text: @js($row['system'] ? 'This is shop equipment. Removing it can take the shop\'s own systems offline.' : 'It will need a voucher to use the Wi-Fi again.'),
+                                        text: @js($row['system'] ? 'This is shop equipment. Removing it can take the shop\'s own systems offline.' : 'It will need a Wi-Fi code to use the Wi-Fi again.'),
                                         icon: 'warning',
                                         confirmText: 'Yes, remove',
                                         callback: () => document.getElementById(@js($formId)).submit()
                                     })"
-                                    class="min-h-[36px] w-full sm:w-auto px-3 text-xs font-bold uppercase tracking-wide text-[#795548] bg-white border border-[#F0E6D2] hover:bg-red-50 hover:text-red-600 hover:border-red-200 rounded-xl transition">Remove</button>
+                                    class="min-h-[44px] md:min-h-[36px] w-full sm:w-auto px-3 text-xs font-bold uppercase tracking-wide text-[#795548] bg-white border border-[#F0E6D2] hover:bg-red-50 hover:text-red-600 hover:border-red-200 rounded-xl transition">Remove</button>
                         </form>
                     @endif
                 </li>
             @empty
-                <li class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide py-6">No trusted devices yet.</li>
+                <li class="text-center text-[#6D4C41] text-sm font-medium py-6">No trusted devices yet.</li>
             @endforelse
         </ul>
     </div>
@@ -87,7 +87,7 @@
             <div class="relative md:w-72">
                 <x-lucide-search class="w-4 h-4 text-[#795548] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input type="search" x-model="q" placeholder="Search name, IP or MAC" aria-label="Search devices"
-                       class="w-full text-sm bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">
+                       class="w-full text-base sm:text-sm bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">
             </div>
         </div>
 
@@ -132,12 +132,12 @@
                                 <button type="button"
                                         onclick="window.confirmAction({
                                             title: @js('Trust '.$label.'?'),
-                                            html: @js('<div style="text-align:left;font-size:14px;line-height:1.7">Check these match the device in your hand:<br><b>IP:</b> <code>'.e($device['ip'] ?? '—').'</code><br><b>MAC:</b> <code>'.e($device['mac']).'</code><br><br>It will use the Wi-Fi without a voucher from now on.</div>'),
+                                            html: @js('<div style="text-align:left;font-size:14px;line-height:1.7">Check these match the device in your hand:<br><b>IP:</b> <code>'.e($device['ip'] ?? '—').'</code><br><b>MAC:</b> <code>'.e($device['mac']).'</code><br><br>It will use the Wi-Fi without a Wi-Fi code from now on.</div>'),
                                             icon: 'question',
                                             confirmText: 'Yes, trust it',
                                             callback: () => document.getElementById(@js($formId)).submit()
                                         })"
-                                        class="min-h-[36px] w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 rounded-xl text-xs font-bold text-green-800 bg-green-50 border border-green-200 hover:bg-green-100 transition">
+                                        class="min-h-[44px] md:min-h-[36px] w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 rounded-xl text-xs font-bold text-green-800 bg-green-50 border border-green-200 hover:bg-green-100 transition">
                                     <x-lucide-shield-check class="w-4 h-4" /> Allow
                                 </button>
                             </form>
@@ -145,7 +145,7 @@
                     </div>
                 </li>
             @empty
-                <li class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide py-6">Couldn't read the device list from the router. Check Network → Health.</li>
+                <li class="text-center text-[#6D4C41] text-sm font-medium py-6">Couldn't read the device list from the router. Check <a href="{{ route('network.health') }}" class="font-bold text-amber-800 underline">Network Status</a>.</li>
             @endforelse
         </ul>
     </div>
@@ -167,7 +167,7 @@
         </div>
 
         <details class="bg-white p-5 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] group">
-            <summary class="cursor-pointer list-none flex items-center justify-between gap-3">
+            <summary class="cursor-pointer list-none min-h-[44px] flex items-center justify-between gap-3">
                 <span class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Add by address</span>
                 <x-lucide-chevron-down class="w-4 h-4 text-[#795548] transition-transform group-open:rotate-180" />
             </summary>
@@ -178,7 +178,7 @@
                 <label for="manual-mac" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">MAC address</label>
                 <div class="flex gap-2">
                     <input id="manual-mac" type="text" name="mac_address" required placeholder="AA:BB:CC:DD:EE:FF"
-                           class="flex-1 min-w-0 text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl p-3 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all">
+                           class="flex-1 min-w-0 text-base sm:text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl p-3 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all">
                     <div class="shrink-0"><x-submit-button label="Allow" loading-label="Adding…" /></div>
                 </div>
             </form>
@@ -188,7 +188,7 @@
                 <label for="manual-ip" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Fixed IP address</label>
                 <div class="flex gap-2">
                     <input id="manual-ip" type="text" name="address" required placeholder="192.168.2.50"
-                           class="flex-1 min-w-0 text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl p-3 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all">
+                           class="flex-1 min-w-0 text-base sm:text-sm font-mono font-bold bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl p-3 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all">
                     <div class="shrink-0"><x-submit-button label="Allow" loading-label="Adding…" /></div>
                 </div>
                 <p class="text-xs text-[#795548] mt-2">Guest-range addresses are refused, because the next guest could get the same one.</p>

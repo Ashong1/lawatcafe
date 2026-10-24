@@ -550,9 +550,6 @@ class VoucherController extends Controller
     }
 
     /**
-     * Terminate an active network session.
-     */
-    /**
      * The guest paid at the counter for more time: extend their code instead
      * of printing a new one. If they were already cut off, the portal's
      * auto-reconnect brings them back the next time the phone opens a page.
@@ -581,6 +578,9 @@ class VoucherController extends Controller
         return redirect()->back()->with('success', "Added {$v['minutes']} minutes to {$voucher->code}. Their Wi-Fi now runs until {$newEnd->format('g:i A')}.");
     }
 
+    /**
+     * Terminate an active network session.
+     */
     public function kick(Request $request, OpnSenseService $opnsense)
     {
         $request->validate([

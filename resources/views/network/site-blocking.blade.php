@@ -38,7 +38,7 @@
     @unless($piholeConfigured)
     <div class="mb-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-4 flex items-start gap-3">
         <x-lucide-alert-triangle class="w-5 h-5 shrink-0 mt-0.5" />
-        <p class="text-xs font-bold leading-relaxed">Pi-hole isn't configured (no app password set). Changes here will not take effect until <code class="bg-amber-100 px-1 rounded">PIHOLE_APP_PASSWORD</code> is set on the server.</p>
+        <p class="text-sm font-bold leading-relaxed">The website filter isn't connected yet, so changes here won't take effect. Ask whoever set up the system to finish connecting it.@if(auth()->user()->isSuperAdmin()) <span class="font-medium">(Set <code class="bg-amber-100 px-1 rounded">PIHOLE_APP_PASSWORD</code> on the server.)</span>@endif</p>
     </div>
     @endunless
 
@@ -107,16 +107,15 @@
             </div>
 
             <div class="flex-1 space-y-3">
-                {{-- x-data supplies the `submitting` flag <x-submit-button> reads.
-                     Without it the button's label expression threw and it
-                     rendered as an empty dark blob. --}}
+                {{-- x-data supplies the `submitting` flag <x-submit-button> reads;
+                     without it the button renders with no label. --}}
                 <form action="{{ route('network.site-blocking.store') }}" method="POST" class="flex gap-2"
                       x-data="{ submitting: false }" @submit="submitting = true">
                     @csrf
                     {{-- ?domain= pre-fills from an adult-site alert (WatchAdultSites), so blocking what it found is one tap. --}}
                     <input type="text" name="domain" required placeholder="Add a site, e.g. example.com" value="{{ old('domain', request('domain')) }}"
                            aria-label="Website to block"
-                           class="flex-1 min-w-0 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-full px-4 min-h-[44px] text-sm font-medium focus:outline-none focus:border-[#3E2723] transition-all">
+                           class="flex-1 min-w-0 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-full px-4 min-h-[44px] text-base sm:text-sm font-medium focus:outline-none focus:border-[#3E2723] transition-all">
                     <x-submit-button label="Block" loading-label="Blocking…" class="!flex-none px-6 !py-0 min-h-[44px] !rounded-full" />
                 </form>
 
@@ -132,7 +131,7 @@
                                     <button type="submit"
                                             aria-pressed="{{ $entry['enabled'] ? 'true' : 'false' }}"
                                             aria-label="{{ $entry['enabled'] ? 'Unblock' : 'Block' }} {{ $entry['domain'] }}"
-                                            class="min-h-[40px] inline-flex items-center gap-2 pl-4 pr-2 font-mono">
+                                            class="min-h-[44px] inline-flex items-center gap-2 pl-4 pr-2 font-mono">
                                         @if($entry['enabled'])
                                             <x-lucide-ban class="w-4 h-4" />
                                         @endif
@@ -147,11 +146,11 @@
                                                 title: 'Remove {{ $entry['domain'] }}?',
                                                 text: 'This removes it from the list entirely, rather than just unblocking it.',
                                                 icon: 'warning',
-                                                confirmText: 'Yes, Remove',
+                                                confirmText: 'Yes, remove',
                                                 callback: () => document.getElementById('remove-site-form-{{ $loop->index }}').submit()
                                             })"
                                             aria-label="Remove {{ $entry['domain'] }}"
-                                            class="min-h-[40px] px-3 rounded-full opacity-70 hover:opacity-100 transition">
+                                            class="min-h-[44px] px-3 rounded-full opacity-70 hover:opacity-100 transition">
                                         <x-lucide-x class="w-4 h-4" />
                                     </button>
                                 </form>

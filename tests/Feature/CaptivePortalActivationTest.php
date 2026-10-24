@@ -600,7 +600,7 @@ class CaptivePortalActivationTest extends TestCase
         $this->assertStringContainsString('window.location.replace(fallback)', $content);
         // A tap link out, and a last jump to the time-left page for a normal
         // browser left sitting on the probe's empty reply.
-        $this->assertStringContainsString('Tap here to see your time left', $content);
+        $this->assertStringContainsString('View my time left', $content);
         $this->assertStringContainsString('window.location.replace(status)', $content);
     }
 

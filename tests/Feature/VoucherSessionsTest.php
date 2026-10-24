@@ -74,7 +74,7 @@ class VoucherSessionsTest extends TestCase
      * Device hostname used to be rendered as a small italic footnote that
      * disappeared entirely when unknown — making every device look
      * identical by IP/MAC alone. It's now the headline of the device cell
-     * in all three tables, with an honest "Unknown Device" fallback when
+     * in all three tables, with an honest "Unnamed device" fallback when
      * neither source has a name for that client.
      *
      * Also covers the source priority added alongside this: OPNsense's ARP
@@ -104,7 +104,7 @@ class VoucherSessionsTest extends TestCase
                     'macAddress' => 'AA:BB:CC:DD:EE:02',
                     'bytes_received' => 0, 'bytes_sent' => 0,
                 ],
-                // Neither source has a name — "Unknown Device" fallback.
+                // Neither source has a name — "Unnamed device" fallback.
                 [
                     'sessionId' => 'sess-unnamed',
                     'ipAddress' => '192.168.2.122/32',
@@ -132,7 +132,7 @@ class VoucherSessionsTest extends TestCase
         $response->assertSee('xiaomi-15-pro');
         $response->assertDontSee('stale-arp-name');
         $response->assertSee('Johns-iPhone');
-        $response->assertSee('Unknown Device');
+        $response->assertSee('Unnamed device');
     }
 
     /**

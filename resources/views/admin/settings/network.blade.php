@@ -10,7 +10,7 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Network Config</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Manage your router connection and configure permanent internet access for kape equipment.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Fixed addresses for shop devices, trusted devices and the firewall connection.</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

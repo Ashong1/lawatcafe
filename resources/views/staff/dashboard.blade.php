@@ -11,7 +11,7 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Staff Hub</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Welcome back! Here is your shift overview.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Your shift, the kitchen queue and guest Wi-Fi at a glance.</p>
         </div>
         <div class="flex items-center gap-4">
             <a href="{{ route('pos.history') }}" class="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-xl border border-[#F0E6D2] bg-white text-sm font-bold text-[#3E2723] hover:border-[#3E2723] transition whitespace-nowrap shrink-0">
@@ -74,7 +74,6 @@
         
         <!-- Active Shift Info -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col h-full relative overflow-hidden">
-            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-blue-50/50 rounded-full z-0"></div>
             <div class="relative z-10 flex flex-col h-full">
                 <div class="flex items-center gap-2 mb-4 pb-4 border-b border-[#F0E6D2]">
                     <div class="p-2 bg-blue-50 rounded-lg text-blue-700">
@@ -86,39 +85,34 @@
                 <div x-show="activeShift" class="flex-1 flex flex-col justify-between">
                     <div class="space-y-4">
                         <div>
-                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Clocked In</p>
+                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Started</p>
                             <p class="text-sm font-bold text-[#3E2723]"><span x-text="activeShift?.started_at"></span> <span class="text-[#6D4C41] text-xs font-medium" x-text="`(${activeShift?.duration})`"></span></p>
                         </div>
                         <div>
-                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Starting Drawer</p>
+                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Starting cash</p>
                             <p class="text-sm font-bold text-green-700" x-text="`₱${activeShift?.starting_cash}`"></p>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Role</p>
-                            <p class="text-sm font-bold text-[#3E2723] capitalize" x-text="activeShift?.role"></p>
                         </div>
                     </div>
 
                     <div class="mt-6 pt-4 border-t border-[#F0E6D2]">
                         <a href="{{ $activeShift ? route('shift.closing-report', $activeShift->id) : '#' }}"
-                                class="w-full py-3 bg-[#FAFAFA] border-2 border-red-100 text-red-600 rounded-xl font-bold text-xs uppercase tracking-wide hover:bg-red-50 transition-all flex items-center justify-center gap-2">
+                                class="w-full min-h-[44px] bg-[#FAFAFA] border-2 border-red-100 text-red-700 rounded-xl font-bold text-xs uppercase tracking-wide hover:bg-red-50 transition-all flex items-center justify-center gap-2">
                             <x-lucide-log-out class="w-4 h-4" />
-                            <span>Clock Out / End Shift</span>
+                            <span>End Shift</span>
                         </a>
                     </div>
                 </div>
 
                 <div x-show="!activeShift" class="flex-1 flex flex-col items-center justify-center text-center py-6">
-                    <x-lucide-lock class="w-8 h-8 text-[#6D4C41] mb-3 opacity-50" />
-                    <p class="text-sm font-bold text-[#3E2723]">No Active Shift</p>
-                    <p class="text-xs text-[#795548] mt-1">Open the POS to start your shift drawer.</p>
+                    <x-lucide-lock class="w-8 h-8 text-[#6D4C41]/50 mb-3" />
+                    <p class="text-sm font-bold text-[#3E2723]">No shift open</p>
+                    <p class="text-xs text-[#795548] mt-1">Open the register to start your shift.</p>
                 </div>
             </div>
         </div>
 
         <!-- The "86" List (Out of Stock Alerts) -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col h-full relative overflow-hidden">
-            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-red-50/50 rounded-full z-0"></div>
             <div class="relative z-10 flex flex-col h-full">
                 <div class="flex items-center justify-between gap-2 mb-4 pb-4 border-b border-[#F0E6D2]">
                     <div class="flex items-center gap-2">
@@ -127,7 +121,7 @@
                         </div>
                         <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">The "86" List</h3>
                     </div>
-                    <span class="text-xs font-bold bg-red-100 text-red-700 px-2 py-1 rounded-full" x-text="`${eightySixList.length} Items`"></span>
+                    <span x-show="eightySixList.length > 0" class="text-xs font-bold bg-red-100 text-red-700 px-2 py-1 rounded-full whitespace-nowrap" x-text="eightySixList.length + (eightySixList.length === 1 ? ' item' : ' items')"></span>
                 </div>
                 
                 <div class="flex-1 overflow-y-auto pr-1 space-y-3 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">
@@ -142,9 +136,9 @@
                     </template>
 
                     <div x-show="eightySixList.length === 0" class="h-full flex flex-col items-center justify-center text-center py-6">
-                        <x-lucide-check-circle class="w-8 h-8 text-green-500 mb-3 opacity-50" />
-                        <p class="text-sm font-bold text-green-700">All Stocked Up</p>
-                        <p class="text-xs text-[#795548] mt-1">No ingredients are running low.</p>
+                        <x-lucide-check-circle class="w-8 h-8 text-green-600/50 mb-3" />
+                        <p class="text-sm font-bold text-green-700">Nothing running low</p>
+                        <p class="text-xs text-[#795548] mt-1">Every ingredient has enough stock.</p>
                     </div>
                 </div>
             </div>
@@ -152,7 +146,6 @@
 
         <!-- Shift Briefing & Announcements -->
         <div class="bg-amber-50/50 p-6 rounded-2xl shadow-sm border border-amber-100 flex flex-col h-full relative overflow-hidden">
-            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-100/50 rounded-full z-0"></div>
             <div class="relative z-10 flex flex-col h-full">
                 <div class="flex items-center gap-2 mb-4 pb-4 border-b border-amber-200/50">
                     <div class="p-2 bg-amber-100 rounded-lg text-amber-700">
@@ -162,7 +155,7 @@
                 </div>
                 
                 <div class="flex-1">
-                    <p class="text-sm font-medium text-[#4A3B32] leading-relaxed italic whitespace-pre-wrap" x-text="`\"${shiftNotes}\"`"></p>
+                    <p class="text-sm font-medium text-[#4A3B32] leading-relaxed whitespace-pre-wrap" x-text="shiftNotes"></p>
                 </div>
 
             </div>
@@ -170,13 +163,12 @@
 
         <!-- Barista AI Findings -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col h-full relative overflow-hidden">
-            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-amber-50/50 rounded-full z-0"></div>
             <div class="relative z-10 flex flex-col h-full">
                 <div class="flex items-center gap-2 mb-4 pb-4 border-b border-[#F0E6D2]">
                     <div class="p-2 bg-amber-50 rounded-lg text-amber-700">
                         <x-lucide-radar class="w-4 h-4" />
                     </div>
-                    <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Barista AI Findings</h3>
+                    <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Barista AI noticed</h3>
                     <a href="{{ route('ai.analysis.index') }}" class="ml-auto min-h-[44px] px-2 -mr-2 text-xs font-bold uppercase tracking-wide text-amber-700 hover:text-amber-800 transition-colors flex items-center gap-1 shrink-0">
                         View All <x-lucide-arrow-right class="w-3 h-3" />
                     </a>
@@ -194,9 +186,9 @@
                     </template>
 
                     <div x-show="aiFindings.length === 0" class="h-full flex flex-col items-center justify-center text-center py-6">
-                        <x-lucide-check-circle class="w-8 h-8 text-green-500 mb-3 opacity-50" />
-                        <p class="text-sm font-bold text-green-700">All Clear</p>
-                        <p class="text-xs text-[#795548] mt-1">No operational findings right now.</p>
+                        <x-lucide-check-circle class="w-8 h-8 text-green-600/50 mb-3" />
+                        <p class="text-sm font-bold text-green-700">Nothing to check</p>
+                        <p class="text-xs text-[#795548] mt-1">Barista AI hasn't spotted anything unusual.</p>
                     </div>
                 </div>
             </div>

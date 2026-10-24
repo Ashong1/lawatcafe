@@ -1,5 +1,5 @@
 @extends(auth()->user()->isAdminOrAbove() ? 'layouts.admin' : 'layouts.staff')
-@section('title', 'Active Network Sessions')
+@section('title', "Who's Online")
 
 @section('content')
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
@@ -15,7 +15,7 @@
         </div>
     </div>
 
-    {{-- Find a device: IP, MAC, voucher code or name — same lookup as the AI's lookupDevice. --}}
+    {{-- Find a device by IP, MAC, Wi-Fi code or name; the same lookup Barista AI uses. --}}
     <div class="bg-white p-5 rounded-2xl shadow-sm border border-[#F0E6D2] mb-6">
         <form action="{{ route('network.sessions') }}" method="GET" class="flex flex-row gap-2">
             <label for="find-device" class="sr-only">Find a device</label>
@@ -58,17 +58,9 @@
         @endif
     </div>
 
-    {{-- Tried Alpine.morph() here to make this poll state-preserving (rows keep
-         their DOM identity across a refresh instead of being destroyed and
-         recreated every 5s) — stable row ids exist in sessions-tables.blade.php
-         for this purpose. Despite correct key configuration and matching ids,
-         it empirically failed to preserve row identity on this specific page
-         once any real time had elapsed between polls (worked in every isolated
-         test, including calling the exact same component method directly right
-         after page load — but not once real elapsed time/content changes were
-         involved), for a root cause that wasn't pinned down after substantial
-         investigation. Reverted to the original plain replace rather than ship
-         something unreliable; left as a known future improvement. --}}
+    {{-- The poll replaces the tables wholesale. Alpine.morph() did not keep row
+         identity reliably across real refreshes here, so don't swap it in
+         without testing on a live page over several minutes. --}}
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]"
          x-data="{
             refreshSessions() {
@@ -87,14 +79,14 @@
          }"
          x-init="setInterval(() => refreshSessions(), 5000)">
         
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div class="flex flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Everything on the Wi-Fi</h3>
                 <p class="text-xs text-[#6D4C41] mt-1 font-medium">Guests online, shop equipment, and devices that haven't signed in — refreshed every 5 seconds.</p>
             </div>
             
-            <div class="flex items-center gap-3 px-5 py-2.5 bg-[#E8F5E9] border border-green-200 rounded-full shadow-sm">
-                <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+            <div class="flex items-center gap-2 px-3 py-1 bg-[#E8F5E9] border border-green-200 rounded-full">
+                <span class="w-2 h-2 bg-green-500 rounded-full motion-safe:animate-pulse"></span>
                 <span class="text-xs font-bold text-[#2E7D32] uppercase tracking-wide">Live</span>
             </div>
         </div>

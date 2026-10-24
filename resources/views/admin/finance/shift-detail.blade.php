@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Shift Audit Detail')
+@section('title', 'Shift Details')
 
 @section('content')
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
@@ -7,15 +7,15 @@
     
     <div class="lk-page-head mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-            <a href="{{ route('admin.finance.z-reads') }}" class="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#795548] hover:text-[#3E2723] transition-all group mb-4">
+            <a href="{{ route('admin.finance.z-reads') }}" class="inline-flex min-h-[44px] items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#795548] hover:text-[#3E2723] transition-all group mb-2">
                 <x-lucide-arrow-left class="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
-                Back to Z-Reads
+                Back to End of Day
             </a>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Audit Detail</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Shift Details</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Detailed performance and reconciliation for shift #{{ $shift->id }}.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">{{ $shift->user->name ?? 'Shift' }}, {{ $shift->created_at->format('M d, h:i A') }}: what was sold and whether the drawer matched.</p>
         </div>
     </div>
 
@@ -24,7 +24,7 @@
         <div class="bg-white p-6 rounded-3xl shadow-sm border border-[#F0E6D2] flex flex-col items-center text-center">
             <p class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-4">Total Sales</p>
             <span class="text-3xl font-bold text-[#3E2723]">₱{{ number_format($summary['total_sales'], 2) }}</span>
-            <p class="text-xs font-bold text-[#6D4C41] mt-2 uppercase">{{ $shift->sales()->count() }} Transactions</p>
+            <p class="text-xs font-bold text-[#6D4C41] mt-2 uppercase">{{ trans_choice(':count order|:count orders', $shift->sales()->count()) }}</p>
         </div>
 
         <div class="bg-white p-6 rounded-3xl shadow-sm border border-[#F0E6D2] flex flex-col items-center text-center">
@@ -38,7 +38,7 @@
             <span class="text-3xl font-bold {{ $variance == 0 ? 'text-green-700' : ($variance > 0 ? 'text-blue-700' : 'text-red-700') }}">
                 {{ $variance > 0 ? '+' : '' }}₱{{ number_format($variance, 2) }}
             </span>
-            <p class="text-xs font-bold mt-2 uppercase opacity-60">{{ $variance == 0 ? 'Perfectly Balanced' : ($variance > 0 ? 'Cash Over' : 'Cash Short') }}</p>
+            <p class="text-xs font-bold mt-2 uppercase opacity-60">{{ $variance == 0 ? 'Drawer matched' : ($variance > 0 ? 'Cash Over' : 'Cash Short') }}</p>
         </div>
     </div>
 
@@ -48,7 +48,7 @@
             <div class="bg-white p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-6 flex items-center gap-2">
                     <x-lucide-credit-card class="w-4 h-4 text-amber-600" />
-                    Revenue by Method
+                    Sales by payment
                 </h3>
                 <div class="space-y-4">
                     <div class="flex justify-between items-center">
@@ -89,23 +89,23 @@
 
         {{-- Right: Reconciliation --}}
         <div class="bg-[#3E2723] p-8 rounded-3xl shadow-2xl text-white flex flex-col">
-            <h3 class="text-sm font-bold text-amber-500 uppercase tracking-wide mb-8">Reconciliation Log</h3>
+            <h3 class="text-sm font-bold text-amber-500 uppercase tracking-wide mb-8">Drawer count</h3>
             
             <div class="space-y-6 flex-1">
                 <div class="flex justify-between items-center">
-                    <span class="text-xs font-medium opacity-60 uppercase tracking-wide">Starting Float</span>
+                    <span class="text-xs font-medium text-amber-50/80 uppercase tracking-wide">Starting cash</span>
                     <span class="text-sm font-bold">₱{{ number_format($summary['starting_cash'], 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-xs font-medium opacity-60 uppercase tracking-wide">Total Cash Sales (+)</span>
+                    <span class="text-xs font-medium text-amber-50/80 uppercase tracking-wide">Cash sales (+)</span>
                     <span class="text-sm font-bold">₱{{ number_format($summary['cash_sales'], 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-xs font-medium opacity-60 uppercase tracking-wide">Total Pay-Ins (+)</span>
+                    <span class="text-xs font-medium text-amber-50/80 uppercase tracking-wide">Cash added (+)</span>
                     <span class="text-sm font-bold">₱{{ number_format($summary['pay_ins'], 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-xs font-medium opacity-60 uppercase tracking-wide">Total Pay-Outs (-)</span>
+                    <span class="text-xs font-medium text-amber-50/80 uppercase tracking-wide">Cash taken out (−)</span>
                     <span class="text-sm font-bold">₱{{ number_format($summary['pay_outs'], 2) }}</span>
                 </div>
                 
@@ -115,16 +115,16 @@
                         <span class="text-xl font-bold">₱{{ number_format($expectedCash, 2) }}</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-white/40 uppercase tracking-wide">Counted</span>
+                        <span class="text-xs font-bold text-amber-50/80 uppercase tracking-wide">Counted</span>
                         <span class="text-xl font-bold">₱{{ number_format($shift->ending_cash, 2) }}</span>
                     </div>
                 </div>
             </div>
 
             <div class="mt-12 p-6 rounded-2xl bg-white/5 border border-white/10 text-center">
-                <p class="text-xs font-bold uppercase tracking-wide text-amber-500 mb-2">Audited By</p>
+                <p class="text-xs font-bold uppercase tracking-wide text-amber-500 mb-2">Closed by</p>
                 <p class="text-sm font-bold mb-1">{{ $shift->user->name }}</p>
-                <p class="text-xs font-medium opacity-40 uppercase tracking-tighter">{{ $shift->closed_at->format('M d, Y - h:i A') }}</p>
+                <p class="text-xs font-medium text-amber-50/80">{{ $shift->closed_at->format('M d, Y - h:i A') }}</p>
             </div>
         </div>
     </div>

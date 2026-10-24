@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() === 'fil' ? 'fil' : 'en' }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -23,23 +23,31 @@
         font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
         text-align: center;
         padding: 2rem;
+        box-sizing: border-box;
     }
     p {
-        font-size: 11px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.2em;
-        line-height: 1.8;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.5;
+        margin: 0;
     }
-    a { color: #3E2723; }
+    a {
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 0.75rem 1rem;
+        color: #3E2723;
+        font-weight: 700;
+        text-underline-offset: 4px;
+    }
 </style>
 </head>
 <body>
 
-    <p>
-        You're online.<br>Opening your browser&hellip;
-<br><a href="{{ $statusUrl }}">Tap here to see your time left</a>
-    </p>
+    <main>
+        <p>{{ __("You're online") }}</p>
+        <p>{{ __('Opening your browser…') }}</p>
+        <a href="{{ $statusUrl }}">{{ __('View my time left') }}</a>
+    </main>
 
     <script>
         (function () {

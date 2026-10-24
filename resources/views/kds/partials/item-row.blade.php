@@ -1,14 +1,11 @@
 <li class="group">
-    {{-- Was a plain form causing a full page reload on every item tap, unlike the
-         order-level Start/Done/Wait buttons in order-grid.blade.php which already
-         use this exact AJAX pattern — the backend (KdsController::updateItemStatus)
-         already had full wantsJson() support, just unused by this form. --}}
+    {{-- Posts through updateStatus() like the order buttons, so a tap doesn't reload the board. --}}
     <form action="{{ route('kds.item.update', $item->id) }}" method="POST" @submit.prevent="updateStatus('{{ route('kds.item.update', $item->id) }}', '{{ $item->kds_status === 'completed' ? 'pending' : 'completed' }}', $event)">
         @csrf
         <input type="hidden" name="status" value="{{ $item->kds_status === 'completed' ? 'pending' : 'completed' }}">
-        <button type="submit" class="w-full flex justify-between items-start gap-3 text-left group-hover:bg-[#FAFAFA] -m-1 p-1 rounded-lg transition-colors">
+        <button type="submit" class="w-full min-h-[44px] flex justify-between items-start gap-3 text-left group-hover:bg-[#FAFAFA] -m-1 p-1 rounded-lg transition-colors">
             <div class="flex gap-2.5 min-w-0">
-                <span class="font-bold {{ $item->kds_status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-[#FDF8F5] text-[#3E2723] border border-[#F0E6D2]' }} w-6 h-6 flex items-center justify-center rounded-lg text-xs shrink-0 transition-colors">
+                <span class="font-bold {{ $item->kds_status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-[#FDF8F5] text-[#3E2723] border border-[#F0E6D2]' }} w-8 h-8 flex items-center justify-center rounded-lg text-sm shrink-0 transition-colors">
                     @if($item->kds_status === 'completed')
                         <x-lucide-check class="w-3.5 h-3.5" />
                     @else

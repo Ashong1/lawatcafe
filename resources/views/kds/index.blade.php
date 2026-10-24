@@ -10,11 +10,11 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Kitchen Display</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Live kitchen display for order preparation and management.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Orders waiting to be made, oldest first. Tap an item when it is ready.</p>
         </div>
 
         <div class="flex items-center gap-4">
-            <button @click="showRecall = true" class="flex items-center gap-2 px-5 py-2.5 bg-white border border-[#F0E6D2] text-[#3E2723] rounded-full shadow-sm hover:bg-[#FDF8F5] transition font-bold text-xs uppercase tracking-wide">
+            <button type="button" @click="showRecall = true" class="min-h-[44px] flex items-center gap-2 px-5 bg-white border border-[#F0E6D2] text-[#3E2723] rounded-full shadow-sm hover:bg-[#FDF8F5] transition font-bold text-xs uppercase tracking-wide">
                 <x-lucide-history class="w-4 h-4" />
                 <span>Recall</span>
             </button>
@@ -31,10 +31,10 @@
 
     {{-- RECALL MODAL --}}
     <x-modal-shell show="showRecall" max-width="2xl" panel-class="border-t-8 border-[#3E2723] flex flex-col max-h-[80vh]" labelled-by="recall-modal-title">
-            <div class="p-8 border-b border-[#FDF8F5] flex justify-between items-center bg-[#FAFAFA]">
+            <div class="p-5 sm:p-8 border-b border-[#FDF8F5] flex justify-between items-center gap-3 bg-[#FAFAFA]">
                 <div>
                     <h3 id="recall-modal-title" class="text-2xl font-bold text-[#3E2723] uppercase tracking-wide">Recently Completed</h3>
-                    <p class="text-xs text-[#795548] font-bold uppercase tracking-wide">Recall orders back to the queue</p>
+                    <p class="text-sm text-[#795548] font-medium">Send a finished order back to the queue.</p>
                 </div>
                 <button @click="showRecall = false" aria-label="Close dialog" class="p-3 hover:bg-gray-100 rounded-full transition">
                     <x-lucide-x class="w-6 h-6 text-[#795548]" />
@@ -43,13 +43,13 @@
 
             <div class="flex-1 overflow-y-auto p-6 space-y-4">
                 @forelse($recentlyCompleted as $comp)
-                    <div class="flex justify-between items-center p-6 bg-[#FAFAFA] rounded-2xl border border-[#F0E6D2] hover:border-amber-500 transition-colors group" data-recall-row>
+                    <div class="flex justify-between items-center gap-3 p-4 sm:p-6 bg-[#FAFAFA] rounded-2xl border border-[#F0E6D2] hover:border-amber-500 transition-colors group" data-recall-row>
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-bold text-[#3E2723] shadow-sm border border-[#FDF8F5]">
                                 #{{ substr($comp->transaction_number, -4) }}
                             </div>
                             <div>
-                                <p class="text-sm font-bold text-[#3E2723]">{{ $comp->items->count() }} Items</p>
+                                <p class="text-sm font-bold text-[#3E2723]">{{ $comp->items->count() }} {{ Str::plural('item', $comp->items->count()) }}</p>
                                 <p class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">Done {{ $comp->updated_at->diffForHumans() }}</p>
                             </div>
                         </div>
@@ -63,7 +63,7 @@
                         </form>
                     </div>
                 @empty
-                    <div class="py-12 text-center opacity-30 italic">No recently completed orders.</div>
+                    <div class="py-12 text-center text-sm font-medium text-[#795548]">No finished orders in the last while.</div>
                 @endforelse
             </div>
     </x-modal-shell>
@@ -79,9 +79,7 @@ document.addEventListener('alpine:init', () => {
             setInterval(() => this.poll(), 30000);
         },
 
-        // Skips polling while the recall modal is open purely to avoid visual noise —
-        // no longer required for correctness, since the grid swap is scoped to
-        // #kds-order-grid and can't disturb the modal (which lives outside it).
+        // Pauses while the recall modal is open so the grid doesn't reshuffle behind it.
         poll() {
             if (this.showRecall) return;
             this.refreshGrid();
@@ -89,10 +87,7 @@ document.addEventListener('alpine:init', () => {
 
         applyGridHtml(html) {
             const grid = document.getElementById('kds-order-grid');
-            // innerHTML replacement does not auto-initialize Alpine on the new nodes —
-            // the order-grid partial has no x-data inside individual cards today, so this
-            // is currently a no-op, but call it anyway so future per-card interactivity
-            // added to that partial doesn't silently break.
+            // innerHTML doesn't initialise Alpine on new nodes; initTree does.
             if (document.startViewTransition) {
                 document.startViewTransition(() => { grid.innerHTML = html; Alpine.initTree(grid); });
             } else {

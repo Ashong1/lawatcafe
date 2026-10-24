@@ -180,12 +180,6 @@ class AIService
         Setting::set("ai_models_{$provider}", null);
     }
 
-    /**
-     * Records the outcome of a single model attempt, independent of the
-     * provider-level circuit breaker above. Read by AIService::getProviderStatuses()
-     * for the admin status page, and by healthyModelsFirst() below to keep the
-     * cascade from wasting a fast-path slot retrying a model that just failed.
-     */
     /** 403 means the model isn't available to this account — cascadeModels() drops it for a week. */
     private function failureReason(int $status): string
     {
@@ -196,6 +190,12 @@ class AIService
         };
     }
 
+    /**
+     * Records the outcome of a single model attempt, independent of the
+     * provider-level circuit breaker above. Read by AIService::getProviderStatuses()
+     * for the admin status page, and by healthyModelsFirst() below to keep the
+     * cascade from wasting a fast-path slot retrying a model that just failed.
+     */
     private function recordModelResult(string $provider, string $model, bool $success, ?string $reason = null): void
     {
         Cache::put($this->modelStatusCacheKey($provider, $model), [
@@ -986,7 +986,6 @@ class AIService
             .app(LessonLibrary::class)->promptBlockFor('guest');
     }
 
-    /** Shared by adminChat() and ToolCallOrchestrator (admin audience). */
     /** Fixed facts about the network, so the AI can reason about where a fault is. */
     private function networkLayoutContext(): string
     {
@@ -1002,6 +1001,7 @@ class AIService
         return implode("\n", $lines)."\n";
     }
 
+    /** Shared by adminChat() and ToolCallOrchestrator (admin audience). */
     public function buildAdminSystemPrompt(): string
     {
         $lowStockIngredients = $this->getLowStockIngredients()->map(fn ($i) => "{$i->name} ({$i->current_stock}{$i->unit})")->toArray();
@@ -1190,13 +1190,6 @@ OPERATIONAL GUIDELINES:
     }
 
     /**
-     * Turn deterministically-detected cross-domain signals (see
-     * CrossDomainCorrelationService) into a short human-readable narrative
-     * for the admin notification. Does NOT decide actions — RunAgentAnalysis
-     * separately drives ToolCallOrchestrator for that, so action selection
-     * goes through the normal tool-calling/permission/audit pipeline.
-     */
-    /**
      * The self-learning step for things the assistant said it couldn't do.
      *
      * Given each capability gap plus the assistant's real tool list and the
@@ -1302,6 +1295,13 @@ Return ONLY a JSON array, at most 5 items:
         return $decoded;
     }
 
+    /**
+     * Turn deterministically-detected cross-domain signals (see
+     * CrossDomainCorrelationService) into a short human-readable narrative
+     * for the admin notification. Does NOT decide actions — RunAgentAnalysis
+     * separately drives ToolCallOrchestrator for that, so action selection
+     * goes through the normal tool-calling/permission/audit pipeline.
+     */
     public function interpretSignals(array $signals): ?array
     {
         $prompt = "You are Barista AI reviewing automatically-detected operational signals for Lawa't Kape (a POS + Wi-Fi captive portal system).
@@ -1510,7 +1510,6 @@ Return ONLY a JSON array, at most 5 items:
         return ['en' => $en, 'tl' => $tl];
     }
 
-    /** Short-TTL cache: these run on every chat call. */
     /**
      * Shared by both buildAdminSystemPrompt() and buildStaffSystemPrompt()
      * (which format it differently — full detail vs. names only), so one
@@ -1541,14 +1540,6 @@ Return ONLY a JSON array, at most 5 items:
     }
 
     /**
-     * Deliberately uncached. This only reads one setting and formats a handful
-     * of lines, and Setting::get is itself cached forever and cleared by
-     * Setting::set — so a second 300s cache on top bought no query saving and
-     * only added a window where the bot quoted voucher prices an admin had
-     * already changed. Quoting a stale price to a paying customer is worse
-     * than the microseconds this saves.
-     */
-    /**
      * Hours from the Store settings page plus the live open/closed state.
      * Not cached: it embeds the current minute, and both settings are
      * already memoised by Setting::get. Handles hours that run past
@@ -1578,6 +1569,14 @@ Return ONLY a JSON array, at most 5 items:
                 : 'CLOSED (opens at '.$openAt->format('g:i A').')')."\n";
     }
 
+    /**
+     * Deliberately uncached. This only reads one setting and formats a handful
+     * of lines, and Setting::get is itself cached forever and cleared by
+     * Setting::set — so a second 300s cache on top bought no query saving and
+     * only added a window where the bot quoted voucher prices an admin had
+     * already changed. Quoting a stale price to a paying customer is worse
+     * than the microseconds this saves.
+     */
     private function getPricingContext()
     {
         $durations = json_decode(Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);

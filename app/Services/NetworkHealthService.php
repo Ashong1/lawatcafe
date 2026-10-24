@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Str;
 
 /**
  * The one definition of "is the shop's network healthy?".
@@ -173,16 +174,16 @@ class NetworkHealthService
         $stats = $this->pihole->summary();
 
         if (! $answer) {
-            return $this->check('Website filter (Pi-hole)', 'fail', "The website filter isn't answering — guests will see \"no internet\" even though the line is up.", ['server' => $server, 'stats' => $stats]);
+            return $this->check('Website filter', 'fail', "The website filter isn't answering — guests will see \"no internet\" even though the line is up.", ['server' => $server, 'stats' => $stats]);
         }
         if ($stats === null) {
-            return $this->check('Website filter (Pi-hole)', 'warn', "Websites open, but the filter's settings can't be read, so blocking can't be confirmed.", ['server' => $server]);
+            return $this->check('Website filter', 'warn', "Websites open, but the filter's settings can't be read, so blocking can't be confirmed.", ['server' => $server]);
         }
         if (! $stats['blocking']) {
-            return $this->check('Website filter (Pi-hole)', 'warn', 'Websites open, but blocking is switched OFF — blocked sites can be opened.', ['server' => $server, 'stats' => $stats]);
+            return $this->check('Website filter', 'warn', 'Websites open, but blocking is switched OFF — blocked sites can be opened.', ['server' => $server, 'stats' => $stats]);
         }
 
-        return $this->check('Website filter (Pi-hole)', 'ok', "Working, blocking on — {$stats['blocked']} of {$stats['queries']} website lookups blocked today ({$stats['percent_blocked']}%).", ['server' => $server, 'stats' => $stats]);
+        return $this->check('Website filter', 'ok', "Working, blocking on — {$stats['blocked']} of {$stats['queries']} website lookups blocked today ({$stats['percent_blocked']}%).", ['server' => $server, 'stats' => $stats]);
     }
 
     private function checkDhcp(): array
@@ -222,7 +223,7 @@ class NetworkHealthService
         }
 
         return $ok
-            ? $this->check('Wi-Fi sign-in page', 'ok', 'Working'.($online !== null ? "; {$online} guest(s) online." : '.'), ['host' => $host, 'guests_online' => $online])
+            ? $this->check('Wi-Fi sign-in page', 'ok', 'Working'.($online !== null ? "; {$online} ".Str::plural('guest', $online).' online.' : '.'), ['host' => $host, 'guests_online' => $online])
             : $this->check('Wi-Fi sign-in page', 'fail', "The Wi-Fi sign-in page isn't loading — new guests can't get online.", ['host' => $host, 'guests_online' => $online]);
     }
 

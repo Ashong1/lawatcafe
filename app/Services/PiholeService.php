@@ -137,11 +137,6 @@ class PiholeService
     }
 
     /**
-     * Add a domain to the blacklist (enabled), or re-enable it if it's
-     * already there but was previously toggled off — one call covers both
-     * so the "block" button never has to know which state a domain is in.
-     */
-    /**
      * DNS lookups Pi-hole answered since $fromTimestamp, oldest first.
      *
      * Feeds the adult-site watch (WatchAdultSites). Returns [] when Pi-hole is
@@ -215,6 +210,11 @@ class PiholeService
         }
     }
 
+    /**
+     * Add a domain to the blacklist (enabled), or re-enable it if it's
+     * already there but was previously toggled off — one call covers both
+     * so the "block" button never has to know which state a domain is in.
+     */
     public function blockDomain(string $domain, ?string $comment = null): bool
     {
         return $this->upsertDomain($domain, true, $comment);

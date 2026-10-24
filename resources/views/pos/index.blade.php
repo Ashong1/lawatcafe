@@ -71,17 +71,12 @@
             
             <div class="flex flex-col md:flex-row justify-between items-center mb-3 sm:mb-8 gap-3 sm:gap-4 shrink-0">
                 
-                <div class="flex items-center gap-3 text-[#3E2723] hidden lg:flex shrink-0">
-                    <span class="lk-brand text-3xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                    <span class="text-base font-bold tracking-wide uppercase mt-1">POS</span>
-                </div>
-
                 <div class="flex items-center gap-2 w-full max-w-md">
                 <div class="relative flex-1 min-w-0">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#795548]">
                         <x-lucide-search class="w-5 h-5 text-gray-400" />
                     </div>
-                    <input type="text" x-model="searchQuery" placeholder="Search menu..." aria-label="Search menu" class="w-full pl-11 pr-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full focus:outline-none focus:ring-2 focus:ring-[#3E2723] transition-all text-sm font-medium placeholder-[#A1887F] text-[#3E2723]">
+                    <input type="text" x-model="searchQuery" placeholder="Search menu..." aria-label="Search menu" class="w-full pl-11 pr-4 py-3 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full focus:outline-none focus:ring-2 focus:ring-[#3E2723] transition-all text-base sm:text-sm font-medium placeholder-[#A1887F] text-[#3E2723]">
                 </div>
 
                 {{-- Phones: one button instead of a row of five, so the menu starts on the first screen. --}}
@@ -156,15 +151,13 @@
                 </template>
             </div>
 
-            <h3 class="hidden sm:block text-xl font-bold text-[#3E2723] mb-4 capitalize shrink-0" x-text="selectedCategory + ' Menu'"></h3>
-
             <div class="relative flex-1 w-full">
                 {{-- Below `lg` this is a normal in-flow block (the whole page scrolls naturally,
                      since the body-lock CSS above is also lg-only) — the absolute+inset-0 trick
                      for a precisely bounded internal scroll region only makes sense once the
                      ancestor chain is forced to viewport height, which only happens at `lg:` up. --}}
                 <div class="lg:absolute lg:inset-0 overflow-y-auto pb-6 pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#D7CCC8] [&::-webkit-scrollbar-thumb]:rounded-full">
-                    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+                    <div class="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
                         <template x-for="item in filteredProducts" :key="item.id">
                             <div @click="(item.type !== 'product' || item.inStock) && addToCart(item)"
                                  :class="item.type === 'product' && !item.inStock ? 'cursor-not-allowed' : 'cursor-pointer active:scale-[0.98]'"
@@ -208,10 +201,7 @@
                                     <p class="text-xs text-[#6D4C41] font-medium mb-2 sm:mb-3 truncate" x-text="item.type === 'wifi' ? 'Wi-Fi code' : item.category"></p>
                                     
                                     <div class="mt-auto flex justify-between items-center gap-2 pt-1 sm:pt-2">
-                                        <div class="flex flex-col min-w-0">
-                                            <span class="hidden sm:block text-xs uppercase font-bold tracking-wider text-[#6D4C41]">Price</span>
-                                            <span class="font-bold text-[#3E2723] text-base sm:text-lg" x-text="'₱' + Number(item.price).toFixed(2)"></span>
-                                        </div>
+                                        <span class="min-w-0 font-bold text-[#3E2723] text-base sm:text-lg tabular-nums" x-text="'₱' + Number(item.price).toFixed(2)"></span>
                                         
                                         <button type="button"
                                                 @click.stop="addToCart(item)"
@@ -229,8 +219,8 @@
                             <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
                                 <x-lucide-search class="w-8 h-8 text-[#795548]" />
                             </div>
-                            <p class="font-bold text-sm">No items found.</p>
-                            <p class="text-xs mt-1">Try searching for something else.</p>
+                            <p class="font-bold text-sm">Nothing on the menu matches that.</p>
+                            <p class="text-xs mt-1">Check the spelling or pick another category.</p>
                         </div>
                     </div>
                 </div>
@@ -241,7 +231,7 @@
     <!-- Variant Selection Modal -->
     <x-modal-shell show="showVariantModal" max-width="sm" panel-class="p-5 sm:p-8 border-t-8 border-[#3E2723]" labelled-by="variant-modal-title">
             <h2 id="variant-modal-title" class="text-2xl font-bold text-[#3E2723] mb-1" x-text="pendingItem?.name"></h2>
-            <p class="text-sm font-medium text-[#795548] mb-6">Select preparation preference:</p>
+            <p class="text-sm font-medium text-[#795548] mb-6">Hot or iced?</p>
 
             <div class="grid grid-cols-2 gap-4 mb-8">
                 <button @click="confirmVariant('Hot')" class="flex flex-col items-center justify-center p-6 border-2 border-[#F0E6D2] rounded-[1.5rem] hover:border-[#3E2723] hover:bg-[#FDF8F5] transition group bg-white shadow-sm">
@@ -299,25 +289,18 @@
             </div>
 
             <h2 id="order-placed-modal-title" class="text-2xl font-bold text-[#3E2723] mb-2">Order Placed!</h2>
-            <p class="text-sm text-[#795548] mb-2">Payment completed for ₱<span x-text="grandTotal.toFixed(2)"></span>.</p>
-            <p class="text-sm font-bold text-green-600 mb-8" x-show="paymentMethod === 'Cash' && amountTendered > 0">Change: ₱<span x-text="Math.max(0, amountTendered - grandTotal).toFixed(2)"></span></p>
+            <p class="text-sm text-[#795548] mb-2">Paid ₱<span x-text="grandTotal.toFixed(2)"></span>.</p>
+            <p class="text-2xl font-bold text-green-700 mb-8 tabular-nums" x-show="paymentMethod === 'Cash' && amountTendered > 0">Change: ₱<span x-text="Math.max(0, amountTendered - grandTotal).toFixed(2)"></span></p>
             <p class="text-sm font-bold text-blue-700 mb-8" x-show="paymentMethod !== 'Cash'" x-text="'Paid by ' + paymentMethod + ' · Ref ' + paymentReference.trim().toUpperCase()"></p>
 
             <template x-if="checkoutHasWifi">
                 <div class="border border-[#E3F2FD] rounded-2xl p-6 mb-8 bg-[#F3F9FF] space-y-3">
                     <p class="text-xs text-[#1565C0] uppercase tracking-wide font-bold">
-                        <span x-text="generatedCodes.length > 1 ? 'Generated Wi-Fi Codes — one per device' : 'Generated Wi-Fi Access'"></span>
+                        <span x-text="generatedCodes.length > 1 ? 'Wi-Fi codes, one per device' : 'Wi-Fi code'"></span>
                     </p>
                     <template x-for="code in generatedCodes" :key="code">
                         <p class="text-3xl font-mono font-bold tracking-widest text-[#0D47A1]" x-text="code"></p>
                     </template>
-                </div>
-            </template>
-
-            <template x-if="!checkoutHasWifi">
-                <div class="border border-[#F0E6D2] rounded-2xl p-6 mb-8 bg-[#FDF8F5]">
-                    <p class="text-xs text-[#795548] uppercase tracking-wider font-bold">Standard Order</p>
-                    <p class="text-sm font-bold text-[#3E2723] mt-1">No network access required.</p>
                 </div>
             </template>
 
@@ -391,14 +374,14 @@
                 <x-lucide-lock class="w-8 h-8" />
             </div>
             
-            <h2 class="text-2xl font-bold text-[#3E2723] mb-2 text-center">Shift Closed</h2>
-            <p class="text-sm text-[#795548] mb-8 text-center">You must open a cash drawer shift to process transactions.</p>
+            <h2 class="text-2xl font-bold text-[#3E2723] mb-2 text-center">Start your shift</h2>
+            <p class="text-sm text-[#795548] mb-8 text-center">Count the cash in the drawer and enter it to start selling.</p>
 
             <form action="{{ route('shift.start') }}" method="POST" x-data="{ submitting: false }" @submit="submitting = true">
                 @csrf
                 <div class="mb-6">
-                    <label class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 text-center">Starting Float / Cash</label>
-                    <input type="number" name="starting_cash" required min="0" step="0.01" class="w-full p-4 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-amber-600 bg-[#FAFAFA] transition-all text-center text-2xl font-bold text-[#3E2723]" placeholder="0.00">
+                    <label for="starting_cash" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 text-center">Cash in the drawer now (₱)</label>
+                    <input type="number" id="starting_cash" inputmode="decimal" name="starting_cash" required min="0" step="0.01" class="w-full p-4 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-amber-600 bg-[#FAFAFA] transition-all text-center text-2xl font-bold text-[#3E2723]" placeholder="0.00">
                 </div>
                 <button type="submit" :disabled="submitting" class="w-full py-4 bg-amber-600 text-white rounded-full hover:bg-amber-700 font-bold uppercase tracking-wide transition shadow-lg text-xs flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
                     <template x-if="!submitting">
@@ -407,14 +390,14 @@
                     <template x-if="submitting">
                         <x-lucide-loader-2 class="w-4 h-4 animate-spin" />
                     </template>
-                    <span x-text="submitting ? 'Opening Shift...' : 'Open Shift'"></span>
+                    <span x-text="submitting ? 'Starting shift...' : 'Start Shift'"></span>
                 </button>
             </form>
 
             <div class="mt-6 text-center">
                 <a href="{{ route(auth()->user()->isAdminOrAbove() ? 'dashboard' : 'staff.dashboard') }}" class="text-xs font-bold text-[#6D4C41] hover:text-[#3E2723] uppercase tracking-wide transition-all flex items-center justify-center gap-2 group">
                     <x-lucide-arrow-left class="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
-                    <span>Back to Hub</span>
+                    <span>Back</span>
                 </a>
             </div>
         </div>
@@ -578,8 +561,8 @@
                     if (projectedUsage > req.current) {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Insufficient Stock',
-                            text: `Not enough ${req.name} available. Only ${Math.floor((req.current - (currentUsage[req.id] || 0)) / req.required)} more servings possible.`,
+                            title: 'Not enough stock',
+                            text: `Not enough ${req.name} left. Only ${Math.floor((req.current - (currentUsage[req.id] || 0)) / req.required)} more can be made.`,
                             confirmButtonColor: '#3E2723'
                         });
                         return false;
@@ -815,20 +798,19 @@
 
             recordCashAction() {
                 Swal.fire({
-                    title: 'Cash Action',
-                    text: 'Add or remove cash from drawer.',
+                    title: 'Cash in or out',
                     html: `
                         <div class='flex flex-col gap-4 py-4'>
-                            <select id='swal-type' class='w-full p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-xs'>
-                                <option value='pay_in'>Cash Pay-In (+)</option>
-                                <option value='pay_out'>Cash Pay-Out (-)</option>
+                            <select id='swal-type' aria-label='Cash in or out' class='w-full min-h-[44px] p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-base'>
+                                <option value='pay_in'>Cash in (put into the drawer)</option>
+                                <option value='pay_out'>Cash out (taken from the drawer)</option>
                             </select>
-                            <input id='swal-amount' type='number' step='0.01' placeholder='Amount (₱)' class='w-full p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-xs'>
-                            <input id='swal-reason' type='text' placeholder='Reason (e.g. Change, Ice Purchase)' class='w-full p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-xs'>
+                            <input id='swal-amount' type='number' inputmode='decimal' step='0.01' placeholder='Amount (₱)' aria-label='Amount in pesos' class='w-full min-h-[44px] p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-base'>
+                            <input id='swal-reason' type='text' placeholder='Reason (e.g. change, bought ice)' aria-label='Reason' class='w-full min-h-[44px] p-2 border-2 border-[#F0E6D2] rounded-xl focus:border-[#3E2723] outline-none font-bold text-base'>
                         </div>
                     `,
                     showCancelButton: true,
-                    confirmButtonText: 'Record Action',
+                    confirmButtonText: 'Record',
                     confirmButtonColor: '#3E2723',
                     cancelButtonColor: '#8D6E63',
                     preConfirm: () => {
@@ -836,7 +818,7 @@
                         const amount = document.getElementById('swal-amount').value;
                         const reason = document.getElementById('swal-reason').value;
                         if (!amount || amount <= 0 || !reason) {
-                            Swal.showValidationMessage('Please fill all fields correctly');
+                            Swal.showValidationMessage('Enter an amount and a reason.');
                             return false;
                         }
                         return { type, amount, reason };

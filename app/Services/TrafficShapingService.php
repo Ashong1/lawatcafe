@@ -318,10 +318,6 @@ class TrafficShapingService
     }
 
     /**
-     * Remove an IP from both tier aliases. Idempotent and safe to call even
-     * if the IP was never added (e.g. a static/VIP session).
-     */
-    /**
      * Drop an address from every tier alias.
      *
      * Returns whether every removal that mattered succeeded. Once a filter rule PASSES

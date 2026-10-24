@@ -18,15 +18,11 @@
             </thead>
             <tbody class="text-sm">
                 @forelse($activeSessions as $session)
-                {{-- Stable id kept from an attempted Alpine.morph()-based rewrite of
-                     this table's poll refresh (see the comment in sessions.blade.php) —
-                     that attempt was reverted, so nothing currently reads this id, but
-                     it's a harmless, useful hook for future debugging/e2e tests. --}}
                 <tr id="session-row-{{ $session->sessionId ?? ($session->ip_address . '-' . $session->mac_address) }}" class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                     <td class="py-4">
                         <div class="flex flex-col">
                             <span class="font-extrabold text-[#3E2723] text-sm flex items-center gap-2">
-                                {{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unknown Device' }}
+                                {{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unnamed device' }}
                                 @if($session->has_traffic)
                                     <span class="flex h-2 w-2 relative shrink-0">
                                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -42,16 +38,16 @@
                                 @endif
                             </div>
                             <div class="flex items-center gap-2 mt-1 md:hidden">
-                                <span class="text-xs font-bold text-blue-600 font-mono">&uarr;{{ $session->speed_in }}</span>
-                                <span class="text-xs font-bold text-green-600 font-mono">&darr;{{ $session->speed_out }}</span>
+                                <span class="text-xs font-bold text-blue-600 tabular-nums">&uarr;{{ $session->speed_in }}</span>
+                                <span class="text-xs font-bold text-green-700 tabular-nums">&darr;{{ $session->speed_out }}</span>
                             </div>
                         </div>
                     </td>
                     <td class="py-4">
                         @if($session->is_orphaned ?? false)
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 border-red-100 rounded-lg font-bold text-xs tracking-wide border" title="Voucher record missing (likely purged while still connected) — no way to compute real time-left. Safe to disconnect.">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 border-red-100 rounded-lg font-bold text-xs tracking-wide border" title="This device's Wi-Fi code was deleted while it was still online, so its time left is unknown. It's safe to disconnect.">
                                 <x-lucide-alert-triangle class="w-3 h-3" />
-                                ORPHANED
+                                Code deleted
                             </span>
                         @else
                             <span class="px-3 py-1 bg-amber-50 text-amber-800 border-amber-100 rounded-lg font-bold text-xs tracking-widest font-mono border">
@@ -71,14 +67,14 @@
                                     <x-lucide-arrow-up class="w-3 h-3 text-blue-500" />
                                     <span>{{ $session->bytes_in }}</span>
                                 </div>
-                                <span class="text-xs font-bold text-blue-600 font-mono">{{ $session->speed_in }}</span>
+                                <span class="text-xs font-bold text-blue-600 tabular-nums">{{ $session->speed_in }}</span>
                             </div>
                             <div class="flex items-center justify-between min-w-[120px]">
                                 <div class="flex items-center gap-1.5 text-xs font-bold text-[#795548] uppercase">
                                     <x-lucide-arrow-down class="w-3 h-3 text-green-500" />
                                     <span>{{ $session->bytes_out }}</span>
                                 </div>
-                                <span class="text-xs font-bold text-green-600 font-mono">{{ $session->speed_out }}</span>
+                                <span class="text-xs font-bold text-green-700 tabular-nums">{{ $session->speed_out }}</span>
                             </div>
                         </div>
                     </td>
@@ -113,14 +109,14 @@
                                                 title: '{{ $targetTier === 'premium' ? 'Upgrade to Premium?' : 'Downgrade to Free?' }}',
                                                 text: 'This device will get {{ $targetTier === 'premium' ? 'Premium' : 'Free' }} plan speeds.',
                                                 icon: 'warning',
-                                                confirmText: 'Yes, {{ $targetTier === 'premium' ? 'Upgrade' : 'Downgrade' }}',
+                                                confirmText: 'Yes, {{ $targetTier === 'premium' ? 'upgrade' : 'downgrade' }}',
                                                 callback: () => {
                                                     this.disabled = true;
                                                     this.classList.add('opacity-40', 'cursor-wait');
                                                     document.getElementById('tier-form-{{ $session->code }}').submit();
                                                 }
                                             })"
-                                            class="min-h-[36px] inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition active:scale-95">
+                                            class="min-h-[44px] md:min-h-[36px] inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition active:scale-95">
                                         @if($targetTier === 'premium')
                                             <x-lucide-arrow-up-circle class="w-4 h-4" /> Upgrade
                                         @else
@@ -138,17 +134,17 @@
                                 <input type="hidden" name="sessionId" value="{{ $session->sessionId }}">
                                 <button type="button"
                                         onclick="window.confirmAction({
-                                            title: 'Disconnect Device?',
+                                            title: 'Disconnect this device?',
                                             text: 'It goes back to the Wi-Fi sign-in page. Its code keeps any time it has left.',
                                             icon: 'warning',
-                                            confirmText: 'Yes, Disconnect',
+                                            confirmText: 'Yes, disconnect',
                                             callback: () => {
                                                 this.disabled = true;
                                                 this.classList.add('opacity-40', 'cursor-wait');
                                                 document.getElementById('kick-form-{{ $session->sessionId }}').submit();
                                             }
                                         })"
-                                        class="min-h-[36px] inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-[#4A3B32] bg-white border border-[#E6D5C3] hover:border-[#3E2723] transition active:scale-95">
+                                        class="min-h-[44px] md:min-h-[36px] inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-[#4A3B32] bg-white border border-[#E6D5C3] hover:border-[#3E2723] transition active:scale-95">
                                     <x-lucide-log-out class="w-4 h-4" /> Disconnect
                                 </button>
                             </form>
@@ -190,12 +186,12 @@
                     <td class="py-4 px-6">
                         <div class="flex flex-col">
                             <span class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                                {{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unknown Device' }}
+                                {{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unnamed device' }}
                                 @if($session->has_traffic)
                                     <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0"></span>
                                 @endif
                             </span>
-                            <span class="text-xs text-slate-500 font-mono mt-0.5">{{ $session->ip_address }}</span>
+                            <span class="text-xs text-slate-500 font-mono mt-0.5">{{ $session->ip_address && $session->ip_address !== 'N/A' ? $session->ip_address : 'No address' }}</span>
                             <div class="hidden sm:flex items-center gap-2 mt-0.5">
                                 <span class="text-xs text-slate-500 font-mono">{{ \App\Support\Mac::format($session->mac_address) }}</span>
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
@@ -218,15 +214,15 @@
                     <td class="py-4 px-6 text-right">
                         <div class="flex flex-row flex-wrap sm:flex-col items-end gap-x-4 gap-y-1">
                             <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-blue-500 font-mono">{{ $session->speed_in }}</span>
-                                <div class="flex items-center gap-1 text-xs font-bold text-slate-400 uppercase">
+                                <span class="text-xs font-bold text-blue-700 tabular-nums">{{ $session->speed_in }}</span>
+                                <div class="flex items-center gap-1 text-xs font-bold text-slate-600 uppercase">
                                     <x-lucide-arrow-up class="w-2.5 h-2.5" />
                                     <span>{{ $session->bytes_in }}</span>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-green-500 font-mono">{{ $session->speed_out }}</span>
-                                <div class="flex items-center gap-1 text-xs font-bold text-slate-400 uppercase">
+                                <span class="text-xs font-bold text-green-700 tabular-nums">{{ $session->speed_out }}</span>
+                                <div class="flex items-center gap-1 text-xs font-bold text-slate-600 uppercase">
                                     <x-lucide-arrow-down class="w-2.5 h-2.5" />
                                     <span>{{ $session->bytes_out }}</span>
                                 </div>
@@ -236,7 +232,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="3" class="py-8 text-center text-slate-400 text-xs font-bold uppercase tracking-wide">
+                    <td colspan="3" class="py-8 text-center text-slate-600 text-sm font-medium">
                         No shop equipment is online right now.
                     </td>
                 </tr>
@@ -269,7 +265,7 @@
                 <tr id="session-row-{{ $session->sessionId ?? ($session->ip_address . '-' . $session->mac_address) }}" class="border-b border-[#FAFAFA] bg-gray-50/30 group hover:bg-[#FDF8F5]/80 transition-colors">
                     <td class="py-3">
                         <div class="flex flex-col">
-                            <span class="font-bold text-[#4A3B32]">{{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unknown Device' }}</span>
+                            <span class="font-bold text-[#4A3B32]">{{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unnamed device' }}</span>
                             <span class="text-xs text-[#6D4C41] font-mono mt-0.5">{{ $session->ip_address }}</span>
                             <div class="flex items-center gap-2 mt-0.5">
                                 <span class="text-xs text-[#6D4C41] font-mono">{{ \App\Support\Mac::format($session->mac_address) }}</span>
@@ -328,8 +324,8 @@
                 <tr id="ghost-row-{{ $ghost['mac_address'] }}" class="border-b border-[#FAFAFA] {{ $ghost['is_banned'] ? 'bg-red-50/40' : 'bg-gray-50/30' }} group hover:bg-[#FDF8F5]/80 transition-colors">
                     <td class="py-3">
                         <div class="flex flex-col">
-                            <span class="font-bold text-[#4A3B32]">{{ $ghost['hostname'] ?: 'Unknown Device' }}</span>
-                            <span class="text-xs text-[#6D4C41] font-mono mt-0.5">{{ $ghost['ip_address'] ?: 'N/A' }}</span>
+                            <span class="font-bold text-[#4A3B32]">{{ $ghost['hostname'] ?: 'Unnamed device' }}</span>
+                            <span class="text-xs text-[#6D4C41] font-mono mt-0.5">{{ $ghost['ip_address'] ?: 'No address yet' }}</span>
                             <div class="flex items-center gap-2 mt-0.5">
                                 <span class="text-xs text-[#6D4C41] font-mono">{{ \App\Support\Mac::format($ghost['mac_address']) }}</span>
                                 @if($ghost['manufacturer'])

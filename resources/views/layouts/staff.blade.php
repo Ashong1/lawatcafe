@@ -366,7 +366,7 @@
                 background: '#FDF8F5',
                 color: '#3E2723',
                 customClass: {
-                    popup: 'rounded-[2rem] border-t-8 border-[#3E2723] shadow-2xl',
+                    popup: 'rounded-[2rem] shadow-2xl',
                     confirmButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-wide text-xs',
                     cancelButton: 'px-8 py-3 rounded-full font-bold uppercase tracking-wide text-xs'
                 }

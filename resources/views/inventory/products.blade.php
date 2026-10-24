@@ -11,7 +11,7 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Product Menu</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Manage your sellable products and their pricing.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Everything on the menu: price, photo, recipe and whether it is on sale.</p>
         </div>
     </div>
 
@@ -20,7 +20,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Menu Items</h3>
-                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Manage and track your kape's offerings.</p>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Tap a status to take an item off the menu or put it back.</p>
             </div>
             
             <div class="flex items-center gap-3">
@@ -37,7 +37,7 @@
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                         <th class="pb-4 font-bold">Product</th>
-                        <th class="pb-4 font-bold hidden md:table-cell">Category</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Recipe</th>
                         <th class="pb-4 font-bold">Price</th>
                         <th class="pb-4 font-bold">Status</th>
                         <th class="pb-4 font-bold text-right">Actions</th>
@@ -61,7 +61,7 @@
                                     </div>
                                     <div class="flex flex-col">
                                         <span class="font-bold text-[#3E2723] text-sm">{{ $product->name }}</span>
-                                        <span class="text-xs text-[#6D4C41] font-bold uppercase tracking-wide md:hidden">{{ $product->category }}</span>
+                                        <span class="text-xs text-[#6D4C41] font-bold uppercase tracking-wide">{{ $product->category }}</span>
                                     </div>
                                 </div>
                             </td>
@@ -71,7 +71,7 @@
                                 @endphp
                                 <div class="flex flex-col">
                                     <div class="flex items-center gap-2">
-                                        <span class="w-2 h-2 rounded-full {{ $ingCount > 0 ? 'bg-green-500' : 'bg-red-500 animate-pulse' }}"></span>
+                                        <span class="w-2 h-2 rounded-full {{ $ingCount > 0 ? 'bg-green-500' : 'bg-red-500' }}"></span>
                                         <span class="text-xs font-bold {{ $ingCount > 0 ? 'text-[#3E2723]' : 'text-red-600' }}">
                                             {{ $ingCount }} {{ Str::plural('Ingredient', $ingCount) }}
                                         </span>
@@ -79,7 +79,7 @@
                                     @if($ingCount > 0)
                                         <div class="flex flex-wrap gap-1 mt-1">
                                             @foreach($product->ingredients->take(2) as $ing)
-                                                <span class="text-xs bg-[#FAFAFA] text-[#795548] border border-[#F0E6D2] px-2 py-0.5 rounded font-bold uppercase tracking-tighter">
+                                                <span class="text-xs bg-[#FAFAFA] text-[#795548] border border-[#F0E6D2] px-2 py-0.5 rounded font-bold">
                                                     {{ $ing->name }}
                                                 </span>
                                             @endforeach
@@ -88,7 +88,7 @@
                                             @endif
                                         </div>
                                     @else
-                                        <span class="text-xs text-red-400 font-bold uppercase tracking-tighter mt-0.5">Missing Recipe</span>
+                                        <span class="text-xs text-red-700 font-medium mt-0.5">No recipe yet, so stock is not deducted</span>
                                     @endif
                                 </div>
                             </td>
@@ -98,16 +98,14 @@
                                         @click="toggleStatus({{ $product->id }})"
                                         :disabled="togglingStatus['{{ $product->id }}']"
                                         :aria-busy="togglingStatus['{{ $product->id }}'] ? 'true' : 'false'"
+                                        title="Tap to switch between Active and Inactive"
                                         :class="[statuses['{{ $product->id }}'] === 'Active' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100', togglingStatus['{{ $product->id }}'] ? 'opacity-50 cursor-wait' : '']"
                                         class="px-2.5 py-1 text-xs font-bold uppercase tracking-wide rounded-lg border transition-all active:scale-95 inline-flex items-center gap-1.5">
                                     <svg x-show="togglingStatus['{{ $product->id }}']" class="w-2.5 h-2.5 animate-spin" viewBox="0 0 24 24" fill="none">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                     </svg>
-                                    {{-- Server value as the element's own content rather than a
-                                         `||` fallback inside the expression: it still renders
-                                         before Alpine boots, but the colour and the text now
-                                         read the one seeded source, so they cannot disagree. --}}
+                                    {{-- Server value renders before Alpine boots; colour and text read the same seeded source. --}}
                                     <span x-text="statuses['{{ $product->id }}']">{{ $product->status }}</span>
                                 </button>
                             </td>
@@ -122,10 +120,10 @@
                                         @method('DELETE')
                                         <button type="button" 
                                                 @click="window.confirmAction({
-                                                    title: 'Delete Product?',
-                                                    text: 'Are you sure you want to delete {{ $product->name }}?',
+                                                    title: 'Delete this product?',
+                                                    text: {{ Js::from($product->name.' will be removed from the menu.') }},
                                                     icon: 'warning',
-                                                    confirmText: 'Yes, Delete It',
+                                                    confirmText: 'Delete',
                                                     callback: () => document.getElementById('delete-product-{{ $product->id }}').submit()
                                                 })"
                                                 class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete" aria-label="Delete">
@@ -138,9 +136,9 @@
                     @empty
                         <tr>
                             <td colspan="5" class="py-16 text-center">
-                                <div class="flex flex-col items-center opacity-30">
-                                    <x-lucide-package class="w-10 h-10 mb-3" />
-                                    <p class="text-[#6D4C41] text-sm font-medium uppercase tracking-wide">No products found. Click "New Product" to start.</p>
+                                <div class="flex flex-col items-center">
+                                    <x-lucide-package class="w-10 h-10 mb-3 text-[#D7CCC8]" />
+                                    <p class="text-[#6D4C41] text-sm font-medium">No products yet. Tap New Product to add the first one.</p>
                                 </div>
                             </td>
                         </tr>

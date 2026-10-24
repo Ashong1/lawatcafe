@@ -3,7 +3,7 @@
 
 @section('content')
 <style>
-    /* Hide number input spinners for a cleaner look */
+    /* The price and minutes fields are typed, not stepped. */
     input::-webkit-outer-spin-button,
     input::-webkit-inner-spin-button {
         -webkit-appearance: none;
@@ -13,7 +13,7 @@
         -moz-appearance: textfield;
     }
     
-    /* 100% FOOLPROOF OVERRIDE FOR TAILWIND FORMS PLUGIN */
+    /* The forms plugin styles every input; these sit inside a bordered wrapper instead. */
     .modal-clean-input, .modal-clean-input:focus {
         border: none !important;
         box-shadow: none !important;
@@ -47,20 +47,19 @@
                         <x-lucide-list-checks class="w-5 h-5 text-amber-600" />
                         Prices
                     </h3>
-                    <p class="text-xs text-[#6D4C41] mt-1 font-medium italic">How much customers pay for each length of Wi-Fi time.</p>
+                    <p class="text-xs text-[#6D4C41] mt-1 font-medium">How much customers pay for each length of Wi-Fi time.</p>
                 </div>
                 
                 <button type="button" @click="openAddModal()"
-                        class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-wide transition shadow-lg active:scale-95 flex items-center gap-3">
+                        class="min-h-[44px] bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-wide transition shadow-lg active:scale-95 flex items-center gap-3">
                     <x-lucide-plus class="w-4 h-4" />
-                    Add a Price
+                    Add a price
                 </button>
             </div>
 
             <form action="{{ route('admin.settings.store.update') }}" method="POST">
                 @csrf
                 
-                {{-- Hidden Inputs for the Form to save Complimentary Data --}}
                 <input type="hidden" name="free_wifi_min_amount" :value="freeMinAmount">
                 <input type="hidden" name="free_wifi_duration" :value="freeDuration">
 
@@ -72,12 +71,10 @@
                                 <th class="py-4 px-6">Price</th>
                                 <th class="py-4 px-6">Speed</th>
                                 <th class="py-4 px-6">Time</th>
-                                <th class="py-4 px-6">Shown as</th>
                                 <th class="py-4 px-6 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[#F0E6D2] bg-white text-sm font-medium text-[#4A3B32]">
-                            {{-- Complimentary Tier (Modal Editable) --}}
                             <tr class="hover:bg-amber-50/30 transition-colors bg-amber-50/10">
                                 <td class="py-4 px-6">
                                     <span class="px-2.5 py-1 bg-amber-100 text-amber-800 border border-amber-200 rounded-md text-xs font-bold uppercase tracking-wide">
@@ -87,31 +84,27 @@
                                 <td class="py-4 px-6">
                                     <div class="flex flex-col">
                                         <span class="font-bold text-[#3E2723] text-sm" x-text="'With orders of ₱' + freeMinAmount + ' or more'"></span>
-                                        <span class="text-xs text-amber-600 font-bold uppercase mt-1">Added automatically</span>
+                                        <span class="text-xs text-amber-700 font-bold mt-1">Added automatically</span>
                                     </div>
                                 </td>
                                 <td class="py-4 px-6">
                                     <div class="flex flex-col">
-                                        <div class="flex items-center gap-1 text-xs font-bold text-blue-600 uppercase">
+                                        <div class="flex items-center gap-1 text-xs font-bold text-blue-700">
                                             <x-lucide-arrow-down class="w-2.5 h-2.5" />
                                             <span>{{ \App\Models\Setting::get('bw_free_down', 2) }} Mbps</span>
                                         </div>
-                                        <div class="flex items-center gap-1 text-xs font-bold text-amber-600 uppercase mt-0.5">
+                                        <div class="flex items-center gap-1 text-xs font-bold text-amber-700 mt-0.5">
                                             <x-lucide-arrow-up class="w-2.5 h-2.5" />
                                             <span>{{ \App\Models\Setting::get('bw_free_up', 1) }} Mbps</span>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="py-4 px-6">
-                                    <span class="font-medium text-[#4A3B32] text-sm" x-text="freeDuration + ' mins'"></span>
-                                </td>
-                                <td class="py-4 px-6">
-                                    <span class="text-xs font-bold text-amber-600 uppercase tracking-tight italic" 
-                                          x-text="formatDuration(freeDuration)"></span>
+                                    <span class="font-bold text-[#3E2723] text-sm" x-text="formatDuration(freeDuration)"></span>
                                 </td>
                                 <td class="py-4 px-6 text-right">
                                     <button type="button" @click="openModalForComplimentary()" title="Edit free Wi-Fi" aria-label="Edit free Wi-Fi"
-                                            class="p-2 text-amber-700 hover:text-amber-900 hover:bg-amber-100/50 rounded-xl transition-all">
+                                            class="w-11 h-11 inline-flex items-center justify-center text-amber-700 hover:text-amber-900 hover:bg-amber-100/50 rounded-xl transition-all">
                                         <x-lucide-pencil class="w-4 h-4" />
                                     </button>
                                 </td>
@@ -126,29 +119,25 @@
                                     <td class="py-4 px-6 font-bold text-[#3E2723]" x-text="'₱' + plan.price"></td>
                                     <td class="py-4 px-6">
                                         <div class="flex flex-col">
-                                            <div class="flex items-center gap-1 text-xs font-bold text-blue-600 uppercase">
+                                            <div class="flex items-center gap-1 text-xs font-bold text-blue-700">
                                                 <x-lucide-arrow-down class="w-2.5 h-2.5" />
                                                 <span x-text="'{{ \App\Models\Setting::get('bw_premium_down', 10) }} Mbps'"></span>
                                             </div>
-                                            <div class="flex items-center gap-1 text-xs font-bold text-amber-600 uppercase mt-0.5">
+                                            <div class="flex items-center gap-1 text-xs font-bold text-amber-700 mt-0.5">
                                                 <x-lucide-arrow-up class="w-2.5 h-2.5" />
                                                 <span x-text="'{{ \App\Models\Setting::get('bw_premium_up', 5) }} Mbps'"></span>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="py-4 px-6 text-[#795548]" x-text="plan.minutes + ' mins'"></td>
-                                    <td class="py-4 px-6">
-                                        <span class="text-xs font-bold text-amber-600 uppercase tracking-tight italic" 
-                                              x-text="formatDuration(plan.minutes)"></span>
-                                    </td>
+                                    <td class="py-4 px-6 font-bold text-[#3E2723]" x-text="formatDuration(plan.minutes)"></td>
                                     <td class="py-4 px-6 text-right">
                                         <div class="flex items-center justify-end gap-2">
                                             <button type="button" @click="openModalForEdit(plan, index)" title="Edit price" aria-label="Edit price"
-                                                    class="p-2 text-amber-700 hover:text-amber-900 hover:bg-amber-100/50 rounded-xl transition-all">
+                                                    class="w-11 h-11 inline-flex items-center justify-center text-amber-700 hover:text-amber-900 hover:bg-amber-100/50 rounded-xl transition-all">
                                                 <x-lucide-pencil class="w-4 h-4" />
                                             </button>
                                             <button type="button" @click="removePlan(index)" title="Remove price" aria-label="Remove price"
-                                                    class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
+                                                    class="w-11 h-11 inline-flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
                                                 <x-lucide-trash-2 class="w-4 h-4" />
                                             </button>
                                         </div>
@@ -158,13 +147,13 @@
 
                             <template x-if="plans.length === 0">
                                 <tr>
-                                    <td colspan="6" class="py-16 text-center">
+                                    <td colspan="5" class="py-16 text-center">
                                         <div class="flex flex-col items-center justify-center">
                                             <div class="w-16 h-16 bg-[#FAFAFA] rounded-full flex items-center justify-center border border-[#F0E6D2] mb-4">
                                                 <x-lucide-wifi class="w-8 h-8 text-amber-200" />
                                             </div>
                                             <p class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">No prices yet</p>
-                                            <p class="text-xs text-[#D7CCC8] mt-1 font-medium">Tap "Add a Price" to add one.</p>
+                                            <p class="text-xs text-[#6D4C41] mt-1 font-medium">Tap "Add a price" to add one.</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -188,10 +177,10 @@
                     </div>
 
                     <div class="xl:col-span-4 flex items-center justify-end h-full">
-                        <button type="submit" 
-                                class="w-full h-full min-h-[70px] px-6 py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-2xl font-bold text-xs md:text-sm uppercase tracking-wide transition shadow-xl shadow-amber-900/20 active:scale-95 flex items-center justify-center gap-3">
+                        <button type="submit"
+                                class="w-full h-full min-h-[56px] px-6 py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-2xl font-bold text-xs md:text-sm uppercase tracking-wide transition shadow-xl shadow-amber-900/20 active:scale-95 flex items-center justify-center gap-3">
                             <x-lucide-save class="w-5 h-5 shrink-0" />
-                            <span>Save Prices</span>
+                            <span>Save prices</span>
                         </button>
                     </div>
                 </div>
@@ -203,14 +192,14 @@
                     <div>
                         <label for="wifi_ssid" class="block text-sm font-bold text-[#3E2723] mb-1">Wi-Fi network name</label>
                         <input id="wifi_ssid" name="wifi_ssid" type="text" maxlength="32" value="{{ $settings['wifi_ssid'] }}" placeholder="e.g. Lawa't Kape"
-                               class="w-full rounded-xl border-2 border-[#F0E6D2] px-4 py-3 text-sm focus:border-[#3E2723] focus:ring-0">
+                               class="w-full rounded-xl border-2 border-[#F0E6D2] px-4 py-3 text-base sm:text-sm focus:border-[#3E2723] focus:ring-0">
                         <p class="text-xs text-[#6D4C41] mt-1.5">Exactly as phones show it. Slips get a QR code that joins this network, plus step-by-step instructions.</p>
                     </div>
                     <div>
                         <label for="voucher_unused_expiry_days" class="block text-sm font-bold text-[#3E2723] mb-1">Unused codes stop working after</label>
                         <div class="flex items-center gap-2">
                             <input id="voucher_unused_expiry_days" name="voucher_unused_expiry_days" type="number" min="0" max="3650" value="{{ $settings['voucher_unused_expiry_days'] }}"
-                                   class="w-28 rounded-xl border-2 border-[#F0E6D2] px-4 py-3 text-sm focus:border-[#3E2723] focus:ring-0">
+                                   class="w-28 rounded-xl border-2 border-[#F0E6D2] px-4 py-3 text-base sm:text-sm focus:border-[#3E2723] focus:ring-0">
                             <span class="text-sm text-[#4A3B32]">days</span>
                         </div>
                         <p class="text-xs text-[#6D4C41] mt-1.5">So a lost slip isn't good forever. 0 means codes never expire. Once used, a code runs for its own time as usual.</p>
@@ -226,7 +215,7 @@
                     <x-lucide-wifi class="w-4 h-4 text-amber-600" />
                     <span x-text="isEditingComplimentary ? 'Edit free Wi-Fi' : (isEditMode ? 'Edit price' : 'Add a price')"></span>
                 </h3>
-                <button type="button" @click="modalOpen = false" aria-label="Close dialog" class="text-[#6D4C41] hover:text-[#3E2723] transition-colors">
+                <button type="button" @click="modalOpen = false" aria-label="Close dialog" class="w-11 h-11 -mr-3 inline-flex items-center justify-center text-[#6D4C41] hover:text-[#3E2723] transition-colors">
                     <x-lucide-x class="w-5 h-5" />
                 </button>
             </div>
@@ -249,10 +238,10 @@
                         <input type="number" id="plan-minutes" x-model="modalData.minutes"
                                class="modal-clean-input flex-1 py-3.5 pl-5 pr-2 bg-transparent text-xl font-bold text-[#3E2723] w-full"
                                placeholder="60">
-                        <span class="pr-5 text-xs font-bold text-[#6D4C41] uppercase tracking-wide select-none pointer-events-none">Mins</span>
+                        <span class="pr-5 text-xs font-bold text-[#6D4C41] uppercase tracking-wide select-none pointer-events-none">min</span>
                     </div>
                     <div class="flex justify-end mt-1.5 mr-1">
-                        <span class="text-xs font-bold text-amber-600 uppercase tracking-tight italic" 
+                        <span class="text-xs font-bold text-[#795548]"
                               x-text="formatDuration(modalData.minutes)"></span>
                     </div>
                 </div>
@@ -260,12 +249,12 @@
 
             <div class="bg-[#FAFAFA] border-t border-[#F0E6D2] px-6 py-4 flex justify-end gap-3">
                 <button type="button" @click="modalOpen = false"
-                        class="px-5 py-3 bg-white border border-[#F0E6D2] hover:bg-gray-50 rounded-xl text-xs font-bold text-[#795548] uppercase tracking-wide transition active:scale-95">
+                        class="min-h-[44px] px-5 py-3 bg-white border border-[#F0E6D2] hover:bg-gray-50 rounded-xl text-xs font-bold text-[#795548] uppercase tracking-wide transition active:scale-95">
                     Cancel
                 </button>
                 <button type="button" @click="saveModalData()"
-                        class="px-5 py-3 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl text-xs font-bold text-[#795548] uppercase tracking-wide transition shadow-md active:scale-95">
-                    Save Tier
+                        class="min-h-[44px] px-5 py-3 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl text-xs font-bold uppercase tracking-wide transition shadow-md active:scale-95">
+                    Save
                 </button>
             </div>
     </x-modal-shell>
@@ -297,13 +286,11 @@ function wifiPlans() {
         plans: plansArray,
         jsonOutput: JSON.stringify(rawData),
         
-        // --- NEW COMPLIMENTARY STATE VARIABLES ---
+        // Free Wi-Fi given with bigger orders.
         freeMinAmount: {{ $settings['free_wifi_min_amount'] ?? 200 }},
         freeDuration: {{ $settings['free_wifi_duration'] ?? 60 }},
         isEditingComplimentary: false,
-        // -----------------------------------------
 
-        // Modal State Machine
         modalOpen: false,
         isEditMode: false,
         editingIndex: null,
@@ -330,7 +317,6 @@ function wifiPlans() {
             this.modalOpen = true;
         },
 
-        // --- NEW FUNCTION FOR THE COMPLIMENTARY TIER ---
         openModalForComplimentary() {
             this.isEditMode = true;
             this.isEditingComplimentary = true;
@@ -341,23 +327,17 @@ function wifiPlans() {
         },
 
         saveModalData() {
-            // Guard against empty fields
             if (!this.modalData.price || !this.modalData.minutes) return;
 
-            // Check if we are saving the Complimentary Tier
             if (this.isEditingComplimentary) {
                 this.freeMinAmount = this.modalData.price;
                 this.freeDuration = this.modalData.minutes;
             } 
-            // Check if we are editing an existing Paid Tier
             else if (this.isEditMode && this.editingIndex !== null) {
-                // Modify record details in place
                 this.plans[this.editingIndex].price = this.modalData.price;
                 this.plans[this.editingIndex].minutes = this.modalData.minutes;
             } 
-            // We are adding a brand new Paid Tier
             else {
-                // Inject freshly generated unique element properties
                 this.plans.push({
                     id: Date.now() + Math.random(),
                     price: this.modalData.price,
@@ -375,27 +355,27 @@ function wifiPlans() {
         },
 
         formatDuration(minutes) {
-            if (!minutes) return '0 Mins';
             const mins = parseInt(minutes);
-            if (isNaN(mins)) return '0 Mins';
+            if (!mins) return '0 minutes';
             
             if (mins >= 1440) {
                 const days = Math.floor(mins / 1440);
                 const rem = mins % 1440;
-                return rem > 0 ? `${days}d ${Math.floor(rem/60)}h` : `${days} Day${days > 1 ? 's' : ''}`;
+                const dayLabel = `${days} day${days > 1 ? 's' : ''}`;
+                return rem >= 60 ? `${dayLabel} ${Math.floor(rem / 60)} hr` : dayLabel;
             }
             if (mins >= 60) {
                 const hrs = Math.floor(mins / 60);
                 const rem = mins % 60;
-                return rem > 0 ? `${hrs}h ${rem}m` : `${hrs} Hour${hrs > 1 ? 's' : ''}`;
+                return rem > 0 ? `${hrs} hr ${rem} min` : `${hrs} hour${hrs > 1 ? 's' : ''}`;
             }
-            return `${mins} Minutes`;
+            return `${mins} minutes`;
         },
 
         syncJson() {
             let obj = {};
             
-            // Clean sort algorithm maps array values flawlessly for json representation
+            // Sorted by price; rows missing a price sink to the bottom.
             let sortedForOutput = [...this.plans].sort((a, b) => {
                 if (!a.price) return 1;
                 if (!b.price) return -1;

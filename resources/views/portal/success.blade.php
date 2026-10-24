@@ -24,10 +24,8 @@
         <div class="absolute inset-0 bg-black/50"></div>
     </div>
 
-    {{-- Phone sizing is shared verbatim with portal/index — see the full
-         reasoning there. Short version: the three portal pages each had their
-         own numbers, so a phone jumped wider and ~180px taller the moment a
-         code was accepted. --}}
+    {{-- Phone sizing is shared verbatim with portal/index, so the card keeps its
+         shape when a code is accepted. --}}
     <div class="relative z-10 w-[92%] max-w-[420px] h-[88dvh] max-h-[640px] rounded-[2rem] md:rounded-[2.5rem] md:max-w-[42rem] md:h-[85dvh] md:max-h-[720px] lg:w-full lg:max-w-[calc(64rem+1mm)] lg:h-[750px] lg:max-h-[800px] shadow-2xl border border-[#E6D5C3] overflow-hidden bg-[#FAF7F2] flex flex-col lg:flex-row transition-all duration-500 my-auto">
 
         <!-- Sidebar Branding (Desktop) -->
@@ -52,7 +50,7 @@
 
                 <div class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-green-500/20 border border-green-500/30 backdrop-blur-md shadow-inner">
                     <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
-                    <span class="text-xs font-bold text-white uppercase tracking-wide">{{ $alreadyActive ? 'Connected' : 'Code accepted' }}</span>
+                    <span class="text-sm font-bold text-white">{{ $alreadyActive ? __('Connected') : __('Code accepted') }}</span>
                 </div>
             </div>
             
@@ -67,13 +65,13 @@
             <!-- Subtle background pattern -->
             <div class="absolute inset-0 opacity-[0.015] pointer-events-none z-0 texture-pinstripe"></div>
             
-            <div class="flex-1 overflow-y-auto px-6 py-10 lg:px-16 lg:py-10 no-scrollbar relative z-10 flex flex-col justify-center">
+            <div class="flex-1 overflow-y-auto px-6 py-10 lg:px-16 lg:py-10 no-scrollbar relative z-10 flex flex-col">
                 
                 {{-- This page lives ~6 seconds before the window moves on, so it
                      leads with the one fact that matters (time bought) and says
                      "check your time" once. It must not say "connected" before
                      activation has actually happened. --}}
-                <div class="text-center mb-6">
+                <div class="text-center mb-6 mt-auto shrink-0">
                     <div class="w-14 h-14 bg-green-50 border-2 border-green-100 rounded-full flex items-center justify-center mx-auto mb-4 check-pop-in">
                         <x-lucide-check class="w-7 h-7 text-green-600" stroke-width="3" />
                     </div>
@@ -81,8 +79,7 @@
                     <p class="text-sm text-[#795548] font-medium mt-1 anim-pop-in [animation-delay:250ms]">{{ $alreadyActive ? __("You're connected.") : __("We'll connect you in a moment.") }}</p>
                 </div>
 
-                <div class="bg-amber-50 border-2 border-amber-200/50 rounded-[2rem] px-6 py-6 mb-6 text-center relative overflow-hidden shadow-sm max-w-md mx-auto w-full">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-amber-500/30"></div>
+                <div class="shrink-0 bg-amber-50 border-2 border-amber-200/50 rounded-[2rem] px-6 py-6 mb-6 text-center shadow-sm max-w-md mx-auto w-full">
                     <p class="text-5xl lg:text-6xl font-bold text-[#3E2723] tracking-tighter mb-1">
                         {{ $durationMinutes >= 60 ? rtrim(rtrim(number_format($durationMinutes / 60, 1), '0'), '.') : $durationMinutes }}<span class="text-xl lg:text-2xl ml-1">{{ $durationMinutes >= 60 ? __('hr') : __('min') }}</span>
                     </p>
@@ -93,20 +90,16 @@
                      the guest gets a real reason and a retry instead of a button
                      that silently does nothing. --}}
                 @if(session('error'))
-                    <div class="max-w-sm mx-auto w-full mb-4 bg-red-50 border-2 border-red-200 rounded-2xl px-5 py-4 text-center">
-                        <p class="text-xs lg:text-sm font-bold text-red-700">{{ session('error') }}</p>
+                    <div role="alert" class="shrink-0 max-w-sm mx-auto w-full mb-4 bg-red-50 border-2 border-red-200 rounded-2xl px-5 py-4 text-center">
+                        <p class="text-sm font-bold text-red-700">{{ session('error') }}</p>
                     </div>
                 @endif
 
-                {{-- Connecting is automatic, but not instant.
-                     Opening the firewall the moment the code was accepted is what
-                     used to destroy this page mid-render: the OS tears the
-                     sign-in window down as soon as its connectivity probe
-                     succeeds. Waiting a few seconds first is the whole fix — it
-                     buys exactly enough time for the guest to read how long they
-                     bought and where to check it — and then it proceeds on its
-                     own, so nobody has to know a button was the next step. --}}
-                <div class="max-w-sm mx-auto w-full space-y-4"
+                {{-- Connecting waits a few seconds on purpose: the OS tears the sign-in
+                     window down as soon as its connectivity probe succeeds, so opening
+                     the firewall at once would destroy this page before the guest reads
+                     how long they bought and where to check it. --}}
+                <div class="max-w-sm mx-auto w-full space-y-4 mb-auto shrink-0"
                      x-data="{
                         submitting: false,
                         secondsLeft: 6,
@@ -201,12 +194,8 @@
 
     </div>
 
-    {{-- No script here. The old version navigated this page to a third-party
-         site after the firewall was already open, which is the race that
-         destroyed it mid-render. The countdown above instead delays *opening the
-         firewall at all*, and the handoff to the guest's real browser is a
-         server-side redirect from portal.activate — see
-         CaptivePortalController::captiveHandoffUrl(). --}}
+    {{-- No script here: the handoff to the guest's own browser is a server-side
+         redirect from portal.activate (CaptivePortalController::captiveHandoffUrl()). --}}
 
 </body>
 </html>

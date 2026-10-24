@@ -1,1 +1,0 @@
-<x-lucide-coffee {{ $attributes }} />

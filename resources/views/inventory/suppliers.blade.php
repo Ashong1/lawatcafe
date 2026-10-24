@@ -11,7 +11,7 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Suppliers</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Manage vendor relationships and delivery schedules.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Who you buy from, how to reach them, and which days they deliver.</p>
         </div>
         
         <div class="flex items-center gap-3">
@@ -28,9 +28,9 @@
             <table class="lk-stack w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-bold">Vendor Name</th>
-                        <th class="pb-4 font-bold">Contact Person</th>
-                        <th class="pb-4 font-bold hidden md:table-cell">Communication</th>
+                        <th class="pb-4 font-bold">Supplier</th>
+                        <th class="pb-4 font-bold">Contact person</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Phone &amp; email</th>
                         <th class="pb-4 font-bold hidden md:table-cell">Delivery Days</th>
                         <th class="pb-4 font-bold text-right">Actions</th>
                     </tr>
@@ -57,7 +57,7 @@
                                             <span class="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-tighter rounded border border-amber-100">{{ substr($day, 0, 3) }}</span>
                                         @endforeach
                                     @else
-                                        <span class="text-xs text-[#D7CCC8] font-bold uppercase italic">No set days</span>
+                                        <span class="text-xs text-[#795548] font-medium">No set days</span>
                                     @endif
                                 </div>
                             </div>
@@ -86,7 +86,7 @@
                                         <span class="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-tighter rounded border border-amber-100">{{ substr($day, 0, 3) }}</span>
                                     @endforeach
                                 @else
-                                    <span class="text-xs text-[#D7CCC8] font-bold uppercase italic">No set days</span>
+                                    <span class="text-xs text-[#795548] font-medium">No set days</span>
                                 @endif
                             </div>
                         </td>
@@ -99,10 +99,10 @@
                                     @csrf
                                     @method('DELETE')
                                     <button type="button" @click="window.confirmAction({
-                                        title: 'Remove Supplier?',
-                                        text: 'Are you sure you want to delete this vendor?',
+                                        title: 'Remove this supplier?',
+                                        text: 'Past deliveries keep their records.',
                                         icon: 'warning',
-                                        confirmText: 'Yes, Remove',
+                                        confirmText: 'Remove',
                                         callback: () => document.getElementById('delete-form-{{ $supplier->id }}').submit()
                                     })" class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Delete" aria-label="Delete">
                                         <x-lucide-trash-2 class="w-4 h-4" />
@@ -114,8 +114,8 @@
                     @empty
                     <tr>
                         <td colspan="5" class="py-20 text-center text-[#6D4C41]">
-                            <x-lucide-users class="w-12 h-12 mb-4 mx-auto opacity-20" />
-                            <p class="font-bold uppercase tracking-wide text-xs">No suppliers added yet.</p>
+                            <x-lucide-users class="w-10 h-10 mb-3 mx-auto text-[#D7CCC8]" />
+                            <p class="text-sm font-medium max-w-sm mx-auto">No suppliers yet. Add one so Barista AI can email it when an ingredient runs low.</p>
                         </td>
                     </tr>
                     @endforelse

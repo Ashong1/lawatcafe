@@ -11,7 +11,7 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Wastage & Spoilage</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Track operational losses due to expiration, spills, or errors.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Spills, spoiled stock and wrong orders, taken off the ingredient count.</p>
         </div>
     </div>
 
@@ -19,8 +19,8 @@
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Wastage Logs</h3>
-                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Monitoring inventory shrink and spoilage incidents.</p>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Thrown away</h3>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Everything logged as wasted, newest first.</p>
             </div>
             
             <button @click="openAddModal()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-red-600/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
@@ -69,9 +69,9 @@
                     @empty
                     <tr>
                         <td colspan="5" class="py-20 text-center">
-                            <div class="flex flex-col items-center opacity-30">
-                                <x-lucide-shield-alert class="w-12 h-12 mb-4" />
-                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-wide">No wastage logged recently.</p>
+                            <div class="flex flex-col items-center max-w-sm mx-auto">
+                                <x-lucide-trash-2 class="w-10 h-10 mb-3 text-[#D7CCC8]" />
+                                <p class="text-[#6D4C41] text-sm font-medium">Nothing thrown away yet. Log spills, spoiled milk or wrong orders here so stock stays right.</p>
                             </div>
                         </td>
                     </tr>

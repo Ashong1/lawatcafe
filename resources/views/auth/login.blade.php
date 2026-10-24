@@ -1,7 +1,7 @@
 <x-guest-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-bold text-white mb-1 uppercase tracking-tight" style="font-family: 'Montserrat', sans-serif;">Welcome Back,</h2>
-        <p class="text-sm text-white/60 font-medium" style="font-family: 'Montserrat', sans-serif;">Please login to your account</p>
+        <h2 class="text-xl font-bold text-white mb-1" style="font-family: 'Montserrat', sans-serif;">Sign in</h2>
+        <p class="text-sm text-white/75 font-medium" style="font-family: 'Montserrat', sans-serif;">For the owner and staff.</p>
     </x-slot>
 
     <!-- Form -->
@@ -10,42 +10,42 @@
 
         <!-- Email or username -->
         <div>
-            <label for="email" class="block text-xs font-bold text-white/80 uppercase tracking-wide mb-2 ml-1">Username or email</label>
+            <label for="email" class="block text-sm font-semibold text-white/90 mb-2 ml-1">Username or email</label>
             <input id="email" type="text" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false" 
-                class="w-full bg-white/10 text-white border-white/20 focus:border-white focus:ring-0 rounded-xl px-4 py-3.5 placeholder-white/30 transition shadow-inner text-sm" 
+                class="w-full bg-white/10 text-white border-white/20 focus:border-white focus:ring-0 rounded-xl px-4 py-3.5 placeholder-white/50 transition shadow-inner text-base" 
                 placeholder="e.g. ana" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-400 text-xs font-bold" />
+            <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-300 text-sm font-semibold" />
         </div>
 
         <!-- Password -->
         <div x-data="{ show: false }">
-            <label for="password" class="block text-xs font-bold text-white/80 uppercase tracking-wide mb-2 ml-1">Password</label>
+            <label for="password" class="block text-sm font-semibold text-white/90 mb-2 ml-1">Password</label>
             <div class="relative">
                 <input id="password" :type="show ? 'text' : 'password'" name="password" required
-                    class="w-full bg-white/10 text-white border-white/20 focus:border-white focus:ring-0 rounded-xl px-4 py-3.5 placeholder-white/30 transition shadow-inner text-sm pr-12"
+                    class="w-full bg-white/10 text-white border-white/20 focus:border-white focus:ring-0 rounded-xl px-4 py-3.5 placeholder-white/50 transition shadow-inner text-base pr-12"
                     placeholder="••••••••" />
 
                 <!-- Toggle Eye Icon -->
-                <button type="button" @click="show = !show" class="absolute inset-y-0 right-0 pr-4 flex items-center text-white/50 hover:text-white transition">
+                <button type="button" @click="show = !show" :aria-label="show ? 'Hide password' : 'Show password'" class="absolute inset-y-0 right-0 w-12 flex items-center justify-center text-white/70 hover:text-white transition">
                     <span class="relative w-5 h-5 block">
                         <x-lucide-eye x-show="!show" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-75" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-75" class="w-5 h-5 absolute inset-0" />
                         <x-lucide-eye-off x-show="show" style="display: none;" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-75" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-75" class="w-5 h-5 absolute inset-0" />
                     </span>
                 </button>
             </div>
-            <x-input-error :messages="$errors->get('password')" class="mt-2 text-red-400 text-xs font-bold" />
+            <x-input-error :messages="$errors->get('password')" class="mt-2 text-red-300 text-sm font-semibold" />
         </div>
 
         <!-- Remember & Forgot -->
-        <div class="flex items-center justify-between mt-2 px-1">
-            <label for="remember_me" class="inline-flex items-center cursor-pointer group">
+        <div class="flex flex-wrap items-center justify-between gap-x-4 mt-2 px-1">
+            <label for="remember_me" class="inline-flex min-h-[44px] items-center cursor-pointer group">
                 <input id="remember_me" type="checkbox" name="remember" 
-                    class="w-4 h-4 rounded border-2 border-white/30 bg-transparent text-white focus:ring-0 cursor-pointer checked:bg-white checked:border-white transition-all">
-                <span class="ms-2 text-xs font-bold text-white/60 group-hover:text-white transition uppercase tracking-wider">Remember me</span>
+                    class="w-5 h-5 rounded border-2 border-white/30 bg-transparent text-white focus:ring-0 cursor-pointer checked:bg-white checked:border-white transition-all">
+                <span class="ms-2 text-sm font-semibold text-white/80 group-hover:text-white transition whitespace-nowrap">Remember me</span>
             </label>
 
             @if (Route::has('password.request'))
-                <a class="text-xs font-bold text-white/60 hover:text-white transition uppercase tracking-wider underline underline-offset-4 decoration-white/20" href="{{ route('password.request') }}">
+                <a class="inline-flex min-h-[44px] items-center whitespace-nowrap text-sm font-semibold text-white/80 hover:text-white transition underline underline-offset-4 decoration-white/30" href="{{ route('password.request') }}">
                     Forgot password?
                 </a>
             @endif
@@ -53,12 +53,12 @@
 
         <!-- Submit Button -->
         <div class="pt-6 text-center">
-            <button type="submit" :disabled="submitting" class="w-full sm:w-5/6 mx-auto flex items-center justify-center gap-2 py-4 px-6 rounded-full shadow-2xl text-sm font-bold text-[#3E2723] bg-[#FDF8F5] hover:bg-white hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-wide disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100">
+            <button type="submit" :disabled="submitting" class="w-full sm:w-5/6 mx-auto flex items-center justify-center gap-2 py-4 px-6 rounded-full shadow-2xl text-base font-bold text-[#3E2723] bg-[#FDF8F5] hover:bg-white active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100">
                 <svg x-show="submitting" x-cloak class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
-                <span x-text="submitting ? 'Signing In...' : 'Sign In'">Sign In</span>
+                <span x-text="submitting ? 'Signing in…' : 'Sign in'">Sign in</span>
             </button>
         </div>
     </form>

@@ -1,5 +1,5 @@
 @extends(auth()->user()->isAdminOrAbove() ? 'layouts.admin' : 'layouts.staff')
-@section('title', 'End of Day Report')
+@section('title', 'End Shift')
 
 @section('content')
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
@@ -9,16 +9,16 @@
         <div>
             <h2 class="flex items-center gap-3 text-[#3E2723]">
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
-                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Shift Closing</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">End Shift</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Review shift performance and declare final drawer amount.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Count the cash in the drawer, enter it, then end your shift.</p>
         </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {{-- Sales Breakdown --}}
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
-            <h3 class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-6">Payment Summary</h3>
+        <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
+            <h3 class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-6">Sales this shift</h3>
             <div class="space-y-4">
                 <div class="flex justify-between items-center">
                     <span class="text-sm font-bold text-[#4A3B32]">Cash Sales</span>
@@ -35,8 +35,8 @@
                     <span class="text-xl font-bold text-[#3E2723]">₱{{ number_format($summary['total_sales'], 2) }}</span>
                 </div>
                 @if($summary['void_total'] > 0)
-                <div class="flex justify-between items-center text-red-500">
-                    <span class="text-xs font-bold uppercase tracking-wide">Total Voids</span>
+                <div class="flex justify-between items-center text-red-600">
+                    <span class="text-xs font-bold uppercase tracking-wide">Voided</span>
                     <span class="font-bold">-₱{{ number_format($summary['void_total'], 2) }}</span>
                 </div>
                 @endif
@@ -44,11 +44,11 @@
         </div>
 
         {{-- Cash Reconciliation --}}
-        <div class="bg-[#3E2723] p-8 rounded-3xl shadow-2xl text-white">
+        <div class="bg-[#3E2723] p-6 sm:p-8 rounded-3xl shadow-2xl text-white">
             <h3 class="text-xs font-bold text-amber-500/80 uppercase tracking-wide mb-6">Cash Drawer</h3>
             <div class="space-y-4 mb-8">
                 <div class="flex justify-between items-center opacity-70 text-xs font-medium">
-                    <span>Starting Float</span>
+                    <span>Starting cash</span>
                     <span>₱{{ number_format($summary['starting_cash'], 2) }}</span>
                 </div>
                 <div class="flex justify-between items-center opacity-70 text-xs font-medium">
@@ -59,13 +59,13 @@
                      them shown here the total looks like it doesn't add up. --}}
                 @if($summary['pay_ins'] > 0)
                 <div class="flex justify-between items-center opacity-70 text-xs font-medium">
-                    <span>Pay-Ins (+)</span>
+                    <span>Cash in (+)</span>
                     <span>₱{{ number_format($summary['pay_ins'], 2) }}</span>
                 </div>
                 @endif
                 @if($summary['pay_outs'] > 0)
                 <div class="flex justify-between items-center opacity-70 text-xs font-medium">
-                    <span>Pay-Outs (−)</span>
+                    <span>Cash out (−)</span>
                     <span>₱{{ number_format($summary['pay_outs'], 2) }}</span>
                 </div>
                 @endif
@@ -89,10 +89,10 @@
                   @submit="submitting = true">
                 @csrf
                 <div>
-                    <label for="ending_cash" class="block text-xs font-bold text-amber-500/80 uppercase tracking-wide mb-2 ml-1">Actual Cash Counted</label>
-                    <input type="number" id="ending_cash" name="ending_cash" step="0.01" required
+                    <label for="ending_cash" class="block text-xs font-bold text-amber-500/80 uppercase tracking-wide mb-2 ml-1">Cash you counted (₱)</label>
+                    <input type="number" id="ending_cash" name="ending_cash" step="0.01" inputmode="decimal" required
                            x-ref="endingCash" @input="filled = false"
-                           class="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-5 py-4 text-2xl font-bold text-white focus:outline-none focus:border-amber-500 transition-all text-center placeholder-white/20"
+                           class="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-5 py-4 text-2xl font-bold text-white focus:outline-none focus:border-amber-500 transition-all text-center placeholder-white/40"
                            placeholder="0.00">
 
                     {{-- Fills the drawer count with the expected figure shown
@@ -105,17 +105,17 @@
                         <span x-text="filled ? 'Filled — ₱' + expected : 'Use Expected Amount (₱' + expected + ')'"></span>
                     </button>
 
-                    <p id="use-expected-hint" class="text-xs text-white/40 mt-3 italic text-center uppercase tracking-tighter"
+                    <p id="use-expected-hint" class="text-xs text-white/75 mt-3 text-center"
                        x-text="filled
-                           ? 'Confirm the drawer really holds this before finalizing.'
-                           : 'Please count the physical bills and coins in the drawer.'"></p>
+                           ? 'Only use this if the drawer really holds this amount.'
+                           : 'Count the bills and coins in the drawer.'"></p>
                 </div>
 
                 <button type="submit" :disabled="submitting" class="w-full py-4 bg-amber-500 hover:bg-amber-600 text-[#3E2723] rounded-2xl font-bold uppercase tracking-wide text-xs transition-all active:scale-95 shadow-xl shadow-amber-500/20 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2">
                     <template x-if="submitting">
                         <x-lucide-loader-2 class="w-4 h-4 animate-spin" />
                     </template>
-                    <span x-text="submitting ? 'Closing Shift...' : 'Finalize & Close Shift'"></span>
+                    <span x-text="submitting ? 'Ending shift...' : 'End Shift'"></span>
                 </button>
             </form>
         </div>
@@ -123,8 +123,8 @@
 
     {{-- RECENT TRANSACTIONS --}}
     @if($recentTransactions->count() > 0)
-    <div class="bg-white p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
-        <h3 class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-6">Recent Cash Actions</h3>
+    <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
+        <h3 class="text-xs font-bold text-[#795548] uppercase tracking-wide mb-6">Cash in and out</h3>
         <div class="space-y-4">
             @foreach($recentTransactions as $tx)
                 <div class="flex justify-between items-center py-3 border-b border-[#FAFAFA] last:border-0">
@@ -138,7 +138,7 @@
                         </div>
                         <div>
                             <p class="text-sm font-bold text-[#3E2723]">{{ $tx->reason }}</p>
-                            <p class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">{{ $tx->created_at->format('h:i A') }} • {{ strtoupper(str_replace('_', ' ', $tx->type)) }}</p>
+                            <p class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">{{ $tx->created_at->format('h:i A') }} • {{ $tx->type === 'pay_in' ? 'Cash in' : 'Cash out' }}</p>
                         </div>
                     </div>
                     <span class="font-bold text-sm {{ $tx->type === 'pay_in' ? 'text-green-700' : 'text-red-700' }}">

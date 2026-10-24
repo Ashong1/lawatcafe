@@ -13,7 +13,7 @@
                     confirmText: @js("Yes, add {$label}"),
                     callback: () => { this.disabled = true; document.getElementById(@js("add-time-{$code}-{$minutes}")).submit(); }
                 })"
-                class="min-h-[36px] inline-flex items-center gap-1 px-3 rounded-xl text-xs font-bold text-green-800 bg-green-50 border border-green-200 hover:bg-green-100 transition active:scale-95">
+                class="min-h-[44px] md:min-h-[36px] inline-flex items-center gap-1 px-3 rounded-xl text-xs font-bold text-green-800 bg-green-50 border border-green-200 hover:bg-green-100 transition active:scale-95">
             <x-lucide-timer class="w-4 h-4" /> {{ $label }}
         </button>
     </form>

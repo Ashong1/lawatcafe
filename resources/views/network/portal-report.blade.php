@@ -8,17 +8,21 @@
     $hourLabel = fn (int $h) => \Illuminate\Support\Carbon::createFromTime($h)->format('g A');
     $busiest = array_keys($byHour, max($byHour))[0] ?? null;
 @endphp
+<div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
 <div class="max-w-6xl mx-auto space-y-6">
 
-    <div class="flex flex-wrap items-end justify-between gap-4">
+    <div class="lk-page-head border-b border-[#E6D5C3] pb-5 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-[#3E2723]">Sign-in Report</h1>
-            <p class="text-sm text-[#6D4C41] mt-1">How guests use the Wi-Fi sign-in page. Counts are devices, not page loads.</p>
+            <h2 class="flex items-center gap-3 text-[#3E2723]">
+                <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
+                <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Sign-in Report</span>
+            </h2>
+            <p class="lk-page-desc text-sm text-[#795548] mt-1 font-medium">How guests use the Wi-Fi sign-in page. Counts are devices, not page loads.</p>
         </div>
-        <nav class="inline-flex rounded-xl border border-[#E6D5C3] bg-white p-1" aria-label="Time range">
+        <nav class="self-start md:self-auto inline-flex rounded-xl border border-[#E6D5C3] bg-white p-1" aria-label="Time range">
             @foreach([1 => 'Today', 7 => '7 days', 30 => '30 days'] as $d => $label)
                 <a href="{{ route('network.portal-report', ['days' => $d]) }}" @if($days === $d) aria-current="page" @endif
-                   class="min-h-[36px] px-3 inline-flex items-center rounded-lg text-sm font-semibold {{ $days === $d ? 'bg-[#3E2723] text-white' : 'text-[#5D4037] hover:bg-[#FAF7F2]' }}">{{ $label }}</a>
+                   class="min-h-[44px] px-4 inline-flex items-center rounded-lg text-sm font-semibold {{ $days === $d ? 'bg-[#3E2723] text-white' : 'text-[#5D4037] hover:bg-[#FAF7F2]' }}">{{ $label }}</a>
             @endforeach
         </nav>
     </div>
@@ -58,7 +62,8 @@
                 @endforeach
             </div>
             @if($funnel[1]['value'] > $funnel[2]['value'])
-                <p class="text-sm text-[#5D4037] mt-4">{{ $funnel[1]['value'] - $funnel[2]['value'] }} device(s) typed a code but never got online — see the wrong codes below.</p>
+                @php($stuck = $funnel[1]['value'] - $funnel[2]['value'])
+                <p class="text-sm text-[#5D4037] mt-4">{{ $stuck }} {{ Str::plural('device', $stuck) }} typed a code but never got online. The wrong codes are listed below.</p>
             @endif
         </section>
 
@@ -80,7 +85,7 @@
                 <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>11 PM</span>
             </div>
             <details class="mt-3 text-sm">
-                <summary class="cursor-pointer font-semibold text-[#5D4037]">Show as a table</summary>
+                <summary class="cursor-pointer min-h-[44px] inline-flex items-center font-semibold text-[#5D4037]">Show as a table</summary>
                 <table class="mt-2 w-full text-sm tabular-nums">
                     @foreach($byHour as $h => $n)
                         @if($n)<tr><td class="py-0.5 text-[#5D4037]">{{ $hourLabel($h) }}</td><td class="text-right text-[#3E2723] font-semibold">{{ $n }}</td></tr>@endif
@@ -99,7 +104,7 @@
                         <li class="flex justify-between"><span class="text-[#4A3B32]">{{ \App\Http\Controllers\PortalReportController::REASONS[$reason] ?? $reason }}</span><span class="font-semibold tabular-nums text-[#3E2723]">{{ $n }}</span></li>
                     @endforeach
                 </ul>
-                <table class="mt-4 w-full text-sm">
+                <div class="mt-4 overflow-x-auto"><table class="w-full text-sm">
                     <thead><tr class="text-left text-xs text-[#6D4C41]"><th class="py-1 font-semibold">When</th><th class="font-semibold">Typed</th><th class="font-semibold">Why</th></tr></thead>
                     <tbody>
                         @foreach($recentFailures as $e)
@@ -110,7 +115,7 @@
                             </tr>
                         @endforeach
                     </tbody>
-                </table>
+                </table></div>
             @else
                 <p class="text-sm text-[#5D4037] mt-2">No refused codes in this period.</p>
             @endif
@@ -118,14 +123,14 @@
 
         <section class="rounded-2xl border border-[#F0E6D2] bg-white p-5">
             <h2 class="text-base font-bold text-[#3E2723]">Guests cut off early</h2>
-            <p class="text-sm text-[#6D4C41]">A session that disappeared while its code still had time and nobody disconnected it. {{ $timeUp }} code(s) simply ran out of time.</p>
+            <p class="text-sm text-[#6D4C41]">A session that disappeared while its code still had time and nobody disconnected it. {{ $timeUp }} {{ Str::plural('code', $timeUp) }} simply ran out of time.</p>
             @if($drops->isNotEmpty())
                 @php($idle = $drops->pluck('meta.idle_minutes')->filter(fn ($m) => $m !== null))
                 <p class="text-sm text-[#3E2723] mt-3">
-                    <b>{{ $drops->count() }}</b> drop(s).
-                    @if($idle->isNotEmpty()) Idle for a median of <b>{{ $idle->median() }} min</b> before the drop — if that's always about the same, it's the firewall's idle timeout. @endif
+                    <b>{{ $drops->count() }}</b> {{ Str::plural('drop', $drops->count()) }}.
+                    @if($idle->isNotEmpty()) Idle for a median of <b>{{ $idle->median() }} min</b> before the drop. If that number is always about the same, the router is signing idle guests out. @endif
                 </p>
-                <table class="mt-3 w-full text-sm">
+                <div class="mt-3 overflow-x-auto"><table class="w-full text-sm">
                     <thead><tr class="text-left text-xs text-[#6D4C41]"><th class="py-1 font-semibold">When</th><th class="font-semibold">Code</th><th class="font-semibold text-right">Idle</th><th class="font-semibold text-right">Time left</th></tr></thead>
                     <tbody>
                         @foreach($drops->take(10) as $e)
@@ -137,11 +142,12 @@
                             </tr>
                         @endforeach
                     </tbody>
-                </table>
+                </table></div>
             @else
                 <p class="text-sm text-[#5D4037] mt-2">No early drops recorded in this period.</p>
             @endif
         </section>
     </div>
+</div>
 </div>
 @endsection

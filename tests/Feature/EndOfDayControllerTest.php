@@ -64,7 +64,7 @@ class EndOfDayControllerTest extends TestCase
         $response->assertOk();
         $response->assertSee(route('shift.closing-report', $openShift), false);
         $response->assertSee(route('admin.finance.shift-detail', $closedShift), false);
-        $response->assertSee('View Live');
-        $response->assertSee('Audit Detail');
+        $response->assertSee('See so far');
+        $response->assertSee('Details');
     }
 }

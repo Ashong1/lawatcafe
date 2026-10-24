@@ -11,7 +11,7 @@
                     <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                     <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">AI Agent Permissions</span>
                 </h2>
-                <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Control which actions Barista AI can take on its own vs. propose for your approval.</p>
+                <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Choose what Barista AI may do on its own and what must wait for your OK.</p>
             </div>
         </div>
 

@@ -23,12 +23,12 @@
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6D4C41]">
                         <x-lucide-search class="w-4 h-4" />
                     </div>
-                    <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Find a code" class="w-full pl-10 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-base md:text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="Find a code" class="w-full pl-10 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-base md:text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                 </div>
             </div>
             <div class="w-32 shrink-0 md:w-auto">
                 <label for="status" class="sr-only md:not-sr-only md:block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Status</label>
-                <select id="status" name="status" @change="if (window.innerWidth < 768) $el.form.submit()" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-3 md:px-4 py-2.5 text-base md:text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                <select id="status" name="status" @change="if (window.innerWidth < 768) $el.form.submit()" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-3 md:px-4 py-2.5 text-base md:text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                     <option value="">All codes</option>
                     <option value="available" {{ request('status') === 'available' ? 'selected' : '' }}>Available</option>
                     <option value="used" {{ request('status') === 'used' ? 'selected' : '' }}>Used</option>
@@ -51,26 +51,24 @@
             </div>
             
             <div class="flex items-center gap-2 sm:gap-3 flex-wrap w-full md:w-auto">
-                <!-- Batch Print -->
                 <button @click="printSelected()" 
                         x-show="selectedVouchers.length > 0"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-blue-600/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2"
+                        class="min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-blue-600/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2"
                         style="display: none;">
                     <x-lucide-printer class="w-3.5 h-3.5" />
                     <span x-text="'Print (' + selectedVouchers.length + ')'"></span>
                 </button>
 
                 @if(auth()->user()->isAdminOrAbove())
-                <!-- Bulk Delete -->
                 <button @click="deleteSelected()"
                         x-show="selectedVouchers.length > 0"
                         aria-label="Delete selected codes"
-                        class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-red-500/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2"
+                        class="min-h-[44px] bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-red-500/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2"
                         style="display: none;">
                     <x-lucide-trash-2 class="w-3.5 h-3.5" />
+                    <span x-text="'Delete (' + selectedVouchers.length + ')'"></span>
                 </button>
 
-                <!-- Auto Purge -->
                 <form action="{{ route('network.vouchers.purge') }}" method="POST" id="purge-form">
                     @csrf
                     <button type="button" 
@@ -81,18 +79,18 @@
                                 confirmText: 'Yes, clear them',
                                 callback: () => document.getElementById('purge-form').submit()
                             })"
-                            class="bg-amber-600 hover:bg-amber-700 text-white px-4 sm:px-5 py-2.5 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
+                            class="min-h-[44px] bg-white border-2 border-amber-300 hover:bg-amber-50 text-amber-800 px-4 sm:px-5 py-2 rounded-full font-bold transition text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                         <x-lucide-trash-2 class="w-3.5 h-3.5" />
-                        Clear Used<span class="hidden sm:inline"> Codes</span>
+                        Clear used<span class="hidden sm:inline">&nbsp;codes</span>
                     </button>
                 </form>
                 @endif
 
                 <x-ask-ai-button prompt="Make a new batch of Wi-Fi codes." label="Ask Barista AI" class="py-2.5" />
 
-                <button @click="submitting = false; isModalOpen = true" class="order-first md:order-none w-full md:w-auto justify-center bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
+                <button @click="submitting = false; isModalOpen = true" class="order-first md:order-none w-full md:w-auto min-h-[44px] justify-center bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                     <x-lucide-plus class="w-4 h-4" />
-                    <span>Make Codes</span>
+                    <span>Make codes</span>
                 </button>
             </div>
         </div>
@@ -102,8 +100,10 @@
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                         @if(auth()->user()->isAdminOrAbove())
-                        <th class="pb-4 w-10">
-                            <input type="checkbox" @change="toggleAll()" :checked="allSelected" class="rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
+                        <th class="pb-4 w-12">
+                            <label class="inline-flex items-center justify-center w-11 h-11 cursor-pointer">
+                                <input type="checkbox" @change="toggleAll()" :checked="allSelected" aria-label="Select all codes on this page" class="w-5 h-5 rounded border-[#D7CCC8] text-[#3E2723] focus:ring-[#3E2723]">
+                            </label>
                         </th>
                         @endif
                         <th class="pb-4 font-bold">Code</th>
@@ -119,15 +119,17 @@
                         <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors" :class="selectedVouchers.includes({{ $voucher->id }}) ? 'bg-amber-50/50' : ''">
                             @if(auth()->user()->isAdminOrAbove())
                             <td class="py-4">
-                                <input type="checkbox" value="{{ $voucher->id }}" x-model="selectedVouchers" class="rounded border-[#F0E6D2] text-[#3E2723] focus:ring-[#3E2723]">
+                                <label class="inline-flex items-center justify-center w-11 h-11 cursor-pointer">
+                                    <input type="checkbox" value="{{ $voucher->id }}" x-model="selectedVouchers" aria-label="Select {{ $voucher->code }}" class="w-5 h-5 rounded border-[#D7CCC8] text-[#3E2723] focus:ring-[#3E2723]">
+                                </label>
                             </td>
                             @endif
                             <td class="py-4 font-extrabold text-amber-700 text-base tracking-widest font-mono">
                                 {{ $voucher->code }}
-                                <span class="block text-xs text-[#6D4C41] font-medium tracking-normal md:hidden">{{ $voucher->duration_minutes }} Mins</span>
+                                <span class="block text-xs text-[#6D4C41] font-medium tracking-normal md:hidden" style="font-family: 'Montserrat', sans-serif;">{{ $voucher->duration_minutes }} min · {{ $voucher->tier === 'premium' ? 'Premium' : 'Free' }}</span>
                             </td>
                             <td class="py-4 text-[#795548] font-bold hidden md:table-cell">
-                                {{ $voucher->duration_minutes }} Mins
+                                {{ $voucher->duration_minutes }} min
                             </td>
                             <td class="py-4 hidden md:table-cell">
                                 @if($voucher->tier === 'premium')
@@ -149,12 +151,13 @@
                                 <span class="block text-xs text-[#6D4C41]">{{ $voucher->created_at->format('h:i A') }}</span>
                             </td>
                             <td class="py-4 text-right">
-                                <div class="flex justify-end gap-2">
+                                <div class="flex justify-end gap-1">
                                     
+                                    {{-- The Android app has no tabs, so it opens the slip in place. --}}
                                     <a href="{{ route('network.vouchers.print', $voucher->id) }}"
-                                       target="_blank"
-                                       class="p-2 text-[#795548] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition"
-                                       title="Print" aria-label="Print">
+                                       @if(! str_contains(request()->userAgent() ?? '', 'LawatKapeApp')) target="_blank" @endif
+                                       class="w-11 h-11 inline-flex items-center justify-center text-[#795548] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition"
+                                       title="Print slip" aria-label="Print slip for {{ $voucher->code }}">
                                         <x-lucide-printer class="w-4 h-4" />
                                     </a>
 
@@ -167,10 +170,10 @@
                                                     title: 'Delete this code?',
                                                     text: 'It will stop working and can\'t be brought back.',
                                                     icon: 'warning',
-                                                    confirmText: 'Yes, Delete',
+                                                    confirmText: 'Yes, delete',
                                                     callback: () => document.getElementById('delete-voucher-{{ $voucher->id }}').submit()
                                                 })"
-                                                class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete" aria-label="Delete">
+                                                class="w-11 h-11 inline-flex items-center justify-center text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition" title="Delete" aria-label="Delete {{ $voucher->code }}">
                                             <x-lucide-trash-2 class="w-4 h-4" />
                                         </button>
                                     </form>
@@ -182,8 +185,8 @@
                     @empty
                         <tr>
                             <td colspan="{{ auth()->user()->isAdminOrAbove() ? 7 : 6 }}" class="py-16 text-center">
-                                <div class="flex flex-col items-center opacity-30">
-                                    <x-lucide-ticket class="w-10 h-10 mb-3" />
+                                <div class="flex flex-col items-center">
+                                    <x-lucide-ticket class="w-10 h-10 mb-3 text-[#D7CCC8]" />
                                     <p class="text-[#6D4C41] text-sm font-medium">No codes found.</p>
                                 </div>
                             </td>
@@ -198,7 +201,6 @@
     </div>
 
     @if(auth()->user()->isAdminOrAbove())
-    <!-- Hidden Bulk Delete Form -->
     <form id="bulk-delete-form" action="{{ route('network.vouchers.bulk-delete') }}" method="POST" class="hidden">
         @csrf
         <template x-for="id in selectedVouchers">
@@ -207,9 +209,8 @@
     </form>
     @endif
 
-    <!-- Generation Modal -->
-    <x-modal-shell show="isModalOpen" max-width="xl" panel-class="rounded-2xl p-5 sm:p-8 border-t-8 border-[#3E2723]" labelled-by="generate-vouchers-heading">
-            <h2 id="generate-vouchers-heading" class="text-2xl font-bold text-[#3E2723] mb-6 uppercase tracking-wide">Make Wi-Fi Codes</h2>
+    <x-modal-shell show="isModalOpen" max-width="xl" panel-class="rounded-2xl p-5 sm:p-8" labelled-by="generate-vouchers-heading">
+            <h2 id="generate-vouchers-heading" class="text-2xl font-bold text-[#3E2723] mb-6">Make Wi-Fi codes</h2>
 
             <form action="{{ route('network.vouchers.generate') }}" method="POST" @submit="submitting = true">
                 @csrf
@@ -260,7 +261,7 @@
 
                 <div class="flex gap-4">
                     <button type="button" @click="isModalOpen = false" class="flex-1 py-3.5 bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#795548] hover:bg-[#FDF8F5] font-bold transition text-sm tracking-wide">Cancel</button>
-                    <x-submit-button label="Make Codes" />
+                    <x-submit-button label="Make codes" />
                 </div>
             </form>
     </x-modal-shell>

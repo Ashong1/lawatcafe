@@ -117,30 +117,25 @@
               the blur was barely visible anyway. --}}
          class="fixed inset-0 z-[90] bg-black/70 flex flex-col items-center justify-center gap-4 text-white text-center px-6">
         <x-lucide-loader-2 class="w-10 h-10 animate-spin text-amber-500" />
-        <p class="text-sm font-bold uppercase tracking-wide">Redeeming your voucher…</p>
-        <p class="text-xs text-white/60 font-medium max-w-xs">Please don't close this window.</p>
+        <p class="text-base font-bold">{{ __('Checking your code…') }}</p>
+        <p class="text-sm text-white/80 font-medium max-w-xs">{{ __("Please don't close this window.") }}</p>
     </div>
 
-    <!-- Main Compact Card -->
-    {{-- Phone sizing is shared verbatim with portal/status and portal/success:
-         w-[92%] max-w-[420px] h-[88dvh] max-h-[640px]. The three pages used to
-         each carry their own numbers (90%/360px/85dvh here against
-         96%/672px/92dvh on the other two), so on a phone the card visibly
-         jumped wider and roughly 180px taller the instant a code was accepted —
-         mid-flow, on the one screen a guest is already unsure about. Desktop
-         still diverges on purpose: this is a narrow entry card, those are
-         two-column panels. --}}
+    {{-- Phone sizing is shared verbatim with portal/success (and portal/status
+         from sm up): w-[92%] max-w-[420px] h-[88dvh] max-h-[640px], so the card
+         keeps its shape through the flow. Desktop diverges on purpose: this is a
+         narrow entry card, those are two-column panels. --}}
     <div class="portal-card relative z-10 w-[92%] max-w-[420px] h-[88dvh] max-h-[640px] rounded-[2rem] md:rounded-[2.5rem] md:max-w-[450px] md:h-[700px] md:max-h-[80vh]">
         
         <!-- 1. Header (Fixed) -->
-        <div class="shrink-0 bg-[#3E2723] p-5 text-center relative overflow-hidden border-b border-[#271815]">
+        <div class="shrink-0 bg-[#3E2723] px-5 py-4 sm:p-5 text-center relative overflow-hidden border-b border-[#271815]">
             <div class="absolute -top-12 -left-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
             <div class="relative z-10 flex flex-col items-center">
                 <div class="flex items-center gap-3 mb-1">
                     <x-lucide-coffee class="w-6 h-6 text-amber-500" />
                     <h1 class="text-3xl font-bold text-white leading-none" style="font-family: 'Dancing Script', cursive;">Lawa't Kape</h1>
                 </div>
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/30 border border-white/10 mb-3">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/30 border border-white/10 mb-2 sm:mb-3">
                     {{-- A guest who hasn't tried anything yet is not "disconnected"
                          — a red pulsing pill on arrival read as "the Wi-Fi is
                          broken". Neutral until they act; red is for real failures. --}}
@@ -178,8 +173,8 @@
                     @if($timeUp)
                         {{-- The firewall cut this phone off when its time ran out; say so,
                              instead of a bare "Connect" page that reads as a broken code. --}}
-                        <div class="relative z-10 mb-5 rounded-3xl border-2 border-amber-200 bg-amber-50 p-5 text-center">
-                            <x-lucide-timer class="w-8 h-8 text-amber-700 mx-auto mb-2" />
+                        <div class="relative z-10 mb-4 rounded-3xl border-2 border-amber-200 bg-amber-50 p-4 sm:p-5 text-center">
+                            <x-lucide-timer class="hidden sm:block w-8 h-8 text-amber-700 mx-auto mb-2" />
                             <h2 class="text-xl font-bold text-[#3E2723]">{{ __('Your Wi-Fi time is up') }}</h2>
                             <p class="text-base text-[#5D4037] mt-1">{{ __('Code :code ended at :time.', ['code' => $timeUp->code, 'time' => $timeUp->ended_at->format('g:i A')]) }}</p>
                             <form action="{{ route('portal.more-time') }}" method="POST" class="mt-4" x-data="{ sending: false }" @submit="sending = true">
@@ -192,8 +187,8 @@
                         </div>
                         <p class="relative z-10 text-center text-base font-semibold text-[#5D4037] mb-3">{{ __('Have a new code? Type it below.') }}</p>
                     @else
-                    <div class="text-center mb-6 shrink-0 relative z-10">
-                        <div class="inline-block p-3 rounded-full bg-amber-50 border border-amber-100 mb-4">
+                    <div class="text-center mb-3 sm:mb-6 shrink-0 relative z-10">
+                        <div class="hidden sm:inline-block p-3 rounded-full bg-amber-50 border border-amber-100 mb-4">
                             <x-lucide-wifi class="w-6 h-6 text-amber-800" stroke-width="2.5" />
                         </div>
                         <h2 class="text-2xl font-bold text-[#3E2723] mb-1 tracking-tight">{{ __('Connect to Wi-Fi') }}</h2>
@@ -214,7 +209,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('portal.authenticate') }}" method="POST" id="lawat-login-form" class="space-y-6 relative z-10" @submit.prevent="submitForm($event)">
+                    <form action="{{ route('portal.authenticate') }}" method="POST" id="lawat-login-form" class="space-y-3 sm:space-y-6 relative z-10" @submit.prevent="submitForm($event)">
                         @csrf
                         <input type="hidden" name="zone" value="{{ \App\Models\Setting::get('opnsense_zone', '0') }}">
                         <div class="space-y-3">
@@ -368,8 +363,7 @@ document.addEventListener('alpine:init', () => {
         connectionStatus: 'idle',
 
         init() {
-            // The embedded agent-chat component instance owns its own chat state/scrolling now —
-            // just tell it when the "help" tab becomes visible so it can scroll itself.
+            // The chat scrolls itself; it only needs to know when its tab is shown.
             this.$watch('activeTab', value => {
                 if (value === 'help') {
                     window.dispatchEvent(new CustomEvent('portal-tab-changed'));
@@ -388,7 +382,7 @@ document.addEventListener('alpine:init', () => {
         },
 }));
 
-// Mobile Keyboard Layout Shift Fix: Center focused inputs
+// Keeps a focused field above the phone keyboard.
 document.querySelectorAll('input').forEach(input => {
     input.addEventListener('focus', function() {
         setTimeout(() => {

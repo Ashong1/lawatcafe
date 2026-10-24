@@ -16,14 +16,14 @@
     <div class="space-y-6">
         @forelse($runs as $run)
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div class="flex items-center gap-3">
                     <div class="p-2 bg-amber-100 rounded-xl">
                         <x-lucide-radar class="w-5 h-5 text-amber-700" />
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold uppercase tracking-wide text-[#3E2723]">Check</h3>
-                        <p class="text-xs text-[#6D4C41] font-bold uppercase tracking-wider">{{ $run->created_at->diffForHumans() }} &middot; {{ $run->created_at->format('M d, Y h:i A') }}</p>
+                        <h3 class="text-sm font-bold text-[#3E2723]">{{ $run->created_at->format('M d, Y · h:i A') }}</h3>
+                        <p class="text-xs text-[#6D4C41] font-medium">{{ $run->created_at->diffForHumans() }}</p>
                     </div>
                 </div>
                 <span class="text-xs font-bold uppercase tracking-wide text-[#795548] bg-[#FDF8F5] border border-[#F0E6D2] px-3 py-1 rounded-full">{{ $run->signal_count }} {{ Str::plural('thing', $run->signal_count) }} noticed</span>
@@ -38,8 +38,8 @@
                 <div class="flex items-start gap-3 p-3 rounded-xl {{ $finding->severity === 'danger' ? 'bg-red-50' : 'bg-amber-50' }}">
                     <span class="w-2 h-2 rounded-full mt-1.5 shrink-0 {{ $finding->severity === 'danger' ? 'bg-red-500' : 'bg-amber-500' }}"></span>
                     <div class="flex-1 min-w-0">
-                        <p class="text-xs font-bold {{ $finding->severity === 'danger' ? 'text-red-800' : 'text-amber-900' }}">{{ $finding->summary }}</p>
-                        <p class="text-xs font-bold {{ $finding->severity === 'danger' ? 'text-red-700' : 'text-amber-800' }} mt-0.5">{{ \App\Support\AgentActivityEntry::signalLabel($finding->type) }} &middot; {{ $finding->created_at->diffForHumans() }}</p>
+                        <p class="text-sm font-bold {{ $finding->severity === 'danger' ? 'text-red-800' : 'text-amber-900' }}">{{ $finding->summary }}</p>
+                        <p class="text-xs font-medium {{ $finding->severity === 'danger' ? 'text-red-700' : 'text-amber-800' }} mt-0.5">{{ \App\Support\AgentActivityEntry::signalLabel($finding->type) }} &middot; {{ $finding->created_at->diffForHumans() }}</p>
                     </div>
                 </div>
                 @endforeach
@@ -47,9 +47,9 @@
         </div>
         @empty
         <div class="bg-white p-16 rounded-2xl shadow-sm border border-[#F0E6D2] text-center">
-            <div class="flex flex-col items-center opacity-30">
-                <x-lucide-radar class="w-12 h-12 mb-4" />
-                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-wide">No analysis runs yet.</p>
+            <div class="flex flex-col items-center">
+                <x-lucide-radar class="w-10 h-10 mb-3 text-[#D7CCC8]" />
+                <p class="text-[#6D4C41] text-sm font-medium">Nothing yet. Barista AI checks sales and the Wi-Fi every 15 minutes, and what it notices shows up here.</p>
             </div>
         </div>
         @endforelse

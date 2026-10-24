@@ -32,8 +32,8 @@
         'unknown_devices' => [route('network.sessions'), 'Review devices'],
     ]);
     $tips = [
-        'internet' => "If this fails: check the internet provider's router and its cables, then switch it off and on.",
-        'firewall' => 'If this fails: check that the server is switched on and its network cables are plugged in.',
+        'internet' => "Try this: check the internet provider's router and its cables, then switch it off and on.",
+        'firewall' => 'Try this: check that the server is switched on and its network cables are plugged in.',
     ];
     $checkedAt = \Carbon\Carbon::parse($latest['checked_at']);
 @endphp
@@ -93,7 +93,7 @@
                     <p class="text-xs text-[#6D4C41]">{{ $tips[$key] }}</p>
                 @endif
                 @if(isset($goTo[$key]))
-                    <a href="{{ $goTo[$key][0] }}" class="mt-auto min-h-[36px] inline-flex items-center text-sm font-bold text-amber-800 hover:text-amber-900">{{ $goTo[$key][1] }} &rarr;</a>
+                    <a href="{{ $goTo[$key][0] }}" class="mt-auto min-h-[44px] inline-flex items-center text-sm font-bold text-amber-800 hover:text-amber-900">{{ $goTo[$key][1] }} &rarr;</a>
                 @endif
             </section>
         @endforeach

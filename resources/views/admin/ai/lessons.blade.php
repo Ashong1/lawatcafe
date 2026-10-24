@@ -166,8 +166,8 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide opacity-50 py-8">
-                        Nothing to review. The assistant proposes lessons once an hour, when there is enough new feedback to generalise from.
+                    <p class="text-center text-[#6D4C41] text-sm font-medium py-8 max-w-md mx-auto">
+                        Nothing to review. Barista AI suggests lessons once an hour, when there is enough new feedback to learn from.
                     </p>
                 @endforelse
             </div>
@@ -203,7 +203,7 @@
                         </form>
                     </div>
                 @empty
-                    <p class="text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide opacity-50 py-6">No approved lessons yet.</p>
+                    <p class="text-center text-[#6D4C41] text-sm font-medium py-6">No approved lessons yet.</p>
                 @endforelse
             </div>
         </div>

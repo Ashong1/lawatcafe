@@ -8,9 +8,8 @@ use App\Services\TrafficShapingService;
 use Illuminate\Console\Command;
 
 /**
- * A single per-device bandwidth ceiling on the guest interface — the shaping
- * this OPNsense build can enforce (per-tier caps can't: shaper rules accept
- * only "any" as source/destination; see docs/INFRASTRUCTURE.md).
+ * A single per-device bandwidth ceiling on the guest interface, underneath the
+ * per-plan caps (those list member IPs; see docs/INFRASTRUCTURE.md).
  *
  * Safe shop-wide because:
  *  1. the pipe masks by dst-ip/src-ip, so every address gets its own queue —

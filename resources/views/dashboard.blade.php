@@ -42,9 +42,7 @@
     </template>
 </div>
 
-{{-- Quick actions: one neutral style. Each used to have its own hover color
-     (amber, blue, slate, indigo), which spent color on decoration and left
-     nothing to signal an actual problem. --}}
+{{-- Quick actions share one neutral style so color stays free to signal a problem. --}}
 <div class="grid grid-cols-2 sm:flex sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3 mb-6">
     @php
         $quickActions = array_filter([
@@ -87,7 +85,7 @@
 
     <a href="{{ route('network.vouchers.index') }}" class="dash-card-in [animation-delay:150ms] bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-[#F0E6D2] hover:shadow-md hover:border-[#3E2723]/30 transition-all">
         <div class="flex justify-between items-start mb-3">
-            <h3 class="text-sm font-bold text-[#795548]">Voucher stock</h3>
+            <h3 class="text-sm font-bold text-[#795548]">Wi-Fi codes left</h3>
             <x-lucide-ticket class="w-5 h-5 text-amber-700" />
         </div>
         <p class="text-3xl sm:text-4xl font-bold text-[#3E2723]" x-text="Math.round(live.availableVouchers)">{{ $availableVouchers ?? 0 }}</p>
@@ -101,7 +99,7 @@
             <x-lucide-alert-triangle class="w-5 h-5" x-bind:class="live.lowStockCount > 0 ? 'text-red-600' : 'text-green-700'" />
         </div>
         <p class="text-3xl sm:text-4xl font-bold" :class="live.lowStockCount > 0 ? 'text-[#C62828]' : 'text-green-700'" x-text="Math.round(live.lowStockCount)">{{ $lowStockCount ?? 0 }}</p>
-        <p class="text-xs font-medium mt-1" :class="live.lowStockCount > 0 ? 'text-red-800' : 'text-green-800'" x-text="live.lowStockCount > 0 ? 'ingredients need restocking' : 'inventory healthy'">{{ ($lowStockCount ?? 0) > 0 ? 'ingredients need restocking' : 'inventory healthy' }}</p>
+        <p class="text-xs font-medium mt-1" :class="live.lowStockCount > 0 ? 'text-red-800' : 'text-green-800'" x-text="live.lowStockCount > 0 ? 'ingredients need restocking' : 'nothing running low'">{{ ($lowStockCount ?? 0) > 0 ? 'ingredients need restocking' : 'nothing running low' }}</p>
     </a>
 </div>
 
@@ -181,7 +179,7 @@
             <thead>
                 <tr class="text-xs font-bold text-[#795548] border-b border-[#F0E6D2]">
                     <th class="pb-2">Code</th>
-                    <th class="pb-2 text-center">Time</th>
+                    <th class="pb-2 text-center">Length</th>
                     <th class="pb-2 text-right">Status</th>
                 </tr>
             </thead>
@@ -193,18 +191,18 @@
                             <div class="flex flex-col items-center">
                                 <span class="text-[#6D4C41] font-medium" x-text="voucher.duration_minutes + ' min'"></span>
                                 <template x-if="voucher.percent !== null && voucher.percent > 0">
-                                    <div class="w-12 bg-gray-100 rounded-full h-1 mt-1 overflow-hidden" :title="voucher.remaining_minutes + ' mins remaining'">
+                                    <div class="w-12 bg-gray-100 rounded-full h-1 mt-1 overflow-hidden" :title="voucher.remaining_minutes + ' min left'">
                                         <div class="h-full w-full origin-left transition-transform duration-1000" :class="voucher.color" :style="'transform: scaleX(' + (voucher.percent / 100) + ')'"></div>
                                     </div>
                                 </template>
                             </div>
                         </td>
                         <td class="py-2.5 text-right">
-                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold" :class="voucher.is_used ? 'bg-gray-100 text-gray-700' : 'bg-green-50 text-green-800 border border-green-200'" x-text="voucher.is_used ? 'Claimed' : 'Available'"></span>
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold" :class="voucher.is_used ? 'bg-gray-100 text-gray-700' : 'bg-green-50 text-green-800 border border-green-200'" x-text="voucher.is_used ? 'Used' : 'Available'"></span>
                         </td>
                     </tr>
                 </template>
-                <tr x-show="live.recentVouchers.length === 0"><td colspan="3" class="py-10 text-center text-[#6D4C41] text-sm">No vouchers yet.</td></tr>
+                <tr x-show="live.recentVouchers.length === 0"><td colspan="3" class="py-10 text-center text-[#6D4C41] text-sm">No Wi-Fi codes yet.</td></tr>
             </tbody>
         </table>
     </div>
@@ -259,9 +257,17 @@
 
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col gap-6">
         <div>
-            <h3 class="text-sm font-bold text-[#3E2723] mb-2">Cash taken</h3>
-            <p class="text-2xl font-bold text-[#3E2723]" x-text="'₱' + Math.round(live.paymentBreakdown['Cash'] || 0).toLocaleString()"></p>
-            <p class="text-xs text-[#6D4C41] font-medium mt-1">The register takes cash only.</p>
+            <h3 class="text-sm font-bold text-[#3E2723] mb-2">How guests paid</h3>
+            <dl class="grid grid-cols-2 gap-3">
+                <div>
+                    <dt class="text-xs font-medium text-[#6D4C41]">Cash</dt>
+                    <dd class="text-2xl font-bold text-[#3E2723]" x-text="'₱' + Math.round(live.paymentBreakdown['Cash'] || 0).toLocaleString()"></dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-medium text-[#6D4C41]">E-wallet</dt>
+                    <dd class="text-2xl font-bold text-[#3E2723]" x-text="'₱' + Math.round(Object.entries(live.paymentBreakdown).reduce((sum, [method, total]) => method === 'Cash' ? sum : sum + Number(total), 0)).toLocaleString()"></dd>
+                </div>
+            </dl>
         </div>
         <div>
             <h3 class="text-sm font-bold text-[#3E2723] mb-2">Menu mix</h3>
@@ -336,7 +342,7 @@
 
     <!-- AI Insights Modal -->
     <x-modal-shell show="showInsightsModal" max-width="2xl" panel-class="p-5 sm:p-8 border-t-8 border-[#3E2723] max-h-[90vh] flex flex-col relative" labelled-by="ai-insights-heading">
-            <button @click="showInsightsModal = false" aria-label="Close" class="absolute top-6 right-6 text-[#6D4C41] hover:text-[#3E2723] transition">
+            <button @click="showInsightsModal = false" aria-label="Close" class="absolute top-3 right-3 w-11 h-11 inline-flex items-center justify-center rounded-xl text-[#6D4C41] hover:text-[#3E2723] transition">
                 <x-lucide-x class="w-6 h-6" />
             </button>
 
@@ -350,16 +356,8 @@
                 </div>
             </div>
 
-            {{-- Loading State.
-                 A skeleton in the shape of the answer, not three bouncing dots
-                 in the middle of an empty panel. The forecast is normally
-                 served from a warm cache in milliseconds, but when that cache
-                 misses this is a full multi-provider AI call — the better part
-                 of ten seconds — and the old spinner spent all of it telling
-                 nobody anything about what was coming.
-
-                 The wording stays: this one really is analysing, and saying so
-                 is why a nine-second wait is tolerable rather than broken. --}}
+            {{-- Skeleton shaped like the answer: a cold cache means a full AI call of
+                 up to ~10 s, and saying it is reading the sales keeps that wait tolerable. --}}
             <div x-show="loadingInsights" class="flex-1 space-y-6 py-2">
                 <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Reading your sales…</p>
 
@@ -404,17 +402,17 @@
                     <div class="bg-blue-50 border border-blue-200 p-4 rounded-2xl shrink-0">
                         <div class="flex justify-between items-center mb-2">
                             <p class="text-xs font-bold text-blue-800 uppercase tracking-wide">Still learning</p>
-                            <p class="text-xs font-bold text-blue-700" x-text="`${insights?.meta?.transaction_count} / ${insights?.meta?.target_transactions} Transactions`"></p>
+                            <p class="text-xs font-bold text-blue-700" x-text="`${insights?.meta?.transaction_count} of ${insights?.meta?.target_transactions} sales`"></p>
                         </div>
                         <div class="w-full bg-blue-200/50 rounded-full h-2 overflow-hidden mb-2">
                             <div class="bg-blue-600 h-full w-full origin-left transition-transform duration-700" :style="`transform: scaleX(${(insights?.meta?.progress_percent ?? 0) / 100})`"></div>
                         </div>
-                        <p class="text-xs text-blue-800 font-medium">Barista AI is establishing a baseline. Accuracy will improve as more sales are recorded.</p>
+                        <p class="text-xs text-blue-800 font-medium">Barista AI needs more sales before its forecast is reliable. It gets better with every sale.</p>
                         @unless(auth()->user()->isSuperAdmin())
                         <div class="mt-3">
-                            <a href="{{ route('pos') }}" class="inline-flex items-center gap-2 text-xs font-bold text-blue-700 bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded-lg transition-colors">
-                                <x-lucide-shopping-cart class="w-3 h-3" />
-                                Go to POS Register
+                            <a href="{{ route('pos') }}" class="inline-flex items-center gap-2 min-h-[44px] text-xs font-bold text-blue-700 bg-blue-100 hover:bg-blue-200 px-3 rounded-lg transition-colors">
+                                <x-lucide-shopping-cart class="w-4 h-4" />
+                                Open the register
                             </a>
                         </div>
                         @endunless
@@ -435,7 +433,7 @@
                                 <!-- Tooltip -->
                                 <div class="absolute bottom-full right-0 mb-2 w-48 bg-[#3E2723] text-white text-xs p-2 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-lg z-10">
                                     <p class="font-bold mb-0.5">How sure it is: <span x-text="insights?.meta?.confidence_label"></span></p>
-                                    <p class="text-white/70">Based on <span x-text="insights?.meta?.days_of_data"></span> days of historical data.</p>
+                                    <p class="text-white/70">Based on <span x-text="insights?.meta?.days_of_data"></span> days of sales.</p>
                                 </div>
                             </div>
                         </div>
@@ -505,8 +503,8 @@
                             
                             <!-- Deep Linking / Actions -->
                             <div class="mt-4 flex gap-3">
-                                <a href="{{ route('inventory.ingredients.index') }}" class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-amber-800 hover:text-amber-900 bg-amber-200/50 hover:bg-amber-200 px-3 py-1.5 rounded transition-colors">
-                                    <x-lucide-package class="w-3 h-3" /> Check Inventory
+                                <a href="{{ route('inventory.ingredients.index') }}" class="inline-flex items-center gap-1.5 min-h-[44px] text-xs font-bold uppercase tracking-wide text-amber-800 hover:text-amber-900 bg-amber-200/50 hover:bg-amber-200 px-3 rounded transition-colors">
+                                    <x-lucide-package class="w-4 h-4" /> Check stock
                                 </a>
                             </div>
                         </div>
@@ -558,13 +556,9 @@ document.addEventListener('alpine:init', () => {
         loadingInsights: false,
         insights: null,
         errorInsights: null,
-        // Host metrics (CPU load, memory, temperature) are deliberately absent:
-        // they render only on the super_admin System Control dashboard now, so
-        // tracking and animating them here would be a 3s poll feeding nothing.
-        // The poll itself stays — bandwidth and the guest count still need it.
+        // Host metrics live on the super_admin dashboard; this poll feeds bandwidth and the guest count.
         liveData: {
-            // No rate exists until two counter samples are in. The 0.00 that
-            // used to render meanwhile was a measurement never taken.
+            // No rate exists until two counter samples are in, so show a skeleton, not 0.00.
             hasRate: false,
             bandwidthDown: 0,
             bandwidthUp: 0,
@@ -688,7 +682,7 @@ document.addEventListener('alpine:init', () => {
                         labels: this.live.chartLabels,
                         datasets: [
                             {
-                                label: 'Current Week (₱)',
+                                label: 'This week',
                                 data: this.live.chartValues,
                                 borderColor: '#3E2723',
                                 backgroundColor: gradientFill,
@@ -704,7 +698,7 @@ document.addEventListener('alpine:init', () => {
                                 tension: 0.4
                             },
                             {
-                                label: 'Previous Week (₱)',
+                                label: 'Last week',
                                 data: this.live.lastWeekValues,
                                 borderColor: '#A1887F',
                                 borderWidth: 2,
@@ -727,7 +721,7 @@ document.addEventListener('alpine:init', () => {
                                     boxWidth: 10,
                                     usePointStyle: true,
                                     pointStyle: 'circle',
-                                    font: { family: 'Montserrat', size: 10, weight: 'bold' }
+                                    font: { family: 'Montserrat', size: 12, weight: 'bold' }
                                 }
                             },
                             tooltip: {
@@ -746,7 +740,7 @@ document.addEventListener('alpine:init', () => {
                         },
                         scales: {
                             x: { grid: { display: false }, ticks: { font: { family: 'Montserrat', weight: '500' }, color: '#8D6E63' } },
-                            y: { beginAtZero: true, grid: { borderDash: [5, 5], color: '#F0E6D2' }, ticks: { font: { family: 'Montserrat', weight: '500' }, color: '#8D6E63', callback: function(value) { return '₱' + value; } } }
+                            y: { beginAtZero: true, grid: { borderDash: [5, 5], color: '#F0E6D2' }, ticks: { precision: 0, font: { family: 'Montserrat', weight: '500' }, color: '#8D6E63', callback: function(value) { return '₱' + value; } } }
                         }
                     }
                 });
@@ -773,7 +767,7 @@ document.addEventListener('alpine:init', () => {
                         plugins: {
                             legend: {
                                 position: 'bottom',
-                                labels: { family: 'Montserrat', usePointStyle: true, pointStyle: 'circle', padding: 15, color: '#4A3B32', font: { weight: '600', size: 10 } }
+                                labels: { family: 'Montserrat', usePointStyle: true, pointStyle: 'circle', padding: 15, color: '#4A3B32', font: { weight: '600', size: 12 } }
                             }
                         }
                     }
@@ -861,7 +855,7 @@ document.addEventListener('alpine:init', () => {
                 const response = await fetch('{{ route("admin.ai.insights") }}', { headers: { 'Accept': 'application/json' } });
 
                 if (!response.ok) {
-                    throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    throw new Error('Barista AI could not make a forecast right now. Try again in a few minutes.');
                 }
 
                 const data = await response.json();
@@ -869,11 +863,14 @@ document.addEventListener('alpine:init', () => {
                 if (data && (data.forecast_total !== undefined || data.is_calibrating)) {
                     this.insights = data;
                 } else {
-                    this.errorInsights = "Unable to generate insights. Data schema mismatch.";
+                    this.errorInsights = 'Barista AI sent back an answer it could not read. Try again in a few minutes.';
                 }
             } catch (error) {
                 console.error('AI Insights Error:', error);
-                this.errorInsights = error.message || "Failed to connect to analytical servers.";
+                // A TypeError is the browser failing to connect; its message is not for people.
+                this.errorInsights = error instanceof TypeError || !error.message
+                    ? 'Could not reach Barista AI. Check the internet connection and try again.'
+                    : error.message;
             } finally {
                 this.loadingInsights = false;
             }

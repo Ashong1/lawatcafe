@@ -11,7 +11,7 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Purchase Orders</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Review, send, or dismiss purchase order drafts (drafted by Barista AI when stock runs low).</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Barista AI drafts an order when an ingredient runs low. Send it to the supplier, or delete it.</p>
         </div>
 
         <x-ask-ai-button prompt="Draft purchase orders for any ingredients that are currently low on stock." label="Ask Barista AI to draft orders" />
@@ -21,8 +21,8 @@
 
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Draft & Sent Orders</h3>
-                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Send a draft to email the linked supplier, or dismiss it if it's no longer needed.</p>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Orders</h3>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Sending emails the supplier when one is on file.</p>
             </div>
         </div>
 
@@ -77,10 +77,10 @@
                                     @csrf
                                     <button type="button"
                                             onclick="window.confirmAction({
-                                                title: 'Send Purchase Order?',
-                                                text: 'This will email the linked supplier (if on file) and mark the draft as sent.',
+                                                title: 'Send this order?',
+                                                text: 'It is emailed to the supplier if they have an email on file, and marked as sent.',
                                                 icon: 'info',
-                                                confirmText: 'Yes, Send',
+                                                confirmText: 'Send',
                                                 callback: () => {
                                                     this.disabled = true;
                                                     this.classList.add('opacity-40', 'cursor-wait');
@@ -97,10 +97,10 @@
                                     @method('DELETE')
                                     <button type="button"
                                             onclick="window.confirmAction({
-                                                title: 'Delete Draft?',
-                                                text: 'Delete this purchase order draft forever? This cannot be undone.',
+                                                title: 'Delete this draft?',
+                                                text: 'This cannot be undone.',
                                                 icon: 'warning',
-                                                confirmText: 'Yes, Delete',
+                                                confirmText: 'Delete',
                                                 callback: () => {
                                                     this.disabled = true;
                                                     this.classList.add('opacity-40', 'cursor-wait');
@@ -117,9 +117,9 @@
                     @empty
                     <tr>
                         <td colspan="7" class="py-20 text-center">
-                            <div class="flex flex-col items-center opacity-30">
-                                <x-lucide-file-text class="w-12 h-12 mb-4" />
-                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-wide">No purchase order drafts yet.</p>
+                            <div class="flex flex-col items-center max-w-sm mx-auto">
+                                <x-lucide-file-text class="w-10 h-10 mb-3 text-[#D7CCC8]" />
+                                <p class="text-[#6D4C41] text-sm font-medium">No orders yet. Barista AI drafts one here when an ingredient runs low.</p>
                             </div>
                         </td>
                     </tr>

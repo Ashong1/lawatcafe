@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() === 'fil' ? 'fil' : 'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {{-- "only light": stops Android/Huawei sign-in windows auto-darkening a page that has no dark theme. --}}
     <meta name="color-scheme" content="only light">
-    <title>Authorizing - Lawa't Kape</title>
+    <title>Connecting - Lawa't Kape</title>
     <!-- Favicons -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=1">
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}?v=1">
@@ -57,8 +57,8 @@
             </div>
         </div>
 
-        <h2 class="text-3xl font-bold text-[#3E2723] mb-4 tracking-tight">Authenticating<span x-show="secondsLeft > 0" x-text="'... (' + secondsLeft + ')'"></span></h2>
-        <p class="text-base text-[#795548] font-medium leading-relaxed max-w-md mx-auto">Verifying voucher and configuring firewall access for your device. Please do not close this window.</p>
+        <h2 class="text-3xl font-bold text-[#3E2723] mb-4 tracking-tight">{{ __('Connecting…') }}</h2>
+        <p class="text-base text-[#795548] font-medium leading-relaxed max-w-md mx-auto">{{ __("Please don't close this window.") }}</p>
 
         {{-- Fills the stretch between the countdown ending and the 8s "taking too
              long" fallback, when the real network wait begins. --}}
@@ -68,15 +68,11 @@
 
         <template x-if="showManualButton">
             <button type="button" @click="document.getElementById('unlock-form').submit()"
-                    class="mt-8 mx-auto inline-flex items-center gap-2 px-6 py-3.5 bg-[#3E2723] hover:bg-[#271815] text-white rounded-full font-bold uppercase tracking-wide text-xs transition active:scale-95">
+                    class="mt-8 mx-auto inline-flex min-h-[48px] items-center gap-2 px-6 py-3.5 bg-[#3E2723] hover:bg-[#271815] text-white rounded-full font-bold text-base transition active:scale-95">
                 <x-lucide-refresh-cw class="w-4 h-4" />
-                Taking too long? Tap to retry
+                {{ __('Taking too long? Try again') }}
             </button>
         </template>
-
-        <div class="mt-12 pt-8 border-t border-[#F0E6D2] opacity-50">
-            <p class="text-xs font-bold uppercase tracking-wide">Directing to Lawa't Core Gateway</p>
-        </div>
     </div>
 
     <!-- The critical hidden form that tells OPNsense to unlock this specific device -->

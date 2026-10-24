@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Services\AccountInviteService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 

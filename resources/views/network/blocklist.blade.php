@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Network Blocklist')
+@section('title', 'Blocked Devices')
 
 @section('content')
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
@@ -15,34 +15,33 @@
         </div>
 
         <div x-data="{ showModal: false, submitting: false }">
-            <button @click="submitting = false; showModal = true" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-lg flex items-center gap-2 text-xs uppercase tracking-wide">
+            <button @click="submitting = false; showModal = true" class="min-h-[44px] bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-lg flex items-center gap-2 text-xs uppercase tracking-wide">
                 <x-lucide-user-x class="w-4 h-4" />
                 <span>Block a device by hand</span>
             </button>
 
-            <!-- Ban Modal -->
-            <x-modal-shell show="showModal" max-width="xl" panel-class="p-5 sm:p-8 border-t-8 border-red-600" labelled-by="ban-device-heading">
-                    <h3 id="ban-device-heading" class="text-xl font-bold text-[#3E2723] mb-2 uppercase tracking-tight">Block a device</h3>
-                    <p class="text-xs text-[#795548] mb-8 font-medium leading-relaxed">For a device that isn't online right now. Its MAC address is in the phone's Wi-Fi settings (Android: Wi-Fi → the network → MAC address; iPhone: Wi-Fi → ⓘ → Wi-Fi Address).</p>
+            <x-modal-shell show="showModal" max-width="xl" panel-class="p-5 sm:p-8" labelled-by="ban-device-heading">
+                    <h3 id="ban-device-heading" class="text-xl font-bold text-[#3E2723] mb-2">Block a device</h3>
+                    <p class="text-sm text-[#795548] mb-6 font-medium leading-relaxed">For a device that isn't online right now. Its MAC address is in the phone's Wi-Fi settings (Android: Wi-Fi → the network → MAC address; iPhone: Wi-Fi → ⓘ → Wi-Fi Address).</p>
 
                     <form action="{{ route('network.blocklist.store') }}" method="POST" class="space-y-6" @submit="submitting = true">
                         @csrf
                         <div>
-                            <label for="mac_address" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">MAC Address</label>
-                            <input type="text" id="mac_address" name="mac_address" required placeholder="00:11:22:33:44:55" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all uppercase font-mono">
+                            <label for="mac_address" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">MAC address</label>
+                            <input type="text" id="mac_address" name="mac_address" required placeholder="00:11:22:33:44:55" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:border-red-500 transition-all uppercase font-mono">
                         </div>
                         <div>
-                            <label for="hostname" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Device Name (Optional)</label>
-                            <input type="text" id="hostname" name="hostname" placeholder="e.g. Table 4 laptop" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723]">
+                            <label for="hostname" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Device name (optional)</label>
+                            <input type="text" id="hostname" name="hostname" placeholder="e.g. Table 4 laptop" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:border-[#3E2723]">
                         </div>
                         <div>
                             <label for="reason" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Why (optional)</label>
-                            <textarea id="reason" name="reason" rows="2" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:border-[#3E2723]"></textarea>
+                            <textarea id="reason" name="reason" rows="2" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-medium focus:outline-none focus:border-[#3E2723]"></textarea>
                         </div>
 
                         <div class="flex gap-3 pt-4">
                             <button type="button" @click="showModal = false" class="flex-1 py-4 bg-[#FDF8F5] text-[#795548] rounded-xl font-bold text-xs uppercase tracking-wide hover:bg-[#F0E6D2] transition">Cancel</button>
-                            <x-submit-button label="Block Device" variant="danger" />
+                            <x-submit-button label="Block device" variant="danger" />
                         </div>
                     </form>
             </x-modal-shell>
@@ -65,7 +64,7 @@
             <table class="lk-stack w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-bold">MAC Address</th>
+                        <th class="pb-4 font-bold">MAC address</th>
                         <th class="pb-4 font-bold">Name</th>
                         <th class="pb-4 font-bold hidden md:table-cell">Reason</th>
                         <th class="pb-4 font-bold hidden md:table-cell">Blocked on</th>
@@ -81,11 +80,11 @@
                             </span>
                         </td>
                         <td class="py-4">
-                            <span class="text-xs font-bold text-[#3E2723] block">{{ $device->hostname ?: 'Unnamed Device' }}</span>
+                            <span class="text-xs font-bold text-[#3E2723] block">{{ $device->hostname ?: 'Unnamed device' }}</span>
                             <span class="text-xs text-[#6D4C41] font-medium md:hidden">{{ $device->created_at->format('M d, Y') }}</span>
                         </td>
                         <td class="py-4 hidden md:table-cell">
-                            <span class="text-xs text-[#795548] font-medium italic">{{ $device->reason ?: 'No reason provided' }}</span>
+                            <span class="text-xs text-[#795548] font-medium">{{ $device->reason ?: '—' }}</span>
                         </td>
                         <td class="py-4 text-[#6D4C41] text-xs font-bold hidden md:table-cell">
                             {{ $device->created_at->format('M d, Y') }}
@@ -102,19 +101,18 @@
                                             confirmText: 'Yes, unblock',
                                             callback: () => document.getElementById('unban-form-{{ $device->id }}').submit()
                                         })"
-                                        aria-label="Unblock device"
-                                        class="p-2 text-green-500 hover:text-green-700 hover:bg-green-50 rounded-xl transition-all">
-                                    <x-lucide-shield-check class="w-5 h-5" />
+                                        class="min-h-[44px] inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-green-800 bg-green-50 border border-green-200 hover:bg-green-100 transition">
+                                    <x-lucide-shield-check class="w-4 h-4" /> Unblock
                                 </button>
                             </form>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="py-20 text-center opacity-30">
+                        <td colspan="5" class="py-16 text-center">
                             <div class="flex flex-col items-center">
-                                <x-lucide-shield-check class="w-12 h-12 mb-4 text-green-600" />
-                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-wide">No devices are blocked.</p>
+                                <x-lucide-shield-check class="w-10 h-10 mb-3 text-green-600/60" />
+                                <p class="text-[#6D4C41] text-sm font-medium">No devices are blocked.</p>
                             </div>
                         </td>
                     </tr>

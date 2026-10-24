@@ -124,15 +124,14 @@
             </div>
 
             <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col relative overflow-hidden group h-full justify-center">
-                <div class="absolute -right-4 -top-4 w-20 h-20 bg-blue-50 rounded-full z-0 group-hover:scale-125 transition duration-500"></div>
                 <div class="relative z-10 w-full h-full flex flex-col">
-                    <div class="flex justify-between items-center w-full mb-6">
+                    <div class="flex flex-wrap justify-between items-center gap-2 w-full mb-6">
                         <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Network Throughput</h3>
-                        <div class="flex items-center gap-2 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100">
+                        <div class="flex flex-wrap items-center gap-2 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100">
                             @forelse($gateways ?? [] as $gw)
                                 <div class="flex items-center gap-1.5" title="{{ $gw['name'] }}: {{ $gw['status'] }}">
                                     <div class="w-1.5 h-1.5 rounded-full {{ in_array($gw['status'], ['none', 'online'], true) ? 'bg-green-500' : 'bg-red-500' }}"></div>
-                                    <span class="text-xs font-bold uppercase text-slate-400">{{ substr($gw['name'], 0, 4) }}</span>
+                                    <span class="text-xs font-bold text-slate-600">{{ $gw['name'] }}</span>
                                 </div>
                             @empty
                                 <div class="flex items-center gap-2 opacity-80">

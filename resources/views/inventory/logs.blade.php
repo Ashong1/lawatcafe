@@ -16,38 +16,38 @@
     </div>
 
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-6">
-        <form action="{{ route('inventory.logs') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form action="{{ route('inventory.logs') }}" method="GET" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <div>
                 <label for="log-filter-ingredient" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Ingredient</label>
-                <select id="log-filter-ingredient" name="ingredient_id" class="w-full bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl px-4 py-2 text-xs font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
-                    <option value="">All Ingredients</option>
+                <select id="log-filter-ingredient" name="ingredient_id" class="w-full bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl px-4 py-2 min-h-[44px] text-base md:text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
+                    <option value="">All ingredients</option>
                     @foreach($ingredients as $ingredient)
                         <option value="{{ $ingredient->id }}" {{ request('ingredient_id') == $ingredient->id ? 'selected' : '' }}>{{ $ingredient->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div>
-                <label for="log-filter-user" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Admin User</label>
-                <select id="log-filter-user" name="user_id" class="w-full bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl px-4 py-2 text-xs font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
-                    <option value="">All Admins</option>
+                <label for="log-filter-user" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Done by</label>
+                <select id="log-filter-user" name="user_id" class="w-full bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl px-4 py-2 min-h-[44px] text-base md:text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
+                    <option value="">Everyone</option>
                     @foreach($users as $user)
                         <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div>
-                <label for="log-filter-date-from" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Date From</label>
-                <input type="date" id="log-filter-date-from" name="date_from" value="{{ request('date_from') }}" class="w-full bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl px-4 py-2 text-xs font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
+                <label for="log-filter-date-from" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">From</label>
+                <input type="date" id="log-filter-date-from" name="date_from" value="{{ request('date_from') }}" class="w-full bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl px-4 py-2 min-h-[44px] text-base md:text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
             </div>
-            <div class="flex items-end gap-2">
-                <div class="flex-1">
-                    <label for="log-filter-date-to" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Date To</label>
-                    <input type="date" id="log-filter-date-to" name="date_to" value="{{ request('date_to') }}" class="w-full bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl px-4 py-2 text-xs font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
+            <div class="flex items-end gap-2 min-w-0">
+                <div class="flex-1 min-w-0">
+                    <label for="log-filter-date-to" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">To</label>
+                    <input type="date" id="log-filter-date-to" name="date_to" value="{{ request('date_to') }}" class="w-full bg-[#FAFAFA] border border-[#F0E6D2] rounded-xl px-4 py-2 min-h-[44px] text-base md:text-sm font-bold text-[#3E2723] focus:border-[#3E2723] focus:ring-0 transition-all">
                 </div>
-                <button type="submit" class="bg-[#3E2723] text-white p-2.5 rounded-xl hover:bg-[#271815] transition shadow-sm active:scale-95">
+                <button type="submit" aria-label="Apply filters" title="Apply filters" class="shrink-0 w-11 h-11 inline-flex items-center justify-center bg-[#3E2723] text-white rounded-xl hover:bg-[#271815] transition shadow-sm active:scale-95">
                     <x-lucide-search class="w-4 h-4" />
                 </button>
-                <a href="{{ route('inventory.logs') }}" class="bg-[#FAFAFA] text-[#795548] p-2.5 rounded-xl border border-[#F0E6D2] hover:bg-[#FDF8F5] transition active:scale-95" title="Clear Filters" aria-label="Clear Filters">
+                <a href="{{ route('inventory.logs') }}" class="shrink-0 w-11 h-11 inline-flex items-center justify-center bg-[#FAFAFA] text-[#795548] rounded-xl border border-[#F0E6D2] hover:bg-[#FDF8F5] transition active:scale-95" title="Clear filters" aria-label="Clear filters">
                     <x-lucide-rotate-ccw class="w-4 h-4" />
                 </a>
             </div>
@@ -63,9 +63,9 @@
                         <th class="pb-4 font-bold">Date & Time</th>
                         <th class="pb-4 font-bold">Ingredient</th>
                         <th class="pb-4 font-bold">Change</th>
-                        <th class="pb-4 font-bold">Final Stock</th>
+                        <th class="pb-4 font-bold">Stock after</th>
                         <th class="pb-4 font-bold hidden md:table-cell">Reason</th>
-                        <th class="pb-4 font-bold hidden md:table-cell">Admin</th>
+                        <th class="pb-4 font-bold hidden md:table-cell">Done by</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
@@ -99,9 +99,9 @@
                     @empty
                     <tr>
                         <td colspan="6" class="py-16 text-center">
-                            <div class="flex flex-col items-center opacity-30">
-                                <x-lucide-history class="w-10 h-10 mb-3" />
-                                <p class="text-[#6D4C41] text-sm font-medium">No inventory logs found matching your filters.</p>
+                            <div class="flex flex-col items-center max-w-sm mx-auto">
+                                <x-lucide-history class="w-10 h-10 mb-3 text-[#D7CCC8]" />
+                                <p class="text-[#6D4C41] text-sm font-medium">Nothing matches these filters. Try a wider date range or clear the filters.</p>
                             </div>
                         </td>
                     </tr>

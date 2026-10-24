@@ -13,12 +13,12 @@
             <button type="button"
                     onclick="window.confirmAction({
                         title: @js('Trust '.$who.'?'),
-                        text: 'It will connect without a voucher from now on. Use this for shop devices like a printer or the owner\'s laptop.',
+                        text: 'It will connect without a Wi-Fi code from now on. Use this for shop devices like a printer or the owner\'s laptop.',
                         icon: 'question',
                         confirmText: 'Yes, trust it',
                         callback: () => document.getElementById('trust-form-{{ $slug }}').submit()
                     })"
-                    class="min-h-[36px] inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-green-800 bg-green-50 border border-green-200 hover:bg-green-100 transition">
+                    class="min-h-[44px] md:min-h-[36px] inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-green-800 bg-green-50 border border-green-200 hover:bg-green-100 transition">
                 <x-lucide-shield-check class="w-4 h-4" /> Trust
             </button>
         </form>
@@ -37,7 +37,7 @@
                         confirmText: 'Yes, block it',
                         callback: () => document.getElementById('block-form-{{ $slug }}').submit()
                     })"
-                    class="min-h-[36px] inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 transition">
+                    class="min-h-[44px] md:min-h-[36px] inline-flex items-center gap-1.5 px-3 rounded-xl text-xs font-bold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 transition">
                 <x-lucide-ban class="w-4 h-4" /> Block
             </button>
         </form>

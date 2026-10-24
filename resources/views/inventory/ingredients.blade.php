@@ -23,13 +23,13 @@
             </div>
             
             <div class="flex flex-wrap gap-3">
-                <button class="bg-[#FAFAFA] hover:bg-[#FDF8F5] text-[#795548] hover:text-[#3E2723] border border-[#F0E6D2] px-6 py-3 rounded-full font-bold transition text-xs tracking-wide uppercase flex items-center gap-2">
+                <a href="{{ route('inventory.logs') }}" class="bg-[#FAFAFA] hover:bg-[#FDF8F5] text-[#795548] hover:text-[#3E2723] border border-[#F0E6D2] px-6 py-3 rounded-full font-bold transition text-xs tracking-wide uppercase flex items-center gap-2">
                     <x-lucide-history class="w-4 h-4" />
                     <span>Stock changes</span>
-                </button>
+                </a>
                 <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
                     <x-lucide-plus class="w-4 h-4" />
-                    <span>Ingredient</span>
+                    <span>Add ingredient</span>
                 </button>
             </div>
         </div>
@@ -85,11 +85,11 @@
                                         Total: {{ $formattedStock }} {{ $displayUnit }}
                                     </span>
                                 @endif
-                                <span class="text-xs font-medium text-[#D7CCC8] uppercase md:hidden">
+                                <span class="text-xs font-medium text-[#795548] uppercase md:hidden">
                                     @if($ingredient->packaging_unit && $ingredient->capacity_per_pack > 1)
-                                        Threshold: {{ number_format($ingredient->low_stock_threshold / $ingredient->capacity_per_pack, 1) }} {{ \Illuminate\Support\Str::plural($ingredient->packaging_unit) }}
+                                        Alert below {{ number_format($ingredient->low_stock_threshold / $ingredient->capacity_per_pack, 1) }} {{ \Illuminate\Support\Str::plural($ingredient->packaging_unit) }}
                                     @else
-                                        Threshold: {{ number_format($ingredient->low_stock_threshold) }} {{ $ingredient->unit }}
+                                        Alert below {{ number_format($ingredient->low_stock_threshold) }} {{ $ingredient->unit }}
                                     @endif
                                 </span>
                             </div>
@@ -100,7 +100,7 @@
                                     <span class="text-xs font-bold text-[#795548]">
                                         {{ number_format($ingredient->low_stock_threshold / $ingredient->capacity_per_pack, 1) }} {{ \Illuminate\Support\Str::plural($ingredient->packaging_unit) }}
                                     </span>
-                                    <span class="text-xs font-medium text-[#D7CCC8] uppercase">{{ number_format($ingredient->low_stock_threshold) }} {{ $ingredient->unit }}</span>
+                                    <span class="text-xs font-medium text-[#795548] uppercase">{{ number_format($ingredient->low_stock_threshold) }} {{ $ingredient->unit }}</span>
                                 @else
                                     <span class="text-xs font-bold text-[#795548]">
                                         {{ number_format($ingredient->low_stock_threshold) }} {{ $ingredient->unit }}
@@ -134,9 +134,9 @@
                     @empty
                     <tr>
                         <td colspan="5" class="py-16 text-center">
-                            <div class="flex flex-col items-center opacity-30">
-                                <x-lucide-flask-conical class="w-10 h-10 mb-3" />
-                                <p class="text-[#6D4C41] text-sm font-medium">No ingredients found. Click "Add Ingredient" to start.</p>
+                            <div class="flex flex-col items-center max-w-sm mx-auto">
+                                <x-lucide-flask-conical class="w-10 h-10 mb-3 text-[#D7CCC8]" />
+                                <p class="text-[#6D4C41] text-sm font-medium">No ingredients yet. Tap Add ingredient to add milk, beans and the rest.</p>
                             </div>
                         </td>
                     </tr>
@@ -149,7 +149,7 @@
     <x-modal-shell show="isModalOpen" max-width="xl" panel-class="border-t-8 border-[#3E2723]" labelled-by="ingredient-modal-title">
             <div class="px-8 py-6 border-b border-[#FDF8F5]">
                 <h2 id="ingredient-modal-title" class="text-xl font-bold text-[#3E2723] uppercase tracking-wide" x-text="modalTitle"></h2>
-                <p class="text-xs text-[#795548] font-medium mt-1 uppercase tracking-tighter">Configure tracking units and stock thresholds.</p>
+                <p class="text-xs text-[#795548] font-medium mt-1">How it is bought, how it is measured, and when to warn you.</p>
             </div>
 
             <form :action="formAction" method="POST" @submit="submitting = true">

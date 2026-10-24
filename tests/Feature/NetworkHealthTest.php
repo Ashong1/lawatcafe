@@ -80,7 +80,7 @@ class NetworkHealthTest extends TestCase
 
         $this->assertSame('ok', $r['overall']);
         $this->assertSame('Working well — answers in 9 ms.', $r['checks']['internet']['summary']);
-        $this->assertStringContainsString('2 guest(s) online', $r['checks']['portal']['summary']);
+        $this->assertStringContainsString('2 guests online', $r['checks']['portal']['summary']);
     }
 
     public function test_no_internet_fails_and_packet_loss_warns(): void
@@ -195,7 +195,7 @@ class NetworkHealthTest extends TestCase
                 ->get(route('network.health'))
                 ->assertOk()
                 ->assertSee('Everything on the network is working.')
-                ->assertSee('Website filter (Pi-hole)');
+                ->assertSee('Website filter');
         }
 
         $this->getJson(route('network.health.status'))->assertOk()->assertJsonStructure(['checked_at']);

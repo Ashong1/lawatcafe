@@ -55,6 +55,20 @@ class PurchaseOrderControllerTest extends TestCase
         Mail::assertQueued(PurchaseOrderRequest::class);
     }
 
+    public function test_the_supplier_email_is_plain_text_without_internal_notes(): void
+    {
+        $supplier = Supplier::create(['name' => "Ana's Dairy & Co", 'email' => 'orders@anasdairy.test']);
+        $draft = $this->makeDraft(['supplier_id' => $supplier->id]);
+        $draft->ingredient->update(['name' => 'Milk & Cream']);
+
+        $text = (new PurchaseOrderRequest($draft->fresh()))->render();
+
+        // A text email must not HTML-escape names ("&amp;", "&#039;").
+        $this->assertStringContainsString("Hello Ana's Dairy & Co,", $text);
+        $this->assertStringContainsString('Milk & Cream: 1000 ml', $text);
+        $this->assertStringNotContainsString('Auto-drafted', $text);
+    }
+
     public function test_send_flashes_error_when_already_sent(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

@@ -78,7 +78,7 @@ for (const p of pages) {
             return r.width > 0 && r.height > 0 && r.right > 0 && r.left < vw
                 && s.visibility !== 'hidden' && s.display !== 'none' && s.opacity !== '0';
         };
-        const label = el => (el.getAttribute('aria-label') || el.innerText || el.value || el.name || el.tagName).trim().replace(/\s+/g, ' ').slice(0, 40);
+        const label = el => String(el.getAttribute('aria-label') || el.innerText || el.value || el.name || el.tagName || '').trim().replace(/\s+/g, ' ').slice(0, 40);
         const small = [...document.querySelectorAll('a, button, input:not([type=hidden]), select, textarea, [role=button]')]
             .filter(visible)
             .map(el => ({ el, r: el.getBoundingClientRect() }))

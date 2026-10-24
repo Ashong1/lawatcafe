@@ -34,15 +34,6 @@ class ToolCallOrchestrator
     ) {}
 
     /**
-     * @param  array  $messages  Canonical chat history: [['role'=>'user'|'assistant'|'system','content'=>string], ...]
-     * @param  string  $audience  'guest'|'staff'|'admin'|'super_admin' — decides which tools the model is offered.
-     * @param  array  $context  Request-scoped data tools may need (e.g. the guest's own IP/MAC). Never model-supplied.
-     * @param  ?callable  $onTextDelta  Called with each streamed text chunk; no-op for non-interactive callers.
-     * @param  ?callable  $onToolStart  Called with a tool's name before its tier is resolved — even for one that
-     *                                  ends up queued for confirmation. No-op by default.
-     * @return array{reply: ?string, pending: array, executed: array}
-     */
-    /**
      * AIService::chatWithToolsStreaming() already bounds a single round
      * trip's provider cascade to its own deadline (~18s), but that resets
      * fresh on every one of up to MAX_ROUND_TRIPS calls in run() — worst
@@ -58,6 +49,15 @@ class ToolCallOrchestrator
         return (float) Setting::get('agent_conversation_budget_seconds', self::DEFAULT_MAX_TOTAL_SECONDS);
     }
 
+    /**
+     * @param  array  $messages  Canonical chat history: [['role'=>'user'|'assistant'|'system','content'=>string], ...]
+     * @param  string  $audience  'guest'|'staff'|'admin'|'super_admin' — decides which tools the model is offered.
+     * @param  array  $context  Request-scoped data tools may need (e.g. the guest's own IP/MAC). Never model-supplied.
+     * @param  ?callable  $onTextDelta  Called with each streamed text chunk; no-op for non-interactive callers.
+     * @param  ?callable  $onToolStart  Called with a tool's name before its tier is resolved — even for one that
+     *                                  ends up queued for confirmation. No-op by default.
+     * @return array{reply: ?string, pending: array, executed: array}
+     */
     public function run(array $messages, string $audience, ?User $actor, array $context = [], ?callable $onTextDelta = null, ?callable $onToolStart = null): array
     {
         $onTextDelta ??= function (string $delta) {};

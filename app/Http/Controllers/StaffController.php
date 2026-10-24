@@ -114,7 +114,7 @@ class StaffController extends Controller
 
     private function getShiftNotes(): string
     {
-        return Setting::get('shift_notes', 'Welcome to your shift! No special announcements right now.');
+        return Setting::get('shift_notes', 'No announcements today.');
     }
 
     private function getPendingOrdersCount(): int

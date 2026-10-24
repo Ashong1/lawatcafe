@@ -60,7 +60,7 @@
                                 @if($user->username)
                                     <span class="font-bold text-[#3E2723]">{{ $user->username }}</span>
                                 @endif
-                                <span class="block text-[#795548] font-mono break-all">{{ $user->email }}</span>
+                                <span class="block text-[#795548] break-all">{{ $user->email }}</span>
                             </td>
                             <td class="py-4 px-4">
                                 <span class="px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border {{ $user->isAdminOrAbove() ? 'bg-amber-100 text-[#3E2723] border-amber-200' : 'bg-gray-100 text-gray-600 border-gray-200' }}">
@@ -81,7 +81,7 @@
                                 @endif
                             </td>
                             <td class="py-4 px-4 text-right w-full sm:w-auto">
-                                <div class="flex justify-end flex-wrap gap-2">
+                                <div class="flex justify-end flex-wrap lg:flex-nowrap gap-2">
                                     @if($user->isPendingInvite())
                                         <form action="{{ route('accounts.send-link', $user) }}" method="POST">
                                             @csrf

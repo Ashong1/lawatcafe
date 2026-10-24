@@ -29,9 +29,6 @@ class EnforceSessionLimits extends Command
     protected $description = 'Scan active OPNsense sessions and disconnect those with expired vouchers.';
 
     /**
-     * Execute the console command.
-     */
-    /**
      * Minutes an app-authorized session may sit with no matching voucher
      * (and no traffic since) before it's treated as orphaned and disconnected.
      */

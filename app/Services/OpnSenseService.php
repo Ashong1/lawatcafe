@@ -850,7 +850,7 @@ class OpnSenseService
     }
 
     /**
-     * Create or update the shaper rule that actually binds a tier's alias to
+     * Create or update the shaper rule that actually binds a tier's devices to
      * its pipe. Without this rule the pipe exists but nothing is ever steered
      * into it, and guests get full line speed while the admin page shows the
      * cap.
@@ -859,18 +859,10 @@ class OpnSenseService
      * leaves that interface ('out', matched on destination), their upload
      * enters it ('in', matched on source).
      *
+     * @param  string|null  $aliasName  Comma-separated member IPs (the shaper
+     *                                  rejects alias names), or null for every
+     *                                  host on the interface.
      * @return string|null the rule's UUID, or null on failure
-     */
-    /**
-     * @param  string|null  $aliasName  The alias whose members the rule applies to,
-     *                                  or null for every host on the interface.
-     *                                  Null is not a fallback — it is the only
-     *                                  thing this OPNsense build's shaper will
-     *                                  accept: source and destination are option
-     *                                  fields offering nothing but "any" (see
-     *                                  docs/INFRASTRUCTURE.md), so an alias-based
-     *                                  rule is rejected outright and a
-     *                                  shop-wide rule is the only one that lands.
      */
     public function upsertShaperRule(string $tier, string $direction, string $pipeUuid, ?string $aliasName, int $sequence, ?string $uuid = null, bool $enabled = true): ?string
     {

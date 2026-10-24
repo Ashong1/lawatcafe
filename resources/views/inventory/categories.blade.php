@@ -11,7 +11,7 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Menu Categories</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Organize your products into logical groups for better management.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Group the menu so the register and the guest menu show items in sections.</p>
         </div>
     </div>
 
@@ -19,7 +19,7 @@
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Available Categories</h3>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Categories</h3>
             </div>
             
             <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
@@ -32,7 +32,6 @@
             <table class="lk-stack w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-bold w-10"></th>
                         <th class="pb-4 font-bold">Category</th>
                         <th class="pb-4 font-bold hidden md:table-cell">Products</th>
                         <th class="pb-4 font-bold hidden md:table-cell">Description</th>
@@ -42,9 +41,6 @@
                 <tbody class="text-sm">
                     @forelse($categories as $category)
                     <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
-                        <td class="py-4 text-[#E6D5C3] cursor-grab active:cursor-grabbing">
-                            <x-lucide-grip-vertical class="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
-                        </td>
                         <td class="py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm border border-[#F0E6D2]" style="background-color: {{ $category->color }}20; color: {{ $category->color }};">
@@ -55,19 +51,18 @@
                                 </div>
                                 <div>
                                     <span class="font-bold text-[#3E2723] text-base block">{{ $category->name }}</span>
-                                    <span class="text-xs text-[#795548] font-mono uppercase tracking-widest">{{ $category->slug }}</span>
                                     <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-xs font-bold bg-[#FDF8F5] text-amber-900 border border-amber-100 md:hidden">
-                                        {{ $category->products_count ?? 0 }} Items
+                                        {{ trans_choice(':count item|:count items', $category->products_count ?? 0) }}
                                     </span>
                                 </div>
                             </div>
                         </td>
                         <td class="py-4 hidden md:table-cell">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FDF8F5] text-amber-900 border border-amber-100">
-                                {{ $category->products_count ?? 0 }} Items
+                                {{ trans_choice(':count item|:count items', $category->products_count ?? 0) }}
                             </span>
                         </td>
-                        <td class="py-4 text-[#795548] font-medium max-w-[200px] truncate hidden md:table-cell">{{ $category->description ?: 'No description provided.' }}</td>
+                        <td class="py-4 text-[#795548] font-medium max-w-[200px] truncate hidden md:table-cell">{{ $category->description ?: '—' }}</td>
                         <td class="py-4 text-right">
                             <div class="flex justify-end gap-2">
                                 <button @click="openEditModal({{ $category }})" class="p-2 text-[#795548] hover:text-amber-700 hover:bg-amber-100 rounded-lg transition" title="Edit" aria-label="Edit">
@@ -79,10 +74,10 @@
                                     @method('DELETE')
                                     <button type="button" 
                                             @click="window.confirmAction({
-                                                title: 'Delete Category?',
-                                                text: 'Are you sure? This will not delete products in this category but they will lose their link.',
+                                                title: 'Delete this category?',
+                                                text: 'Its products stay on the menu, but without a category.',
                                                 icon: 'warning',
-                                                confirmText: 'Yes, Delete',
+                                                confirmText: 'Delete',
                                                 callback: () => document.getElementById('delete-category-{{ $category->id }}').submit()
                                             })"
                                             class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Delete" aria-label="Delete">
@@ -94,10 +89,10 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="py-16 text-center">
-                            <div class="flex flex-col items-center opacity-30">
-                                <x-lucide-layers class="w-10 h-10 mb-3" />
-                                <p class="text-[#6D4C41] text-sm font-medium">No categories found. Create one to get started.</p>
+                        <td colspan="4" class="py-16 text-center">
+                            <div class="flex flex-col items-center">
+                                <x-lucide-layers class="w-10 h-10 mb-3 text-[#D7CCC8]" />
+                                <p class="text-[#6D4C41] text-sm font-medium">No categories yet. Add one to group the menu.</p>
                             </div>
                         </td>
                     </tr>
@@ -110,7 +105,7 @@
     <x-modal-shell show="isModalOpen" max-width="xl" panel-class="border-t-8 border-[#3E2723]" labelled-by="category-modal-title">
             <div class="px-8 py-6 border-b border-[#FDF8F5]">
                 <h2 id="category-modal-title" class="text-xl font-bold text-[#3E2723] uppercase tracking-wide" x-text="modalTitle"></h2>
-                <p class="text-xs text-[#795548] font-medium mt-1 uppercase tracking-tighter">Organize products into logical groups.</p>
+                <p class="text-xs text-[#795548] font-medium mt-1">A name, an icon and a color for one section of the menu.</p>
             </div>
 
             <form :action="formAction" method="POST" @submit="submitting = true">

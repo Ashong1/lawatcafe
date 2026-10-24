@@ -174,10 +174,10 @@ class TrustedDeviceService
                 return ['success' => false, 'message' => "{$who} was added, but its address {$device['ip']} could not be: ".($ipResult['message'] ?? 'the firewall refused it.')];
             }
 
-            return ['success' => true, 'message' => "{$who} now connects without a voucher."];
+            return ['success' => true, 'message' => "{$who} now connects without a Wi-Fi code."];
         }
 
-        return ['success' => true, 'message' => "{$who} now connects without a voucher. Its address can change, so if it ever asks for a voucher again, give it a fixed address and trust it once more."];
+        return ['success' => true, 'message' => "{$who} now connects without a Wi-Fi code. Its address can change, so if it ever asks for a Wi-Fi code again, give it a fixed address and trust it once more."];
     }
 
     /**

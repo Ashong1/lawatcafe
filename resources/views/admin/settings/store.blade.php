@@ -57,39 +57,39 @@
                                 <x-lucide-clock class="w-6 h-6" />
                             </div>
                             <div>
-                                <h3 class="text-sm font-bold uppercase tracking-wide">Store Operations</h3>
-                                <p class="text-xs text-amber-200 font-medium italic">Configure business hours and receipt details.</p>
+                                <h3 class="text-sm font-bold uppercase tracking-wide">Store hours &amp; receipt</h3>
+                                <p class="text-xs text-amber-200 font-medium">Opening hours, order reminders and the receipt greeting.</p>
                             </div>
                         </div>
 
                         <div class="space-y-6">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label for="store-open-time" class="block text-xs font-bold text-amber-200 uppercase mb-2 tracking-wide">Opening Time</label>
-                                    <input id="store-open-time" type="time" name="store_open_time" value="{{ $settings['store_open_time'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
+                                    <label for="store-open-time" class="block text-xs font-bold text-amber-200 uppercase mb-2 tracking-wide">Opens at</label>
+                                    <input id="store-open-time" type="time" name="store_open_time" value="{{ $settings['store_open_time'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
                                 </div>
                                 <div>
-                                    <label for="store-close-time" class="block text-xs font-bold text-amber-200 uppercase mb-2 tracking-wide">Closing Time</label>
-                                    <input id="store-close-time" type="time" name="store_close_time" value="{{ $settings['store_close_time'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
+                                    <label for="store-close-time" class="block text-xs font-bold text-amber-200 uppercase mb-2 tracking-wide">Closes at</label>
+                                    <input id="store-close-time" type="time" name="store_close_time" value="{{ $settings['store_close_time'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
                                 </div>
                             </div>
 
                             <div>
                                 <label for="order-wait-alert" class="block text-xs font-bold text-amber-200 uppercase mb-2 tracking-wide">Remind staff when an order waits (minutes)</label>
-                                <input id="order-wait-alert" type="number" min="1" max="60" name="order_wait_alert_minutes" value="{{ $settings['order_wait_alert_minutes'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
+                                <input id="order-wait-alert" type="number" min="1" max="60" name="order_wait_alert_minutes" value="{{ $settings['order_wait_alert_minutes'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white">
                                 <p class="text-xs text-amber-100/70 mt-1.5">The register and kitchen screens chime and show the order once it has waited this long, then again every 3 minutes until it's marked done.</p>
                             </div>
 
                             <div>
-                                <label for="receipt-header" class="block text-xs font-bold text-amber-200 uppercase mb-2 tracking-wide">Receipt Header Text</label>
-                                <input id="receipt-header" type="text" name="receipt_header" value="{{ $settings['receipt_header'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white placeholder-white/30" placeholder="Thank you for visiting!">
+                                <label for="receipt-header" class="block text-xs font-bold text-amber-200 uppercase mb-2 tracking-wide">Receipt greeting</label>
+                                <input id="receipt-header" type="text" name="receipt_header" value="{{ $settings['receipt_header'] }}" class="w-full bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:border-amber-500 transition-all text-white placeholder-white/30" placeholder="Thank you for visiting!">
                             </div>
                         </div>
 
                         <div class="mt-8 flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/10">
                             <x-lucide-info class="w-5 h-5 text-amber-400 shrink-0" />
-                            <p class="text-xs leading-relaxed text-amber-100/70 font-medium italic">
-                                Operating hours can be used for automated system tasks, such as clearing active guest sessions after business hours.
+                            <p class="text-xs leading-relaxed text-amber-100/80 font-medium">
+                                Barista AI and the guest Wi-Fi page use these hours to tell people when the shop is open.
                             </p>
                         </div>
                     </div>

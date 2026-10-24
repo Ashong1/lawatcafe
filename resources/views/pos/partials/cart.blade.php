@@ -3,20 +3,20 @@
     <div class="flex justify-between items-center">
         <div>
             <h3 class="text-xl font-bold text-[#3E2723]">Current Order</h3>
-            <p class="text-xs font-medium text-[#795548] mt-0.5"><span x-text="cart.length"></span> items in cart</p>
+            <p class="text-xs font-medium text-[#795548] mt-0.5" x-text="(n => n + (n === 1 ? ' item' : ' items'))(cart.reduce((sum, i) => sum + i.quantity, 0))"></p>
         </div>
 
-        <button type="button" x-show="cart.length > 0" @click="resetCart()" class="w-11 h-11 lg:w-9 lg:h-9 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center shadow-sm" title="Clear All" aria-label="Clear All">
+        <button type="button" x-show="cart.length > 0" @click="window.confirmAction({ title: 'Clear this order?', text: 'Everything in the cart is removed.', confirmText: 'Clear order', callback: () => resetCart() })" class="w-11 h-11 rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors flex items-center justify-center" title="Clear order" aria-label="Clear order">
             <x-lucide-trash-2 class="w-4 h-4" />
         </button>
     </div>
 
     <div class="flex bg-[#FDF8F5] p-1 rounded-xl border border-[#F0E6D2]/50">
-        <button @click="orderType = 'dine_in'" class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'dine_in' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#795548] hover:text-[#3E2723]'">
+        <button type="button" @click="orderType = 'dine_in'" :aria-pressed="orderType === 'dine_in' ? 'true' : 'false'" class="flex-1 min-h-[44px] rounded-lg text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'dine_in' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#795548] hover:text-[#3E2723]'">
             <x-lucide-utensils class="w-3.5 h-3.5" />
             <span>Dine In</span>
         </button>
-        <button @click="orderType = 'takeaway'" class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'takeaway' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#795548] hover:text-[#3E2723]'">
+        <button type="button" @click="orderType = 'takeaway'" :aria-pressed="orderType === 'takeaway' ? 'true' : 'false'" class="flex-1 min-h-[44px] rounded-lg text-xs font-bold transition flex items-center justify-center gap-2" :class="orderType === 'takeaway' ? 'bg-white text-[#3E2723] shadow-sm' : 'text-[#795548] hover:text-[#3E2723]'">
             <x-lucide-shopping-bag class="w-3.5 h-3.5" />
             <span>Take Away</span>
         </button>
@@ -48,19 +48,17 @@
         <p class="text-xs font-bold text-amber-900 leading-snug" x-text="suggestion && '“' + suggestion.message + '”'"></p>
         <p x-show="suggestion?.message_tl" class="text-xs font-medium italic text-amber-900 leading-snug mt-1" lang="tl" x-text="suggestion && '“' + suggestion.message_tl + '”'"></p>
     </div>
-    <button type="button" @click="addSuggestion()" class="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold uppercase tracking-wide px-3 py-1.5 rounded-full transition">Add</button>
-    <button type="button" @click="dismissSuggestion()" aria-label="Dismiss suggestion" class="shrink-0 w-6 h-6 flex items-center justify-center text-amber-700 hover:text-amber-900 transition">
-        <x-lucide-x class="w-3.5 h-3.5" />
+    <button type="button" @click="addSuggestion()" class="shrink-0 min-h-[44px] lg:min-h-[36px] bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold uppercase tracking-wide px-4 rounded-full transition">Add</button>
+    <button type="button" @click="dismissSuggestion()" aria-label="Dismiss suggestion" class="shrink-0 w-11 h-11 lg:w-8 lg:h-8 -mr-2 flex items-center justify-center rounded-full text-amber-700 hover:text-amber-900 hover:bg-amber-100 transition">
+        <x-lucide-x class="w-4 h-4" />
     </button>
 </div>
 
-{{-- CART ITEMS (Scrollable: Takes up remaining space) --}}
-{{-- min-h-0 is the CSS secret that allows flex-1 to scroll properly --}}
+{{-- min-h-0 lets this flex-1 list shrink and scroll instead of pushing checkout off screen. --}}
 <div class="flex-1 min-h-0 overflow-y-auto pr-2 my-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#E0D4C3] [&::-webkit-scrollbar-thumb]:rounded-full">
     <div class="flex flex-col">
         <template x-for="(cartItem, index) in cart" :key="cartItem.id + '-' + cartItem.variant">
 
-            {{-- Added min-h-[5rem] (80px) to absolutely forbid the browser from squishing the item vertically --}}
             <div class="flex gap-3 items-center bg-white group shrink-0 min-h-[5rem] py-2 border-b border-[#FDF8F5] last:border-0"
                  x-transition:enter="transition ease-out duration-300"
                  x-transition:enter-start="opacity-0 -translate-x-2"
@@ -81,7 +79,7 @@
                 </div>
 
                 <div class="flex-1 min-w-0">
-                    <h4 @click="editNote(index)" tabindex="0" role="button" @keydown.enter="editNote(index)" @keydown.space.prevent="editNote(index)" class="font-bold text-sm text-[#3E2723] truncate pr-2 flex items-center cursor-pointer hover:text-amber-800 transition-colors" title="Click to add note">
+                    <h4 @click="editNote(index)" tabindex="0" role="button" @keydown.enter="editNote(index)" @keydown.space.prevent="editNote(index)" class="font-bold text-sm text-[#3E2723] truncate pr-2 flex items-center cursor-pointer hover:text-amber-800 transition-colors" title="Tap to add a note">
                         <span x-text="cartItem.name"></span>
                         <span x-show="cartItem.variant" class="ml-1.5 text-xs font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full shrink-0" :class="cartItem.variant === 'Hot' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'" x-text="cartItem.variant"></span>
                     </h4>
@@ -90,11 +88,11 @@
                         <p class="font-bold text-xs text-[#795548]" x-text="'₱' + (Number(cartItem.price) * cartItem.quantity).toFixed(2)"></p>
 
                         <div class="flex items-center bg-[#FAFAFA] border border-[#F0E6D2] rounded-full px-1 py-0.5 shrink-0">
-                            <button type="button" @click="removeFromCart(index)" aria-label="Decrease quantity" class="w-10 h-10 lg:w-5 lg:h-5 flex items-center justify-center text-[#795548] hover:text-[#3E2723] font-bold transition text-base lg:text-xs">-</button>
-                            <span class="w-6 lg:w-5 text-center text-sm lg:text-xs font-bold transition-all duration-200"
+                            <button type="button" @click="removeFromCart(index)" aria-label="Decrease quantity" class="w-11 h-11 lg:w-8 lg:h-8 rounded-full flex items-center justify-center text-[#795548] hover:text-[#3E2723] hover:bg-[#F0E6D2] transition"><x-lucide-minus class="w-4 h-4" /></button>
+                            <span class="w-6 text-center text-sm font-bold tabular-nums transition-all duration-200"
                                   :class="flashKey === (cartItem.id + '-' + cartItem.variant) ? 'text-amber-600 scale-125' : 'text-[#3E2723] scale-100'"
                                   x-text="cartItem.quantity"></span>
-                            <button type="button" @click="addToCart(cartItem)" aria-label="Increase quantity" class="w-10 h-10 lg:w-5 lg:h-5 flex items-center justify-center text-[#795548] hover:text-[#3E2723] font-bold transition text-base lg:text-xs">+</button>
+                            <button type="button" @click="addToCart(cartItem)" aria-label="Increase quantity" class="w-11 h-11 lg:w-8 lg:h-8 rounded-full flex items-center justify-center text-[#795548] hover:text-[#3E2723] hover:bg-[#F0E6D2] transition"><x-lucide-plus class="w-4 h-4" /></button>
                         </div>
                     </div>
                 </div>
@@ -117,36 +115,25 @@
          x-transition:leave="transition ease-in duration-300"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-1"
-         class="p-3 rounded-xl border flex flex-col gap-2 transition-all" :class="grandTotal >= freeWifiMinAmount ? 'bg-[#F3F9FF] border-[#E3F2FD]' : 'bg-[#FAFAFA] border-[#F0E6D2]'" style="display: none;">
-        <div class="flex justify-between items-center">
-            <p class="text-xs font-bold uppercase tracking-wide" :class="grandTotal >= freeWifiMinAmount ? 'text-[#1565C0]' : 'text-[#795548]'">
-                <span x-show="grandTotal >= freeWifiMinAmount"><x-lucide-wifi class="w-3 h-3 inline-block mr-1 -mt-0.5"/> Free Wi-Fi included</span>
-                <span x-show="grandTotal < freeWifiMinAmount">Free Wi-Fi Promo</span>
-            </p>
-            <p class="text-xs font-bold" :class="grandTotal >= freeWifiMinAmount ? 'text-[#1565C0]' : 'text-[#795548]'" x-text="Math.min(100, Math.round((grandTotal / freeWifiMinAmount) * 100)) + '%'"></p>
-        </div>
-
-        <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+         class="px-3 py-2.5 rounded-xl border flex flex-col gap-2 transition-all" :class="grandTotal >= freeWifiMinAmount ? 'bg-[#F3F9FF] border-[#E3F2FD]' : 'bg-[#FAFAFA] border-[#F0E6D2]'" style="display: none;">
+        <p class="text-xs font-bold flex items-center gap-1.5" :class="grandTotal >= freeWifiMinAmount ? 'text-[#1565C0]' : 'text-[#6D4C41]'">
+            <x-lucide-wifi class="w-3.5 h-3.5 shrink-0"/>
+            <span x-text="grandTotal >= freeWifiMinAmount
+                ? `Free Wi-Fi: this order gets ${freeWifiDuration} mins.`
+                : `Free Wi-Fi: spend ₱${(freeWifiMinAmount - grandTotal).toFixed(2)} more for ${freeWifiDuration} mins.`"></span>
+        </p>
+        <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden" aria-hidden="true">
             <div class="h-full transition-all duration-500"
                  :class="grandTotal >= freeWifiMinAmount ? 'bg-[#1565C0]' : 'bg-[#3E2723]'"
                  :style="`width: ${Math.min(100, (grandTotal / freeWifiMinAmount) * 100)}%`"></div>
         </div>
-
-        <p class="text-xs text-[#6D4C41] font-medium text-center">
-            <template x-if="grandTotal >= freeWifiMinAmount">
-                <span x-text="`Order qualifies for ${freeWifiDuration} mins free access.`"></span>
-            </template>
-            <template x-if="grandTotal < freeWifiMinAmount">
-                <span x-text="`Spend ₱${(freeWifiMinAmount - grandTotal).toFixed(2)} more to get ${freeWifiDuration} mins free.`"></span>
-            </template>
-        </p>
     </div>
 
     <div>
-        <label class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5">Discount</label>
+        <p class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5">Discount</p>
         <div class="flex gap-2">
-            <button type="button" @click="discountType = 'none'; discountAmount = 0" class="flex-1 py-1.5 rounded-md text-xs font-bold transition border" :class="discountType === 'none' ? 'bg-[#3E2723] text-white border-[#3E2723]' : 'bg-[#FAFAFA] text-[#795548] border-[#F0E6D2] hover:bg-[#FDF8F5]'">None</button>
-            <button type="button" @click="discountType = 'senior'; discountAmount = 0.20" class="flex-1 py-1.5 rounded-md text-xs font-bold transition border" :class="discountType === 'senior' ? 'bg-[#3E2723] text-white border-[#3E2723]' : 'bg-[#FAFAFA] text-[#795548] border-[#F0E6D2] hover:bg-[#FDF8F5]'">Senior/PWD (20%)</button>
+            <button type="button" @click="discountType = 'none'; discountAmount = 0" :aria-pressed="discountType === 'none' ? 'true' : 'false'" class="flex-1 min-h-[44px] lg:min-h-[36px] rounded-md text-xs font-bold transition border" :class="discountType === 'none' ? 'bg-[#3E2723] text-white border-[#3E2723]' : 'bg-[#FAFAFA] text-[#795548] border-[#F0E6D2] hover:bg-[#FDF8F5]'">None</button>
+            <button type="button" @click="discountType = 'senior'; discountAmount = 0.20" :aria-pressed="discountType === 'senior' ? 'true' : 'false'" class="flex-1 min-h-[44px] lg:min-h-[36px] rounded-md text-xs font-bold transition border" :class="discountType === 'senior' ? 'bg-[#3E2723] text-white border-[#3E2723]' : 'bg-[#FAFAFA] text-[#795548] border-[#F0E6D2] hover:bg-[#FDF8F5]'">Senior/PWD (20%)</button>
         </div>
     </div>
 
@@ -155,7 +142,7 @@
         <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Payment method">
             <template x-for="method in paymentOptions" :key="method">
                 <button type="button" role="radio" :aria-checked="paymentMethod === method ? 'true' : 'false'" @click="choosePayment(method)"
-                        class="flex-1 min-w-[4.5rem] py-1.5 rounded-md text-xs font-bold transition border inline-flex items-center justify-center gap-1"
+                        class="flex-1 min-w-[4.5rem] min-h-[44px] lg:min-h-[36px] rounded-md text-xs font-bold transition border inline-flex items-center justify-center gap-1"
                         :class="paymentMethod === method ? 'bg-[#3E2723] text-white border-[#3E2723]' : 'bg-[#FAFAFA] text-[#795548] border-[#F0E6D2] hover:bg-[#FDF8F5]'">
                     <template x-if="method !== 'Cash'"><x-lucide-qr-code class="w-3.5 h-3.5" /></template>
                     <span x-text="method"></span>
@@ -165,17 +152,17 @@
     </div>
 
     <div x-show="paymentMethod === 'Cash'">
-        <label class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5">Amount Tendered (₱)</label>
-        <input type="number" inputmode="decimal" aria-label="Amount tendered in pesos" x-model.number="amountTendered" class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-sm font-bold text-[#3E2723]" placeholder="0.00">
+        <label class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5">Cash received (₱)</label>
+        <input type="number" inputmode="decimal" aria-label="Cash received in pesos" x-model.number="amountTendered" class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-base font-bold text-[#3E2723] tabular-nums" placeholder="Blank = exact amount">
     </div>
 
     <div x-show="paymentMethod !== 'Cash'" x-cloak x-id="['payref']" class="flex gap-2 items-end">
         <div class="flex-1 min-w-0">
             <label class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5" :for="$id('payref')">Reference no.</label>
             <input :id="$id('payref')" type="text" x-model="paymentReference" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40"
-                   class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] text-sm font-bold font-mono text-[#3E2723]" placeholder="From their sent screen">
+                   class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] text-base lg:text-sm font-bold font-mono text-[#3E2723]" placeholder="From their sent screen">
         </div>
-        <button type="button" @click="showQrModal = true" class="shrink-0 py-2 px-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 text-xs font-bold inline-flex items-center gap-1.5">
+        <button type="button" @click="showQrModal = true" class="shrink-0 min-h-[44px] px-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-800 text-xs font-bold inline-flex items-center gap-1.5">
             <x-lucide-scan-line class="w-4 h-4" /> Show QR
         </button>
     </div>
@@ -193,23 +180,23 @@
             <span>VAT (12% inc)</span>
             <span x-text="'₱' + vatAmount.toFixed(2)"></span>
         </div>
-        <div class="flex justify-between text-lg font-bold text-[#3E2723] pt-1.5 border-t border-[#FDF8F5]">
+        <div class="flex justify-between text-lg font-bold text-[#3E2723] pt-1.5 border-t border-[#FDF8F5] tabular-nums">
             <span>Total</span>
             <span x-text="'₱' + grandTotal.toFixed(2)"></span>
         </div>
-        <div class="flex justify-between text-xs font-bold text-green-600 pt-1 border-t border-[#FDF8F5]" x-show="paymentMethod === 'Cash' && amountTendered > 0">
+        <div class="flex justify-between text-lg font-bold text-green-700 tabular-nums" x-show="paymentMethod === 'Cash' && amountTendered >= grandTotal && amountTendered > 0">
             <span>Change</span>
             <span x-text="'₱' + Math.max(0, amountTendered - grandTotal).toFixed(2)"></span>
         </div>
     </div>
 
-    <button type="button" @click="submitCheckout()" :disabled="cart.length === 0 || isProcessing || !paymentReady" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white py-3 rounded-full font-bold uppercase tracking-wide transition shadow-lg shadow-[#3E2723]/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center text-xs gap-2 shrink-0">
+    <button type="button" @click="submitCheckout()" :disabled="cart.length === 0 || isProcessing || !paymentReady" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white min-h-[48px] py-3 rounded-full font-bold uppercase tracking-wide transition shadow-lg shadow-[#3E2723]/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center text-xs gap-2 shrink-0">
         <template x-if="!isProcessing">
             <x-lucide-send class="w-4 h-4" />
         </template>
         <template x-if="isProcessing">
             <x-lucide-loader-2 class="w-4 h-4 animate-spin" />
         </template>
-        <span x-text="isProcessing ? 'Processing...' : (paymentMethod !== 'Cash' && !paymentReady ? 'Type the reference no.' : (amountTendered > 0 && amountTendered < grandTotal ? 'Insufficient Funds' : 'Place Order'))"></span>
+        <span x-text="isProcessing ? 'Processing...' : (paymentMethod !== 'Cash' && !paymentReady ? 'Type the reference no.' : (amountTendered > 0 && amountTendered < grandTotal ? 'Short by ₱' + (grandTotal - amountTendered).toFixed(2) : 'Place Order'))"></span>
     </button>
 </div>

@@ -16,10 +16,8 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
-{{-- Supplies the html.is-cna detection and the .cna-only rule used by the
-     "Open in Browser" button below. The other two portal pages already include
-     this; the status page did not, so .cna-only had no styling here and would
-     have shown the button to everyone, including guests already in a browser. --}}
+{{-- html.is-cna and the .cna-only rule: without them the "Open in your browser"
+     button shows to guests who are already in a browser. --}}
 @include('portal.partials.captive-assistant')
 </head>
 {{-- h-[100dvh], not min-h-screen: 100vh on Android Chromium is the tall
@@ -45,10 +43,8 @@
         <div class="absolute inset-0 bg-black/50"></div>
     </div>
 
-    {{-- Phone sizing is shared verbatim with portal/index — see the full
-         reasoning there. Short version: the three portal pages each had their
-         own numbers, so a phone jumped wider and ~180px taller the moment a
-         code was accepted. --}}
+    {{-- From sm up this is the same card as portal/index and portal/success, so
+         the card keeps its shape through the flow. On phones it fills the screen. --}}
     <div class="relative z-10 w-full h-full rounded-none border-0 shadow-none sm:w-[92%] sm:max-w-[420px] sm:h-[88dvh] sm:max-h-[640px] sm:rounded-[2rem] sm:border sm:border-[#E6D5C3] sm:shadow-2xl md:rounded-[2.5rem] md:max-w-[42rem] md:h-[85dvh] md:max-h-[720px] lg:w-full lg:max-w-[calc(64rem+1mm)] lg:h-[750px] lg:max-h-[800px] overflow-hidden bg-[#FAF7F2] flex flex-col lg:flex-row transition-all duration-500 sm:my-auto">
 
         <!-- Sidebar Branding (Desktop) -->
@@ -77,7 +73,7 @@
                 </div>
                 
                 <div class="mt-14">
-                    <a href="{{ route('portal.menu') }}" class="group relative inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 hover:bg-amber-500 text-white hover:text-[#3E2723] border border-white/10 hover:border-amber-400 transition-all duration-300 text-xs font-bold uppercase tracking-wide overflow-hidden">
+                    <a href="{{ route('portal.menu') }}" class="group relative inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 hover:bg-amber-500 text-white hover:text-[#3E2723] border border-white/10 hover:border-amber-400 transition-all duration-300 text-sm font-bold overflow-hidden">
                         <div class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                         <x-lucide-coffee class="w-5 h-5 group-hover:scale-110 transition-transform relative z-10" stroke-width="2.5" />
                         <span class="relative z-10">{{ __('See our menu') }}</span>
@@ -99,18 +95,12 @@
             <div class="flex-1 min-h-0 overflow-hidden sm:overflow-y-auto px-4 py-4 sm:px-6 sm:py-8 lg:px-16 lg:py-10 no-scrollbar relative z-10 flex flex-col">
 
                 <!-- Tab: Status -->
-                {{-- Scrolls on its own. The wrapper above is overflow-hidden so the
-                     AI tab's message list can be the scroll container, but that
-                     took this tab's scrolling with it — on a phone the Disconnect
-                     button sat below the fold with no way to reach it. Each tab
-                     now owns its own overflow instead of sharing the wrapper's.
-
-                     justify-center is gone with it: centring content taller than
-                     the box pushes the top AND bottom out of reach. --}}
-                <div x-show="activeTab === 'status'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-8" x-transition:enter-end="opacity-100 translate-y-0" class="flex flex-col h-full flex-1 min-h-0 overflow-y-auto no-scrollbar sm:justify-center" x-cloak>
-                    {{-- Collapsed on phones so the cards and the Disconnect button
-                         below fit without a hunt. Unchanged from sm up. --}}
-                    <div class="text-center mb-4 sm:mb-10 shrink-0">
+                {{-- Each tab owns its own scrolling: the wrapper is overflow-hidden so
+                     the chat's message list can be the scroller. Centred from sm up with
+                     auto margins, not justify-center, which cuts off the top of content
+                     taller than the box. --}}
+                <div x-show="activeTab === 'status'" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 translate-y-8" x-transition:enter-end="opacity-100 translate-y-0" class="flex flex-col h-full flex-1 min-h-0 overflow-y-auto no-scrollbar" x-cloak>
+                    <div class="text-center mb-4 sm:mb-10 shrink-0 sm:mt-auto">
                         @include('portal.partials.lang-switch', ['onLight' => true, 'class' => 'mb-3'])
                         <br>
                         <div class="inline-block p-2 sm:p-4 rounded-full bg-green-50 border border-green-100 mb-2 sm:mb-6 shadow-sm">
@@ -120,13 +110,13 @@
                         <p class="hidden sm:block text-xs lg:text-base text-[#795548] font-medium max-w-md mx-auto px-4">{{ __("Enjoy your time at Lawa't Kape!") }}</p>
                     </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-10 max-w-4xl mx-auto w-full px-2">
+                    <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6 max-w-md mx-auto w-full px-2">
                         {{-- role="timer" with aria-live="off" on purpose: the label changes
                              every second, and a polite live region would make a screen reader
                              read the clock aloud once a second and talk over everything else.
                              The label instead exposes the whole value on demand, so it can be
                              queried whenever the guest actually wants it. --}}
-                        <div class="bg-amber-50 border-2 border-amber-200/50 rounded-3xl p-4 sm:p-6 shadow-sm col-span-2 flex flex-col items-center justify-center transition-all hover:bg-amber-100/50 group"
+                        <div class="bg-amber-50 border-2 border-amber-200/50 rounded-3xl p-4 sm:p-6 shadow-sm col-span-2 flex flex-col items-center justify-center"
                              role="timer" aria-live="off"
                              :aria-label="`${T.timeLeft}: ${remainingLabel} ${remainingUnit}`">
                             <span class="text-sm font-bold text-amber-900 mb-2" aria-hidden="true">{{ __('Time left') }}</span>
@@ -134,8 +124,8 @@
                             <span class="text-sm font-bold text-amber-900 mt-1" aria-hidden="true" x-text="remainingUnit"></span>
                         </div>
                         
-                        <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">
-                            <x-lucide-download class="w-6 h-6 text-[#795548] mb-3" stroke-width="2.5" />
+                        <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col items-center justify-center text-center min-w-0">
+                            <x-lucide-download class="w-6 h-6 text-[#795548] mb-2 sm:mb-3" stroke-width="2.5" />
                             <span class="text-sm font-bold text-[#5D4037] mb-1">{{ __('Data used') }}</span>
                             {{-- Defaulted, not assumed: OPNsense does not always
                                  include a counter on a freshly-created session,
@@ -146,21 +136,16 @@
                                 $mbOut = ($session['bytes_out'] ?? $session['bytes_sent'] ?? 0) / 1048576;
                             @endphp
                             <span class="text-lg font-bold text-[#3E2723] tabular-nums">{{ number_format($mbIn + $mbOut, 1) }} MB</span>
-                            <span class="text-xs text-[#795548] tabular-nums mt-0.5">↓ {{ number_format($mbIn, 1) }} · ↑ {{ number_format($mbOut, 1) }}</span>
+                            <span class="text-xs text-[#795548] tabular-nums mt-0.5">{{ __(':in down · :out up', ['in' => number_format($mbIn, 1), 'out' => number_format($mbOut, 1)]) }}</span>
                         </div>
 
-                        <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center transition-all hover:border-[#3E2723]/30 hover:shadow-lg">
-                            <x-lucide-user class="w-6 h-6 text-[#795548] mb-3" stroke-width="2.5" />
+                        <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col items-center justify-center text-center min-w-0">
+                            <x-lucide-smartphone class="w-6 h-6 text-[#795548] mb-2 sm:mb-3" stroke-width="2.5" />
                             <span class="text-sm font-bold text-[#5D4037] mb-1">{{ __('Your device') }}</span>
                             <span class="text-base font-bold text-[#3E2723] truncate w-full text-center px-1">{{ $userName }}</span>
                         </div>
                     </div>
 
-                    {{-- The sign-in window a phone opens for the portal is dismissed by
-                         the OS the moment the device is authorized, taking this countdown
-                         with it. Devices supporting RFC 8908 (iOS 14+/Android 11+) get the
-                         remaining time natively from /captive-portal-api instead; everyone
-                         else needs the address to reopen it in a real browser. --}}
                     {{-- The guest's plan and speed; free guests see what Premium would give them. --}}
                     <div class="max-w-md mx-auto w-full px-2 mb-4">
                         <div class="rounded-2xl border-2 border-[#F0E6D2] bg-white px-4 py-3 text-center">
@@ -174,6 +159,8 @@
                         </div>
                     </div>
 
+                    {{-- The OS closes the sign-in window once the phone is online, taking
+                         this countdown with it, so the guest needs the address to come back. --}}
                     <div class="max-w-md mx-auto w-full px-2 mb-6">
                         <div class="bg-white border-2 border-[#F0E6D2] rounded-3xl p-5 text-center shadow-sm">
                             <span class="block text-sm font-bold text-[#5D4037] mb-2">{{ __('Check your time anytime') }}</span>
@@ -182,7 +169,7 @@
                         </div>
                     </div>
 
-                    <div class="max-w-md mx-auto w-full space-y-4 px-2">
+                    <div class="max-w-md mx-auto w-full space-y-4 px-2 sm:mb-auto">
                         {{-- Only worth showing when it actually leads somewhere else.
                              With portal_browse_url unset this resolves to the portal,
                              and a "Continue Browsing" button that reloads the page the
@@ -268,7 +255,7 @@
                              a fixed overlay. A shrink-0 row costs the same
                              vertical space and simply cannot collide. --}}
                         <div class="shrink-0 relative z-10 mb-4 flex items-center gap-2">
-                            <div class="flex items-center gap-2.5 bg-[#FAF7F2] px-4 py-1.5 rounded-full border border-[#F0E6D2] shadow-sm" x-bind:class="aiCue ? 'animate-bounce' : ''">
+                            <div class="flex items-center gap-2.5 bg-[#FAF7F2] px-4 py-1.5 rounded-full border border-[#F0E6D2] shadow-sm">
                                 <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                                 <span class="text-sm font-bold text-[#3E2723]">{{ __('Barista AI is here') }}</span>
                             </div>
@@ -314,7 +301,7 @@
                     <span>{{ __('My time') }}</span>
                 </button>
                 <button x-on:click="activeTab = 'help'"
-                        class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-xs font-bold uppercase tracking-wide transition-all duration-300 flex flex-col items-center gap-2.5 group"
+                        class="flex-1 max-w-[130px] py-4 px-3 rounded-2xl lg:rounded-3xl text-sm font-bold transition-all duration-300 flex flex-col items-center gap-2 group"
                         :class="activeTab === 'help' ? 'text-white bg-[#3E2723] shadow-2xl shadow-amber-900/30 -translate-y-1' : 'text-[#6D4C41] hover:bg-white hover:shadow-md hover:border-[#F0E6D2] border border-transparent'">
                     <x-lucide-message-square class="w-5 h-5 lg:w-6 lg:h-6 transition-colors" x-bind:class="activeTab === 'help' ? 'text-amber-500' : 'text-[#D7CCC8] group-hover:text-[#795548]'" stroke-width="2.5" />
                     <span>{{ __('Ask AI') }}</span>
@@ -330,12 +317,10 @@ const T = @js([
     'timeLeft' => __('Time left'),
     'timesUp' => __("Time's up"),
     'reconnecting' => __('Reconnecting…'),
-    'daysLeft' => __('days left'),
-    'hoursLeft' => __('hours left'),
-    'minuteLeft' => __('minute left'),
-    'minutesLeft' => __('minutes left'),
-    'secondLeft' => __('second left'),
-    'secondsLeft' => __('seconds left'),
+    'minuteLeft' => __('minute'),
+    'minutesLeft' => __('minutes'),
+    'secondLeft' => __('second'),
+    'secondsLeft' => __('seconds'),
     'tenLeftTitle' => __('10 minutes left'),
     'tenLeftText' => __('Your Wi-Fi time is almost up. Need more? Tap "Need more time?" or ask at the counter.'),
     'gotIt' => __('Got it'),
@@ -347,30 +332,20 @@ document.addEventListener('alpine:init', () => {
         remainingLabel: '—',
         remainingUnit: '',
         tickPulse: false,
-        aiCue: false,
         // One-shot: without this the warning would refire every tick for
         // the entire last 10 minutes, not just announce the threshold once.
         warnedTenMinutes: false,
 
         init() {
-            // The embedded agent-chat component instance owns its own chat state/scrolling now —
-            // just tell it when the "help" tab becomes visible so it can scroll itself.
+            // The chat scrolls itself; it only needs to know when its tab is shown.
             this.$watch('activeTab', value => {
                 if (value === 'help') {
                     window.dispatchEvent(new CustomEvent('portal-tab-changed'));
-                    // One-shot bounce on the "AI Agent Active" pill each time this tab
-                    // activates, reusing the existing animate-bounce vocabulary rather
-                    // than adding new motion — just a "hey, I'm here" cue.
-                    this.aiCue = true;
-                    setTimeout(() => { this.aiCue = false; }, 900);
                 }
             });
 
-            // Live countdown so guests can watch their time tick down without
-            // waiting on the page's 60s <meta refresh>. That refresh is still
-            // what re-syncs against the server and catches actual expiry
-            // (redirecting to the passcode screen) — this just makes the
-            // number between refreshes feel alive instead of frozen.
+            // Ticks between the 60s <meta refresh>; the refresh is what re-syncs
+            // with the server and catches real expiry.
             this.tickCountdown(expiresAtMs);
             setInterval(() => this.tickCountdown(expiresAtMs), 1000);
         },
@@ -409,15 +384,12 @@ document.addEventListener('alpine:init', () => {
 
             if (days > 0) {
                 this.remainingLabel = `${days}d ${hours}h`;
-                this.remainingUnit = T.daysLeft;
+                this.remainingUnit = '';
             } else if (hours > 0) {
                 this.remainingLabel = `${hours}h ${minutes}m`;
-                this.remainingUnit = T.hoursLeft;
+                this.remainingUnit = '';
             } else if (minutes > 0) {
-                // Whole minutes, not m:ss. Under a label reading "Minutes Left",
-                // "5:30" reads as five-point-thirty — guests took it for five and
-                // a half minutes, or for a clock time. The number and its unit
-                // now agree.
+                // Whole minutes, not m:ss: "5:30" reads as a clock time or as 5.3.
                 this.remainingLabel = `${minutes}`;
                 this.remainingUnit = minutes === 1 ? T.minuteLeft : T.minutesLeft;
             } else {
@@ -428,12 +400,7 @@ document.addEventListener('alpine:init', () => {
                 this.remainingUnit = seconds === 1 ? T.secondLeft : T.secondsLeft;
             }
 
-            // Pulse the digits whenever the displayed value actually changes
-            // (every second in minutes:seconds mode, every minute/hour once
-            // the countdown rolls up to a coarser unit) — same flashKey()
-            // one-shot pattern dashboard.blade.php uses for its live-poll
-            // numbers, so the passive "watch it count down" moment isn't a
-            // flat re-render.
+            // Pulse the digits only when the shown value changes.
             if (previousLabel !== '—' && this.remainingLabel !== previousLabel) {
                 this.tickPulse = true;
                 setTimeout(() => { this.tickPulse = false; }, 500);
@@ -454,7 +421,7 @@ document.addEventListener('alpine:init', () => {
                 color: '#5D4037',
                 iconColor: '#F59E0B',
                 customClass: {
-                    popup: 'rounded-[2rem] border-t-8 border-amber-500 shadow-2xl',
+                    popup: 'rounded-[2rem] shadow-2xl',
                     confirmButton: 'px-8 py-3 rounded-full font-bold text-base bg-[#3E2723]',
                 },
             });

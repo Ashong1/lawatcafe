@@ -1,24 +1,21 @@
 <x-guest-layout>
-    <div class="mb-4 text-sm text-[#6D4C41]">
-        {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
-    </div>
+    <x-slot name="header">
+        <h2 class="text-xl font-bold text-white mb-1" style="font-family: 'Montserrat', sans-serif;">Check your email</h2>
+        <p class="text-sm text-white/75 font-medium" style="font-family: 'Montserrat', sans-serif;">Open the link we sent you to confirm your email address.</p>
+    </x-slot>
 
-    <div class="mt-4 flex items-center justify-between">
-        <form method="POST" action="{{ route('verification.send') }}">
+    <div class="max-w-md mx-auto w-full flex flex-col items-center gap-2">
+        <form method="POST" action="{{ route('verification.send') }}" class="w-full">
             @csrf
-
-            <div>
-                <x-primary-button>
-                    {{ __('Resend Verification Email') }}
-                </x-primary-button>
-            </div>
+            <button type="submit" class="w-full sm:w-5/6 mx-auto flex justify-center py-4 px-6 rounded-full shadow-2xl text-base font-bold text-[#3E2723] bg-[#FDF8F5] hover:bg-white active:scale-95 transition-all">
+                Send the link again
+            </button>
         </form>
 
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-
-            <button type="submit" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {{ __('Log Out') }}
+            <button type="submit" class="inline-flex min-h-[44px] items-center text-sm font-semibold text-white/80 hover:text-white transition underline underline-offset-4 decoration-white/30">
+                Sign out
             </button>
         </form>
     </div>

@@ -11,14 +11,14 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Order History</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">View past transactions{{ $receiptPrintingEnabled ? ', reprint receipts,' : '' }} and manage voids.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Find a past order, reprint its kitchen slip{{ $receiptPrintingEnabled ? ' or receipt' : '' }}, or void it.</p>
         </div>
     </div>
 
     @if(auth()->user()->isAdminOrAbove() && $pendingVoidRequests->isNotEmpty())
     <div class="bg-amber-50 border border-amber-200 p-6 md:p-8 rounded-2xl mb-8">
         <h3 class="text-sm font-bold text-amber-800 uppercase tracking-wide mb-1">Pending Void Requests</h3>
-        <p class="text-xs text-amber-700/80 mb-6 font-medium">Staff-submitted void requests awaiting your review.</p>
+        <p class="text-sm text-amber-800 mb-6 font-medium">Staff asked to cancel these sales. Approve to void the sale, or reject to keep it.</p>
 
         <div class="space-y-3">
             @foreach($pendingVoidRequests as $voidRequest)
@@ -34,14 +34,14 @@
                 <div class="flex items-center gap-2 shrink-0">
                     <form action="{{ route('pos.history.void-requests.approve', $voidRequest->id) }}" method="POST" @submit="formSubmitting = true">
                         @csrf
-                        <button type="submit" :disabled="formSubmitting" class="text-xs font-bold uppercase tracking-wide text-green-700 bg-green-50 hover:bg-green-100 border border-green-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5">
+                        <button type="submit" :disabled="formSubmitting" class="text-xs font-bold uppercase tracking-wide text-green-700 bg-green-50 hover:bg-green-100 border border-green-100 min-h-[44px] px-4 rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5">
                             <template x-if="formSubmitting"><x-lucide-loader-2 class="w-3 h-3 animate-spin" /></template>
                             <span>Approve</span>
                         </button>
                     </form>
                     <form action="{{ route('pos.history.void-requests.reject', $voidRequest->id) }}" method="POST" @submit="formSubmitting = true">
                         @csrf
-                        <button type="submit" :disabled="formSubmitting" class="text-xs font-bold uppercase tracking-wide text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-2 rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5">
+                        <button type="submit" :disabled="formSubmitting" class="text-xs font-bold uppercase tracking-wide text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 min-h-[44px] px-4 rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5">
                             <template x-if="formSubmitting"><x-lucide-loader-2 class="w-3 h-3 animate-spin" /></template>
                             <span>Reject</span>
                         </button>
@@ -55,28 +55,28 @@
 
     {{-- FILTERS --}}
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
-        <form action="{{ route('pos.history') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4" @submit="formSubmitting = true">
-            <div>
-                <label for="search" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Search ID</label>
-                <input type="text" id="search" name="search" value="{{ request('search') }}" placeholder="TRN-..." class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+        <form action="{{ route('pos.history') }}" method="GET" class="grid grid-cols-2 md:grid-cols-4 gap-4" @submit="formSubmitting = true">
+            <div class="col-span-2 md:col-span-1">
+                <label for="search" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Order no.</label>
+                <input type="search" id="search" name="search" value="{{ request('search') }}" placeholder="e.g. last 4 digits" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 min-h-[44px] text-base sm:text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
             </div>
             <div>
                 <label for="date" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Date</label>
-                <input type="date" id="date" name="date" value="{{ request('date', now()->toDateString()) }}" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                <input type="date" id="date" name="date" value="{{ request('date', now()->toDateString()) }}" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 min-h-[44px] text-base sm:text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
             </div>
             <div>
                 <label for="status" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Status</label>
-                <select id="status" name="status" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
-                    <option value="">All Statuses</option>
+                <select id="status" name="status" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 min-h-[44px] text-base sm:text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    <option value="">All</option>
                     <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
                     <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Voided</option>
                     <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Preparing</option>
                 </select>
             </div>
-            <div class="flex items-end">
-                <button type="submit" :disabled="formSubmitting" class="w-full bg-[#3E2723] text-white py-3 rounded-xl font-bold uppercase tracking-wide text-xs hover:bg-[#271815] transition shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            <div class="col-span-2 md:col-span-1 flex items-end">
+                <button type="submit" :disabled="formSubmitting" class="w-full min-h-[44px] bg-[#3E2723] text-white py-3 rounded-xl font-bold uppercase tracking-wide text-xs hover:bg-[#271815] transition shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                     <template x-if="formSubmitting"><x-lucide-loader-2 class="w-3.5 h-3.5 animate-spin" /></template>
-                    <span>Filter Results</span>
+                    <span>Show orders</span>
                 </button>
             </div>
         </form>
@@ -87,7 +87,7 @@
             <table class="lk-stack w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-bold">Transaction #</th>
+                        <th class="pb-4 font-bold">Order</th>
                         <th class="pb-4 font-bold">Items</th>
                         <th class="pb-4 font-bold text-right">Total</th>
                         <th class="pb-4 font-bold text-center">Payment</th>
@@ -133,7 +133,7 @@
                             @elseif($sale->status === 'cancelled')
                                 <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-50 text-red-700 text-xs font-bold uppercase tracking-wide rounded-full"><x-lucide-x class="w-3 h-3" />Voided</span>
                             @else
-                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-wide rounded-full"><x-lucide-clock class="w-3 h-3" />{{ $sale->status }}</span>
+                                <span class="inline-flex items-center gap-1 px-3 py-1 bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-wide rounded-full"><x-lucide-clock class="w-3 h-3" />Preparing</span>
                             @endif
                         </td>
                         <td class="py-4 text-right">
@@ -142,12 +142,12 @@
                                      PosController::receipt() refuses too — this
                                      only removes the affordance. --}}
                                 @if(! auth()->user()->isSuperAdmin() && $sale->items->where('type', 'product')->isNotEmpty())
-                                    <a href="{{ route('pos.kitchen-slip', $sale->id) }}" @if(! str_contains(request()->userAgent() ?? '', 'LawatKapeApp')) target="_blank" @endif class="p-2 text-[#795548] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-lg transition" title="Print kitchen slip" aria-label="Print kitchen slip">
+                                    <a href="{{ route('pos.kitchen-slip', $sale->id) }}" @if(! str_contains(request()->userAgent() ?? '', 'LawatKapeApp')) target="_blank" @endif class="w-11 h-11 inline-flex items-center justify-center text-[#795548] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-lg transition" title="Print kitchen slip" aria-label="Print kitchen slip">
                                         <x-lucide-chef-hat class="w-4 h-4" />
                                     </a>
                                 @endif
                                 @if($receiptPrintingEnabled)
-                                    <a href="{{ route('pos.receipt', $sale->id) }}" target="_blank" class="p-2 text-[#795548] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-lg transition" title="Reprint Receipt" aria-label="Reprint Receipt">
+                                    <a href="{{ route('pos.receipt', $sale->id) }}" target="_blank" class="w-11 h-11 inline-flex items-center justify-center text-[#795548] hover:text-[#3E2723] hover:bg-[#FDF8F5] rounded-lg transition" title="Reprint Receipt" aria-label="Reprint Receipt">
                                         <x-lucide-printer class="w-4 h-4" />
                                     </a>
                                 @endif
@@ -161,13 +161,13 @@
                                             <button type="button"
                                                     :disabled="formSubmitting"
                                                     @click="window.confirmAction({
-                                                        title: 'Void Order?',
-                                                        text: 'Are you sure you want to void this transaction? This is recorded for auditing.',
+                                                        title: 'Void order #{{ substr($sale->transaction_number, -8) }}?',
+                                                        text: 'The sale is marked voided and stays in the records.',
                                                         icon: 'warning',
-                                                        confirmText: 'Yes, Void It',
+                                                        confirmText: 'Void order',
                                                         callback: () => { formSubmitting = true; document.getElementById('void-form-{{ $sale->id }}').submit(); }
                                                     })"
-                                                    class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed" title="Void Transaction" aria-label="Void Transaction">
+                                                    class="w-11 h-11 inline-flex items-center justify-center text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed" title="Void order" aria-label="Void order">
                                                 <template x-if="!formSubmitting"><x-lucide-slash class="w-4 h-4" /></template>
                                                 <template x-if="formSubmitting"><x-lucide-loader-2 class="w-4 h-4 animate-spin" /></template>
                                             </button>
@@ -175,7 +175,7 @@
                                     @else
                                         <button type="button"
                                                 @click="openVoidRequestModal({{ $sale->id }}, '{{ substr($sale->transaction_number, -8) }}')"
-                                                class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition" title="Request Void" aria-label="Request Void">
+                                                class="w-11 h-11 inline-flex items-center justify-center text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition" title="Ask to void" aria-label="Ask an admin to void this order">
                                             <x-lucide-slash class="w-4 h-4" />
                                         </button>
                                     @endif
@@ -186,9 +186,9 @@
                     @empty
                     <tr>
                         <td colspan="6" class="py-20 text-center">
-                            <div class="flex flex-col items-center opacity-30">
-                                <x-lucide-history class="w-12 h-12 mb-4" />
-                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-wide">No transactions found for this date.</p>
+                            <div class="flex flex-col items-center">
+                                <x-lucide-history class="w-12 h-12 mb-4 text-[#6D4C41]/40" />
+                                <p class="text-[#6D4C41] text-sm font-bold">No orders match. Try another date or clear the search.</p>
                             </div>
                         </td>
                     </tr>
@@ -204,20 +204,20 @@
 
     {{-- Request Void Modal (staff only) --}}
     <x-modal-shell show="isModalOpen" max-width="md" panel-class="border-t-8 border-red-500" labelled-by="request-void-heading">
-        <div class="px-8 py-6 border-b border-[#FDF8F5]">
-            <h2 id="request-void-heading" class="text-xl font-bold text-[#3E2723] uppercase tracking-wide">Request Void</h2>
-            <p class="text-xs text-[#795548] font-medium mt-1 uppercase tracking-tighter">Order <span x-text="voidingSaleLabel"></span> — an admin will review this before it's voided.</p>
+        <div class="px-5 sm:px-8 py-6 border-b border-[#FDF8F5]">
+            <h2 id="request-void-heading" class="text-xl font-bold text-[#3E2723] uppercase tracking-wide">Ask to void</h2>
+            <p class="text-sm text-[#795548] font-medium mt-1">Order <span x-text="voidingSaleLabel"></span>. An admin approves it before the sale is voided.</p>
         </div>
 
         <form :action="'/pos/history/void/' + voidingSaleId" method="POST" @submit="submitting = true">
             @csrf
-            <div class="p-8">
-                <label for="reason" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Reason for Void</label>
-                <textarea id="reason" name="reason" x-model="reason" required rows="3" placeholder="e.g. Customer changed their mind, wrong item rung up..." class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all"></textarea>
+            <div class="p-5 sm:p-8">
+                <label for="reason" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Reason</label>
+                <textarea id="reason" name="reason" x-model="reason" required rows="3" placeholder="e.g. Customer changed their mind, wrong item rung up..." class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all"></textarea>
             </div>
-            <div class="px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
+            <div class="px-5 sm:px-8 py-6 bg-[#FAFAFA] border-t border-[#F0E6D2] flex gap-4">
                 <button type="button" @click="isModalOpen = false" class="flex-1 py-4 bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#795548] hover:bg-[#FDF8F5] font-bold transition text-xs uppercase tracking-wide whitespace-nowrap">Cancel</button>
-                <x-submit-button label="Submit Request" variant="danger" state="submitting" />
+                <x-submit-button label="Send to admin" variant="danger" state="submitting" />
             </div>
         </form>
     </x-modal-shell>

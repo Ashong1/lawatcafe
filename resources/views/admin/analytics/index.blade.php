@@ -23,34 +23,39 @@
         @endif
     </div>
 
-    <!-- AI Intelligence Grid -->
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-12">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-12">
         
         <!-- Left: Revenue Forecasting -->
         <div class="xl:col-span-2 space-y-8">
-            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-[#F0E6D2] relative overflow-hidden group">
-                <!-- Abstract Background Pattern -->
-                <div class="absolute -right-20 -top-20 w-64 h-64 bg-amber-50 rounded-full blur-3xl opacity-50 group-hover:bg-amber-100 transition-colors duration-700"></div>
-                
-                <div class="relative z-10">
-                    <div class="flex items-center gap-4 mb-8">
+            <div class="bg-white p-5 sm:p-8 rounded-[2.5rem] shadow-sm border border-[#F0E6D2]">
+                <div>
+                    <div class="flex flex-wrap items-center gap-4 mb-8">
                         <div class="w-12 h-12 bg-[#3E2723] rounded-2xl flex items-center justify-center shadow-xl">
                             <x-lucide-trending-up class="w-6 h-6 text-amber-500" />
                         </div>
                         <div>
                             <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">7-Day Revenue Forecast</h3>
-                            <p class="text-xs text-[#6D4C41] font-bold uppercase tracking-tighter mt-0.5">Projected earnings based on past performance</p>
+                            <p class="text-xs text-[#6D4C41] font-medium mt-0.5">What Barista AI expects, based on past sales</p>
                         </div>
+                        @if($aiForecast['is_calibrating'] ?? false)
+                            <div class="sm:ml-auto bg-[#3E2723] text-white px-4 py-2 rounded-2xl flex items-center gap-3">
+                                <x-lucide-clock class="w-4 h-4 text-amber-500" />
+                                <div>
+                                    <p class="text-xs font-bold leading-tight">Still learning</p>
+                                    <p class="text-xs font-medium text-amber-200/90 leading-tight">{{ $aiForecast['calibration_days_remaining'] ?? 7 }} more days of sales needed</p>
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
-                    <div class="flex flex-col md:flex-row items-stretch gap-12 {{ (($aiForecast['is_calibrating'] ?? false) && !($aiForecast['forecast_total'] ?? 0)) ? 'blur-sm select-none pointer-events-none' : '' }}">
+                    <div class="flex flex-col md:flex-row items-stretch gap-6 md:gap-12 {{ (($aiForecast['is_calibrating'] ?? false) && !($aiForecast['forecast_total'] ?? 0)) ? 'blur-sm select-none pointer-events-none' : '' }}">
                         <div class="flex-1 flex flex-col justify-center">
                             <div class="flex items-baseline gap-3 mb-2">
-                                <span class="text-6xl font-bold text-[#3E2723] tracking-tighter">₱{{ number_format($aiForecast['forecast_total'] ?? 0, 0) }}</span>
+                                <span class="text-5xl sm:text-6xl font-bold text-[#3E2723] tracking-tight">₱{{ number_format($aiForecast['forecast_total'] ?? 0, 0) }}</span>
                                 <span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-lg uppercase">Estimated</span>
                             </div>
-                            <p class="text-xs text-[#795548] font-medium leading-relaxed max-w-md mb-6">
-                                {{ $aiForecast['trend_analysis'] ?? 'Gathering historical data to generate a precise financial outlook for your kape.' }}
+                            <p class="text-sm text-[#795548] font-medium leading-relaxed max-w-md mb-6">
+                                {{ $aiForecast['trend_analysis'] ?? 'Barista AI needs a few more days of sales before it can forecast.' }}
                             </p>
                             
                             <div class="bg-[#FAFAFA] rounded-2xl p-5 border border-[#F0E6D2]">
@@ -69,74 +74,59 @@
                         <div class="w-full md:w-64 bg-[#FAFAFA] rounded-3xl p-6 border border-[#F0E6D2] shadow-inner flex flex-col justify-between">
                             <div class="flex flex-col gap-4">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">Daily Avg (Proj.)</span>
+                                    <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">Per day</span>
                                     <span class="text-sm font-bold text-[#3E2723]">₱{{ number_format(($aiForecast['forecast_total'] ?? 0) / 7, 0) }}</span>
                                 </div>
                                 <div class="h-[1px] w-full bg-[#F0E6D2]"></div>
-                                <div class="flex justify-between items-center">
+                                <div class="flex flex-col gap-1">
                                     <span class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">How sure it is</span>
                                     @php
                                         $confScore = $aiForecast['meta']['confidence_score'] ?? 1;
                                         $confStars = ceil(($confScore / 7) * 5);
                                     @endphp
-                                    <div class="flex gap-1" title="Confidence: {{ $aiForecast['meta']['confidence_label'] ?? 'Gathering' }}">
-                                        @for($i = 1; $i <= 5; $i++)
-                                            <div class="w-1.5 h-1.5 rounded-full {{ $i <= $confStars ? 'bg-amber-500' : 'bg-gray-200' }}"></div>
-                                        @endfor
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold text-[#3E2723]">{{ $aiForecast['meta']['confidence_label'] ?? 'Not yet' }}</span>
+                                        <div class="flex gap-1" aria-hidden="true">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                <div class="w-1.5 h-3 rounded-full {{ $i <= $confStars ? 'bg-amber-500' : 'bg-gray-200' }}"></div>
+                                            @endfor
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             
                             <div class="mt-6 p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                                <p class="text-xs font-bold text-amber-800 uppercase tracking-wide mb-1">Peak Day Prediction</p>
+                                <p class="text-xs font-bold text-amber-800 uppercase tracking-wide mb-1">Busiest day</p>
                                 <p class="text-xs font-bold text-[#3E2723]">
                                     @php
                                         $peak = collect($aiForecast['daily_forecast'] ?? [])->sortByDesc('amount')->first();
                                     @endphp
-                                    {{ $peak['day'] ?? 'Determining...' }}
+                                    {{ $peak['day'] ?? 'Not enough sales yet' }}
                                 </p>
                             </div>
                         </div>
                     </div>
-                    @if($aiForecast['is_calibrating'] ?? false)
-                        <div class="absolute top-4 right-4 flex flex-col items-end gap-2 z-20 pointer-events-none">
-                            <div class="bg-[#3E2723] text-white px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-3 border border-amber-500/30 animate-in slide-in-from-right duration-500">
-                                <x-lucide-clock class="w-4 h-4 text-amber-500 animate-spin" />
-                                <div class="text-right">
-                                    <p class="text-xs font-bold uppercase tracking-wide leading-none mb-0.5">Calibrating</p>
-                                    <p class="text-xs font-medium text-amber-200/90 leading-none">{{ $aiForecast['calibration_days_remaining'] ?? 7 }} days left</p>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
                 </div>
             </div>
 
             <!-- Strategic Advice Section -->
-            <div class="bg-[#3E2723] p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group border-t-8 border-amber-500">
-                <div class="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px]"></div>
-                
-                <div class="relative z-10 flex flex-col md:flex-row gap-10 items-start">
-                    <div class="w-20 h-20 bg-amber-500 rounded-3xl flex items-center justify-center shrink-0 shadow-2xl shadow-amber-900/50 group-hover:rotate-12 transition-transform duration-500">
-                        <x-lucide-lightbulb class="w-10 h-10 text-[#3E2723]" />
+            <div class="bg-[#3E2723] p-6 sm:p-10 rounded-[2.5rem] shadow-sm">
+                <div class="flex flex-col md:flex-row gap-6 md:gap-10 items-start">
+                    <div class="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center shrink-0">
+                        <x-lucide-lightbulb class="w-7 h-7 text-[#3E2723]" />
                     </div>
                     <div>
                         <h3 class="text-amber-200 text-xs font-bold uppercase tracking-wide mb-4">Barista AI's tip</h3>
-                        <p class="text-lg md:text-xl text-white font-medium italic leading-relaxed">
-                            "{{ $aiForecast['strategic_advice'] ?? 'Focus on gathering more sales data to unlock advanced AI-driven business strategies tailored to Lawa\'t Kape.' }}"
+                        <p class="text-lg md:text-xl text-white font-medium leading-relaxed">
+                            {{ $aiForecast['strategic_advice'] ?? 'Tips appear here once there are enough sales to learn from.' }}
                         </p>
-                        <div class="mt-8 flex items-center gap-4 text-white/40 text-xs font-bold uppercase tracking-wide">
-                            <span class="flex items-center gap-1"><x-lucide-check-circle class="w-3 h-3" /> Real-time Data</span>
-                            <span class="flex items-center gap-1"><x-lucide-check-circle class="w-3 h-3" /> Contextual Analysis</span>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right: Market Predictions -->
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-[#F0E6D2] flex flex-col">
-            <div class="flex items-center gap-3 mb-10">
+        <div class="bg-white p-5 sm:p-8 rounded-[2.5rem] shadow-sm border border-[#F0E6D2] flex flex-col">
+            <div class="flex items-center gap-3 mb-8">
                 <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center border border-amber-100">
                     <x-lucide-brain-circuit class="w-5 h-5 text-amber-700" />
                 </div>
@@ -149,18 +139,16 @@
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-xs font-bold text-green-600 uppercase tracking-wide flex items-center gap-2">
                             <x-lucide-arrow-up-right class="w-4 h-4" />
-                            Predicted Best Sellers
+                            Likely best sellers
                         </span>
                     </div>
                     <div class="space-y-2">
-                        @foreach($aiForecast['predicted_top_products'] ?? ['Analyzing trend data...'] as $prod)
-                            <div class="bg-green-50/50 border border-green-100 rounded-2xl p-4 flex items-center justify-between group/item hover:bg-green-50 transition-colors">
+                        @foreach($aiForecast['predicted_top_products'] ?? ['Not enough sales yet'] as $prod)
+                            <div class="bg-green-50/50 border border-green-100 rounded-2xl p-4">
                                 <span class="text-sm font-bold text-green-800 capitalize">{{ $prod }}</span>
-                                <x-lucide-sparkles class="w-3 h-3 text-amber-500 opacity-0 group-hover/item:opacity-100 transition-opacity" />
                             </div>
                         @endforeach
                     </div>
-                    <p class="text-xs text-green-800 mt-3 font-bold uppercase tracking-tighter">Expected to see volume increase based on trend</p>
                 </div>
 
                 <!-- Low Demand Risk -->
@@ -168,50 +156,47 @@
                     <div class="flex items-center justify-between mb-4">
                         <span class="text-xs font-bold text-red-600 uppercase tracking-wide flex items-center gap-2">
                             <x-lucide-arrow-down-right class="w-4 h-4" />
-                            Demand Risk Alert
+                            May sell slowly
                         </span>
                     </div>
                     <div class="space-y-4">
                         @forelse($aiForecast['demand_risk_alerts'] ?? [] as $alert)
-                            <div class="bg-red-50/50 border border-red-100 rounded-2xl p-4 flex items-center justify-between group/item hover:bg-red-50 transition-colors">
+                            <div class="bg-red-50/50 border border-red-100 rounded-2xl p-4 flex items-center justify-between gap-3">
                                 <div>
                                     <span class="text-sm font-bold text-red-800 capitalize block">{{ $alert['item'] }}</span>
-                                    <span class="text-xs font-bold text-red-600 uppercase">{{ $alert['reason'] }}</span>
+                                    <span class="text-xs font-medium text-red-700">{{ $alert['reason'] }}</span>
                                 </div>
-                                <x-lucide-alert-triangle class="w-4 h-4 text-red-400 group-hover/item:scale-110 transition-transform" />
+                                <x-lucide-alert-triangle class="w-4 h-4 text-red-400 shrink-0" />
                             </div>
                         @empty
                             <div class="p-6 border-2 border-dashed border-[#F0E6D2] rounded-3xl text-center">
                                 <x-lucide-shield-check class="w-8 h-8 text-green-200 mx-auto mb-3" />
-                                <p class="text-xs font-bold text-[#795548] uppercase tracking-wide leading-tight">Demand Stable</p>
-                                <p class="text-xs text-[#6D4C41] font-medium mt-1">No major risks detected in existing data.</p>
+                                <p class="text-xs font-bold text-[#795548] uppercase tracking-wide leading-tight">Nothing to worry about</p>
+                                <p class="text-xs text-[#6D4C41] font-medium mt-1">No item looks likely to sell slowly.</p>
                             </div>
                         @endforelse
                     </div>
                 </div>
             </div>
 
-            <div class="mt-8 pt-8 border-t border-[#F0E6D2] text-center">
-                <p class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">Last Updated: {{ now()->format('h:i A') }}</p>
-            </div>
         </div>
     </div>
 
     <!-- Data Breakdown Tables -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Category Performance -->
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-[#F0E6D2]">
-            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-8">Performance by Category</h3>
+        <div class="bg-white p-5 sm:p-8 rounded-[2.5rem] shadow-sm border border-[#F0E6D2]">
+            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-6">Sales by category, all time</h3>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                             <th class="pb-4 font-bold">Category</th>
-                            <th class="pb-4 font-bold text-center">Volume</th>
+                            <th class="pb-4 font-bold text-center">Sold</th>
                             <th class="pb-4 font-bold text-right">Revenue</th>
                         </tr>
                     </thead>
-                    <tbody class="text-xs">
+                    <tbody class="text-sm">
                         @forelse($categoryPerformance as $cp)
                             <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                                 <td class="py-4">
@@ -227,7 +212,7 @@
                                 <td colspan="3" class="py-10 text-center">
                                     <x-lucide-package-search class="w-7 h-7 text-[#F0E6D2] mx-auto mb-2" />
                                     <p class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">No category sales yet</p>
-                                    <p class="text-xs text-[#D7CCC8] font-medium mt-1">Data appears once completed sales are recorded.</p>
+                                    <p class="text-xs text-[#6D4C41] font-medium mt-1">This fills in as orders are completed.</p>
                                 </td>
                             </tr>
                         @endforelse
@@ -237,18 +222,18 @@
         </div>
 
         <!-- Weekly Footfall Breakdown -->
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-[#F0E6D2]">
-            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-8">7-Day Transaction Activity</h3>
+        <div class="bg-white p-5 sm:p-8 rounded-[2.5rem] shadow-sm border border-[#F0E6D2]">
+            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-6">Orders, last 7 days</h3>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
                             <th class="pb-4 font-bold">Day</th>
-                            <th class="pb-4 font-bold text-center">Transactions</th>
-                            <th class="pb-4 font-bold text-right">Daily Revenue</th>
+                            <th class="pb-4 font-bold text-center">Orders</th>
+                            <th class="pb-4 font-bold text-right">Sales</th>
                         </tr>
                     </thead>
-                    <tbody class="text-xs">
+                    <tbody class="text-sm">
                         @forelse($weeklyStats as $ws)
                             <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                                 <td class="py-4 font-bold text-[#3E2723]">{{ $ws->day }}</td>
@@ -260,7 +245,7 @@
                                 <td colspan="3" class="py-10 text-center">
                                     <x-lucide-calendar-x class="w-7 h-7 text-[#F0E6D2] mx-auto mb-2" />
                                     <p class="text-xs font-bold text-[#6D4C41] uppercase tracking-wide">No transactions this week</p>
-                                    <p class="text-xs text-[#D7CCC8] font-medium mt-1">Daily activity will appear here once sales come in.</p>
+                                    <p class="text-xs text-[#6D4C41] font-medium mt-1">Each day appears here once it has sales.</p>
                                 </td>
                             </tr>
                         @endforelse

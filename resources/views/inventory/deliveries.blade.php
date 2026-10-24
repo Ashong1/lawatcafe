@@ -11,7 +11,7 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Inventory Receiving</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Record new supplies from vendors and automatically restock ingredients.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Record supplies when they arrive. Ingredient stock goes up on its own.</p>
         </div>
     </div>
 
@@ -19,8 +19,8 @@
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
-                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Delivery Records</h3>
-                <p class="text-xs text-[#6D4C41] mt-1 font-medium">History of all stock replenishments.</p>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Deliveries</h3>
+                <p class="text-xs text-[#6D4C41] mt-1 font-medium">Every delivery received, newest first.</p>
             </div>
             
             <button @click="openAddModal()" class="bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wide uppercase active:scale-95 flex items-center gap-2">
@@ -107,10 +107,10 @@
                                     @method('DELETE')
                                     <button type="button"
                                             @click="window.confirmAction({
-                                                title: 'Remove Record?',
-                                                text: 'This will hide the delivery record but WILL NOT revert stock levels.',
+                                                title: 'Remove this delivery?',
+                                                text: 'The record is hidden, but the stock it added stays. Fix stock on the Ingredients page if needed.',
                                                 icon: 'warning',
-                                                confirmText: 'Yes, Remove It',
+                                                confirmText: 'Remove',
                                                 callback: () => document.getElementById('delete-delivery-{{ $delivery->id }}').submit()
                                             })"
                                             class="p-2 text-red-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
@@ -123,9 +123,9 @@
                     @empty
                     <tr>
                         <td colspan="7" class="py-20 text-center">
-                            <div class="flex flex-col items-center opacity-30">
-                                <x-lucide-receipt class="w-12 h-12 mb-4" />
-                                <p class="text-[#6D4C41] text-sm font-bold uppercase tracking-wide">No delivery records found.</p>
+                            <div class="flex flex-col items-center max-w-sm mx-auto">
+                                <x-lucide-truck class="w-10 h-10 mb-3 text-[#D7CCC8]" />
+                                <p class="text-[#6D4C41] text-sm font-medium">No deliveries yet. Tap Receive Delivery when supplies arrive, and stock goes up on its own.</p>
                             </div>
                         </td>
                     </tr>
@@ -144,7 +144,7 @@
 
             <div class="px-8 py-6 border-b border-[#FDF8F5]">
                 <h2 id="receive-delivery-heading" class="text-xl font-bold text-[#3E2723] uppercase tracking-wide">Receive Supplies</h2>
-                <p class="text-xs text-[#795548] font-medium mt-1 uppercase tracking-tighter">Input vendor details to update inventory.</p>
+                <p class="text-xs text-[#795548] font-medium mt-1">Who delivered and what came in. Stock updates when you save.</p>
             </div>
 
             <form action="{{ route('inventory.deliveries.store') }}" method="POST" @submit="submitting = true">
@@ -215,7 +215,7 @@
                                         <div class="flex flex-col">
                                             <label :for="'delivery-item-'+index+'-cost'" class="block text-xs text-[#6D4C41] font-bold uppercase mb-1">Unit Cost</label>
                                             <div class="flex items-center gap-1 w-full border border-[#F0E6D2] rounded-lg bg-white pl-2 focus-within:border-[#3E2723] transition-all">
-                                                <span class="shrink-0 text-xs font-bold text-[#D7CCC8]">₱</span>
+                                                <span class="shrink-0 text-xs font-bold text-[#795548]">₱</span>
                                                 <input type="number" step="0.01" :id="'delivery-item-'+index+'-cost'" :name="'items['+index+'][cost_per_unit]'" x-model="item.cost_per_unit" required class="flex-1 min-w-0 py-2 pr-2 border-0 bg-transparent focus:outline-none focus:ring-0 text-xs font-bold text-[#3E2723]">
                                             </div>
                                         </div>
