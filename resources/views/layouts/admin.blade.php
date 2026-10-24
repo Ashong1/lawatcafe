@@ -507,6 +507,12 @@
 
             <div class="flex items-center gap-1 sm:gap-3 lg:gap-6 min-w-0">
                 <x-notification-bell />
+                @if(auth()->user()->isAdminOrAbove())
+                    <a href="{{ route('system-power.index') }}" aria-label="Restart or shut down" title="Restart or shut down"
+                       class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-[#3E2723] hover:bg-[#FDF8F5] hover:text-red-700 transition {{ request()->routeIs('system-power.*') ? 'bg-[#FDF8F5] text-red-700' : '' }}">
+                        <x-lucide-power class="w-5 h-5" />
+                    </a>
+                @endif
                 <x-agent-pending-badge :is-admin="true" />
 
                 <div class="hidden lg:block h-4 w-[1px] bg-[#F0E6D2]"></div>

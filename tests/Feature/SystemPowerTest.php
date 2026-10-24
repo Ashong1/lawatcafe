@@ -24,7 +24,7 @@ class SystemPowerTest extends TestCase
         Process::fake(['*' => Process::result(output: '')]);
 
         $this->actingAs($this->owner())->get(route('system-power.index'))->assertOk()
-            ->assertSee('Restart web app')->assertSee('Shut down server')->assertSee('One-time setup');
+            ->assertSee('Restart web app')->assertSee('Shut down server')->assertSee('One-time setup')->assertSee('aria-label="Restart or shut down"', false);
         $this->actingAs(User::factory()->create(['role' => 'staff']))->get(route('system-power.index'))->assertRedirect();
     }
 
