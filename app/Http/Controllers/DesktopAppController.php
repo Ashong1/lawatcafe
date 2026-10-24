@@ -8,7 +8,7 @@ namespace App\Http\Controllers;
  */
 class DesktopAppController extends Controller
 {
-    public const FILES = ['windows' => 'LawatKape-win.exe', 'linux' => 'LawatKape-linux.AppImage'];
+    public const FILES = ['windows' => 'LawatKape-Setup.exe', 'linux' => 'LawatKape-linux.AppImage'];
 
     public static function available(string $os): bool
     {

@@ -156,10 +156,14 @@ that name can't be reached, refuses untrusted certificates, opens other
 websites in the computer's browser, and adds `LawatKapeDesktop/<version>` to
 its user agent so Profile hides the download card inside it.
 
-- **Windows**: `LawatKape-win.exe`, a portable program with nothing to
-  install. It isn't code-signed, so Windows SmartScreen asks once
-  (More info → Run anyway). A real installer (NSIS) needs Wine to build on
-  Linux, which this server doesn't have.
+- **Windows**: `LawatKape-Setup.exe`, a setup wizard (`desktop/installer.nsi`)
+  that installs per user (no admin rights) under
+  `%LOCALAPPDATA%\Programs\Lawa't Kape`, adds Start-menu and desktop
+  shortcuts, and registers in Settings → Apps with an uninstaller. The
+  uninstaller is written on the PC at install time, so the build needs no
+  Wine (electron-builder's own NSIS target needs 32-bit Wine, which clashes
+  with the PHP repository's libgd on this server). It isn't code-signed, so
+  SmartScreen asks once (More info → Run anyway).
 - **Linux**: `LawatKape-linux.AppImage`; mark it executable, then run it.
 
 Build and publish (downloads Electron the first time, ~300 MB of tools):

@@ -49,7 +49,7 @@
         <p class="text-sm text-[#795548] mt-1">The system as an app with its own window and icon. It shows the live system, so it never needs updating. The computer must be on the shop network.</p>
 
         <div class="mt-4 flex flex-col sm:flex-row gap-3">
-            @foreach(['windows' => ['Download for Windows', '.exe'], 'linux' => ['Download for Linux', '.AppImage']] as $os => [$label, $ext])
+            @foreach(['windows' => ['Download for Windows', 'installer'], 'linux' => ['Download for Linux', '.AppImage']] as $os => [$label, $ext])
                 @if(\App\Http\Controllers\DesktopAppController::available($os))
                     <a href="{{ route('app.desktop', $os) }}" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 rounded-full bg-[#3E2723] hover:bg-[#271815] text-white text-sm font-bold transition">
                         <x-lucide-download class="w-4 h-4" /> {{ $label }} <span class="font-normal opacity-80">{{ $ext }}</span>
@@ -58,7 +58,7 @@
             @endforeach
         </div>
         <ul class="mt-3 space-y-1 text-xs text-[#795548] list-disc pl-5">
-            <li><span class="font-bold">Windows:</span> open the downloaded file; nothing to install. If Windows says it protected your PC, click <span class="font-bold">More info → Run anyway</span>. Pin it to the taskbar to keep it handy.</li>
+            <li><span class="font-bold">Windows:</span> open the downloaded setup and follow the steps; it adds Lawa't Kape to the Start menu and desktop, and you can remove it from <span class="font-bold">Settings → Apps</span>. If Windows says it protected your PC, click <span class="font-bold">More info → Run anyway</span>.</li>
             <li><span class="font-bold">Linux:</span> right-click the file → Properties → allow running it as a program (or <code>chmod +x LawatKape-linux.AppImage</code>), then double-click it.</li>
         </ul>
 

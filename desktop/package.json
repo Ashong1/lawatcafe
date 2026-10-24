@@ -32,7 +32,7 @@
       "category": "Office"
     },
     "win": {
-      "target": "portable",
+      "target": "dir",
       "icon": "icon.ico",
       "signAndEditExecutable": false
     }
