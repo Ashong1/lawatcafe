@@ -15,6 +15,12 @@ class TrafficShapingService
     /** Named so it is never confused with the per-tier objects beside it. */
     public const FAIR_USE_TIER = 'fairuse';
 
+    /** Matches ProvisionTrafficShaping's defaults. */
+    public const PLAN_DEFAULTS = [
+        'bw_free_down' => '2', 'bw_free_up' => '1',
+        'bw_premium_down' => '10', 'bw_premium_up' => '5',
+    ];
+
     /**
      * Why the last applyLimits() failed, in words a person can act on.
      *
@@ -250,6 +256,31 @@ class TrafficShapingService
 
         // The rules that steer each plan's guests into its pipes.
         return $this->syncTierRules($opnsense, $pipes, $existing['rules'] ?? []);
+    }
+
+    /** Each plan's speeds as last saved, in Mbps. */
+    public function storedPlanSpeeds(): array
+    {
+        return collect(self::PLAN_DEFAULTS)->map(fn ($default, $key) => (float) Setting::get($key, $default))->all();
+    }
+
+    /**
+     * Apply each plan's speed caps, then record them, so a stored figure never
+     * describes a cap the gateway refused. Keys left out keep their saved value.
+     */
+    public function savePlanSpeeds(array $speeds, OpnSenseService $opnsense): bool
+    {
+        $speeds = array_merge($this->storedPlanSpeeds(), array_intersect_key($speeds, self::PLAN_DEFAULTS));
+
+        if (! $this->applyLimits($speeds, $opnsense)) {
+            return false;
+        }
+
+        foreach ($speeds as $key => $value) {
+            Setting::set($key, (string) (float) $value);
+        }
+
+        return true;
     }
 
     /**

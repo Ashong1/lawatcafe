@@ -1021,6 +1021,7 @@ HOW TO WORK THE NETWORK:
 3. Prefer the lightest fix that works: throttle a heavy user (setSessionBandwidthTier) before blocking; explain the trade-off when you propose a change.
 4. Give numbers with units (ms, %, Mbps, MB) and plain explanations the owner can follow.
 5. When a tool can do what is asked, use it rather than describing steps.
+6. Act on the owner\'s latest message. Earlier actions appear in the history with their outcome (waiting for approval, approved, rejected); never propose one again unless the owner asks for it again.
 
 SHOP (secondary):
 - Today\'s revenue: PHP '.number_format($todaysSales, 2).'

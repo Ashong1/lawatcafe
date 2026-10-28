@@ -19,7 +19,9 @@ class RestockIngredientTool implements AgentTool
 
     public function description(): string
     {
-        return 'Add stock to an existing ingredient by its name or ID.';
+        return 'Add stock to an existing ingredient by its name or ID. If the ingredient has a packaging unit '
+            .'(e.g. box, sack), added_amount is a count of those packs and is converted to the stock unit '
+            .'automatically: "add 10 boxes of milk" is added_amount 10. Never ask the owner how big a pack is.';
     }
 
     public function parametersSchema(): array
@@ -29,7 +31,7 @@ class RestockIngredientTool implements AgentTool
             'properties' => [
                 'ingredient_id' => ['type' => 'integer', 'description' => 'Ingredient ID (preferred if known)'],
                 'ingredient_name' => ['type' => 'string', 'description' => 'Ingredient name, used if ID is not known'],
-                'added_amount' => ['type' => 'number', 'description' => 'Quantity to add, in the ingredient\'s packaging or base unit'],
+                'added_amount' => ['type' => 'number', 'description' => 'Quantity to add: number of packs if the ingredient has a packaging unit, otherwise its stock unit'],
             ],
             'required' => ['added_amount'],
         ];

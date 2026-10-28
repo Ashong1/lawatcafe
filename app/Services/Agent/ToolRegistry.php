@@ -28,6 +28,7 @@ use App\Services\Agent\Tools\ListUserAccountsTool;
 use App\Services\Agent\Tools\LookupDeviceTool;
 use App\Services\Agent\Tools\LookupVoucherTool;
 use App\Services\Agent\Tools\RestockIngredientTool;
+use App\Services\Agent\Tools\SetPlanSpeedsTool;
 use App\Services\Agent\Tools\SendSupplierPoTool;
 use App\Services\Agent\Tools\SetSessionBandwidthTierTool;
 use App\Services\Agent\Tools\ShiftHandoffSummaryTool;
@@ -116,6 +117,7 @@ class ToolRegistry
             // ceiling for every device in the shop at once, where
             // setSessionBandwidthTier above touches a single session.
             AdjustFairUseCeilingTool::class,
+            SetPlanSpeedsTool::class,
             GetAnomalySignalsTool::class,
             GenerateVoucherBatchTool::class,
             SuggestCategoryContentTool::class,

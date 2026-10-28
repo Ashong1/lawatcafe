@@ -388,11 +388,23 @@ export default function registerAgentChat(Alpine) {
             // empty content — null/'' fails the server's history.*.content
             // validation and 422s every later message. Bounded here only to keep
             // the payload small; the server applies its own sliding window.
-            const historyForRequest = this.history
-                .filter(m => m.kind === 'text' && !m.isGreeting && (m.content || m.imageThumb))
-                // Earlier photos aren't re-sent; the marker tells the model one existed.
-                .map(m => ({ role: m.role, content: m.imageThumb ? ('📷 [photo attached] ' + (m.content || '')).trim() : m.content }))
-                .slice(-30);
+            // Tool outcomes ride on the assistant turn before them: without them the
+            // model saw its own "I'll restock the milk" with nothing after it and
+            // proposed the restock again in reply to an unrelated message.
+            const historyForRequest = [];
+            this.history.forEach(m => {
+                if (m.kind === 'text' && !m.isGreeting && (m.content || m.imageThumb)) {
+                    // Earlier photos aren't re-sent; the marker tells the model one existed.
+                    historyForRequest.push({ role: m.role, content: m.imageThumb ? ('📷 [photo attached] ' + (m.content || '')).trim() : m.content });
+                    return;
+                }
+                const note = this.actionNote(m);
+                if (!note) return;
+                const last = historyForRequest[historyForRequest.length - 1];
+                if (last && last.role === 'assistant') last.content = (last.content + '\n' + note).slice(-3900);
+                else historyForRequest.push({ role: 'assistant', content: note });
+            });
+            historyForRequest.splice(0, historyForRequest.length - 30);
 
             this.history.push({ kind: 'text', role: 'user', content: userMsg, imageThumb });
             this.message = '';
@@ -599,6 +611,14 @@ export default function registerAgentChat(Alpine) {
                 this.scrollToBottom();
                 this.save();
             }
+        },
+
+        actionNote(m) {
+            const what = m.label + (m.arguments ? ' ' + JSON.stringify(m.arguments) : '');
+            if (m.kind === 'executed') return `[Done: ${m.label}: ${String(m.message || '').slice(0, 300)}]`;
+            if (m.kind !== 'pending') return null;
+            if (!m.resolved) return `[Proposed, waiting for the owner's approval: ${what}]`;
+            return `[Proposed: ${what}. Owner ${m.resolution}: ${String(m.resolutionMessage || '').slice(0, 200)}]`;
         },
 
         async syncPendingActions() {

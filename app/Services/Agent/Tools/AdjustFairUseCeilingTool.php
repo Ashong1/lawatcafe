@@ -44,7 +44,7 @@ class AdjustFairUseCeilingTool implements AgentTool
             .'interface including the POS and the kitchen display. Lower it when many guests are '
             .'sharing the line so no one device can crowd the others out; raise it when the network '
             .'is quiet. The value is clamped to the owner-configured bounds, so a request outside '
-            .'them is applied at the nearest bound and reported as such.';
+            .'them is applied at the nearest bound and reported as such. To change the free or premium plan speeds, use setPlanSpeeds instead.';
     }
 
     public function parametersSchema(): array

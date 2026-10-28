@@ -23,6 +23,7 @@ class AgentActivityEntry
         'blockDevice' => ['Blocked a device from the Wi-Fi', 'Wants to block a device from the Wi-Fi', 'ban'],
         'unblockDevice' => ['Let a blocked device back on', 'Wants to let a blocked device back on', 'ban'],
         'setSessionBandwidthTier' => ["Changed a guest's Wi-Fi speed", "Wants to change a guest's Wi-Fi speed", 'gauge'],
+        'setPlanSpeeds' => ['Changed the Wi-Fi plan speeds', 'Wants to change the Wi-Fi plan speeds', 'gauge'],
         'adjustFairUseCeiling' => ['Adjusted the Wi-Fi speed limit', 'Wants to adjust the Wi-Fi speed limit', 'gauge'],
         'generateVoucherBatch' => ['Made Wi-Fi codes', 'Wants to make Wi-Fi codes', 'ticket'],
         'restockIngredient' => ['Restocked an ingredient', 'Wants to restock an ingredient', 'package'],

@@ -70,6 +70,9 @@ class CheckStockLevelsTool implements AgentTool
         $isLow = $ingredient->current_stock <= $ingredient->low_stock_threshold;
         $message = "{$ingredient->name}: {$ingredient->current_stock}{$ingredient->unit} in stock"
             .($isLow ? " (at or below the low-stock threshold of {$ingredient->low_stock_threshold}{$ingredient->unit})." : '.');
+        if ($ingredient->packaging_unit && $ingredient->capacity_per_pack > 0) {
+            $message .= " One {$ingredient->packaging_unit} = {$ingredient->capacity_per_pack}{$ingredient->unit}.";
+        }
 
         return ToolResult::ok($message, [
             'id' => $ingredient->id,

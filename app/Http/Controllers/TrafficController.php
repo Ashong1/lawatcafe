@@ -20,15 +20,9 @@ class TrafficController extends Controller
     /** Matches ProvisionFairUseCap's default, so the two never disagree. */
     private const DEFAULT_CEILING = '20';
 
-    /** Matches ProvisionTrafficShaping's defaults. */
-    private const PLAN_DEFAULTS = [
-        'bw_free_down' => '2', 'bw_free_up' => '1',
-        'bw_premium_down' => '10', 'bw_premium_up' => '5',
-    ];
-
     public function index(AdaptiveBandwidthService $adaptive, LinkCapacityLearner $learner, TrafficShapingService $shaper, OpnSenseService $opnsense)
     {
-        $stored = collect(self::PLAN_DEFAULTS)->map(fn ($default, $key) => Setting::get($key, $default))->all();
+        $stored = collect(TrafficShapingService::PLAN_DEFAULTS)->map(fn ($default, $key) => Setting::get($key, $default))->all();
         $live = $shaper->liveStatus($opnsense, $stored);
 
         $settings = [
@@ -50,15 +44,12 @@ class TrafficController extends Controller
         return view('network.traffic', compact('settings', 'learned', 'live'));
     }
 
-    /**
-     * Apply each plan's speed caps, then record them — same order as the
-     * ceiling, so a stored figure never describes a cap the gateway refused.
-     */
+    /** Apply each plan's speed caps, then record them. */
     public function updatePlans(Request $request, TrafficShapingService $shaper, OpnSenseService $opnsense)
     {
         $rule = 'required|numeric|min:0.5|max:1000';
         $validated = $request->validate(
-            array_fill_keys(array_keys(self::PLAN_DEFAULTS), $rule),
+            array_fill_keys(array_keys(TrafficShapingService::PLAN_DEFAULTS), $rule),
             [],
             [
                 'bw_free_down' => 'free download speed', 'bw_free_up' => 'free upload speed',
@@ -66,13 +57,9 @@ class TrafficController extends Controller
             ]
         );
 
-        if (! $shaper->applyLimits($validated, $opnsense)) {
+        if (! $shaper->savePlanSpeeds($validated, $opnsense)) {
             return redirect()->back()->withInput()->with('error',
                 ($shaper->lastError() ?? 'The router refused the plan speeds.').' The plan speeds were not saved.');
-        }
-
-        foreach ($validated as $key => $value) {
-            Setting::set($key, (string) (float) $value);
         }
 
         return redirect()->back()->with('success', sprintf(

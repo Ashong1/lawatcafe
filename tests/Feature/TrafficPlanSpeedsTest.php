@@ -160,6 +160,35 @@ class TrafficPlanSpeedsTest extends TestCase
         $this->assertSame('15', Setting::get('bw_premium_down'));
     }
 
+    /** The reported chat: "free tier download 10, upload 8" had no tool and got the fair-use ceiling. */
+    public function test_the_ai_tool_changes_only_the_named_plan_speeds(): void
+    {
+        Setting::set('bw_premium_down', '15');
+        Setting::set('bw_premium_up', '6');
+        $this->fakeLiveGateway();
+
+        $result = app(\App\Services\Agent\Tools\SetPlanSpeedsTool::class)
+            ->execute(['free_download_mbps' => 10, 'free_upload_mbps' => 8], $this->admin());
+
+        $this->assertTrue($result->success, $result->message);
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'setPipe/p4')
+            && $request['pipe']['bandwidth'] === '8');
+        foreach (['bw_free_down' => '10', 'bw_free_up' => '8', 'bw_premium_down' => '15', 'bw_premium_up' => '6'] as $key => $value) {
+            Cache::forget("setting.{$key}");
+            $this->assertSame($value, Setting::get($key));
+        }
+    }
+
+    public function test_the_ai_tool_refuses_an_out_of_range_speed_before_reaching_the_gateway(): void
+    {
+        Http::fake();
+
+        $result = app(\App\Services\Agent\Tools\SetPlanSpeedsTool::class)->execute(['free_upload_mbps' => 0], null);
+
+        $this->assertFalse($result->success);
+        Http::assertNothingSent();
+    }
+
     public function test_a_missing_or_zero_speed_is_refused_before_reaching_the_gateway(): void
     {
         Http::fake();
