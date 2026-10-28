@@ -13,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
+    public const MAX_ATTEMPTS = 5;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -51,13 +53,17 @@ class LoginRequest extends FormRequest
         if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
+            if (RateLimiter::remaining($this->throttleKey(), self::MAX_ATTEMPTS) === 0) {
+                $this->ensureIsNotRateLimited();
+            }
+
             // An invited account has no password of its own yet, so say where to get one.
             $pending = User::where($field, $credentials[$field])->whereNull('password_set_at')->exists();
 
             throw ValidationException::withMessages([
                 'email' => $pending
                     ? 'This account isn\'t set up yet. Open the invite in your email to choose a password, or ask the owner to send it again.'
-                    : trans('auth.failed'),
+                    : trans('auth.failed').' '.trans_choice(':count attempt left.|:count attempts left.', RateLimiter::remaining($this->throttleKey(), self::MAX_ATTEMPTS)),
             ]);
         }
 
@@ -79,7 +85,7 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), self::MAX_ATTEMPTS)) {
             return;
         }
 
@@ -87,11 +93,11 @@ class LoginRequest extends FormRequest
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
+        // The login page counts this down live.
+        session()->flash('login_locked_until', now()->addSeconds($seconds)->getTimestamp());
+
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
+            'email' => "Too many wrong attempts. You can try again in {$seconds} seconds.",
         ]);
     }
 

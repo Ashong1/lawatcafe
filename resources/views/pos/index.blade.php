@@ -357,7 +357,7 @@
                 </div>
                 <div class="flex gap-3 mt-5">
                     <button type="button" @click="showQrModal = false" class="flex-1 min-h-[48px] bg-[#FAFAFA] border border-[#F0E6D2] rounded-full text-[#795548] text-xs font-bold uppercase tracking-wide">Back</button>
-                    <button type="button" @click="submitCheckout()" :disabled="isProcessing || !paymentReady || cart.length === 0"
+                    <button type="button" @click="confirmCheckout()" :disabled="isProcessing || !paymentReady || cart.length === 0"
                             class="flex-[2] min-h-[48px] bg-[#3E2723] hover:bg-[#271815] text-white rounded-full text-xs font-bold uppercase tracking-wide disabled:opacity-50">
                         <span x-text="isProcessing ? 'Processing...' : (paymentReady ? 'Paid — Place Order' : 'Type the reference no.')"></span>
                     </button>
@@ -723,6 +723,22 @@
                 if (method === 'Cash') { this.paymentReference = ''; return; }
                 this.amountTendered = 0;
                 this.showQrModal = true;
+            },
+
+            confirmCheckout() {
+                if (this.cart.length === 0 || this.isProcessing || !this.paymentReady) return;
+                const peso = (n) => '₱' + Number(n).toFixed(2);
+                const tendered = this.amountTendered || this.grandTotal;
+                const parts = [this.cart.reduce((n, i) => n + i.quantity, 0) + ' item(s)', 'Total ' + peso(this.grandTotal), this.paymentMethod];
+                if (this.paymentMethod === 'Cash') parts.push('Change ' + peso(tendered - this.grandTotal));
+                window.confirmAction({
+                    title: 'Place this order?',
+                    text: parts.join(' · '),
+                    icon: 'question',
+                    confirmText: 'Place order',
+                    cancelText: 'Go back',
+                    callback: () => this.submitCheckout(),
+                });
             },
 
             async submitCheckout() {

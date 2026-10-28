@@ -9,6 +9,24 @@ the history was rewritten.
 
 ---
 
+## 1.28.0 — Confirmations and sign-in lockout
+*build 217*
+
+- **"Place this order?"** before every checkout, showing items, total,
+  payment and change.
+- **"Log out?"** before signing out (owner and staff).
+- **Sign-in page** says how many tries are left after a wrong password,
+  and counts down live to when sign-in unlocks after the 5th.
+
+## 1.27.0 — Barista AI: plan speeds, no repeat proposals
+*build 216*
+
+- The assistant can change the free and premium plans' download and upload
+  speeds (needs approval).
+- It no longer re-proposes an action it already asked for when you send
+  something else.
+- It knows pack sizes (a box of milk, a sack of beans), so it stops asking.
+
 ## 1.26.0 — Security: activity log, backups, HTTPS
 *builds 201–215*
 

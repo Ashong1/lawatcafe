@@ -190,7 +190,7 @@
         </div>
     </div>
 
-    <button type="button" @click="submitCheckout()" :disabled="cart.length === 0 || isProcessing || !paymentReady" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white min-h-[48px] py-3 rounded-full font-bold uppercase tracking-wide transition shadow-lg shadow-[#3E2723]/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center text-xs gap-2 shrink-0">
+    <button type="button" @click="confirmCheckout()" :disabled="cart.length === 0 || isProcessing || !paymentReady" class="w-full bg-[#3E2723] hover:bg-[#271815] text-white min-h-[48px] py-3 rounded-full font-bold uppercase tracking-wide transition shadow-lg shadow-[#3E2723]/20 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex justify-center items-center text-xs gap-2 shrink-0">
         <template x-if="!isProcessing">
             <x-lucide-send class="w-4 h-4" />
         </template>

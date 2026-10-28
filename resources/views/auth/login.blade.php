@@ -5,7 +5,14 @@
     </x-slot>
 
     <!-- Form -->
-    <form method="POST" action="{{ route('login') }}" class="space-y-6 max-w-md mx-auto w-full" x-data="{ submitting: false }" @submit="submitting = true">
+    <form method="POST" action="{{ route('login') }}" class="space-y-6 max-w-md mx-auto w-full" x-data="{
+            submitting: false,
+            lockedFor: {{ max(0, (int) session('login_locked_until', 0) - now()->getTimestamp()) }},
+            init() {
+                if (this.lockedFor <= 0) return;
+                const timer = setInterval(() => { if (--this.lockedFor <= 0) clearInterval(timer); }, 1000);
+            },
+          }" @submit="if (lockedFor > 0) { $event.preventDefault(); return; } submitting = true">
         @csrf
 
         <!-- Email or username -->
@@ -14,7 +21,14 @@
             <input id="email" type="text" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false" 
                 class="w-full bg-white/10 text-white border-white/20 focus:border-white focus:ring-0 rounded-xl px-4 py-3.5 placeholder-white/50 transition shadow-inner text-base" 
                 placeholder="e.g. ana" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-300 text-sm font-semibold" />
+            @if (session('login_locked_until'))
+                <p class="mt-2 text-red-300 text-sm font-semibold" role="status" aria-live="polite">
+                    <span x-show="lockedFor > 0">Too many wrong attempts. You can try again in <span x-text="lockedFor">{{ max(0, (int) session('login_locked_until') - now()->getTimestamp()) }}</span> seconds.</span>
+                    <span x-show="lockedFor <= 0" x-cloak>You can try signing in again now.</span>
+                </p>
+            @else
+                <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-300 text-sm font-semibold" />
+            @endif
         </div>
 
         <!-- Password -->
@@ -53,12 +67,12 @@
 
         <!-- Submit Button -->
         <div class="pt-6 text-center">
-            <button type="submit" :disabled="submitting" class="w-full sm:w-5/6 mx-auto flex items-center justify-center gap-2 py-4 px-6 rounded-full shadow-2xl text-base font-bold text-[#3E2723] bg-[#FDF8F5] hover:bg-white active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100">
+            <button type="submit" :disabled="submitting || lockedFor > 0" class="w-full sm:w-5/6 mx-auto flex items-center justify-center gap-2 py-4 px-6 rounded-full shadow-2xl text-base font-bold text-[#3E2723] bg-[#FDF8F5] hover:bg-white active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100">
                 <svg x-show="submitting" x-cloak class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
-                <span x-text="submitting ? 'Signing in…' : 'Sign in'">Sign in</span>
+                <span x-text="lockedFor > 0 ? 'Locked — wait ' + lockedFor + 's' : (submitting ? 'Signing in…' : 'Sign in')">Sign in</span>
             </button>
         </div>
     </form>

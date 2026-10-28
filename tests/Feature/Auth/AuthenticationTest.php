@@ -56,4 +56,34 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
         $response->assertRedirect('/');
     }
+
+    public function test_a_wrong_password_says_how_many_attempts_are_left(): void
+    {
+        $user = User::factory()->create();
+
+        $this->post('/login', ['email' => $user->email, 'password' => 'wrong'])
+            ->assertSessionHasErrors(['email' => trans('auth.failed').' 4 attempts left.']);
+
+        foreach (range(1, 3) as $_) {
+            $this->post('/login', ['email' => $user->email, 'password' => 'wrong']);
+        }
+        $this->assertStringEndsWith('1 attempt left.', session('errors')->first('email'));
+    }
+
+    public function test_the_last_wrong_attempt_locks_sign_in_with_a_countdown(): void
+    {
+        $user = User::factory()->create();
+
+        foreach (range(1, 5) as $_) {
+            $this->post('/login', ['email' => $user->email, 'password' => 'wrong']);
+        }
+
+        $this->assertStringContainsString('try again in', session('errors')->first('email'));
+        $this->assertGreaterThan(now()->getTimestamp(), session('login_locked_until'));
+
+        // Even the right password is refused until the countdown ends.
+        $this->post('/login', ['email' => $user->email, 'password' => 'password']);
+        $this->assertGuest();
+        $this->get('/login')->assertSee('lockedFor > 0', false)->assertSee('You can try again in', false);
+    }
 }

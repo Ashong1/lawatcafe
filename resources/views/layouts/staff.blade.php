@@ -329,7 +329,7 @@
                 <div class="hidden lg:block h-4 w-[1px] bg-[#F0E6D2]"></div>
 
                 <form method="POST" action="{{ route('logout') }}"
-                      onsubmit="try { sessionStorage.removeItem('agentChatHistory:staff'); sessionStorage.removeItem('agentChatConversationId:staff'); } catch (e) {}">
+                      onsubmit="event.preventDefault(); window.confirmAction({ title: 'Log out?', text: 'You will need your password to sign back in.', icon: 'question', confirmText: 'Log out', callback: () => { try { sessionStorage.removeItem('agentChatHistory:staff'); sessionStorage.removeItem('agentChatConversationId:staff'); } catch (e) {} this.submit(); } })">
                     @csrf
                     {{-- Word on desktop, icon on a phone — the label is what
                          made this row wrap. --}}
