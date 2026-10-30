@@ -9,6 +9,14 @@ the history was rewritten.
 
 ---
 
+## 1.53.1 — Larger text on desktop
+*build 284*
+
+- From 1280px wide, the two smallest text sizes step up (12→13.5px,
+  14→15.5px) across the staff and owner app. Phones, tablets and the guest
+  portal are unchanged. Barista AI Settings lists the services from the real
+  routing order.
+
 ## 1.53.0 — AI usage for every service
 *build 283*
 

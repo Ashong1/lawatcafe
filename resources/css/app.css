@@ -93,3 +93,13 @@
     .space-y-6 > :not([hidden]) ~ :not([hidden]), .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem; }
     .mb-6, .mb-8 { margin-bottom: 1rem; }
 }
+
+/*
+ * Desktop (owner, Oct 30: "the text is too small for desktop view"). The two
+ * smallest sizes read well on a phone but strain on a wide screen; from 1280px
+ * they step up. Only the plain classes: sm:/lg:-prefixed sizes stay as set.
+ */
+@media (min-width: 1280px) {
+    .text-xs { font-size: 0.84375rem; line-height: 1.25rem; }
+    .text-sm { font-size: 0.96875rem; line-height: 1.5rem; }
+}
