@@ -19,6 +19,8 @@ Schedule::command('network:watch-adult-sites')->everyMinute()->evenInMaintenance
 // when a check changes state (no AI involved), and the live status in the
 // AI's prompt. withoutOverlapping: a slow firewall mustn't stack runs.
 Schedule::command('network:health')->everyMinute()->evenInMaintenanceMode()->withoutOverlapping();
+// Checks every 15 minutes but measures only once a day, soon after opening.
+Schedule::command('network:speed-test')->everyFifteenMinutes()->withoutOverlapping();
 Schedule::command('agent:analyze')->everyFifteenMinutes();
 
 // Every 3 hours (was every 30 min = 48 AI calls a day, most of the 50-a-day

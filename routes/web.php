@@ -282,6 +282,8 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/traffic/fair-use/off', [TrafficController::class, 'disableFairUse'])->name('traffic.fair-use.off');
             // Per-plan caps; applied to OPNsense before they are recorded.
             Route::post('/traffic/plans', [TrafficController::class, 'updatePlans'])->name('traffic.plans');
+            Route::post('/traffic/speed-test', [TrafficController::class, 'speedTest'])->name('traffic.speed-test')->middleware('throttle:3,60');
+            Route::post('/traffic/line', [TrafficController::class, 'updateLine'])->name('traffic.line');
             // The adaptive loop's envelope — writes settings only. The firewall
             // write happens later, from shaper:adapt via the agent tool.
             Route::post('/traffic/adaptive', [TrafficController::class, 'updateAdaptive'])->name('traffic.adaptive');

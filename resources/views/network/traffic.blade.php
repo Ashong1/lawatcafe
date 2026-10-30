@@ -40,6 +40,82 @@
 
         <div class="max-w-3xl mx-auto space-y-8">
 
+            {{-- The measured line (InternetSpeedTest) and what it can give each guest. --}}
+            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] space-y-5">
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-[#FDF8F5] rounded-xl flex items-center justify-center text-[#3E2723] shrink-0"><x-lucide-globe class="w-6 h-6" /></div>
+                        <div>
+                            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Your internet line</h3>
+                            <p class="text-xs text-[#6D4C41] font-medium">What your internet provider is really giving the shop. Tested once a day after opening (about 13 MB of data).</p>
+                        </div>
+                    </div>
+                    <form action="{{ route('network.traffic.speed-test') }}" method="POST" x-data="{ testing: false }" @submit="testing = true">
+                        @csrf
+                        <button type="submit" :disabled="testing" class="min-h-[44px] px-5 rounded-full bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide inline-flex items-center gap-2 hover:bg-[#271815] disabled:opacity-60 whitespace-nowrap">
+                            <x-lucide-gauge class="w-4 h-4" /><span x-text="testing ? 'Testing… (about 15 s)' : 'Test now'">Test now</span>
+                        </button>
+                    </form>
+                </div>
+
+                @if ($line['latest'])
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="p-4 rounded-xl bg-[#FDF8F5] border border-[#F0E6D2]">
+                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Download</p>
+                            <p class="text-2xl font-bold text-[#3E2723]">{{ $line['latest']['down'] }} <span class="text-xs">Mbps</span></p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-[#FDF8F5] border border-[#F0E6D2]">
+                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Upload</p>
+                            <p class="text-2xl font-bold text-[#3E2723]">{{ $line['latest']['up'] }} <span class="text-xs">Mbps</span></p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-[#FDF8F5] border border-[#F0E6D2]">
+                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">In use right now</p>
+                            <p class="text-2xl font-bold text-[#3E2723]" x-text="downSpeed">…</p>
+                            <p class="text-xs text-[#6D4C41]">Tested {{ \Illuminate\Support\Carbon::parse($line['latest']['at'])->diffForHumans() }}</p>
+                        </div>
+                    </div>
+
+                    @php($advice = $line['advice'])
+                    <div class="rounded-xl border-2 border-green-200 bg-green-50/40 p-4 space-y-2">
+                        <p class="text-sm font-bold text-[#3E2723]">Recommended: about {{ $advice['per_guest'] }} Mbps per guest at the busiest time</p>
+                        <p class="text-xs text-[#6D4C41]">{{ $line['latest']['down'] }} Mbps − {{ rtrim(rtrim(number_format($line['reserve'], 1), '0'), '.') }} Mbps kept for the shop = {{ $advice['usable'] }} Mbps for guests, shared by {{ $line['busy_guests'] }} guests.</p>
+                        <ul class="text-sm space-y-1">
+                            @foreach ($advice['plans'] as $plan => $fit)
+                                <li class="{{ $fit['too_fast'] ? 'text-red-700 font-bold' : 'text-[#3E2723]' }}">
+                                    {{ $plan }}: {{ $fit['too_fast'] ? 'set faster than your internet can give guests — lower it' : "about {$fit['guests']} ".Str::plural('guest', $fit['guests']).' at full speed at once' }}
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+
+                    @if (count($line['history']) > 1)
+                        <details class="text-xs text-[#6D4C41]">
+                            <summary class="cursor-pointer font-bold min-h-[44px] inline-flex items-center">Last {{ count($line['history']) }} tests</summary>
+                            <ul class="mt-1 space-y-0.5">
+                                @foreach ($line['history'] as $t)
+                                    <li>{{ \Illuminate\Support\Carbon::parse($t['at'])->format('M j, g:i A') }} — {{ $t['down'] }} down / {{ $t['up'] }} up Mbps</li>
+                                @endforeach
+                            </ul>
+                        </details>
+                    @endif
+                @else
+                    <p class="text-sm text-[#6D4C41]">No speed test yet. Tap <strong>Test now</strong>, or wait for the daily test after opening.</p>
+                @endif
+
+                <form action="{{ route('network.traffic.line') }}" method="POST" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end pt-2 border-t border-[#F0E6D2]">
+                    @csrf
+                    <div>
+                        <label for="bw-reserve" class="block text-xs font-bold text-[#3E2723] uppercase mb-2">Keep for the shop (Mbps)</label>
+                        <input type="number" step="0.5" min="0" id="bw-reserve" name="bw_shop_reserve_mbps" value="{{ $line['reserve'] }}" class="w-full min-h-[44px] bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 text-base sm:text-sm font-bold">
+                    </div>
+                    <div>
+                        <label for="bw-busy" class="block text-xs font-bold text-[#3E2723] uppercase mb-2">Guests at the busiest time</label>
+                        <input type="number" min="1" id="bw-busy" name="bw_busy_guests" value="{{ $line['busy_guests'] }}" class="w-full min-h-[44px] bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 text-base sm:text-sm font-bold">
+                    </div>
+                    <button type="submit" class="min-h-[44px] rounded-full bg-[#FDF8F5] border border-[#F0E6D2] text-[#3E2723] text-xs font-bold uppercase tracking-wide hover:bg-[#F0E6D2]">Update advice</button>
+                </form>
+            </div>
+
             {{-- Each plan's cap as OPNsense is running it (liveStatus()), so this
                  matches what a guest's speed test shows. Saving applies to the
                  gateway first and records only on success. --}}

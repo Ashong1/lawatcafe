@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Services\AdaptiveBandwidthService;
+use App\Services\InternetSpeedTest;
 use App\Services\LinkCapacityLearner;
 use App\Services\OpnSenseService;
 use App\Services\TrafficShapingService;
@@ -19,6 +20,12 @@ class TrafficController extends Controller
 {
     /** Matches ProvisionFairUseCap's default, so the two never disagree. */
     private const DEFAULT_CEILING = '20';
+
+    /** Mbps kept for the register, AI and staff devices. */
+    private const DEFAULT_RESERVE = 5;
+
+    /** Guests online together at the busiest time, until the owner says otherwise. */
+    private const DEFAULT_BUSY_GUESTS = 10;
 
     public function index(AdaptiveBandwidthService $adaptive, LinkCapacityLearner $learner, TrafficShapingService $shaper, OpnSenseService $opnsense)
     {
@@ -41,7 +48,44 @@ class TrafficController extends Controller
             'last_decision' => $adaptive->lastDecision(),
         ];
 
-        return view('network.traffic', compact('settings', 'learned', 'live'));
+        // The measured line, and what it can give each guest after the shop's share.
+        $speed = app(InternetSpeedTest::class);
+        $reserve = (float) Setting::get('bw_shop_reserve_mbps', self::DEFAULT_RESERVE);
+        $busyGuests = (int) Setting::get('bw_busy_guests', self::DEFAULT_BUSY_GUESTS);
+        $line = [
+            'latest' => $speed->latest(),
+            'history' => array_slice($speed->history(), 0, 7),
+            'reserve' => $reserve,
+            'busy_guests' => $busyGuests,
+            'advice' => ($latest = $speed->latest()) ? InternetSpeedTest::recommend($latest['down'], $reserve, $busyGuests, [
+                'Free' => (float) Setting::get('bw_free_down', TrafficShapingService::PLAN_DEFAULTS['bw_free_down']),
+                'Premium' => (float) Setting::get('bw_premium_down', TrafficShapingService::PLAN_DEFAULTS['bw_premium_down']),
+            ]) : null,
+        ];
+
+        return view('network.traffic', compact('settings', 'learned', 'live', 'line'));
+    }
+
+    public function speedTest(InternetSpeedTest $speed)
+    {
+        $result = $speed->run();
+
+        return back()->with($result ? 'success' : 'error', $result
+            ? "Your internet is giving {$result['down']} Mbps down and {$result['up']} Mbps up right now."
+            : "The speed test couldn't run. Check that the internet is up and try again.");
+    }
+
+    public function updateLine(Request $request)
+    {
+        $validated = $request->validate([
+            'bw_shop_reserve_mbps' => 'required|numeric|min:0|max:1000',
+            'bw_busy_guests' => 'required|integer|min:1|max:200',
+        ]);
+        foreach ($validated as $key => $value) {
+            Setting::set($key, (string) $value);
+        }
+
+        return back()->with('success', 'Saved. The advice below uses the new numbers.');
     }
 
     /** Apply each plan's speed caps, then record them. */

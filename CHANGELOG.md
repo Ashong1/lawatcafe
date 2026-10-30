@@ -9,14 +9,20 @@ the history was rewritten.
 
 ---
 
-## 1.31.0 — Orders to make, on the register
-*build 233*
+## 1.31.0 — Orders to make, on the register; real internet speed
+*builds 233–234*
 
 - **Orders to make** button on the register (with a count) opens a side
   panel of waiting orders with **Start** and **Done**. One person takes and
   makes orders on the same screen; no switching to the Kitchen Display. The
   list refreshes every 15 seconds and right after each order. The Kitchen
   Display page stays for shops with a second screen.
+- **Your internet line** on Wi-Fi Speed: the speed the internet provider is
+  really giving (download and upload), measured once a day after opening
+  (about 13 MB, for the prepaid plan) and with **Test now**; what's in use
+  right now; and advice: Mbps per guest at the busiest time after keeping
+  some for the shop, how many guests each plan fits, and a warning when a
+  plan is set faster than the line.
 
 ## 1.30.0 — Reports
 *builds 230–*
