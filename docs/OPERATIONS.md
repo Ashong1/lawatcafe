@@ -140,9 +140,9 @@ the [README](../README.md#background-jobs). Points worth knowing:
 
 Back up these things:
 
-1. **The database.** Done automatically every night at 23:30 by
+1. **The database.** Done automatically every hour by
    `backup:database`, which writes a gzipped dump to `storage/app/backups/`
-   and keeps the last 14. Each run, success or failure, appears on
+   and keeps the last 168 (one week). Each run, success or failure, appears on
    **Settings → Security**, which lists them with **Make a backup now**, **Download**
    and **Restore**. From the command line: `sudo -u www-data php artisan backup:database`. These
    copies live on the same server, so copy the newest one somewhere else

@@ -56,5 +56,6 @@ Schedule::command('shaper:adapt')->everyFiveMinutes()->withoutOverlapping();
 // an internet outage is retried every 5 minutes (see WaitsForInternet).
 Schedule::command('queue:work --stop-when-empty --max-time=50 --force')->everyMinute()->evenInMaintenanceMode()->withoutOverlapping();
 
-// Nightly database backup after closing; see BackupDatabase.
-Schedule::command('backup:database')->dailyAt('23:30')->evenInMaintenanceMode()->withoutOverlapping();
+// Hourly while the server is on: it is often switched off before closing,
+// and a single nightly copy loses the whole day if something fails.
+Schedule::command('backup:database')->hourly()->evenInMaintenanceMode()->withoutOverlapping();

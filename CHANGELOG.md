@@ -29,6 +29,9 @@ Feedback list: [docs/capstone/EVALUATION_2026-10-28.md](docs/capstone/EVALUATION
   balance is below zero.
 - **Pending AI actions** icon is a robot with a cog, so it isn't mistaken
   for the chat button.
+- **Backups every hour** while the server is on (was once at 11:30 PM,
+  which never ran on nights the server was already off); the last 7 days
+  are kept.
 
 ## 1.28.0 — Confirmations and sign-in lockout
 *build 217*

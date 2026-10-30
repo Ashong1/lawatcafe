@@ -35,7 +35,7 @@
             <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
                 <div>
                     <h3 id="backups" class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Backups</h3>
-                    <p class="text-sm text-[#6D4C41] mt-1">A copy of all sales, stock, accounts and settings is made every night at 11:30 PM; the last {{ \App\Services\BackupService::KEEP }} are kept on this server. Download one each week and keep it somewhere else, like a USB drive.</p>
+                    <p class="text-sm text-[#6D4C41] mt-1">A copy of all sales, stock, accounts and settings is made every hour while the server is on; the last 7 days are kept on this server. Download one each week and keep it somewhere else, like a USB drive.</p>
                 </div>
                 <form method="POST" action="{{ route('backups.store') }}" class="shrink-0">
                     @csrf

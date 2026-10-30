@@ -12,13 +12,14 @@ use Illuminate\Support\Facades\Process;
 use RuntimeException;
 
 /**
- * Gzipped mysqldump backups in storage/app/backups, shared by the nightly
+ * Gzipped mysqldump backups in storage/app/backups, shared by the hourly
  * backup:database job and Settings → Security. A restore also needs the same
  * APP_KEY (MACs and AI audit records are encrypted with it).
  */
 class BackupService
 {
-    public const KEEP = 14;
+    /** A week of hourly copies (about 0.7 MB each). */
+    public const KEEP = 168;
 
     private const NAME = '/^[a-z0-9_]+_\d{4}-\d{2}-\d{2}_\d{6}\.sql\.gz$/';
 

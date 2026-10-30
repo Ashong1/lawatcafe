@@ -10,7 +10,7 @@ class BackupDatabase extends Command
 {
     protected $signature = 'backup:database';
 
-    protected $description = 'Dump the database to storage/app/backups and keep the last two weeks.';
+    protected $description = 'Dump the database to storage/app/backups and keep the last week of hourly copies.';
 
     public function handle(BackupService $backups): int
     {
