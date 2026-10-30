@@ -48,6 +48,10 @@ return [
         'key' => env('GROQ_API_KEY'),
     ],
 
+    'mistral' => [
+        'key' => env('MISTRAL_API_KEY'),
+    ],
+
     'cloudflare' => [
         'key' => env('CLOUDFLARE_API_TOKEN'),
         'account' => env('CLOUDFLARE_ACCOUNT_ID'),

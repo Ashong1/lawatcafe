@@ -98,8 +98,8 @@ class AiBudget
             return false;
         }
 
-        // Gemini, Groq and Cloudflare answer before OpenRouter, so its daily reserve isn't at stake.
-        if (AIService::providerKey('gemini') || AIService::providerKey('groq') || AIService::providerKey('cloudflare')) {
+        // Gemini, Groq, Cloudflare and Mistral answer before OpenRouter, so its daily reserve isn't at stake.
+        if (AIService::providerKey('gemini') || AIService::providerKey('groq') || AIService::providerKey('cloudflare') || AIService::providerKey('mistral')) {
             return true;
         }
 

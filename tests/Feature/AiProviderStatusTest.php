@@ -19,7 +19,7 @@ class AiProviderStatusTest extends TestCase
         $statuses = app(AIService::class)->getProviderStatuses();
 
         // Gemini, Groq, Cloudflare, then OpenRouter last (owner, Oct 30).
-        $this->assertSame(['gemini', 'groq', 'cloudflare', 'openrouter'], array_keys($statuses));
+        $this->assertSame(['gemini', 'groq', 'cloudflare', 'mistral', 'openrouter'], array_keys($statuses));
 
         $this->assertNotEmpty($statuses['openrouter']['models']);
         foreach ($statuses['openrouter']['models'] as $model) {

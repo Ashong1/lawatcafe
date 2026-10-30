@@ -315,4 +315,42 @@ class AIServiceMultiProviderTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'super_admin']))->getJson(route('admin.settings.ai-providers.models.scan', 'cloudflare'))
             ->assertOk()->assertExactJson(['models' => ['@cf/meta/llama-3.1-8b-instruct-fp8-fast']]);
     }
+
+    /** Owner (Oct 30): Mistral, connected from the settings page like the others. */
+    public function test_mistral_is_set_up_from_the_page_and_tried_before_openrouter(): void
+    {
+        config(['services.openrouter.key' => null]);
+        $owner = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($owner)->get(route('admin.settings.ai-providers'))->assertSee('Mistral AI API Key');
+        $this->actingAs($owner)->post(route('admin.settings.ai-providers.update'), ['mistral_api_key' => 'ms-key', 'openrouter_api_key' => 'or-key']);
+
+        Http::fake([
+            'api.mistral.ai/v1/chat/completions' => Http::response($this->sse('From Mistral.')),
+            '*' => Http::response($this->sse('Wrong provider.')),
+        ]);
+        $reply = app(AIService::class)->chatWithToolsStreaming([['role' => 'user', 'content' => 'hi']], [], fn () => null);
+
+        $this->assertSame('From Mistral.', $reply['choices'][0]['message']['content']);
+        Http::assertSent(fn ($r) => $r->hasHeader('Authorization', 'Bearer ms-key') && $r->data()['model'] === 'mistral-small-latest');
+    }
+
+    /** Mistral only takes 9-character tool-call ids; another provider's ids are mapped. */
+    public function test_mistral_gets_nine_character_tool_call_ids(): void
+    {
+        $this->keys(['mistral']);
+        Http::fake(['api.mistral.ai/*' => Http::response($this->sse('None online.'))]);
+
+        app(AIService::class)->chatWithToolsStreaming([
+            ['role' => 'user', 'content' => 'How many guests?'],
+            ['role' => 'assistant', 'content' => null, 'tool_calls' => [['id' => 'call_from_groq_123', 'name' => 'getActiveSessions', 'arguments' => []]]],
+            ['role' => 'tool', 'name' => 'getActiveSessions', 'tool_call_id' => 'call_from_groq_123', 'content' => '{"count":0}'],
+        ], [], fn () => null);
+
+        Http::assertSent(function ($r) {
+            $m = $r->data()['messages'];
+            $id = $m[1]['tool_calls'][0]['id'];
+
+            return preg_match('/^[a-zA-Z0-9]{9}$/', $id) && $m[2]['tool_call_id'] === $id;
+        });
+    }
 }

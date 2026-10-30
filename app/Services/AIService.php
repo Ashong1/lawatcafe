@@ -41,6 +41,7 @@ class AIService
         'groq' => ['label' => 'Groq', 'url' => 'https://api.groq.com/openai/v1/chat/completions'],
         // {account}: the Cloudflare account ID, entered next to its token.
         'cloudflare' => ['label' => 'Cloudflare Workers AI', 'url' => 'https://api.cloudflare.com/client/v4/accounts/{account}/ai/v1/chat/completions'],
+        'mistral' => ['label' => 'Mistral AI', 'url' => 'https://api.mistral.ai/v1/chat/completions'],
         'openrouter' => ['label' => 'OpenRouter', 'url' => 'https://openrouter.ai/api/v1/chat/completions'],
     ];
 
@@ -51,6 +52,8 @@ class AIService
 
     // The cheapest per token on the free 10,000 Neurons a day.
     protected $cloudflareModels = ['@cf/openai/gpt-oss-20b', '@cf/qwen/qwen3-30b-a3b-fp8'];
+
+    protected $mistralModels = ['mistral-small-latest', 'ministral-8b-latest'];
 
     // Curated free models, best first: the fast path only tries the first two
     // healthy ones, so the head of the list should be the models that pick the
@@ -141,7 +144,7 @@ class AIService
 
     public function getModel()
     {
-        return 'Gemini, Groq, Cloudflare and OpenRouter, in that order';
+        return 'Gemini, Groq, Cloudflare, Mistral and OpenRouter, in that order';
     }
 
     /**
@@ -218,6 +221,7 @@ class AIService
             'gemini' => $this->geminiModels,
             'groq' => $this->groqModels,
             'cloudflare' => $this->cloudflareModels,
+            'mistral' => $this->mistralModels,
             default => [],
         };
     }
@@ -1134,16 +1138,23 @@ class AIService
             }
         }
 
-        return array_map(function (array $m) use ($provider) {
+        // Mistral only accepts tool-call ids of exactly 9 letters/digits.
+        $id = fn (string $raw) => $provider === 'mistral' && ! preg_match('/^[a-zA-Z0-9]{9}$/', $raw) ? substr(md5($raw), 0, 9) : $raw;
+
+        return array_map(function (array $m) use ($provider, $id) {
+            if (($m['role'] ?? null) === 'tool' && isset($m['tool_call_id'])) {
+                $m['tool_call_id'] = $id($m['tool_call_id']);
+            }
             if (($m['role'] ?? null) !== 'assistant' || empty($m['tool_calls'])) {
                 return $m;
             }
-            $m['tool_calls'] = array_map(function (array $c) use ($provider) {
+            $m['tool_calls'] = array_map(function (array $c) use ($provider, $id) {
                 $call = isset($c['function']) ? array_intersect_key($c, ['id' => 1, 'type' => 1, 'function' => 1]) : [
                     'id' => $c['id'],
                     'type' => 'function',
                     'function' => ['name' => $c['name'], 'arguments' => is_string($c['arguments'] ?? null) ? $c['arguments'] : json_encode((object) ($c['arguments'] ?? []))],
                 ];
+                $call['id'] = $id((string) $call['id']);
                 if ($provider === 'gemini') {
                     $call['extra_content'] = $c['extra_content'] ?? ['google' => ['thought_signature' => 'skip_thought_signature_validator']];
                 }

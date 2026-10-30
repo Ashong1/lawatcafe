@@ -9,6 +9,15 @@ the history was rewritten.
 
 ---
 
+## 1.52.0 — Mistral AI
+*build 279*
+
+- Barista AI routes Gemini → Groq → Cloudflare → **Mistral AI** → OpenRouter.
+  Connect it in Barista AI Settings with a Mistral API key (stored
+  encrypted). Defaults: mistral-small-latest and ministral-8b-latest; Scan
+  for more models lists the rest. Tool-call ids are turned into the 9-character
+  form Mistral requires when a chat moves to it from another service.
+
 ## 1.51.0 — AI Routing, live
 *build 278*
 
