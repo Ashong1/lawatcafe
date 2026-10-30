@@ -19,11 +19,12 @@ class IngredientController extends Controller
     public function index()
     {
         $ingredients = Ingredient::all();
+        $expiring = app(\App\Services\StockExpiryService::class)->soon();
 
         // No shop-wide threshold passed any more: the view already compares
         // each row against its own low_stock_threshold column, which is the only
         // comparison that means anything when units differ per ingredient.
-        return view('inventory.ingredients', compact('ingredients'));
+        return view('inventory.ingredients', compact('ingredients', 'expiring'));
     }
 
     // 2. Add a new ingredient
@@ -106,9 +107,10 @@ class IngredientController extends Controller
     {
         $request->validate([
             'added_amount' => 'required|numeric|min:0.01',
+            'expires_at' => 'nullable|date|after_or_equal:today',
         ]);
 
-        $result = $this->ingredients->addStock($ingredient, (float) $request->added_amount, auth()->id());
+        $result = $this->ingredients->addStock($ingredient, (float) $request->added_amount, auth()->id(), 'human', $request->expires_at);
 
         return redirect()->route('inventory.ingredients.index')->with('success', $result['message']);
     }

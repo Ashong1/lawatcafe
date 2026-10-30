@@ -9,6 +9,15 @@ the history was rewritten.
 
 ---
 
+## 1.37.0 — Expiration dates
+*build 241*
+
+- **Restock asks for the expiration date** (optional, from the package).
+- **Expiring soon** on Ingredients: stock still on hand that expires within
+  30 days, grouped Already expired / This week / This month, with the date it
+  was received. Stock is used oldest first, so what's left is worked out from
+  the newest deliveries. **Write off** logs the expired amount as wastage.
+
 ## 1.36.0 — Receive deliveries by purchase order
 *build 240*
 

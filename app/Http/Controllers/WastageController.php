@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Ingredient;
 use App\Models\InventoryLog;
 use App\Models\Wastage;
+use App\Services\StockExpiryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -38,32 +39,9 @@ class WastageController extends Controller
                 : "Only {$amount($stock)} {$ingredient->unit} in stock."]);
         }
 
-        return DB::transaction(function () use ($request) {
-            $wastage = Wastage::create([
-                'ingredient_id' => $request->ingredient_id,
-                'quantity' => $request->quantity,
-                'reason' => $request->reason,
-                'note' => $request->note,
-                'user_id' => auth()->id(),
-            ]);
+        $this->record($ingredient, (float) $validated['quantity'], $validated['reason'], $validated['note'] ?? null);
 
-            // Update Ingredient Stock
-            $ingredient = Ingredient::find($request->ingredient_id);
-            $ingredient->current_stock -= $request->quantity;
-            $ingredient->save();
-
-            // Log the inventory change
-            InventoryLog::create([
-                'type' => 'wastage',
-                'ingredient_id' => $ingredient->id,
-                'change_amount' => -$request->quantity,
-                'after_amount' => $ingredient->current_stock,
-                'reason' => 'Wastage: '.$request->reason,
-                'user_id' => auth()->id(),
-            ]);
-
-            return redirect()->route('inventory.wastage.index')->with('success', 'Wastage logged and stock adjusted.');
-        });
+        return redirect()->route('inventory.wastage.index')->with('success', 'Wastage logged and stock adjusted.');
     }
 
     public function destroy(Wastage $wastage)
@@ -90,5 +68,37 @@ class WastageController extends Controller
         });
 
         return redirect()->route('inventory.wastage.index')->with('success', 'Wastage record removed and stock restored.');
+    }
+
+    /** Writes off what's left of an expired delivery or restock (the Expiring soon list). */
+    public function writeOffExpired(InventoryLog $inventoryLog, StockExpiryService $expiry)
+    {
+        $left = $expiry->leftOf($inventoryLog);
+        if ($left <= 0) {
+            return back()->with('error', 'Nothing from that delivery is left in stock.');
+        }
+
+        $this->record($inventoryLog->ingredient, $left, 'Expired', 'Expired '.$inventoryLog->expires_at?->format('M j, Y').'; received '.$inventoryLog->created_at->format('M j'));
+
+        return back()->with('success', 'Wrote off '.rtrim(rtrim(number_format($left, 2), '0'), '.')." {$inventoryLog->ingredient->unit} of {$inventoryLog->ingredient->name} as expired.");
+    }
+
+    private function record(Ingredient $ingredient, float $quantity, string $reason, ?string $note): void
+    {
+        DB::transaction(function () use ($ingredient, $quantity, $reason, $note) {
+            Wastage::create(['ingredient_id' => $ingredient->id, 'quantity' => $quantity, 'reason' => $reason, 'note' => $note, 'user_id' => auth()->id()]);
+
+            $ingredient->current_stock -= $quantity;
+            $ingredient->save();
+
+            InventoryLog::create([
+                'type' => 'wastage',
+                'ingredient_id' => $ingredient->id,
+                'change_amount' => -$quantity,
+                'after_amount' => $ingredient->current_stock,
+                'reason' => 'Wastage: '.$reason,
+                'user_id' => auth()->id(),
+            ]);
+        });
     }
 }

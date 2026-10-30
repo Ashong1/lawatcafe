@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class InventoryLog extends Model
 {
-    protected $fillable = ['ingredient_id', 'change_amount', 'after_amount', 'reason', 'type', 'user_id'];
+    protected $fillable = ['ingredient_id', 'change_amount', 'after_amount', 'reason', 'type', 'expires_at', 'user_id'];
+
+    protected $casts = ['expires_at' => 'date'];
 
     public function ingredient()
     {

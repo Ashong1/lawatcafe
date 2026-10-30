@@ -15,6 +15,29 @@
         </div>
     </div>
 
+    {{-- Expiring soon (StockExpiryService): what's still on hand from deliveries/restocks that expire within 30 days. --}}
+    @if (array_filter($expiring))
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border-2 border-amber-200 mb-8">
+        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide flex items-center gap-2"><x-lucide-calendar-clock class="w-5 h-5 text-amber-700" /> Expiring soon</h3>
+        <p class="text-xs text-[#6D4C41] mt-1 mb-4">Stock still on hand with an expiration date in the next 30 days. Use these first.</p>
+        @foreach (['expired' => ['Already expired', 'text-red-700'], 'this_week' => ['This week', 'text-amber-800'], 'this_month' => ['This month', 'text-[#3E2723]']] as $key => [$label, $color])
+            @continue(! $expiring[$key])
+            <h4 class="text-xs font-bold uppercase tracking-wide mt-3 mb-1 {{ $color }}">{{ $label }}</h4>
+            @foreach ($expiring[$key] as $row)
+                <div class="flex flex-wrap items-center justify-between gap-2 py-2 border-t border-[#F0E6D2]">
+                    <span class="text-sm"><strong>{{ $row['ingredient'] }}</strong> · {{ rtrim(rtrim(number_format($row['left'], 2), '0'), '.') }} {{ $row['unit'] }} left · expires {{ \Illuminate\Support\Carbon::parse($row['expires'])->format('M j') }} <span class="text-xs text-[#6D4C41]">(received {{ \Illuminate\Support\Carbon::parse($row['received'])->format('M j') }})</span></span>
+                    @if ($key === 'expired')
+                        <form action="{{ route('inventory.expired.write-off', $row['log_id']) }}" method="POST" data-confirm="Write this off as expired?" data-confirm-text="It comes off the stock and is logged as wastage.">
+                            @csrf
+                            <button type="submit" class="min-h-[44px] px-4 rounded-full bg-red-600 text-white text-xs font-bold uppercase tracking-wide hover:bg-red-700">Write off</button>
+                        </form>
+                    @endif
+                </div>
+            @endforeach
+        @endforeach
+    </div>
+    @endif
+
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -268,6 +291,11 @@
                             <input type="number" id="ingredient-added-amount" name="added_amount" required step="0.01" autofocus class="flex-1 min-w-0 py-4 border-0 bg-transparent focus:outline-none focus:ring-0 font-bold text-lg text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="0.00">
                             <span class="shrink-0 text-xs font-bold text-[#6D4C41]" x-text="selectedIngredient?.packaging_unit || selectedIngredient?.unit"></span>
                         </div>
+                    </div>
+                    <div class="mt-4">
+                        <label for="ingredient-expires-at" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Expiration date (optional)</label>
+                        <input type="date" id="ingredient-expires-at" name="expires_at" min="{{ now()->toDateString() }}" class="w-full min-h-[44px] px-4 border-2 border-[#F0E6D2] rounded-xl bg-[#FAFAFA] text-base sm:text-sm font-bold">
+                        <p class="text-xs text-[#6D4C41] mt-1">From the package. The oldest stock is used first, and you're warned before it expires.</p>
                     </div>
                 </div>
 

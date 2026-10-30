@@ -16,7 +16,7 @@ class IngredientService
      *
      * @return array{old_stock: float, new_stock: float, status: string, low_stock_alert_sent: bool, message: string}
      */
-    public function addStock(Ingredient $ingredient, float $addedAmount, ?int $actorUserId = null, string $actorType = 'human'): array
+    public function addStock(Ingredient $ingredient, float $addedAmount, ?int $actorUserId = null, string $actorType = 'human', ?string $expiresAt = null): array
     {
         // If it's packaging, we multiply by capacity
         if ($ingredient->packaging_unit && $ingredient->capacity_per_pack > 0) {
@@ -48,6 +48,7 @@ class IngredientService
             'change_amount' => $baseAddedAmount,
             'after_amount' => $newStock,
             'reason' => $actorType === 'ai' ? 'AI Agent Restock' : 'Quick Add',
+            'expires_at' => $expiresAt,
             'user_id' => $actorUserId,
         ]);
 

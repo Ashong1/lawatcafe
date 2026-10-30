@@ -30,7 +30,7 @@ Status legend: **Done** = already in the code · **Partial** · **To do** · **Q
 
 | # | Where | Request | Status |
 |---|---|---|---|
-| 10 | R1 10:07–11:09; R2 29:15–30:20 | Record the date received and the expiration date when restocking (FIFO); system shows what expires today / next week / next month instead of hand-entered wastage | To do |
+| 10 | R1 10:07–11:09; R2 29:15–30:20 | Record the date received and the expiration date when restocking (FIFO); system shows what expires today / next week / next month instead of hand-entered wastage | Done v1.37.0.241 (restock expiry, Expiring soon, write-off; delivery expiry next) |
 | 11 | R1 06:47–09:00 | Wastage can't exceed what one opened package holds (error trapping) | Done v1.29.0.221 |
 | 12 | R1 44:00–45:15 | Wastage of partial amounts (e.g. 50 ml spilled), not whole servings | Done — wastage is entered in ml/g already |
 | 13 | R1 11:17–13:05, 34:10–40:00 | Receive Deliveries: enter the PO reference number → checklist of expected items; add the supplier's own DR/SI number field; pick the supplier instead of retyping | Done v1.36.0.240 (PO numbers, Receive fills the checklist, DR no.) |

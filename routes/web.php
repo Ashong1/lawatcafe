@@ -231,6 +231,7 @@ Route::middleware(['auth'])->group(function () {
         // Inventory Management
         Route::prefix('inventory')->name('inventory.')->group(function () {
             Route::get('/logs', [IngredientController::class, 'logs'])->name('logs');
+            Route::post('/expired/{inventoryLog}/write-off', [WastageController::class, 'writeOffExpired'])->name('expired.write-off');
             Route::resource('categories', CategoryController::class)->except(['create', 'show', 'edit']);
             Route::post('categories/suggest-ai', [CategoryController::class, 'suggestAi'])->name('categories.suggest-ai');
             Route::resource('products', ProductController::class)->except(['create', 'show', 'edit']);
