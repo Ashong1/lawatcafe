@@ -36,24 +36,30 @@ class ShiftController extends Controller
             return redirect()->back()->with('error', 'Shift is already closed.');
         }
 
-        $summary = [
-            'starting_cash' => (float) $shift->starting_cash,
-            'cash_sales' => (float) $shift->sales()->revenue()->where('payment_method', 'Cash')->sum('total_amount'),
-            // Per e-wallet, so the cashier knows this money is in the shop's account, not the drawer.
-            'ewallet_sales' => $shift->sales()->revenue()->where('payment_method', '!=', 'Cash')
-                ->selectRaw('payment_method, SUM(total_amount) as total')->groupBy('payment_method')
-                ->pluck('total', 'payment_method')->map(fn ($t) => (float) $t)->all(),
-            'void_total' => (float) $shift->sales()->where('status', 'cancelled')->sum('total_amount'),
-            'total_sales' => (float) $shift->sales()->revenue()->sum('total_amount'),
-            'pay_ins' => (float) $shift->transactions()->where('type', 'pay_in')->sum('amount'),
-            'pay_outs' => (float) $shift->transactions()->where('type', 'pay_out')->sum('amount'),
-        ];
-
-        $expectedCash = $summary['starting_cash'] + $summary['cash_sales'] + $summary['pay_ins'] - $summary['pay_outs'];
+        $summary = $shift->summary();
+        $expectedCash = $summary['expected_cash'];
 
         $recentTransactions = $shift->transactions()->latest()->take(5)->get();
 
         return view('pos.closing-report', compact('shift', 'summary', 'expectedCash', 'recentTransactions'));
+    }
+
+    /** The shift's totals so far, without closing it (evaluators, Oct 28). Own shift, or an admin. */
+    public function xRead(Shift $shift)
+    {
+        abort_unless($shift->user_id === auth()->id() || auth()->user()->isAdminOrAbove(), 403);
+
+        return view('pos.reading', [
+            'title' => 'X-READ',
+            'lines' => [
+                'Cashier' => $shift->user->name,
+                'Shift opened' => $shift->opened_at->format('M j, g:i A'),
+                'Shift' => $shift->status === 'open' ? 'still open' : 'closed '.$shift->closed_at->format('M j, g:i A'),
+            ],
+            's' => $shift->summary(),
+            'footer' => 'Totals so far. Nothing was closed or reset.',
+            'back' => route('pos'),
+        ]);
     }
 
     public function recordTransaction(Request $request, Shift $shift)
@@ -81,13 +87,7 @@ class ShiftController extends Controller
             'ending_cash' => 'required|numeric|min:0',
         ]);
 
-        // Calculate expected cash
-        // starting cash + all cash sales + pay_ins - pay_outs
-        $cashSales = (float) $shift->sales()->revenue()->where('payment_method', 'Cash')->sum('total_amount');
-        $payIns = (float) $shift->transactions()->where('type', 'pay_in')->sum('amount');
-        $payOuts = (float) $shift->transactions()->where('type', 'pay_out')->sum('amount');
-
-        $expectedCash = (float) $shift->starting_cash + $cashSales + $payIns - $payOuts;
+        $expectedCash = $shift->summary()['expected_cash'];
 
         $shift->update([
             'expected_cash' => $expectedCash,

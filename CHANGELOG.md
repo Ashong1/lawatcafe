@@ -9,6 +9,15 @@ the history was rewritten.
 
 ---
 
+## 1.33.0 — X-Read and Z-Read
+*builds 236–*
+
+- **X-Read** on the register (and in the phone menu): this shift's totals so
+  far — orders, gross, Senior/PWD and other discounts, net, VAT-exempt sales,
+  voids, cash and e-wallet, cash in/out, expected drawer — printable on the
+  80 mm receipt printer. Nothing is closed or reset.
+- The closing report, End of Day and X-Read now share one calculation.
+
 ## 1.32.0 — Barista AI runs the Wi-Fi speeds and blocks adult sites
 *build 235*
 

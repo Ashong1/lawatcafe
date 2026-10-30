@@ -135,6 +135,7 @@ Route::middleware(['auth'])->group(function () {
     // and reading one is a management duty, not a cashiering one. It is linked
     // straight from admin/finance/z-reads, which super_admin can reach.
     Route::get('/shift/closing-report/{shift}', [ShiftController::class, 'showClosingReport'])->name('shift.closing-report');
+    Route::get('/shift/x-read/{shift}', [ShiftController::class, 'xRead'])->name('shift.x-read');
 
     // Order History
     Route::get('/pos/history', [OrderHistoryController::class, 'index'])->name('pos.history');

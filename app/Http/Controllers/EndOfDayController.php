@@ -37,19 +37,8 @@ class EndOfDayController extends Controller
 
         $shift->load(['user', 'sales.items', 'transactions']);
 
-        $summary = [
-            'starting_cash' => (float) $shift->starting_cash,
-            'cash_sales' => (float) $shift->sales()->revenue()->where('payment_method', 'Cash')->sum('total_amount'),
-            // Per e-wallet, so the cashier knows this money is in the shop's account, not the drawer.
-            'ewallet_sales' => $shift->sales()->revenue()->where('payment_method', '!=', 'Cash')
-                ->selectRaw('payment_method, SUM(total_amount) as total')->groupBy('payment_method')
-                ->pluck('total', 'payment_method')->map(fn ($t) => (float) $t)->all(),
-            'total_sales' => (float) $shift->sales()->revenue()->sum('total_amount'),
-            'pay_ins' => (float) $shift->transactions()->where('type', 'pay_in')->sum('amount'),
-            'pay_outs' => (float) $shift->transactions()->where('type', 'pay_out')->sum('amount'),
-        ];
-
-        $expectedCash = $summary['starting_cash'] + $summary['cash_sales'] + $summary['pay_ins'] - $summary['pay_outs'];
+        $summary = $shift->summary();
+        $expectedCash = $summary['expected_cash'];
         $variance = (float) $shift->ending_cash - $expectedCash;
 
         return view('admin.finance.shift-detail', compact('shift', 'summary', 'expectedCash', 'variance'));

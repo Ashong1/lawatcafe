@@ -95,6 +95,7 @@
                         @endif
                         @if($activeShift)
                         <button type="button" @click="more = false; recordCashAction()" class="flex items-center gap-3 w-full min-h-[48px] px-4 text-sm font-bold text-[#3E2723] hover:bg-[#FDF8F5] text-left"><x-lucide-banknote class="w-4 h-4 text-[#795548]" /> Cash in or out</button>
+                        <a href="{{ route('shift.x-read', $activeShift->id) }}" target="_blank" class="flex items-center gap-3 w-full min-h-[48px] px-4 text-sm font-bold text-[#3E2723] hover:bg-[#FDF8F5] text-left"><x-lucide-receipt-text class="w-4 h-4 text-[#795548]" /> X-Read (totals so far)</a>
                         <a href="{{ route('shift.closing-report', $activeShift->id) }}" class="flex items-center gap-3 w-full min-h-[48px] px-4 text-sm font-bold text-[#3E2723] hover:bg-[#FDF8F5] text-left text-amber-700 border-t border-[#F0E6D2]"><x-lucide-lock class="w-4 h-4" /> End Shift</a>
                         @endif
                     </div>
@@ -140,6 +141,11 @@
                             <x-lucide-banknote class="w-4 h-4" />
                             <span class="hidden xl:inline">Cash</span>
                         </button>
+                        <a href="{{ route('shift.x-read', $activeShift->id) }}" target="_blank" title="X-Read: this shift's totals so far" aria-label="X-Read: this shift's totals so far"
+                           class="min-h-[44px] min-w-[44px] bg-white hover:bg-[#FDF8F5] text-[#3E2723] px-3 sm:px-4 rounded-full font-bold transition border border-[#F0E6D2] text-xs tracking-wider inline-flex items-center justify-center gap-2">
+                            <x-lucide-receipt-text class="w-4 h-4" />
+                            <span class="hidden xl:inline">X-Read</span>
+                        </a>
                         <a href="{{ route('shift.closing-report', $activeShift->id) }}" class="min-h-[44px] bg-amber-600 hover:bg-amber-700 text-white px-3 sm:px-5 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wider inline-flex items-center justify-center gap-2 whitespace-nowrap">
                             <x-lucide-lock class="w-4 h-4" />
                             <span>End Shift</span>
