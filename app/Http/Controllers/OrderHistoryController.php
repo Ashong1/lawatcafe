@@ -63,6 +63,19 @@ class OrderHistoryController extends Controller
         return redirect()->back()->with($result['success'] ? 'success' : 'error', $result['message']);
     }
 
+    public function refund(Sale $sale, Request $request)
+    {
+        $validated = $request->validate([
+            'items' => 'required|array',
+            'items.*' => 'integer|min:0',
+            'reason' => 'required|string|max:500',
+        ]);
+
+        $result = $this->sales->refund($sale, $validated['items'], $validated['reason'], auth()->user());
+
+        return redirect()->back()->with($result['success'] ? 'success' : 'error', $result['message']);
+    }
+
     public function approveVoidRequest(SaleVoidRequest $void_request)
     {
         $result = $this->sales->approveVoidRequest($void_request, auth()->user());

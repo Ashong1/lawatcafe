@@ -5,9 +5,11 @@ namespace App\Services;
 use App\Models\Sale;
 use App\Models\SaleVoidRequest;
 use App\Models\ZReading;
+use App\Models\Shift;
 use App\Models\User;
 use App\Notifications\SystemAlert;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\DB;
 
 class SaleService
 {
@@ -81,7 +83,9 @@ class SaleService
             return ['success' => false, 'message' => 'This request has already been reviewed.'];
         }
 
-        $result = $this->void($request->sale, $admin->id);
+        $result = $request->type === 'refund'
+            ? $this->applyRefund($request->sale, (float) $request->amount, $request->items ?? [], $request->reason, $request->requestedBy)
+            : $this->void($request->sale, $admin->id);
 
         $request->update([
             'status' => 'approved',
@@ -90,8 +94,8 @@ class SaleService
         ]);
 
         Notification::send($request->requestedBy, new SystemAlert(
-            'Void Request Approved',
-            'Your void request for order #'.substr($request->sale->transaction_number, -4).' was approved.',
+            ucfirst($request->type).' Request Approved',
+            'Your '.$request->type.' request for order #'.substr($request->sale->transaction_number, -4).' was approved.',
             'check-circle',
             route('pos.history')
         ));
@@ -115,12 +119,83 @@ class SaleService
         ]);
 
         Notification::send($request->requestedBy, new SystemAlert(
-            'Void Request Rejected',
-            'Your void request for order #'.substr($request->sale->transaction_number, -4).' was rejected.',
+            ucfirst($request->type).' Request Rejected',
+            'Your '.$request->type.' request for order #'.substr($request->sale->transaction_number, -4).' was rejected.',
             'x-circle',
             route('pos.history')
         ));
 
-        return ['success' => true, 'message' => 'Void request rejected.'];
+        return ['success' => true, 'message' => ucfirst($request->type).' request rejected.'];
+    }
+
+    /**
+     * Refund some items of a paid order (evaluators, Oct 28). The owner's
+     * refund goes through now; staff ask, and it waits in the void queue.
+     * Ingredients are not restocked: a returned drink was already made.
+     *
+     * @param  array<int, int>  $lines  sale_item_id => quantity
+     * @return array{success: bool, message: string}
+     */
+    public function refund(Sale $sale, array $lines, string $reason, User $actor): array
+    {
+        if ($sale->status === 'cancelled') {
+            return ['success' => false, 'message' => 'A voided order cannot be refunded.'];
+        }
+
+        $items = $sale->items()->whereIn('id', array_keys($lines))->get()->keyBy('id');
+        $picked = [];
+        foreach ($lines as $id => $qty) {
+            $qty = (int) $qty;
+            if ($qty < 1) {
+                continue;
+            }
+            if (! isset($items[$id]) || $qty > $items[$id]->quantity) {
+                return ['success' => false, 'message' => 'Choose only items from this order, up to the quantity bought.'];
+            }
+            $picked[] = ['item' => $items[$id]->item_name, 'qty' => $qty, 'amount' => round($qty * (float) $items[$id]->price, 2)];
+        }
+        $amount = round(array_sum(array_column($picked, 'amount')), 2);
+        $refundable = round((float) $sale->total_amount - (float) $sale->refunded_amount, 2);
+
+        if ($amount <= 0) {
+            return ['success' => false, 'message' => 'Choose at least one item to refund.'];
+        }
+        if ($amount > $refundable) {
+            return ['success' => false, 'message' => 'Only ₱'.number_format($refundable, 2).' of this order is left to refund.'];
+        }
+
+        if ($actor->isAdminOrAbove()) {
+            return $this->applyRefund($sale, $amount, $picked, $reason, $actor);
+        }
+
+        if (SaleVoidRequest::where('sale_id', $sale->id)->where('status', 'pending')->exists()) {
+            return ['success' => false, 'message' => 'A request for this order is already waiting for the owner.'];
+        }
+        SaleVoidRequest::create(['sale_id' => $sale->id, 'type' => 'refund', 'amount' => $amount, 'items' => $picked,
+            'requested_by' => $actor->id, 'reason' => $reason, 'status' => 'pending']);
+        Notification::send(User::active()->whereIn('role', ['admin', 'super_admin'])->get(), new SystemAlert(
+            'Refund Request Pending',
+            "{$actor->name} asked to refund ₱".number_format($amount, 2).' of order #'.substr($sale->transaction_number, -4).': "'.$reason.'"',
+            'undo-2',
+            route('pos.history')
+        ));
+
+        return ['success' => true, 'message' => 'Refund request sent to the owner.'];
+    }
+
+    /** Records the refund on the order; cash comes out of the open shift's drawer as a cash-out. */
+    private function applyRefund(Sale $sale, float $amount, array $items, string $reason, ?User $requester): array
+    {
+        return DB::transaction(function () use ($sale, $amount, $items, $reason, $requester) {
+            $sale->increment('refunded_amount', $amount);
+
+            if ($sale->payment_method === 'Cash') {
+                $shift = Shift::where('status', 'open')->where('user_id', $requester?->id)->first() ?? Shift::where('status', 'open')->latest('opened_at')->first();
+                $shift?->transactions()->create(['type' => 'pay_out', 'amount' => $amount, 'user_id' => $requester?->id,
+                    'reason' => 'Refund #'.substr($sale->transaction_number, -4).': '.collect($items)->map(fn ($i) => "{$i['qty']}× {$i['item']}")->implode(', ')." ({$reason})"]);
+            }
+
+            return ['success' => true, 'message' => 'Refunded ₱'.number_format($amount, 2).' on order #'.substr($sale->transaction_number, -4).'.'];
+        });
     }
 }

@@ -40,13 +40,11 @@
         @empty
             <div class="row"><span>Less discounts</span><span>{{ $peso(0) }}</span></div>
         @endforelse
-        <div class="row bold"><span>Net sales</span><span>{{ $peso($s['total_sales']) }}</span></div>
-        <div class="row"><span>VAT-exempt sales</span><span>{{ $peso($s['total_sales']) }}</span></div>
+        <div class="row"><span>Less refunds ({{ $s['refund_count'] ?? 0 }})</span><span>-{{ $peso($s['refund_total'] ?? 0) }}</span></div>
+        <div class="row bold"><span>Net sales</span><span>{{ $peso($s['total_sales'] - ($s['refund_total'] ?? 0)) }}</span></div>
+        <div class="row"><span>VAT-exempt sales</span><span>{{ $peso($s['total_sales'] - ($s['refund_total'] ?? 0)) }}</span></div>
         <div class="row"><span>VAT</span><span>{{ $peso(0) }}</span></div>
         <div class="row"><span>Voided ({{ $s['void_count'] }})</span><span>{{ $peso($s['void_total']) }}</span></div>
-        @isset($s['refund_total'])
-            <div class="row"><span>Refunded ({{ $s['refund_count'] }})</span><span>{{ $peso($s['refund_total']) }}</span></div>
-        @endisset
         <hr>
         <div class="row"><span>Cash sales</span><span>{{ $peso($s['cash_sales']) }}</span></div>
         @foreach ($s['ewallet_sales'] as $method => $amount)

@@ -21,7 +21,7 @@ Status legend: **Done** = already in the code · **Partial** · **To do** · **Q
 | 4 | R1 40:23–43:18 | Opening cash must be verified by a second person (owner, or the next shift verifies the handover) — "you can't verify your own transaction" | Done v1.34.0.238 (opening checked against last close) |
 | 5 | R1 18:20, 52:09 | X-Read (mid-shift) and Z-Read (end of day) reports, standard POS functions | Done v1.33.0.236 (X-Read), v1.33.0.237 (daily Z-Read) |
 | 6 | R1 25:10–27:19 | Void should be approved on the spot (owner/admin verifies at the register), not left pending until the owner arrives | To do — reverses the v1 void-approval queue |
-| 7 | R1 27:33–28:27 | Return / refund transaction | To do |
+| 7 | R1 27:33–28:27 | Return / refund transaction | Done v1.35.0.239 (owner-approved, same queue as voids) |
 | 8 | R1 28:35–31:13 | Sales report by day, date range and month; best sellers per month/season | Done v1.30.0.231 (Reports → Sales) |
 | 9 | R1 21:54–25:06 + owner | One person runs the shift: POS and kitchen display in one screen | Done v1.31.0.233 (Orders to make panel on the register) |
 | — | R1 31:36–33:59 | Receipts / BIR, Senior & PWD discount, reprint | Question — all present |

@@ -51,6 +51,7 @@
                 <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Discounts · Voided</p>
                 <p class="text-lg font-bold text-[#3E2723] mt-1">{{ $peso($report['discounts']) }}</p>
                 <p class="text-sm font-bold text-red-700">{{ $report['voided_count'] }} voided ({{ $peso($report['voided_amount']) }})</p>
+                <p class="text-sm font-bold text-blue-800">Refunded {{ $peso($report['refunds']) }}</p>
             </div>
         </div>
 

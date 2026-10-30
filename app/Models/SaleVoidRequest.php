@@ -8,6 +8,9 @@ class SaleVoidRequest extends Model
 {
     protected $fillable = [
         'sale_id',
+        'type',
+        'amount',
+        'items',
         'requested_by',
         'reason',
         'status',
@@ -17,6 +20,7 @@ class SaleVoidRequest extends Model
 
     protected $casts = [
         'reviewed_at' => 'datetime',
+        'items' => 'array',
     ];
 
     public function sale()

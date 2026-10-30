@@ -13,6 +13,7 @@ class Sale extends Model
     protected $fillable = [
         'transaction_number',
         'total_amount',
+        'refunded_amount',
         'amount_received',
         'status',
         'payment_method',

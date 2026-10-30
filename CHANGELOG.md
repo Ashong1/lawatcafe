@@ -9,6 +9,17 @@ the history was rewritten.
 
 ---
 
+## 1.35.0 — Refunds
+*build 239*
+
+- **Refund items** on Order History: pick items and quantities and give a
+  reason. The owner's refund goes through at once; staff's waits in the same
+  approval queue as voids. A cash refund comes out of the open shift as a
+  cash-out, so the expected drawer stays right. Ingredients are not put back
+  in stock (the item was already made).
+- Refunds show on the Sales Report (taken off net sales), the X-Read and the
+  Z-Read.
+
 ## 1.34.0 — Cash handover
 *build 238*
 

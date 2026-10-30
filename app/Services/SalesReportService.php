@@ -15,14 +15,15 @@ class SalesReportService
         $range = [$p->start, $p->end];
         $sales = fn () => Sale::revenue()->whereBetween('created_at', $range);
 
-        $net = (float) $sales()->sum('total_amount');
+        $refunds = (float) $sales()->sum('refunded_amount');
+        $net = (float) $sales()->sum('total_amount') - $refunds;
         $orders = $sales()->count();
         $cash = (float) $sales()->where('payment_method', 'Cash')->sum('total_amount');
-        $previous = (float) Sale::revenue()->whereBetween('created_at', [$p->previous()->start, $p->previous()->end])->sum('total_amount');
+        $previous = (float) Sale::revenue()->whereBetween('created_at', [$p->previous()->start, $p->previous()->end])->sum(DB::raw('total_amount - refunded_amount'));
         $voided = Sale::where('status', 'cancelled')->whereBetween('created_at', $range);
 
         $bucket = $p->bucketSql(DB::connection()->getDriverName(), 'created_at');
-        $byBucket = $sales()->selectRaw("{$bucket} as k, SUM(total_amount) as total")->groupBy('k')->pluck('total', 'k');
+        $byBucket = $sales()->selectRaw("{$bucket} as k, SUM(total_amount - refunded_amount) as total")->groupBy('k')->pluck('total', 'k');
         $series = array_map(fn ($k) => (float) ($byBucket[$k] ?? 0), array_combine(array_keys($p->buckets()), array_keys($p->buckets())));
 
         $items = DB::table('sale_items')->join('sales', 'sales.id', '=', 'sale_items.sale_id')
@@ -46,8 +47,9 @@ class SalesReportService
             'orders' => $orders,
             'average' => $orders ? round($net / $orders, 2) : 0.0,
             'cash' => $cash,
-            'ewallet' => round($net - $cash, 2),
+            'ewallet' => round($net + $refunds - $cash, 2),
             'discounts' => (float) $sales()->sum('discount_amount'),
+            'refunds' => $refunds,
             'voided_count' => (clone $voided)->count(),
             'voided_amount' => (float) (clone $voided)->sum('total_amount'),
             'previous_net' => $previous,

@@ -67,6 +67,8 @@ class Shift extends Model
             'discounts' => $revenue()->where('discount_amount', '>', 0)
                 ->selectRaw("COALESCE(discount_type, 'Discount') as type, SUM(discount_amount) as total")->groupBy('type')
                 ->pluck('total', 'type')->map(fn ($t) => (float) $t)->all(),
+            'refund_count' => $revenue()->where('refunded_amount', '>', 0)->count(),
+            'refund_total' => (float) $revenue()->sum('refunded_amount'),
             'void_count' => $sales()->where('status', 'cancelled')->count(),
             'void_total' => (float) $sales()->where('status', 'cancelled')->sum('total_amount'),
             'first_transaction' => $sales()->orderBy('id')->value('transaction_number'),

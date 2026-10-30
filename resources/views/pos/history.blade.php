@@ -11,14 +11,14 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Order History</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Find a past order, reprint its kitchen slip{{ $receiptPrintingEnabled ? ' or receipt' : '' }}, or void it.</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Find a past order, reprint its kitchen slip{{ $receiptPrintingEnabled ? ' or receipt' : '' }}, refund items, or void it.</p>
         </div>
     </div>
 
     @if(auth()->user()->isAdminOrAbove() && $pendingVoidRequests->isNotEmpty())
     <div class="bg-amber-50 border border-amber-200 p-6 md:p-8 rounded-2xl mb-8">
-        <h3 class="text-sm font-bold text-amber-800 uppercase tracking-wide mb-1">Pending Void Requests</h3>
-        <p class="text-sm text-amber-800 mb-6 font-medium">Staff asked to cancel these sales. Approve to void the sale, or reject to keep it.</p>
+        <h3 class="text-sm font-bold text-amber-800 uppercase tracking-wide mb-1">Pending Void and Refund Requests</h3>
+        <p class="text-sm text-amber-800 mb-6 font-medium">Staff asked to void these orders or refund some items. Approve or reject each one.</p>
 
         <div class="space-y-3">
             @foreach($pendingVoidRequests as $voidRequest)
@@ -26,6 +26,11 @@
                 <div>
                     <span class="font-extrabold text-[#3E2723] font-mono">#{{ substr($voidRequest->sale->transaction_number, -8) }}</span>
                     <span class="text-xs text-[#795548] font-bold ml-2">₱{{ number_format($voidRequest->sale->total_amount, 2) }}</span>
+                    @if ($voidRequest->type === 'refund')
+                        <span class="ml-2 px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 text-xs font-bold">Refund ₱{{ number_format($voidRequest->amount, 2) }}: {{ collect($voidRequest->items)->map(fn ($i) => $i['qty'].'× '.$i['item'])->implode(', ') }}</span>
+                    @else
+                        <span class="ml-2 px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-xs font-bold">Void</span>
+                    @endif
                     <span class="text-xs text-[#6D4C41] font-bold uppercase tracking-wide block mt-1">
                         Requested by {{ $voidRequest->requestedBy->name }} • {{ $voidRequest->created_at->diffForHumans() }}
                     </span>
@@ -152,6 +157,13 @@
                                     </a>
                                 @endif
 
+                                @if($sale->status !== 'cancelled' && $sale->refunded_amount < $sale->total_amount)
+                                    <button type="button"
+                                            @click="openRefundModal({{ $sale->id }}, {{ Js::from(substr($sale->transaction_number, -8)) }}, {{ Js::from($sale->items->where('type', '!=', 'wifi')->map(fn ($i) => ['id' => $i->id, 'name' => $i->item_name, 'max' => $i->quantity, 'price' => (float) $i->price])->values()) }})"
+                                            class="w-11 h-11 inline-flex items-center justify-center text-blue-700 hover:bg-blue-50 rounded-lg transition" title="Refund items" aria-label="Refund items of this order">
+                                        <x-lucide-undo-2 class="w-4 h-4" />
+                                    </button>
+                                @endif
                                 @if($sale->status !== 'cancelled')
                                     <x-ask-ai-button :prompt="'Review sale with ID ' . $sale->id . ' (transaction #' . substr($sale->transaction_number, -8) . ') for anything unusual, and void it if warranted.'" label="Review" />
 
@@ -221,6 +233,35 @@
             </div>
         </form>
     </x-modal-shell>
+
+    {{-- Refund: pick items and quantities. The owner's goes through; staff's waits for the owner. --}}
+    <x-modal-shell show="refundOpen" max-width="md" panel-class="border-t-8 border-blue-700" labelled-by="refund-heading">
+        <form :action="'/pos/history/refund/' + refundSaleId" method="POST" @submit="submitting = true">
+            @csrf
+            <div class="px-5 sm:px-8 py-6 border-b border-[#FDF8F5]">
+                <h2 id="refund-heading" class="text-xl font-bold text-[#3E2723] uppercase tracking-wide">Refund items</h2>
+                <p class="text-sm text-[#795548] font-medium mt-1">Order <span x-text="refundLabel"></span>. @if(! auth()->user()->isAdminOrAbove()) The owner approves it first. @endif Ingredients are not put back in stock.</p>
+            </div>
+            <div class="p-5 sm:p-8 space-y-3">
+                <template x-for="item in refundItems" :key="item.id">
+                    <div class="flex items-center justify-between gap-3">
+                        <label :for="'refund-' + item.id" class="text-sm font-bold text-[#3E2723] min-w-0" x-text="item.name + ' (₱' + item.price.toFixed(2) + ')'"></label>
+                        <input type="number" min="0" :max="item.max" :id="'refund-' + item.id" :name="'items[' + item.id + ']'" x-model.number="item.qty"
+                               class="w-20 min-h-[44px] border-2 border-[#F0E6D2] rounded-xl text-center text-base font-bold">
+                    </div>
+                </template>
+                <p class="text-sm font-bold text-blue-800" x-text="'Refund total: ₱' + refundTotal().toFixed(2)"></p>
+                <div>
+                    <label for="refund-reason" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Reason</label>
+                    <input id="refund-reason" name="reason" required maxlength="500" class="w-full min-h-[44px] border-2 border-[#F0E6D2] rounded-xl px-4 text-base sm:text-sm" placeholder="e.g. Customer didn't like the taste">
+                </div>
+            </div>
+            <div class="px-5 sm:px-8 pb-6 flex gap-3">
+                <button type="button" @click="refundOpen = false" class="flex-1 min-h-[48px] bg-white border-2 border-[#F0E6D2] rounded-2xl text-[#795548] font-bold text-xs uppercase tracking-wide">Cancel</button>
+                <button type="submit" :disabled="submitting || refundTotal() <= 0" class="flex-[2] min-h-[48px] bg-blue-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wide disabled:opacity-50">{{ auth()->user()->isAdminOrAbove() ? 'Refund now' : 'Ask the owner' }}</button>
+            </div>
+        </form>
+    </x-modal-shell>
 </div>
 
 <script>
@@ -232,6 +273,23 @@
             voidingSaleId: null,
             voidingSaleLabel: '',
             reason: '',
+
+            refundOpen: false,
+            refundSaleId: null,
+            refundLabel: '',
+            refundItems: [],
+
+            openRefundModal(saleId, label, items) {
+                this.refundSaleId = saleId;
+                this.refundLabel = '#' + label;
+                this.refundItems = items.map(i => ({ ...i, qty: 0 }));
+                this.submitting = false;
+                this.refundOpen = true;
+            },
+
+            refundTotal() {
+                return this.refundItems.reduce((sum, i) => sum + Math.min(i.qty || 0, i.max) * i.price, 0);
+            },
 
             openVoidRequestModal(saleId, label) {
                 this.voidingSaleId = saleId;
