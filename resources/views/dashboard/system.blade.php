@@ -121,6 +121,26 @@
                         <span class="text-xs font-bold uppercase tracking-wide text-[#4A3B32] leading-tight">Disk<br>Usage</span>
                     </div>
                 </div>
+
+                {{-- The real machine, read live (ServerSpecs). --}}
+                @isset($specs)
+                    <dl class="mt-6 pt-5 border-t border-[#F0E6D2] grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                        @foreach ([
+                            'Processor' => $specs['processor'].' · '.$specs['cores'].' '.Str::plural('core', $specs['cores']),
+                            'Memory' => $specs['memory'],
+                            'Disk' => $specs['disk'],
+                            'Running for' => $specs['uptime'],
+                            'System' => $specs['system'],
+                            'Runs on' => $specs['runs_on'],
+                            'Software' => $specs['software'],
+                        ] as $label => $value)
+                            <div class="min-w-0 {{ in_array($label, ['Processor', 'System', 'Runs on'], true) ? 'sm:col-span-2' : '' }}">
+                                <dt class="text-xs font-bold uppercase tracking-wide text-[#795548]">{{ $label }}</dt>
+                                <dd class="font-medium text-[#3E2723] break-words">{{ $value }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
+                @endisset
             </div>
 
             <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2] flex flex-col relative overflow-hidden group h-full justify-center">

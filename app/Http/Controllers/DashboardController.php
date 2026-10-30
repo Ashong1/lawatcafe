@@ -173,6 +173,7 @@ class DashboardController extends Controller
         $ai = app(AIService::class);
 
         return view('dashboard.system', array_merge(
+            ['specs' => app(\App\Services\ServerSpecs::class)->read()],
             $this->getSystemHealth(),
             $this->getNetworkPulse($opnsense),
             [

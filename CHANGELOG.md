@@ -9,6 +9,14 @@ the history was rewritten.
 
 ---
 
+## 1.54.4 — Server specs on the system dashboard
+*build 290*
+
+- Application Host shows the server's real specs, read from the machine:
+  processor and cores, memory, disk, how long it has been running, the
+  operating system, what it runs on (here a container on a Proxmox server),
+  and the PHP and Laravel versions.
+
 ## 1.54.3 — Restocking needs the expiry date
 *build 289*
 
