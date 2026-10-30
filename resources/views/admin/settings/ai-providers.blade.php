@@ -114,9 +114,10 @@
                     </button>
                 </div>
             @endif
-            <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 items-start">
+            {{-- Columns, not a grid: a long card doesn't leave holes beside it. --}}
+            <div class="columns-1 lg:columns-2 2xl:columns-3 gap-6">
             @foreach ($providers as $key => $provider)
-            <div class="min-w-0 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
+            <div x-data="{ showAll: false }" class="min-w-0 break-inside-avoid mb-6 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700">
@@ -165,7 +166,9 @@
 
                 <div class="divide-y divide-[#F0E6D2]">
                     @foreach ($provider['models'] as $model)
-                        <div class="py-3" x-data="{ editing: false, saving: false, isCustom: false, id: @js($key.'|'.$model['name']) }">
+                        <div class="py-2" x-data="{ editing: false, saving: false, isCustom: false, id: @js($key.'|'.$model['name']) }"
+                             @if ($loop->index >= 5) x-show="showAll" x-cloak @endif
+                             @if ($model['at']) title="Last checked {{ $model['at']->diffForHumans() }}" @endif>
                             <div class="flex items-center justify-between gap-3">
                                 <div class="flex items-center gap-2 min-w-0">
                                     <span x-show="!result(id)" class="w-2 h-2 rounded-full shrink-0 {{ match($model['status']) {
@@ -185,20 +188,17 @@
                                     </svg>
                                     <span x-text="result(id) ? label(result(id)) : ''"></span>
                                 </div>
-                                <div x-show="!result(id)" class="text-right shrink-0">
+                                <div x-show="!result(id)" class="shrink-0 flex items-center gap-3">
                                     @if ($model['status'] === 'ok')
                                         <span class="text-xs font-bold text-green-700 uppercase tracking-wider">Healthy</span>
                                     @elseif ($model['status'] === 'failed')
-                                        <span class="text-xs font-bold text-red-600 uppercase tracking-wider">Failed{{ $model['reason'] ? ' — ' . str_replace('_', ' ', $model['reason']) : '' }}</span>
+                                        <span class="text-xs font-bold text-red-600 uppercase tracking-wider whitespace-nowrap">{{ $model['reason'] ? ucfirst(['http_429' => 'limit reached', 'http_404' => 'not available', 'http_400' => 'refused', 'http_500' => 'provider error', 'http_503' => 'provider busy', 'timed_out' => 'too slow', 'unauthorized' => 'bad key', 'forbidden' => 'not on your plan', 'exception' => 'no answer', 'empty_response' => 'empty reply'][$model['reason']] ?? str_replace('_', ' ', $model['reason'])) : 'Failed' }}</span>
                                     @else
                                         <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Never tested</span>
                                     @endif
-                                    @if ($model['at'])
-                                        <span class="block text-xs text-[#6D4C41]">{{ $model['at']->diffForHumans() }}</span>
-                                    @endif
                                     @if ($model['status'] === 'failed' && auth()->user()->isSuperAdmin())
-                                        <button type="button" @click="editing = !editing" class="block text-xs font-bold uppercase tracking-wide text-blue-600 hover:text-blue-800 mt-1 ml-auto">
-                                            Change Model
+                                        <button type="button" @click="editing = !editing" class="min-h-[32px] text-xs font-bold uppercase tracking-wide text-blue-600 hover:text-blue-800">
+                                            Change
                                         </button>
                                     @endif
                                 </div>
@@ -249,9 +249,14 @@
                             @endif
                         </div>
                     @endforeach
+                    @if (count($provider['models']) > 5)
+                        <button type="button" @click="showAll = !showAll"
+                                class="w-full min-h-[44px] text-left text-xs font-bold uppercase tracking-wide text-[#6D4C41] hover:text-[#3E2723]"
+                                x-text="showAll ? 'Show fewer' : @js('Show '.(count($provider['models']) - 5).' more')"></button>
+                    @endif
                     {{-- Models added from a scan, shown at once (no refresh). --}}
                     <template x-for="m in (added[@js($key)] || [])" :key="m">
-                        <div class="py-3 flex items-center justify-between gap-3">
+                        <div class="py-2 flex items-center justify-between gap-3">
                             <div class="flex items-center gap-2 min-w-0">
                                 <span class="w-2 h-2 rounded-full shrink-0 bg-green-500"></span>
                                 <span class="text-xs font-mono font-bold text-[#3E2723] truncate" x-text="m"></span>
@@ -262,12 +267,18 @@
                 </div>
 
                 @if ($provider['configured'])
-                <div class="mt-4 pt-4 border-t border-[#F0E6D2]">
+                <div class="mt-3 pt-3 border-t border-[#F0E6D2]">
+                    <div class="flex flex-wrap items-center justify-between gap-x-4">
                     <button type="button" @click="scan(@js($key))" :disabled="scans[@js($key)]?.state === 'scanning'"
                             class="min-h-[44px] text-xs font-bold uppercase tracking-wide text-[#3E2723] hover:text-amber-700 transition disabled:opacity-60 flex items-center gap-2">
                         <span class="inline-flex" x-bind:class="scans[@js($key)]?.state === 'scanning' ? 'animate-spin' : ''"><x-lucide-radar class="w-4 h-4" /></span>
                         <span x-text="scans[@js($key)]?.state === 'scanning' ? 'Scanning…' : 'Scan for more models'">Scan for more models</span>
                     </button>
+                    <form action="{{ route('admin.settings.ai-providers.models.reset', $key) }}" method="POST" data-confirm="Go back to the default models?" data-confirm-text="Models you added are removed from this provider.">
+                        @csrf
+                        <button type="submit" class="min-h-[44px] text-xs font-bold uppercase tracking-wide text-[#6D4C41] hover:text-[#3E2723] transition">Reset to defaults</button>
+                    </form>
+                    </div>
                     <template x-if="scans[@js($key)]?.state === 'done'">
                         <div class="mt-2" x-data="{ showFailed: false }">
                             <p class="text-xs text-[#6D4C41] font-medium" x-text="scans[@js($key)].message"></p>
@@ -296,14 +307,6 @@
                 </div>
                 @endif
 
-                @if (auth()->user()->isSuperAdmin())
-                <form action="{{ route('admin.settings.ai-providers.models.reset', $key) }}" method="POST" class="mt-4 pt-4 border-t border-[#F0E6D2]">
-                    @csrf
-                    <button type="submit" class="text-xs font-bold uppercase tracking-wide text-[#6D4C41] hover:text-[#3E2723] transition">
-                        Reset to default models
-                    </button>
-                </form>
-                @endif
             </div>
             @endforeach
             </div>

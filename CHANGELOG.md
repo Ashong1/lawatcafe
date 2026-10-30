@@ -9,6 +9,16 @@ the history was rewritten.
 
 ---
 
+## 1.50.2 — Tidier Barista AI Settings
+*build 277*
+
+- One line per model, with problems in plain words ("limit reached",
+  "provider error") and a short **Change**; when it was last checked shows
+  on hover.
+- Lists longer than 5 models fold behind "Show N more".
+- Provider cards stack in columns without gaps; Scan and **Reset to
+  defaults** share one row, and Reset asks first.
+
 ## 1.50.1 — Added models show at once
 *build 276*
 
