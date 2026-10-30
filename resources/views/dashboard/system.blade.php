@@ -47,7 +47,7 @@
              ~150px per tile, which is not enough for a label like "Pending AI
              Actions" set in uppercase at 0.1em tracking without it wrapping into a
              column of fragments. --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-8">
             @php
                 $unhealthyJobs = collect($scheduledJobs)->where('healthy', false)->count();
                 $downProviders = collect($aiProviders)->filter(fn ($p) => $p['configured'] && $p['circuit']['open'])->count();

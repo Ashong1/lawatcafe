@@ -9,6 +9,19 @@ the history was rewritten.
 
 ---
 
+## 1.49.2 — Gemini and Groq really answer; smaller on phones
+*build 272*
+
+- Fixed: any chat where Barista AI used a tool was refused by Gemini and
+  Groq (400) and fell back to OpenRouter, using up its daily requests and
+  leaving Groq "circuit open". Tool calls now go back in the standard
+  format, and Gemini gets back the thought signature it needs (or Google's
+  placeholder for another provider's call). Checked live: a tool-using chat
+  answered from Gemini in 5 s.
+- Phones: card padding, big numbers and gaps step down a size everywhere
+  in the staff/owner app (not the guest portal); the system dashboard's
+  stat tiles sit two per row.
+
 ## 1.49.1 — Phone fixes; Android app 1.2
 *build 271*
 

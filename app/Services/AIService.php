@@ -875,7 +875,7 @@ class AIService
             }
 
             try {
-                $payload = ['model' => $model, 'messages' => $messages, 'stream' => true];
+                $payload = ['model' => $model, 'messages' => $this->toOpenAiMessages($messages, $provider), 'stream' => true];
                 // Second lock for free-only requests: OpenRouter itself refuses
                 // to route to any endpoint that would cost money, even if a
                 // paid model got past freeModelsOnly().
@@ -918,6 +918,9 @@ class AIService
                         if (isset($tc['id'])) {
                             $toolCallsByIndex[$index]['id'] = $tc['id'];
                         }
+                        if (isset($tc['extra_content'])) {
+                            $toolCallsByIndex[$index]['extra_content'] = $tc['extra_content'];
+                        }
                         if (isset($tc['function']['name'])) {
                             $toolCallsByIndex[$index]['name'] = $tc['function']['name'];
                         }
@@ -932,7 +935,7 @@ class AIService
                         'id' => $tc['id'] ?? ('call_'.Str::random(8)),
                         'name' => $tc['name'] ?? '',
                         'arguments' => json_decode($tc['arguments'] ?: '{}', true) ?? [],
-                    ], array_values($toolCallsByIndex));
+                    ] + array_intersect_key($tc, ['extra_content' => true]), array_values($toolCallsByIndex));
 
                     $this->recordModelResult($provider, $model, true);
 
@@ -1004,7 +1007,7 @@ class AIService
         }
         foreach ($models as $model) {
             try {
-                $payload = ['model' => $model, 'messages' => $messages];
+                $payload = ['model' => $model, 'messages' => $this->toOpenAiMessages($messages, $provider)];
                 if (! empty($tools)) {
                     $payload['tools'] = $this->toOpenAiTools($tools);
                 }
@@ -1061,6 +1064,36 @@ class AIService
     }
 
     /** OpenRouter's raw OpenAI-compatible response -> canonical shape (decodes JSON-string tool arguments). */
+    /**
+     * The conversation in the standard chat format, as each provider needs it.
+     * Tool calls are kept internally as {id, name, arguments[]}; Groq and
+     * Gemini refuse that shape (400). Gemini also wants the thought signature
+     * it attached to its own calls back, and a placeholder Google documents
+     * for calls another provider made.
+     */
+    private function toOpenAiMessages(array $messages, string $provider): array
+    {
+        return array_map(function (array $m) use ($provider) {
+            if (($m['role'] ?? null) !== 'assistant' || empty($m['tool_calls'])) {
+                return $m;
+            }
+            $m['tool_calls'] = array_map(function (array $c) use ($provider) {
+                $call = isset($c['function']) ? array_intersect_key($c, ['id' => 1, 'type' => 1, 'function' => 1]) : [
+                    'id' => $c['id'],
+                    'type' => 'function',
+                    'function' => ['name' => $c['name'], 'arguments' => is_string($c['arguments'] ?? null) ? $c['arguments'] : json_encode((object) ($c['arguments'] ?? []))],
+                ];
+                if ($provider === 'gemini') {
+                    $call['extra_content'] = $c['extra_content'] ?? ['google' => ['thought_signature' => 'skip_thought_signature_validator']];
+                }
+
+                return $call;
+            }, $m['tool_calls']);
+
+            return $m;
+        }, $messages);
+    }
+
     private function normalizeOpenAiResponse(array $data): array
     {
         $message = $data['choices'][0]['message'] ?? [];
@@ -1070,7 +1103,7 @@ class AIService
                 'id' => $call['id'] ?? ('call_'.Str::random(8)),
                 'name' => $call['function']['name'] ?? '',
                 'arguments' => json_decode($call['function']['arguments'] ?? '{}', true) ?? [],
-            ];
+            ] + array_intersect_key($call, ['extra_content' => true]);
         }
 
         return ['choices' => [['message' => ['content' => $message['content'] ?? null, 'tool_calls' => $toolCalls]]]];

@@ -74,3 +74,22 @@
     main .gap-6, main .gap-8 { gap: 1rem; }
     main .space-y-6 > * + *, main .space-y-8 > * + * { margin-top: 1rem; }
 }
+
+/*
+ * Phones (owner, Oct 30: "cards and text are too big"). Pages are written at
+ * desktop size; below 640px every card's padding, the big numbers and the
+ * gaps step down one size here, so each page doesn't need its own sm: classes.
+ * After @tailwind utilities, so these win; sm: and up are untouched.
+ */
+@media (max-width: 639px) {
+    .p-5, .p-6, .p-8 { padding: 1rem; }
+    .px-8 { padding-left: 1rem; padding-right: 1rem; }
+    .py-6, .py-8 { padding-top: 1rem; padding-bottom: 1rem; }
+    .text-4xl { font-size: 1.875rem; line-height: 2.25rem; }
+    .text-3xl { font-size: 1.5rem; line-height: 2rem; }
+    .text-2xl { font-size: 1.25rem; line-height: 1.75rem; }
+    .rounded-3xl, .rounded-\[2rem\] { border-radius: 1.25rem; }
+    .gap-6, .gap-8 { gap: 0.75rem; }
+    .space-y-6 > :not([hidden]) ~ :not([hidden]), .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem; }
+    .mb-6, .mb-8 { margin-bottom: 1rem; }
+}

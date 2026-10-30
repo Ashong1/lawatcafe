@@ -217,4 +217,52 @@ class AIServiceMultiProviderTest extends TestCase
         $this->assertContains('qwen/new-model', app(AIService::class)->activeModels('groq'));
         $this->actingAs($owner)->get(route('admin.settings.ai-providers'))->assertSee('Scan for more models');
     }
+
+    /** Oct 30: a chat that used a tool sent our internal call format back; Groq and Gemini answered 400. */
+    private function afterAToolCall(array $call): array
+    {
+        return [['role' => 'user', 'content' => 'How many guests?'],
+            ['role' => 'assistant', 'content' => null, 'tool_calls' => [$call]],
+            ['role' => 'tool', 'name' => 'getActiveSessions', 'tool_call_id' => 'c1', 'content' => '{"count":0}']];
+    }
+
+    public function test_tool_calls_go_back_in_the_standard_format(): void
+    {
+        $this->keys(['groq']);
+        Http::fake(['api.groq.com/*' => Http::response($this->sse('None online.'))]);
+
+        app(AIService::class)->chatWithToolsStreaming($this->afterAToolCall(['id' => 'c1', 'name' => 'getActiveSessions', 'arguments' => ['tier' => 'free']]), [], fn () => null);
+
+        Http::assertSent(function ($r) {
+            $call = $r->data()['messages'][1]['tool_calls'][0];
+
+            return $call === ['id' => 'c1', 'type' => 'function', 'function' => ['name' => 'getActiveSessions', 'arguments' => '{"tier":"free"}']];
+        });
+    }
+
+    public function test_gemini_gets_its_thought_signature_back(): void
+    {
+        $this->keys(['gemini']);
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::sequence()
+            ->push('data: '.json_encode(['choices' => [['delta' => ['tool_calls' => [['id' => 'c1', 'type' => 'function', 'function' => ['name' => 'getActiveSessions', 'arguments' => '{}'], 'extra_content' => ['google' => ['thought_signature' => 'SIG123']]]]]]]])."\n\n")
+            ->push($this->sse('None online.'))]);
+        $ai = app(AIService::class);
+
+        $first = $ai->chatWithToolsStreaming([['role' => 'user', 'content' => 'How many guests?']], [], fn () => null);
+        $call = $first['choices'][0]['message']['tool_calls'][0];
+        $ai->chatWithToolsStreaming($this->afterAToolCall($call), [], fn () => null);
+
+        Http::assertSent(fn ($r) => ($r->data()['messages'][1]['tool_calls'][0]['extra_content']['google']['thought_signature'] ?? null) === 'SIG123');
+    }
+
+    public function test_gemini_gets_a_placeholder_signature_for_another_providers_call(): void
+    {
+        $this->keys(['gemini']);
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response($this->sse('None online.'))]);
+
+        app(AIService::class)->chatWithToolsStreaming($this->afterAToolCall(['id' => 'c1', 'name' => 'getActiveSessions', 'arguments' => []]), [], fn () => null);
+
+        Http::assertSent(fn ($r) => ($r->data()['messages'][1]['tool_calls'][0]['extra_content']['google']['thought_signature'] ?? null) === 'skip_thought_signature_validator'
+            && $r->data()['messages'][1]['tool_calls'][0]['function']['arguments'] === '{}');
+    }
 }

@@ -165,7 +165,9 @@ class AdminLayoutMobileShellTest extends TestCase
     {
         $html = $this->renderDashboard();
 
-        $this->assertStringContainsString('grid-cols-1 sm:grid-cols-2 lg:grid-cols-4', $html);
+        // Two per row on a phone (Oct 30: one per row wasted the screen); the
+        // values stay on one line thanks to whitespace-nowrap below.
+        $this->assertStringContainsString('grid grid-cols-2 lg:grid-cols-4', $html);
 
         // "3 / 3" contains spaces and broke at them in a narrow tile, rendering
         // one glyph per line.
