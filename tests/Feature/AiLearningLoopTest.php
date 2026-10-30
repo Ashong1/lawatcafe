@@ -477,6 +477,19 @@ class AiLearningLoopTest extends TestCase
             ->assertDontSee('once an hour');
     }
 
+    /** Owner (Oct 30): "what is 3 plus 3" got answered; staff and owner chat stays on the system. */
+    public function test_staff_and_owner_chat_declines_things_unrelated_to_the_system(): void
+    {
+        $ai = app(AIService::class);
+
+        foreach ([$ai->buildAdminSystemPrompt(), $ai->buildStaffSystemPrompt(), $ai->buildSuperAdminSystemPrompt()] as $prompt) {
+            $this->assertStringContainsString('STAY ON THE SYSTEM:', $prompt);
+            $this->assertStringContainsString("That's outside what I help with here", $prompt);
+        }
+        // The decline must not read as a capability gap, or the learning step would try to "learn" trivia.
+        $this->assertFalse(\App\Services\Agent\CapabilityGap::looksLikeGap("That's outside what I help with here. I can check sales, stock or the Wi-Fi for you."));
+    }
+
     /** A settled transcript alone can trip a run — no explicit rating needed. */
     public function test_conversations_count_towards_the_evidence_threshold(): void
     {

@@ -9,6 +9,15 @@ the history was rewritten.
 
 ---
 
+## 1.52.2 — Barista AI stays on the system
+*build 281*
+
+- Owner, staff and super admin chat declines things unrelated to the shop
+  and its system (general math, trivia, homework, coding, news) with
+  "That's outside what I help with here" and what it can do instead. Math
+  about the shop's own numbers is still answered. Guest Wi-Fi chat already
+  worked this way.
+
 ## 1.52.1 — AI Routing, redesigned
 *build 280*
 
