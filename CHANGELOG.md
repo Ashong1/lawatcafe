@@ -9,6 +9,13 @@ the history was rewritten.
 
 ---
 
+## 1.38.0 — Activity Log by kind and date
+*build 242*
+
+- **Activity Log** (Settings → Security) filters by kind (Sign-ins, Accounts,
+  Backups, System) and by date range, and points to Stock History for stock
+  changes, so security and inventory records aren't mixed up.
+
 ## 1.37.0 — Expiration dates
 *build 241*
 

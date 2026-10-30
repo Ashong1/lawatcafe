@@ -34,6 +34,14 @@ class ActivityLog extends Model
         'server_shutting_down' => 'Shut down the server',
     ];
 
+    /** Kinds of entry, so sign-ins, accounts, backups and system power can be read apart (evaluators, Oct 28). */
+    public const CATEGORIES = [
+        'Sign-ins' => ['signed_in', 'signed_out', 'sign_in_failed', 'locked_out', 'password_reset'],
+        'Accounts' => ['account_added', 'account_changed', 'account_removed', 'account_restored'],
+        'Backups' => ['backup_made', 'backup_failed', 'backup_restored'],
+        'System' => ['app_restarted', 'app_shut_down', 'app_started', 'server_restarting', 'server_shutting_down'],
+    ];
+
     protected $fillable = ['user_id', 'event', 'detail', 'ip_address', 'user_agent'];
 
     public function user()

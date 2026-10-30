@@ -93,8 +93,16 @@
         </div>
 
         <div class="mt-6 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
-            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-4">Activity Log</h3>
-            <form method="GET" class="flex flex-col sm:flex-row gap-3 mb-6">
+            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-1">Activity Log</h3>
+            <p class="text-xs text-[#6D4C41] mb-4">Sign-ins, accounts, backups and system power. Stock changes (sales, deliveries, wastage) are in <a href="{{ route('inventory.logs') }}" class="font-bold underline text-[#3E2723]">Stock History</a>.</p>
+            <form method="GET" class="flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-6">
+                <label class="sr-only" for="log-category">Kind</label>
+                <select id="log-category" name="category" class="min-h-[44px] rounded-xl border-[#E6D5C3] text-base sm:text-sm">
+                    <option value="">All kinds</option>
+                    @foreach(array_keys(\App\Models\ActivityLog::CATEGORIES) as $category)
+                        <option value="{{ $category }}" @selected(request('category') === $category)>{{ $category }}</option>
+                    @endforeach
+                </select>
                 <label class="sr-only" for="log-event">What happened</label>
                 <select id="log-event" name="event" class="min-h-[44px] rounded-xl border-[#E6D5C3] text-base sm:text-sm">
                     <option value="">Everything</option>
@@ -109,6 +117,10 @@
                         <option value="{{ $u->id }}" @selected((string) request('user') === (string) $u->id)>{{ $u->name }}</option>
                     @endforeach
                 </select>
+                <label class="sr-only" for="log-from">From</label>
+                <input type="date" id="log-from" name="from" value="{{ request('from') }}" aria-label="From date" class="min-h-[44px] rounded-xl border-[#E6D5C3] text-base sm:text-sm">
+                <label class="sr-only" for="log-to">To</label>
+                <input type="date" id="log-to" name="to" value="{{ request('to') }}" aria-label="To date" class="min-h-[44px] rounded-xl border-[#E6D5C3] text-base sm:text-sm">
                 <button type="submit" class="min-h-[44px] px-6 rounded-xl bg-[#3E2723] hover:bg-[#271815] text-white text-sm font-bold">Show</button>
             </form>
 
