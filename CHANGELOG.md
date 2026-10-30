@@ -9,6 +9,17 @@ the history was rewritten.
 
 ---
 
+## 1.49.1 — Phone fixes; Android app 1.2
+*build 271*
+
+- **Android app 1.2** (Profile → Get the app; installs over 1.1): a
+  **Connect** choice of Automatic / In the shop / From anywhere. Automatic
+  checks in about a second whether the shop server answers and otherwise
+  uses the remote link — outside the shop the old app timed out on the shop
+  address ("Webpage not available").
+- On phones, the notifications, power and approvals menus span the screen
+  under the header instead of running off the left edge.
+
 ## 1.49.0 — Visit log
 *build 270*
 

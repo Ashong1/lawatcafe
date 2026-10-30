@@ -17,6 +17,10 @@
   button { width: 100%; min-height: 48px; border-radius: 999px; font-size: 15px; font-weight: 700; border: 0; cursor: pointer; }
   .primary { background: var(--brown); color: #fff; margin-bottom: 10px; }
   .secondary { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  .label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin: 18px 0 8px; }
+  .modes { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 10px; }
+  .modes button { background: #fff; color: var(--brown); border: 2px solid var(--line); }
+  .modes button.on { background: var(--brown); color: #fff; border-color: var(--brown); }
   .addr { font-family: ui-monospace, monospace; font-size: 13px; color: var(--muted); margin-top: 14px; word-break: break-all; }
 </style>
 </head>
@@ -29,17 +33,31 @@
     </svg>
   </div>
   <h1>Can't reach the shop system</h1>
-  <p>The app only works inside the shop.</p>
+  <p id="why">The app couldn't reach the shop.</p>
   <ul>
-    <li>Connect this phone to the shop Wi-Fi.</li>
-    <li>If it was a power cut, give the shop router a few minutes to start.</li>
+    <li><b>In the shop:</b> connect to the shop Wi-Fi. After a power cut, give the router a few minutes.</li>
+    <li><b>Away from the shop:</b> choose <b>From anywhere</b>. It works while the owner has <b>Remote access</b> turned on (Settings &rarr; Security), and only for owner and admin accounts.</li>
   </ul>
   <button class="primary" onclick="LawatKapeApp.retry()">Try again</button>
-  <button class="secondary" onclick="LawatKapeApp.changeServer()">Change server address</button>
+  <p class="label">Connect</p>
+  <div class="modes">
+    <button data-mode="auto" onclick="LawatKapeApp.useConnection('auto')">Automatic</button>
+    <button data-mode="shop" onclick="LawatKapeApp.useConnection('shop')">In the shop</button>
+    <button data-mode="remote" onclick="LawatKapeApp.useConnection('remote')">From anywhere</button>
+  </div>
+  <button class="secondary" onclick="LawatKapeApp.changeServer()">Other address…</button>
   <div class="addr" id="addr"></div>
 </div>
 <script>
-  try { document.getElementById('addr').textContent = LawatKapeApp.serverUrl(); } catch (e) {}
+  try {
+    var mode = LawatKapeApp.connectionMode();
+    document.querySelectorAll('[data-mode]').forEach(function (b) { if (b.dataset.mode === mode) b.classList.add('on'); });
+    document.getElementById('why').textContent = mode === 'remote'
+      ? "Remote access may be off, or this phone has no internet."
+      : mode === 'shop' ? "This phone isn't on the shop Wi-Fi, or the shop system is off."
+      : "Tried the shop Wi-Fi and the remote link; neither answered.";
+    document.getElementById('addr').textContent = LawatKapeApp.serverUrl();
+  } catch (e) {}
 </script>
 </body>
 </html>

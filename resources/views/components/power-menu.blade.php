@@ -22,7 +22,7 @@
     <div x-show="open" x-cloak @click.away="open = false" @keydown.escape.window="open = false"
          x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
          x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-         class="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-[#F0E6D2] overflow-hidden z-50">
+         class="fixed inset-x-4 top-16 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 bg-white rounded-2xl shadow-2xl border border-[#F0E6D2] overflow-hidden z-50">
         <p class="px-4 pt-4 pb-2 text-xs font-bold uppercase tracking-wide text-[#795548]">Restart or shut down</p>
         @foreach($items as $key => [$label, $icon, $text, $needsSetup])
             <form method="POST" action="{{ route('system-power.act', $key) }}" id="power-{{ $key }}">

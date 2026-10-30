@@ -37,6 +37,10 @@ import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import org.json.JSONArray;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * Lawa't Kape for Android: the shop system, full screen.
@@ -57,6 +61,10 @@ public class MainActivity extends Activity {
     // (internet down and no local DNS record) or its certificate fails.
     private static final String DEFAULT_SERVER = "https://lawatkape.aserotech.com";
     private static final String LOCAL_SERVER = "http://192.168.2.100";
+    // Remote access (Settings -> Security): works from anywhere while the owner has it on.
+    private static final String REMOTE_SERVER = "https://lawatkape-remote.aserotech.com";
+    // auto: shop address, then the server's own address, then remote. shop / remote: only that.
+    private static final String KEY_MODE = "connection_mode";
     private static final String OFFLINE_PAGE = "file:///android_asset/offline.html";
     private static final int FILE_CHOOSER_REQUEST = 1;
 
@@ -70,6 +78,7 @@ public class MainActivity extends Activity {
 
     private WebView web;
     private boolean onLocalFallback;
+    private boolean onRemoteFallback;
     private ValueCallback<Uri[]> fileCallback;
     private Uri cameraUri;
     private boolean leavingOffline = false;
@@ -93,7 +102,7 @@ public class MainActivity extends Activity {
         if (savedInstanceState != null) {
             web.restoreState(savedInstanceState);
         } else {
-            web.loadUrl(serverUrl() + "/");
+            start();
         }
     }
 
@@ -122,7 +131,64 @@ public class MainActivity extends Activity {
 
     // ---- Server address -------------------------------------------------
 
+    private String mode() {
+        return getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_MODE, "auto");
+    }
+
+    private void useMode(String mode) {
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_MODE, mode).apply();
+        start();
+    }
+
+    /**
+     * Load the system. In Automatic, first ask the shop server for its health
+     * page (about a second): outside the shop that address doesn't answer, and
+     * waiting for it to time out left a white screen for half a minute.
+     */
+    private void start() {
+        onLocalFallback = false;
+        onRemoteFallback = false;
+        if (!mode().equals("auto")) {
+            web.loadUrl(serverUrl() + "/");
+            return;
+        }
+        new Thread(() -> {
+            boolean inShop = shopAnswers();
+            runOnUiThread(() -> {
+                onRemoteFallback = !inShop;
+                web.loadUrl(baseUrl() + "/");
+            });
+        }).start();
+    }
+
+    /** The shop server's /up page, not just any device at that address on someone's home network. */
+    private static boolean shopAnswers() {
+        HttpURLConnection c = null;
+        try {
+            c = (HttpURLConnection) new URL(LOCAL_SERVER + "/up").openConnection();
+            c.setConnectTimeout(1500);
+            c.setReadTimeout(1500);
+            if (c.getResponseCode() != 200) {
+                return false;
+            }
+            try (InputStream in = c.getInputStream()) {
+                byte[] buf = new byte[4096];
+                int n = in.read(buf);
+                return n > 0 && new String(buf, 0, n, "UTF-8").contains("Application up");
+            }
+        } catch (IOException e) {
+            return false;
+        } finally {
+            if (c != null) {
+                c.disconnect();
+            }
+        }
+    }
+
     private String serverUrl() {
+        if (mode().equals("remote")) {
+            return REMOTE_SERVER;
+        }
         String saved = getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_SERVER, DEFAULT_SERVER);
         // 1.0 saved the old default on "Reset"; move those phones to HTTPS.
         return saved.equals(LOCAL_SERVER) ? DEFAULT_SERVER : saved;
@@ -130,20 +196,33 @@ public class MainActivity extends Activity {
 
     /** Where pages load from right now: the saved address, or the local one after a failure. */
     private String baseUrl() {
-        return onLocalFallback ? LOCAL_SERVER : serverUrl();
+        return onRemoteFallback ? REMOTE_SERVER : onLocalFallback ? LOCAL_SERVER : serverUrl();
     }
 
-    /** Retry the same page from the local address, once, if the HTTPS name failed. */
-    private boolean fallBackToLocal(WebView view, Uri failed) {
-        if (onLocalFallback || failed == null || !serverUrl().equals(DEFAULT_SERVER)
-                || !Uri.parse(DEFAULT_SERVER).getHost().equals(failed.getHost())) {
+    /**
+     * After a failed page: the shop name -> the server's own address (once);
+     * in Automatic, the shop -> the remote link (once). False = nothing left to try.
+     */
+    private boolean fallBack(WebView view, Uri failed) {
+        if (failed == null || failed.getHost() == null) {
             return false;
         }
-        onLocalFallback = true;
+        String host = failed.getHost();
         String path = failed.getEncodedPath() == null ? "/" : failed.getEncodedPath();
         String query = failed.getEncodedQuery() == null ? "" : "?" + failed.getEncodedQuery();
-        view.loadUrl(LOCAL_SERVER + path + query);
-        return true;
+        boolean shopHost = host.equals(Uri.parse(DEFAULT_SERVER).getHost()) || host.equals(Uri.parse(LOCAL_SERVER).getHost());
+
+        if (!onLocalFallback && !mode().equals("remote") && serverUrl().equals(DEFAULT_SERVER) && host.equals(Uri.parse(DEFAULT_SERVER).getHost())) {
+            onLocalFallback = true;
+            view.loadUrl(LOCAL_SERVER + path + query);
+            return true;
+        }
+        if (!onRemoteFallback && mode().equals("auto") && shopHost) {
+            onRemoteFallback = true;
+            view.loadUrl(REMOTE_SERVER + path + query);
+            return true;
+        }
+        return false;
     }
 
     private void saveServerUrl(String input) {
@@ -205,7 +284,8 @@ public class MainActivity extends Activity {
             String host = uri.getHost() == null ? "" : uri.getHost();
 
             if (scheme.equals("http") || scheme.equals("https")) {
-                if (host.equals(serverHost()) || host.equals(Uri.parse(LOCAL_SERVER).getHost()) || host.equals("wifi.lawatkape.lab")) {
+                if (host.equals(serverHost()) || host.equals(Uri.parse(LOCAL_SERVER).getHost()) || host.equals("wifi.lawatkape.lab")
+                        || host.equals(Uri.parse(REMOTE_SERVER).getHost()) || host.equals(Uri.parse(DEFAULT_SERVER).getHost())) {
                     return false;
                 }
                 // The staff name goes through the HTTPS proxy, which the phone
@@ -243,7 +323,7 @@ public class MainActivity extends Activity {
 
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-            if (request.isForMainFrame() && !fallBackToLocal(view, request.getUrl())) {
+            if (request.isForMainFrame() && !fallBack(view, request.getUrl())) {
                 showOffline();
             }
         }
@@ -252,7 +332,7 @@ public class MainActivity extends Activity {
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
             // Never accept a certificate the phone doesn't trust; use the local address instead.
             handler.cancel();
-            if (!fallBackToLocal(view, Uri.parse(error.getUrl()))) {
+            if (!fallBack(view, Uri.parse(error.getUrl()))) {
                 showOffline();
             }
         }
@@ -377,10 +457,20 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void retry() {
-            runOnUiThread(() -> {
-                onLocalFallback = false;
-                web.loadUrl(MainActivity.this.serverUrl() + "/");
-            });
+            runOnUiThread(MainActivity.this::start);
+        }
+
+        /** auto, shop or remote. */
+        @JavascriptInterface
+        public String connectionMode() {
+            return MainActivity.this.mode();
+        }
+
+        @JavascriptInterface
+        public void useConnection(String mode) {
+            if (mode.equals("auto") || mode.equals("shop") || mode.equals("remote")) {
+                runOnUiThread(() -> MainActivity.this.useMode(mode));
+            }
         }
 
         @JavascriptInterface

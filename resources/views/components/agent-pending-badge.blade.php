@@ -33,7 +33,7 @@
          x-transition:leave="transition ease-in duration-300"
          x-transition:leave-start="opacity-100 scale-100 translate-y-0"
          x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-         class="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-[#F0E6D2] overflow-hidden z-50">
+         class="fixed inset-x-4 top-16 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-80 bg-white rounded-2xl shadow-2xl border border-[#F0E6D2] overflow-hidden z-50">
 
         <div class="bg-[#FDF8F5] p-4 border-b border-[#F0E6D2]">
             <h3 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide">Pending AI Actions</h3>
