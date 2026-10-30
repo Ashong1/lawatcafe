@@ -378,8 +378,29 @@ export default function registerAgentChat(Alpine) {
             this.imageError = null;
         },
 
+        // Arrow up/down in the box brings back earlier messages, newest first,
+        // like a terminal. Only from an empty box or a recalled one, so a
+        // half-typed message is never replaced.
+        recallIndex: null,
+        recall(step, e) {
+            const sent = this.history.filter((m) => m.kind === 'text' && m.role === 'user' && m.content).map((m) => m.content);
+            const recalling = this.recallIndex !== null && this.message === sent[this.recallIndex];
+            if (!sent.length || (!recalling && this.message.trim() !== '')) return;
+            e.preventDefault();
+            const i = (recalling ? this.recallIndex : sent.length) + step;
+            if (i >= sent.length) {
+                this.recallIndex = null;
+                this.message = '';
+                return;
+            }
+            this.recallIndex = Math.max(0, i);
+            this.message = sent[this.recallIndex];
+            this.$nextTick(() => e.target.setSelectionRange(this.message.length, this.message.length));
+        },
+
         async send() {
             if ((!this.message.trim() && !this.image) || this.thinking || this.streaming) return;
+            this.recallIndex = null;
 
             const userMsg = this.message;
             const image = this.image;

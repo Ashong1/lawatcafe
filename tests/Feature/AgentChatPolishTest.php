@@ -25,4 +25,14 @@ class AgentChatPolishTest extends TestCase
         $this->assertStringNotContainsString('assistantEntry.content += event.text;', $js);
         $this->assertStringContainsString('window.innerWidth >= 1024 ? 820 : 550', $js);
     }
+
+    /** Owner (Oct 30): arrow up/down brings back earlier messages to send again. */
+    public function test_arrow_keys_recall_earlier_messages(): void
+    {
+        $blade = file_get_contents(resource_path('views/components/agent-chat.blade.php'));
+        $js = file_get_contents(resource_path('js/agent-chat.js'));
+
+        $this->assertSame(2, substr_count($blade, '@keydown.up="recall(-1, $event)" @keydown.down="recall(1, $event)"'));
+        $this->assertStringContainsString('recall(step, e)', $js);
+    }
 }

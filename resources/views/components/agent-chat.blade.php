@@ -135,7 +135,7 @@
                  will not shrink below it. The portal forces inputs to 16px (iOS
                  zoom guard), which widened it past a phone-width card and pushed
                  the send button off the edge. --}}
-            <input type="text" x-model="message" @keydown.enter="send()" placeholder="{{ __('Type your question…') }}" aria-label="{{ __('Type your question…') }}"
+            <input type="text" x-model="message" @keydown.enter="send()" @keydown.up="recall(-1, $event)" @keydown.down="recall(1, $event)" placeholder="{{ __('Type your question…') }}" aria-label="{{ __('Type your question…') }}"
                    class="flex-1 min-w-0 bg-white border-2 border-[#F0E6D2] rounded-2xl px-4 py-3 text-sm font-semibold focus:outline-none focus:border-[#3E2723] transition-all shadow-sm text-[#3E2723] placeholder:font-medium"
                    :disabled="streaming">
             <button @click="send()" class="bg-[#3E2723] text-white px-4 py-3 rounded-2xl hover:bg-[#271815] transition shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center shrink-0" :disabled="streaming || !message.trim()">
@@ -366,7 +366,7 @@
                     <span class="sr-only">Attach a photo</span>
                     <input type="file" accept="image/*" class="hidden" x-ref="imageInput" @change="attachImage($event)">
                 </label>
-                <input type="text" x-model="message" @keydown.enter="send()" @paste="pasteImage($event)"
+                <input type="text" x-model="message" @keydown.enter="send()" @keydown.up="recall(-1, $event)" @keydown.down="recall(1, $event)" @paste="pasteImage($event)"
                        :placeholder="imageThumb ? 'Say what to do with this photo...' : {{ \Illuminate\Support\Js::from(__('Ask a question or request an action...')) }}"
                        class="flex-1 min-w-0 bg-[#FAFAFA] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-[#3E2723] transition-all"
                        :disabled="streaming">

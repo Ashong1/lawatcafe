@@ -9,6 +9,14 @@ the history was rewritten.
 
 ---
 
+## 1.54.1 — Arrow keys bring back earlier messages
+*build 287*
+
+- In the Barista AI chat box (staff, owner and guest), **↑** fills in your
+  previous message and keeps going back; **↓** goes forward and ends on an
+  empty box. Only from an empty box or a recalled message, so a half-typed
+  one is never replaced.
+
 ## 1.54.0 — Reports sent through the chat
 *build 286*
 
