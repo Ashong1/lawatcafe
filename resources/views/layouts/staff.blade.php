@@ -382,6 +382,23 @@
             });
         };
 
+        // <form data-confirm="Question?" data-confirm-text="Details"> asks before
+        // submitting. Capture phase, so an Alpine @submit spinner never starts
+        // when the answer is Cancel.
+        document.addEventListener('submit', (e) => {
+            const form = e.target;
+            if (!form.matches('form[data-confirm]') || form.dataset.confirmed) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            window.confirmAction({
+                title: form.dataset.confirm,
+                text: form.dataset.confirmText || 'Please check the details before saving.',
+                icon: 'question',
+                confirmText: 'Yes, save',
+                callback: () => { form.dataset.confirmed = '1'; form.requestSubmit(); },
+            });
+        }, true);
+
         document.addEventListener('alpine:init', () => {
             Alpine.data('staffLayout', () => ({
                 sidebarOpen: @json($sidebarOpen),

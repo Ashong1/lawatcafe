@@ -92,7 +92,7 @@
                 <p class="text-xs text-[#795548] font-medium mt-1">Deduct spoiled or damaged stock from inventory.</p>
             </div>
 
-            <form action="{{ route('inventory.wastage.store') }}" method="POST" class="p-8 pt-4" @submit="submitting = true">
+            <form action="{{ route('inventory.wastage.store') }}" method="POST" class="p-8 pt-4" @submit="submitting = true" data-confirm="Log this as wasted?" data-confirm-text="This amount comes off the stock count.">
                 @csrf
                 <div class="space-y-6">
                     <div>

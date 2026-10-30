@@ -236,7 +236,7 @@
                  envelope the agent may move the ceiling within, and
                  `shaper:adapt` does the acting. Kept as its own card so the
                  manual ceiling above stays a plain, immediate control. --}}
-            <form action="{{ route('network.traffic.adaptive') }}" method="POST"
+            <form action="{{ route('network.traffic.adaptive') }}" method="POST" data-confirm="Change the automatic speed setting?" data-confirm-text="Guests' Wi-Fi speed may change right away."
                   class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] space-y-6">
                 @csrf
 

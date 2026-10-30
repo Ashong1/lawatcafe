@@ -25,7 +25,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('network.static-ips.store') }}" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6" x-data="{ submitting: false }" @submit="submitting = true">
+                <form action="{{ route('network.static-ips.store') }}" method="POST" data-confirm="Reserve this address?" data-confirm-text="The device gets this fixed address from now on." class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6" x-data="{ submitting: false }" @submit="submitting = true">
                     @csrf
                     <div class="md:col-span-1">
                         <label for="static-ip-mac" class="block text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-2">MAC Address</label>

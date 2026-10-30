@@ -165,7 +165,7 @@
                 </div>
             </div>
             
-            <form :action="formAction" method="POST" enctype="multipart/form-data" @submit="if (photoBusy) { $event.preventDefault(); return; } submitting = true">
+            <form :action="formAction" method="POST" enctype="multipart/form-data" data-confirm="Save this product?" data-confirm-text="Its price and recipe are used by the register right away." @submit="if (photoBusy) { $event.preventDefault(); return; } submitting = true">
                 @csrf
                 <template x-if="isEditing">
                     <input type="hidden" name="_method" value="PUT">

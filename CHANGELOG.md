@@ -15,6 +15,9 @@ the history was rewritten.
 Feedback list: [docs/capstone/EVALUATION_2026-10-28.md](docs/capstone/EVALUATION_2026-10-28.md).
 
 - **Sign-in locks after 3 wrong passwords** (was 5), as the evaluators asked.
+- **"Save this?" before inventory and network changes:** ingredients,
+  restocks, products, wastage, reserved addresses and the automatic speed
+  setting now ask first (plan speeds and fair use already did).
 
 ## 1.28.0 — Confirmations and sign-in lockout
 *build 217*

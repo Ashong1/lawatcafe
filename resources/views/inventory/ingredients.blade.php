@@ -152,7 +152,7 @@
                 <p class="text-xs text-[#795548] font-medium mt-1">How it is bought, how it is measured, and when to warn you.</p>
             </div>
 
-            <form :action="formAction" method="POST" @submit="submitting = true">
+            <form :action="formAction" method="POST" @submit="submitting = true" data-confirm="Save this ingredient?" data-confirm-text="The stock count changes as soon as you save.">
                 @csrf
                 <template x-if="isEditing">
                     <input type="hidden" name="_method" value="PUT">
@@ -259,7 +259,7 @@
                 <p class="text-xs text-[#795548] font-medium mt-1 uppercase tracking-tighter" x-text="selectedIngredient?.name"></p>
             </div>
 
-            <form :action="quickAddAction" method="POST" @submit="quickAddSubmitting = true">
+            <form :action="quickAddAction" method="POST" @submit="quickAddSubmitting = true" data-confirm="Add this stock?" data-confirm-text="The stock count changes as soon as you save.">
                 @csrf
                 <div class="p-8 space-y-6">
                     <div>
