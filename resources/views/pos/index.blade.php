@@ -602,11 +602,6 @@
                 return this.subtotal * this.discountAmount;
             },
 
-            get vatAmount() {
-                // Assuming prices are VAT inclusive (12%)
-                return (this.subtotal - this.calculatedDiscount) * (12/112);
-            },
-
             get grandTotal() {
                 return this.subtotal - this.calculatedDiscount;
             },

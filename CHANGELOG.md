@@ -10,7 +10,7 @@ the history was rewritten.
 ---
 
 ## 1.40.0 — Register and Kitchen Display are one screen
-*build 244*
+*builds 244–245*
 
 - **The Register shows Menu | Orders to make | Current order side by side**
   (from desktop width), so the one person on duty takes and makes orders on
@@ -19,6 +19,9 @@ the history was rewritten.
 - **Kitchen Display is gone from the sidebar**; its old address opens the
   Register. The staff dashboard's kitchen queue and the waiting-order
   reminder point to the Register.
+- **Non-VAT everywhere:** the cart and the receipt no longer show a 12% VAT
+  line ("VAT-exempt" instead), and the receipt's placeholder address and
+  TIN are gone.
 
 ## 1.39.0 — Check a delivery by PO number
 *build 243*

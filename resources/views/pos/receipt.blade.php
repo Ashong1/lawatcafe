@@ -81,8 +81,7 @@
         <!-- Header -->
         <div class="header text-center">
             <h1>Lawa't Kape</h1>
-            <p>123 Coffee Lane, Brew City</p>
-            <p>VAT Reg TIN: 123-456-789-000</p>
+            <p>NON-VAT</p>
         </div>
 
         <div class="divider"></div>
@@ -136,8 +135,8 @@
             </tr>
             @endif
             <tr>
-                <td>VAT (12% inc):</td>
-                <td class="text-right">₱{{ number_format($sale->total_amount - ($sale->total_amount / 1.12), 2) }}</td>
+                <td>VAT-exempt sales:</td>
+                <td class="text-right">₱{{ number_format($sale->total_amount, 2) }}</td>
             </tr>
             <tr class="font-bold text-lg" style="border-top: 1px solid #000;">
                 <td style="padding-top: 5px;">Total:</td>

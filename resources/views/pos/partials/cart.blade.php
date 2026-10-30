@@ -177,8 +177,8 @@
             <span class="text-red-500" x-text="'- ₱' + calculatedDiscount.toFixed(2)"></span>
         </div>
         <div class="flex justify-between text-xs text-[#795548] font-medium">
-            <span>VAT (12% inc)</span>
-            <span x-text="'₱' + vatAmount.toFixed(2)"></span>
+            <span>VAT</span>
+            <span>VAT-exempt (non-VAT)</span>
         </div>
         <div class="flex justify-between text-lg font-bold text-[#3E2723] pt-1.5 border-t border-[#FDF8F5] tabular-nums">
             <span>Total</span>
