@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Shift;
+use App\Models\ZReading;
+use App\Services\ZReadService;
 use Illuminate\Http\Request;
 
 class EndOfDayController extends Controller
@@ -18,7 +20,10 @@ class EndOfDayController extends Controller
 
         $shifts = $query->paginate(20);
 
-        return view('admin.finance.z-reads', compact('shifts'));
+        $zReadings = ZReading::latest('number')->take(10)->get();
+        $todayTaken = ZReading::closes(today());
+
+        return view('admin.finance.z-reads', compact('shifts', 'zReadings', 'todayTaken'));
     }
 
     public function show(Shift $shift)
@@ -42,5 +47,32 @@ class EndOfDayController extends Controller
         $variance = (float) $shift->ending_cash - $expectedCash;
 
         return view('admin.finance.shift-detail', compact('shift', 'summary', 'expectedCash', 'variance'));
+    }
+
+    public function takeZRead(ZReadService $zreads)
+    {
+        try {
+            $z = $zreads->take(today(), auth()->user());
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('admin.finance.z-read.show', $z);
+    }
+
+    public function zRead(ZReading $zReading)
+    {
+        return view('pos.reading', [
+            'title' => 'Z-READ #'.str_pad($zReading->number, 4, '0', STR_PAD_LEFT),
+            'lines' => [
+                'Business day' => $zReading->business_date->format('M j, Y'),
+                'Taken by' => $zReading->user?->name ?? '—',
+                'Taken at' => $zReading->created_at->format('M j, g:i A'),
+            ],
+            's' => $zReading->totals,
+            'grandTotal' => $zReading->grand_total,
+            'footer' => 'Day closed. Its orders can no longer be voided.',
+            'back' => route('admin.finance.z-reads'),
+        ]);
     }
 }

@@ -11,13 +11,40 @@
                 <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
                 <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">End of Day</span>
             </h2>
-            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Each shift's counted cash compared with what the register expected (the Z-read).</p>
+            <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Each shift's counted cash compared with what the register expected, and the daily Z-Read that closes the day.</p>
         </div>
 
         <div class="flex gap-2">
             <a href="{{ route('admin.finance.z-reads') }}" class="px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all {{ !request('all') ? 'bg-[#3E2723] text-white shadow-md' : 'bg-white text-[#795548] border border-[#F0E6D2]' }}">Today Only</a>
             <a href="{{ route('admin.finance.z-reads', ['all' => 1]) }}" class="px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wide transition-all {{ request('all') ? 'bg-[#3E2723] text-white shadow-md' : 'bg-white text-[#795548] border border-[#F0E6D2]' }}">View All History</a>
         </div>
+    </div>
+
+    {{-- Daily Z-Read (ZReadService): closes the business day once every shift is closed. --}}
+    <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2] mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Z-Read</h3>
+                <p class="text-xs text-[#6D4C41] mt-1">Take it at closing, after every shift is closed. It numbers the day, keeps the running grand total, and locks the day's orders against voids.</p>
+            </div>
+            @if ($todayTaken)
+                <span class="min-h-[44px] inline-flex items-center px-5 rounded-full bg-green-50 text-green-700 text-xs font-bold uppercase tracking-wide">Today's Z-Read is done</span>
+            @else
+                <form action="{{ route('admin.finance.z-read.store') }}" method="POST" data-confirm="Take today's Z-Read?" data-confirm-text="This closes today: its orders can no longer be voided. Make sure every shift is closed.">
+                    @csrf
+                    <button type="submit" class="min-h-[44px] px-5 rounded-full bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide hover:bg-[#271815] whitespace-nowrap">Take Z-Read for today</button>
+                </form>
+            @endif
+        </div>
+        @if ($zReadings->isNotEmpty())
+            <div class="mt-4 flex flex-wrap gap-2">
+                @foreach ($zReadings as $z)
+                    <a href="{{ route('admin.finance.z-read.show', $z) }}" target="_blank" class="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-full bg-[#FDF8F5] border border-[#F0E6D2] text-xs font-bold text-[#3E2723] hover:bg-[#F0E6D2]">
+                        <x-lucide-receipt-text class="w-4 h-4" /> Z #{{ str_pad($z->number, 4, '0', STR_PAD_LEFT) }} · {{ $z->business_date->format('M j') }}
+                    </a>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">

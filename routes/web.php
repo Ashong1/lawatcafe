@@ -338,6 +338,8 @@ Route::middleware(['auth'])->group(function () {
         // Z-Reads / End of Day Audits
         Route::get('/finance/z-reads', [EndOfDayController::class, 'index'])->name('admin.finance.z-reads');
         Route::get('/finance/z-reads/{shift}', [EndOfDayController::class, 'show'])->name('admin.finance.shift-detail');
+        Route::post('/finance/z-read', [EndOfDayController::class, 'takeZRead'])->name('admin.finance.z-read.store');
+        Route::get('/finance/z-read/{zReading}', [EndOfDayController::class, 'zRead'])->name('admin.finance.z-read.show');
 
         // System Accounts
         Route::resource('accounts', AccountController::class)->except(['create', 'show', 'edit']);

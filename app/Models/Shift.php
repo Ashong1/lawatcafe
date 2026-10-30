@@ -37,29 +37,40 @@ class Shift extends Model
      */
     public function summary(): array
     {
-        $sales = fn () => $this->sales()->revenue();
-        $voided = $this->sales()->where('status', 'cancelled');
         $summary = [
             'starting_cash' => (float) $this->starting_cash,
-            'orders' => $sales()->count(),
-            'total_sales' => (float) $sales()->sum('total_amount'),
-            'cash_sales' => (float) $sales()->where('payment_method', 'Cash')->sum('total_amount'),
-            // Per e-wallet, so the cashier knows this money is in the shop's account, not the drawer.
-            'ewallet_sales' => $sales()->where('payment_method', '!=', 'Cash')
-                ->selectRaw('payment_method, SUM(total_amount) as total')->groupBy('payment_method')
-                ->pluck('total', 'payment_method')->map(fn ($t) => (float) $t)->all(),
-            'discounts' => $sales()->where('discount_amount', '>', 0)
-                ->selectRaw("COALESCE(discount_type, 'Discount') as type, SUM(discount_amount) as total")->groupBy('type')
-                ->pluck('total', 'type')->map(fn ($t) => (float) $t)->all(),
-            'void_count' => (clone $voided)->count(),
-            'void_total' => (float) (clone $voided)->sum('total_amount'),
+            ...self::salesFigures(fn () => $this->sales()),
             'pay_ins' => (float) $this->transactions()->where('type', 'pay_in')->sum('amount'),
             'pay_outs' => (float) $this->transactions()->where('type', 'pay_out')->sum('amount'),
-            'first_transaction' => $this->sales()->orderBy('id')->value('transaction_number'),
-            'last_transaction' => $this->sales()->orderByDesc('id')->value('transaction_number'),
         ];
         $summary['expected_cash'] = $summary['starting_cash'] + $summary['cash_sales'] + $summary['pay_ins'] - $summary['pay_outs'];
 
         return $summary;
+    }
+
+    /**
+     * Sales figures for any set of sales — one shift (summary()) or a whole
+     * day (ZReadService). $sales returns a fresh query each call.
+     */
+    public static function salesFigures(\Closure $sales): array
+    {
+        $revenue = fn () => $sales()->where('status', '!=', 'cancelled');
+
+        return [
+            'orders' => $revenue()->count(),
+            'total_sales' => (float) $revenue()->sum('total_amount'),
+            'cash_sales' => (float) $revenue()->where('payment_method', 'Cash')->sum('total_amount'),
+            // Per e-wallet, so the cashier knows this money is in the shop's account, not the drawer.
+            'ewallet_sales' => $revenue()->where('payment_method', '!=', 'Cash')
+                ->selectRaw('payment_method, SUM(total_amount) as total')->groupBy('payment_method')
+                ->pluck('total', 'payment_method')->map(fn ($t) => (float) $t)->all(),
+            'discounts' => $revenue()->where('discount_amount', '>', 0)
+                ->selectRaw("COALESCE(discount_type, 'Discount') as type, SUM(discount_amount) as total")->groupBy('type')
+                ->pluck('total', 'type')->map(fn ($t) => (float) $t)->all(),
+            'void_count' => $sales()->where('status', 'cancelled')->count(),
+            'void_total' => (float) $sales()->where('status', 'cancelled')->sum('total_amount'),
+            'first_transaction' => $sales()->orderBy('id')->value('transaction_number'),
+            'last_transaction' => $sales()->orderByDesc('id')->value('transaction_number'),
+        ];
     }
 }

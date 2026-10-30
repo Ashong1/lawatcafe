@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Sale;
 use App\Models\SaleVoidRequest;
+use App\Models\ZReading;
 use App\Models\User;
 use App\Notifications\SystemAlert;
 use Illuminate\Support\Facades\Notification;
@@ -21,6 +22,10 @@ class SaleService
     {
         if ($sale->status === 'cancelled') {
             return ['success' => false, 'message' => 'Order is already voided.'];
+        }
+
+        if (ZReading::closes($sale->created_at)) {
+            return ['success' => false, 'message' => 'That day was closed with a Z-Read, so its orders can no longer be voided.'];
         }
 
         $sale->update(['status' => 'cancelled']);

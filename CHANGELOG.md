@@ -17,6 +17,10 @@ the history was rewritten.
   voids, cash and e-wallet, cash in/out, expected drawer — printable on the
   80 mm receipt printer. Nothing is closed or reset.
 - The closing report, End of Day and X-Read now share one calculation.
+- **Z-Read** on End of Day: "Take Z-Read for today" once every shift is
+  closed. Numbered Z #0001, #0002… without gaps, with the running grand
+  total, first and last order, and the day's totals; printable. After it,
+  that day's orders can't be voided.
 
 ## 1.32.0 — Barista AI runs the Wi-Fi speeds and blocks adult sites
 *build 235*
