@@ -9,6 +9,14 @@ the history was rewritten.
 
 ---
 
+## 1.41.0 — Pick suppliers from a list
+*build 246*
+
+- **Supplier dropdown** on Receive Supplies (owner) and Receive Delivery
+  (staff): tap a saved supplier instead of typing it; "Someone else…" for a
+  new one. A delivery opened from a PO keeps its supplier.
+- Wastage reasons include **Spoiled (napanis)**.
+
 ## 1.40.0 — Register and Kitchen Display are one screen
 *builds 244–245*
 

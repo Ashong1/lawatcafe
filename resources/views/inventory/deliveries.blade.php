@@ -156,7 +156,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
                             <label for="delivery-supplier-name" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Supplier Name</label>
-                            <input type="text" id="delivery-supplier-name" name="supplier_name" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                            <x-supplier-select id="delivery-supplier-name" />
                         </div>
                         <div>
                             <label for="delivery-date" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Delivery Date</label>

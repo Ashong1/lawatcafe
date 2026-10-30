@@ -114,6 +114,7 @@
                     <div>
                         <label for="wastage-reason" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Reason for Loss</label>
                         <select id="wastage-reason" name="reason" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all">
+                            <option value="Spoiled">Spoiled (napanis)</option>
                             <option value="Expired">Expired</option>
                             <option value="Spilled">Spilled / Wasted</option>
                             <option value="Damaged">Damaged Goods</option>

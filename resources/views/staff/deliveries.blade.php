@@ -195,8 +195,13 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
                             <label for="dlv-supplier" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Supplier</label>
-                            <input type="text" id="dlv-supplier" name="supplier_name" x-model="supplier" :readonly="fromPo" list="dlv-suppliers" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
-                            <datalist id="dlv-suppliers">@foreach ($suppliers as $name)<option value="{{ $name }}">@endforeach</datalist>
+                            {{-- From a PO the supplier is fixed; otherwise pick a saved one. --}}
+                            <template x-if="fromPo">
+                                <input type="text" id="dlv-supplier" name="supplier_name" x-model="supplier" readonly class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-bold">
+                            </template>
+                            <template x-if="! fromPo">
+                                <x-supplier-select id="dlv-supplier" :suppliers="$suppliers" />
+                            </template>
                         </div>
                         <div>
                             <label for="dlv-date" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Date</label>
