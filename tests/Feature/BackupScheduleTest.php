@@ -21,8 +21,30 @@ class BackupScheduleTest extends TestCase
         $this->assertSame('0 * * * *', $event->expression);
     }
 
-    public function test_a_week_of_hourly_backups_is_kept(): void
+    /** Owner (Oct 30): keep a week of backups, delete older ones automatically, by age not count. */
+    public function test_backups_older_than_a_week_are_deleted_automatically(): void
     {
-        $this->assertSame(168, BackupService::KEEP);
+        \Illuminate\Support\Carbon::setTestNow('2026-10-30 12:00:00');
+        $dir = storage_path('framework/testing/backups-week');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists($dir);
+        $this->mock(BackupService::class)->makePartial()->shouldReceive('dir')->andReturn($dir);
+        config(['database.connections.mysql.database' => 'lawat_db']);
+        foreach (['2026-10-20_090000', '2026-10-22_110000', '2026-10-24_100000', '2026-10-29_230000'] as $t) {
+            \Illuminate\Support\Facades\File::put("{$dir}/lawat_db_{$t}.sql.gz", 'x');
+        }
+        \Illuminate\Support\Facades\Process::fake(function ($process) {
+            if (preg_match("/> '([^']+\\.sql\\.gz)'/", implode(' ', (array) $process->command), $m)) {
+                \Illuminate\Support\Facades\File::put($m[1], str_repeat('x', 200));
+            }
+
+            return \Illuminate\Support\Facades\Process::result();
+        });
+
+        app(BackupService::class)->create();
+
+        $left = collect(\Illuminate\Support\Facades\File::files($dir))->map->getFilename()->sort()->values()->all();
+        $this->assertSame(['lawat_db_2026-10-24_100000.sql.gz', 'lawat_db_2026-10-29_230000.sql.gz', 'lawat_db_2026-10-30_120000.sql.gz'], $left);
+        $this->assertSame(7, BackupService::KEEP_DAYS);
+        \Illuminate\Support\Facades\File::deleteDirectory($dir);
     }
 }

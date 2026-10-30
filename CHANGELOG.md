@@ -9,6 +9,13 @@ the history was rewritten.
 
 ---
 
+## 1.54.7 — Backups kept for a week
+*build 293*
+
+- Backups older than 7 days are deleted automatically after each new one, by
+  age rather than by count (with the server off some nights, 168 copies
+  could reach much further back). The newest backup is always kept.
+
 ## 1.54.6 — Database and backup storage
 *build 292*
 

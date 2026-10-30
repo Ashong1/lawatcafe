@@ -142,7 +142,7 @@ Back up these things:
 
 1. **The database.** Done automatically every hour by
    `backup:database`, which writes a gzipped dump to `storage/app/backups/`
-   and keeps the last 168 (one week). Each run, success or failure, appears on
+   and keeps the last 7 days (older copies are deleted automatically; the newest is always kept). Each run, success or failure, appears on
    **Settings → Security**, which lists them with **Make a backup now**, **Download**
    and **Restore**. From the command line: `sudo -u www-data php artisan backup:database`. These
    copies live on the same server, so copy the newest one somewhere else

@@ -18,8 +18,12 @@ use RuntimeException;
  */
 class BackupService
 {
-    /** A week of hourly copies (about 0.7 MB each). */
-    public const KEEP = 168;
+    /**
+     * Owner (Oct 30): keep a week of backups and delete older ones. By age, not
+     * count: the server is often off overnight, so 168 copies could reach back
+     * far more than a week.
+     */
+    public const KEEP_DAYS = 7;
 
     private const NAME = '/^[a-z0-9_]+_\d{4}-\d{2}-\d{2}_\d{6}\.sql\.gz$/';
 
@@ -70,7 +74,9 @@ class BackupService
             throw new RuntimeException('Backup failed: '.$error);
         }
 
-        $this->list()->slice(self::KEEP)->reject(fn ($old) => $old['name'] === $keep)
+        // The newest is always kept (it's the one just made), and so is $keep.
+        $cutoff = now()->subDays(self::KEEP_DAYS)->getTimestamp();
+        $this->list()->slice(1)->filter(fn ($old) => $old['made_at'] < $cutoff && $old['name'] !== $keep)
             ->each(fn ($old) => File::delete($this->dir().'/'.$old['name']));
         // Hourly backups would fill the log; only failures and the ones a person makes are recorded.
         if ($by) {

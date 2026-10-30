@@ -74,7 +74,7 @@ class BackupPageTest extends TestCase
     {
         config(['database.connections.mysql.database' => 'lawat_db']);
         // A full week of hourly copies; the one restored is the oldest.
-        foreach (range(1, BackupService::KEEP - 1) as $h) {
+        foreach (range(1, 167) as $h) {
             File::put($this->dir.'/lawat_db_2026-10-21_'.sprintf('%02d', $h % 24).sprintf('%02d', intdiv($h, 24)).'00.sql.gz', gzencode('-- dump'));
         }
         // The safety dump really writes its file; the restore just succeeds.
