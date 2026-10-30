@@ -122,6 +122,61 @@
             </div>
         </div>
 
+        {{-- Who opened the system, and from where (owner, Oct 30). One row per visit; the guest Wi-Fi portal isn't counted. --}}
+        <div class="mt-6 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+                <div>
+                    <h3 id="visits" class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Who opened the system</h3>
+                    <p class="text-xs text-[#6D4C41] mt-1">Each visit, from the shop or through the remote link. {{ $remoteVisitsThisWeek }} {{ Str::plural('visit', $remoteVisitsThisWeek) }} through the remote link in the last 7 days. Kept for {{ \App\Models\SiteVisit::KEEP_DAYS }} days.</p>
+                </div>
+                <div class="flex gap-1 rounded-xl bg-[#FDF8F5] border border-[#F0E6D2] p-1 text-xs font-bold">
+                    @foreach ([null => 'All', 'remote' => 'From anywhere', 'shop' => 'In the shop'] as $where => $whereLabel)
+                        <a href="{{ request()->fullUrlWithQuery(['where' => $where, 'visits_page' => null]) }}#visits"
+                           class="min-h-[40px] px-3 inline-flex items-center rounded-lg {{ request('where') == $where ? 'bg-[#3E2723] text-white' : 'text-[#795548] hover:bg-white' }}">{{ $whereLabel }}</a>
+                    @endforeach
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="lk-stack w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
+                            <th class="pb-4 px-4 font-bold">When</th>
+                            <th class="pb-4 px-4 font-bold">Who</th>
+                            <th class="pb-4 px-4 font-bold">From</th>
+                            <th class="pb-4 px-4 font-bold">Device</th>
+                            <th class="pb-4 px-4 font-bold">Opened</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        @forelse($visits as $visit)
+                            <tr class="border-b border-[#FAFAFA]">
+                                <td data-label="When" class="py-3 px-4 whitespace-nowrap font-bold text-[#3E2723]">{{ $visit->created_at->format('M d, g:i A') }}</td>
+                                <td data-label="Who" class="py-3 px-4">{{ $visit->user?->name ?? 'Not signed in' }}</td>
+                                <td data-label="From" class="py-3 px-4">
+                                    @if($visit->remote)
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold"><x-lucide-globe class="w-3 h-3" /> Remote link</span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-800 text-xs font-bold"><x-lucide-store class="w-3 h-3" /> In the shop</span>
+                                    @endif
+                                </td>
+                                <td data-label="Device" class="py-3 px-4 text-xs text-[#6D4C41]">
+                                    {{ $visit->deviceKind() }}
+                                    @if(auth()->user()->isSuperAdmin())
+                                        <span class="block font-mono">{{ $visit->ip_address }}</span>
+                                        @if($visit->user_agent)<span class="block truncate max-w-[16rem]" title="{{ $visit->user_agent }}">{{ $visit->user_agent }}</span>@endif
+                                    @endif
+                                </td>
+                                <td data-label="Opened" class="py-3 px-4 text-xs font-mono text-[#6D4C41] break-all">{{ $visit->path }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="5" class="py-10 text-center text-[#6D4C41]">No visits recorded yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4">{{ $visits->fragment('visits')->links() }}</div>
+        </div>
+
         <div class="mt-6 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
             <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-1">Activity Log</h3>
             <p class="text-xs text-[#6D4C41] mb-4">Sign-ins, accounts, backups and system power. Stock changes (sales, deliveries, wastage) are in <a href="{{ route('inventory.logs') }}" class="font-bold underline text-[#3E2723]">Stock History</a>.</p>

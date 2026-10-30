@@ -9,6 +9,17 @@ the history was rewritten.
 
 ---
 
+## 1.49.0 — Visit log
+*build 270*
+
+- **Security → Who opened the system**: every visit to the system, once per
+  browser visit — when, who (once signed in), from **the shop** or **the
+  remote link**, the kind of device, and the first page opened. Tabs for
+  From anywhere / In the shop, and a count of remote visits this week. The
+  super admin also sees the IP address and browser. Guest Wi-Fi portal
+  visits aren't counted. Kept 90 days.
+- `lk-migrate` on the server: backs up, then applies new database changes.
+
 ## 1.48.1 — Error pages in the shop's style
 *build 269*
 

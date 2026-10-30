@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\IdleSessionTimeout;
+use App\Http\Middleware\LogSiteVisit;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\RemoteAccessAdminsOnly;
 use App\Http\Middleware\SignOutRemovedAccounts;
@@ -56,6 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
             SignOutRemovedAccounts::class,
             RemoteAccessAdminsOnly::class,
             IdleSessionTimeout::class,
+            LogSiteVisit::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

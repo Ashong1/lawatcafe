@@ -61,3 +61,6 @@ Schedule::command('queue:work --stop-when-empty --max-time=50 --force')->everyMi
 // Hourly while the server is on: it is often switched off before closing,
 // and a single nightly copy loses the whole day if something fails.
 Schedule::command('backup:database')->hourly()->evenInMaintenanceMode()->withoutOverlapping();
+
+// The visit log keeps 90 days (SiteVisit::KEEP_DAYS).
+Schedule::command('model:prune', ['--model' => [\App\Models\SiteVisit::class]])->daily();
