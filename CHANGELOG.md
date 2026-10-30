@@ -9,6 +9,19 @@ the history was rewritten.
 
 ---
 
+## 1.45.0 — Smoother Barista AI replies
+*build 258*
+
+- **Replies flow in** at a steady pace instead of pausing and then appearing
+  all at once (the model often sends the whole answer in one burst after
+  thinking).
+- **Action results are folded**: the green "Checked the network status" card
+  shows just its title; **View more** opens the full details.
+- **Line speed vs. use**: the network check now gives the line speed from the
+  last speed test *and* what is in use right now, labelled separately. Before,
+  only the in-use number (e.g. 0.11 Mbps on a quiet line) was reported, and
+  the AI called it the bandwidth.
+
 ## 1.44.2 — Sidebar and register fixes
 *builds 256–257*
 

@@ -190,7 +190,7 @@ class ChatStreamTruncationTest extends TestCase
         $html = $this->widgetSource();
 
         // In the finally, so an abort and an error clear it as well as success.
-        $this->assertStringContainsString('if (assistantEntry) assistantEntry.streaming = false;', $html);
+        $this->assertMatchesRegularExpression('/finally \{[^}]*if \(assistantEntry\) \{\s*assistantEntry\.content \+= queued;\s*queued = \'\';\s*assistantEntry\.streaming = false;/', $html);
     }
 
     /** A flag left in session storage would come back as a caret under a finished reply. */

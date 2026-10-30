@@ -82,10 +82,7 @@
                     @include('components.partials.agent-chat-rating')
 
                     <template x-if="msg.kind === 'executed'">
-                        <div class="flex items-start gap-2 max-w-[90%] p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 mx-1">
-                            <x-lucide-check-circle-2 class="w-4 h-4 shrink-0 mt-0.5" />
-                            <span><span class="font-bold" x-text="msg.label || msg.tool"></span>: <span x-text="msg.message"></span></span>
-                        </div>
+                        <div x-data="{ open: false }" class="max-w-[90%] p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 mx-1">                            <div class="flex items-start gap-2">                                <x-lucide-check-circle-2 class="w-4 h-4 shrink-0 mt-0.5" />                                <span x-text="msg.label || msg.tool"></span>                            </div>                            <p x-show="open" class="mt-2 pl-6 font-medium leading-relaxed" x-text="msg.message"></p>                            <button type="button" x-show="msg.message && msg.message !== 'Done.'" @click="open = !open" class="pl-6 -mb-2 min-h-[44px] underline underline-offset-2 text-emerald-700" x-text="open ? 'View less' : 'View more'"></button>                        </div>
                     </template>
 
                     <template x-if="msg.kind === 'pending'">
@@ -269,10 +266,7 @@
 
                     <!-- Executed tool action -->
                     <template x-if="msg.kind === 'executed'">
-                        <div class="flex items-start gap-2 max-w-[90%] p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800">
-                            <x-lucide-check-circle-2 class="w-4 h-4 shrink-0 mt-0.5" />
-                            <span><span class="font-bold" x-text="msg.label || msg.tool"></span>: <span x-text="msg.message"></span></span>
-                        </div>
+                        <div x-data="{ open: false }" class="max-w-[90%] p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800">                            <div class="flex items-start gap-2">                                <x-lucide-check-circle-2 class="w-4 h-4 shrink-0 mt-0.5" />                                <span x-text="msg.label || msg.tool"></span>                            </div>                            <p x-show="open" class="mt-2 pl-6 font-medium leading-relaxed" x-text="msg.message"></p>                            <button type="button" x-show="msg.message && msg.message !== 'Done.'" @click="open = !open" class="pl-6 -mb-2 min-h-[44px] underline underline-offset-2 text-emerald-700" x-text="open ? 'View less' : 'View more'"></button>                        </div>
                     </template>
 
                     <!-- Pending confirmation -->

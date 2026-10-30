@@ -83,6 +83,19 @@ class NetworkHealthTest extends TestCase
         $this->assertStringContainsString('2 guests online', $r['checks']['portal']['summary']);
     }
 
+    /** Owner (Oct 30): the AI called 0.11 Mbps of guest use the "bandwidth"; the line speed is the speed test. */
+    public function test_internet_use_reports_the_speed_test_and_what_is_in_use(): void
+    {
+        \App\Models\BandwidthSample::create(['sampled_at' => now(), 'down_mbps' => 0.11, 'up_mbps' => 0.18]);
+        Setting::set('internet_speed_tests', json_encode([['down' => 24.6, 'up' => 9.8, 'at' => '2026-10-30T09:00:00+08:00']]));
+
+        $check = $this->service()->run()['checks']['bandwidth'];
+
+        $this->assertStringStartsWith('Line speed 24.6 Mbps down / 9.8 up (last speed test', $check['summary']);
+        $this->assertStringContainsString('In use right now: 0.11 Mbps down / 0.18 up.', $check['summary']);
+        $this->assertSame(24.6, $check['details']['speed_test']['down']);
+    }
+
     public function test_no_internet_fails_and_packet_loss_warns(): void
     {
         $this->pings['1.1.1.1'] = $this->pings['8.8.8.8'] = ['loss' => 100.0, 'avg' => null];

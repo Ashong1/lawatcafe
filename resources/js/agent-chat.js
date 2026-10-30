@@ -444,6 +444,28 @@ export default function registerAgentChat(Alpine) {
             // "Typing..." indicator keeps showing until genuine reply text starts.
             let assistantEntry = null;
 
+            // The model often thinks (and runs tools) for a while, then sends the whole
+            // answer in a burst or two. Revealing the queue a little each frame, faster
+            // the more is waiting, makes it flow instead of jump. A hidden tab gets it all.
+            let queued = '';
+            let typing = null;
+            const typeOut = () => typing ??= new Promise(done => {
+                const tick = () => {
+                    const n = document.hidden ? queued.length : Math.max(2, Math.ceil(queued.length / 50));
+                    assistantEntry.content += queued.slice(0, n);
+                    queued = queued.slice(n);
+                    this.scrollToBottom(true);
+                    if (queued) setTimeout(tick, 16);
+                    else { typing = null; done(); }
+                };
+                tick();
+            });
+            const startBubble = () => {
+                this.history.push({ kind: 'text', role: 'assistant', content: '', streaming: true });
+                assistantEntry = this.history[this.history.length - 1];
+                this.thinking = false;
+            };
+
             try {
                 const headers = {
                     'Content-Type': 'application/json',
@@ -524,29 +546,16 @@ export default function registerAgentChat(Alpine) {
                         } else if (event.type === 'delta') {
                             if (!assistantEntry) {
                                 // `streaming` stays true here where `thinking`
-                                // goes false. The dots are replaced by the
-                                // caret on this bubble — before, nothing at all
-                                // marked the reply as unfinished, so a pause
-                                // between tokens or a tool call part-way through
-                                // an answer was indistinguishable from a hang.
-                                this.history.push({ kind: 'text', role: 'assistant', content: '', streaming: true });
-
-                                // Read the entry back OUT of the array; don't
-                                // mutate the literal we pushed. Alpine stores the
-                                // raw object and only hands out a reactive Proxy
-                                // when an element is read back through the array,
-                                // so mutating the literal updates data but
-                                // notifies nothing — the bubble freezes
-                                // mid-sentence and even the final meta.reply
-                                // repaints nothing (while save() stores the full
-                                // text).
-                                assistantEntry = this.history[this.history.length - 1];
-
-                                this.thinking = false;
+                                // goes false: the dots are replaced by the caret
+                                // on this bubble. startBubble() reads the entry
+                                // back OUT of the array — Alpine only notifies
+                                // through the Proxy it hands out on read, so
+                                // mutating the pushed literal repaints nothing.
+                                startBubble();
                             }
                             this.toolStatusLabel = null;
-                            assistantEntry.content += event.text;
-                            this.scrollToBottom(true);
+                            queued += event.text;
+                            typeOut();
                         } else if (event.type === 'meta') {
                             if (this.historyEnabled && event.conversation_id) {
                                 this.conversationId = event.conversation_id;
@@ -563,13 +572,14 @@ export default function registerAgentChat(Alpine) {
                             // visibly truncated or duplicated, and made the bubble
                             // disagree with what a history reload would show.
                             if (event.reply) {
-                                if (assistantEntry) {
-                                    if (assistantEntry.content !== event.reply) {
-                                        assistantEntry.content = event.reply;
-                                    }
+                                if (!assistantEntry) startBubble();
+                                if (event.reply.startsWith(assistantEntry.content)) {
+                                    queued = event.reply.slice(assistantEntry.content.length);
                                 } else {
-                                    this.history.push({ kind: 'text', role: 'assistant', content: event.reply });
+                                    assistantEntry.content = event.reply;
+                                    queued = '';
                                 }
+                                if (queued) await typeOut();
                             }
 
                             (event.executed || []).forEach(e => {
@@ -584,6 +594,7 @@ export default function registerAgentChat(Alpine) {
                         }
                     }
                 }
+                if (typing) await typing;
             } catch (error) {
                 // A stream that produced text and then died is a different event
                 // from one that never connected, and saying "having trouble
@@ -604,7 +615,11 @@ export default function registerAgentChat(Alpine) {
                 clearTimeout(hardStop);
                 // However the stream ended, the bubble is no longer being
                 // written to — the caret must not be left blinking on it.
-                if (assistantEntry) assistantEntry.streaming = false;
+                if (assistantEntry) {
+                    assistantEntry.content += queued;
+                    queued = '';
+                    assistantEntry.streaming = false;
+                }
                 this.streaming = false;
                 this.thinking = false;
                 this.toolStatusLabel = null;

@@ -262,16 +262,20 @@ class NetworkHealthService
         }
 
         $down = (float) $sample->down_mbps;
-        $capacity = $estimate['learned'] ? $estimate['down'] : null;
+        // The speed test is the line's real speed; guest traffic is only what's in use.
+        $test = app(InternetSpeedTest::class)->latest();
+        $capacity = $test['down'] ?? ($estimate['learned'] ? $estimate['down'] : null);
         $busy = $capacity && $down >= 0.9 * $capacity;
-        $summary = "Using {$down} Mbps download / {$sample->up_mbps} upload"
-            .($capacity ? " of about {$capacity} Mbps" : " (still learning the line's top speed)")
+        $now = "In use right now: {$down} Mbps down / {$sample->up_mbps} up";
+        $summary = ($test
+                ? "Line speed {$test['down']} Mbps down / {$test['up']} up (last speed test ".Carbon::parse($test['at'])->setTimezone(config('app.timezone'))->format('M j, g:i A')."). {$now}"
+                : $now.($capacity ? " of about {$capacity} Mbps" : " (no speed test yet)"))
             .($busy ? ' — the line is nearly full.' : '.');
 
         return $this->check('Internet use', $busy ? 'warn' : 'ok', $summary, [
             'down_mbps' => $down, 'up_mbps' => (float) $sample->up_mbps,
             'sampled_at' => $sample->sampled_at?->toIso8601String(),
-            'capacity' => $estimate, 'top_users' => $top,
+            'speed_test' => $test, 'capacity' => $estimate, 'top_users' => $top,
         ]);
     }
 
