@@ -9,6 +9,20 @@ the history was rewritten.
 
 ---
 
+## 1.43.4 — Minor fixes from the review
+*build 253*
+
+- "Test now" answers at once and measures in the background (a slow line
+  could time the page out).
+- A refund that brings an order below the free Wi-Fi minimum cancels its
+  unused free codes.
+- No "drawer differs" alert when another shift is still open.
+- Best sellers and sales by category say "(at menu price)".
+- Exporting a year of orders works in batches.
+- Security page: newest 24 backups, hourly wording; hourly backups only log
+  failures (manual ones still log); last backup read from the backups.
+- Escape on an "Are you sure?" no longer closes the form underneath.
+
 ## 1.43.3 — Fixes from the pre-defense review (network, inventory)
 *build 252*
 

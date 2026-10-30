@@ -34,7 +34,7 @@ class OrderHistoryController extends Controller
     public function export(Request $request)
     {
         $period = ReportPeriod::fromRequest($request);
-        $sales = $this->filtered($request)->get();
+        $sales = $this->filtered($request)->lazy(500);   // a whole year of orders, a batch at a time
 
         return response()->streamDownload(function () use ($sales) {
             $out = fopen('php://output', 'w');

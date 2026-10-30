@@ -6,6 +6,8 @@ use App\Models\Sale;
 use App\Models\SaleVoidRequest;
 use App\Models\ZReading;
 use App\Models\Shift;
+use App\Models\Setting;
+use App\Models\Voucher;
 use App\Models\User;
 use App\Notifications\SystemAlert;
 use Illuminate\Support\Facades\Notification;
@@ -250,6 +252,11 @@ class SaleService
         }
 
         $sale->increment('refunded_amount', $check['amount']);
+        // Below the free Wi-Fi minimum now: free codes nobody has used yet no longer apply.
+        $freeMin = (float) Setting::get('free_wifi_min_amount', 200);
+        if ($freeMin > 0 && (float) $sale->total_amount - (float) $sale->refunded_amount < $freeMin) {
+            Voucher::where('sale_id', $sale->id)->where('tier', 'free')->where('is_used', false)->delete();
+        }
         $shift?->transactions()->create(['type' => 'pay_out', 'amount' => $check['amount'], 'user_id' => $approver->id,
             'reason' => 'Refund #'.substr($sale->transaction_number, -4).': '.collect($check['picked'])->map(fn ($i) => "{$i['qty']}× {$i['item']}")->implode(', ')." ({$reason})"]);
         if ($requester?->id === $approver->id) {

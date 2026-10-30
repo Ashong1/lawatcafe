@@ -74,7 +74,7 @@ class InternetLineSpeedTest extends TestCase
         $this->mock(InternetSpeedTest::class, fn ($m) => $m->shouldReceive('run')->once()->andReturn(['down' => 30.0, 'up' => 10.0, 'at' => now()->toIso8601String()]));
 
         $this->actingAs(User::factory()->create(['role' => 'admin']))->post(route('network.traffic.speed-test'))
-            ->assertRedirect()->assertSessionHas('success', fn ($m) => str_contains($m, '30'));
+            ->assertRedirect()->assertSessionHas('success', fn ($m) => str_contains($m, 'Testing your internet now'));
     }
 
     public function test_the_daily_test_is_scheduled_and_runs_once_a_day_after_opening(): void

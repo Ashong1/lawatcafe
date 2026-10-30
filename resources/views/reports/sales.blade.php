@@ -73,7 +73,7 @@
 
             <div class="space-y-6 min-w-0">
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-[#F0E6D2]">
-                    <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-3">Best sellers</h3>
+                    <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-3">Best sellers <span class="text-xs font-medium normal-case text-[#795548]">(at menu price)</span></h3>
                     @forelse ($report['best'] as $i => $row)
                         <div class="flex justify-between gap-2 py-1.5 border-t border-[#F0E6D2] first:border-0 text-sm">
                             <span class="truncate">{{ $i + 1 }}. {{ $row['item'] }}</span>
@@ -92,7 +92,7 @@
                     @endforeach
                 </div>
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-[#F0E6D2]">
-                    <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-3">By category</h3>
+                    <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-3">By category <span class="text-xs font-medium normal-case text-[#795548]">(at menu price)</span></h3>
                     @forelse ($report['by_category'] as $row)
                         <div class="flex justify-between gap-2 py-1.5 border-t border-[#F0E6D2] first:border-0 text-sm">
                             <span class="truncate">{{ $row['category'] }}</span><span class="font-bold">{{ $peso($row['sales']) }}</span>

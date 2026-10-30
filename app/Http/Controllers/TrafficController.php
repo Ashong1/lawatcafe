@@ -69,11 +69,10 @@ class TrafficController extends Controller
 
     public function speedTest(InternetSpeedTest $speed)
     {
-        $result = $speed->run();
+        // Measured after the page answers: on a slow line the test outlasts the proxy's timeout.
+        dispatch(fn () => app(InternetSpeedTest::class)->run())->afterResponse();
 
-        return back()->with($result ? 'success' : 'error', $result
-            ? "Your internet is giving {$result['down']} Mbps down and {$result['up']} Mbps up right now."
-            : "The speed test couldn't run. Check that the internet is up and try again.");
+        return back()->with('success', 'Testing your internet now. It takes about 15 seconds; refresh this page to see the result.');
     }
 
     public function updateLine(Request $request)

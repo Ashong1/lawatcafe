@@ -66,7 +66,7 @@ $isBottomSheet = $position === 'bottom-sheet';
     }"
     x-show="{{ $show }}"
     x-cloak
-    x-on:keydown.escape.window="{{ $show }} = false"
+    x-on:keydown.escape.window="if (! document.querySelector('.swal2-container')) {{ $show }} = false"
     x-on:keydown.tab.prevent="$event.shiftKey || nextFocusable().focus()"
     x-on:keydown.shift.tab.prevent="prevFocusable().focus()"
     @if($isBottomSheet)

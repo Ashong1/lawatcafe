@@ -26,7 +26,7 @@
             <div class="bg-white p-5 rounded-2xl border border-[#F0E6D2]">
                 <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Last database backup</p>
                 <p class="text-base font-bold text-[#3E2723] mt-2">
-                    {{ $lastBackup ? $lastBackup->created_at->format('M d, Y g:i A').' ('.$lastBackup->created_at->diffForHumans().')' : 'None yet. Backups run every night.' }}
+                    {{ $lastBackup ? \Illuminate\Support\Carbon::createFromTimestamp($lastBackup, config('app.timezone'))->format('M j, Y g:i A').' ('.\Illuminate\Support\Carbon::createFromTimestamp($lastBackup)->diffForHumans().')' : 'None yet. A backup is made every hour while the server is on.' }}
                 </p>
             </div>
         </div>
@@ -55,7 +55,7 @@
                         </tr>
                     </thead>
                     <tbody class="text-sm">
-                        @forelse($backups as $b)
+                        @forelse($backups->take(24) as $b)
                             @php($made = \Illuminate\Support\Carbon::createFromTimestamp($b['made_at'])->timezone(config('app.timezone')))
                             <tr class="border-b border-[#FAFAFA]">
                                 <td data-label="Made" class="py-3 px-4">
@@ -80,7 +80,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="3" class="py-10 text-center text-[#6D4C41]">No backups yet. Tap <span class="font-bold">Make a backup now</span>, or wait for tonight's.</td></tr>
+                            <tr><td colspan="3" class="py-10 text-center text-[#6D4C41]">No backups yet. Tap <span class="font-bold">Make a backup now</span>, or wait for the next hourly one.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

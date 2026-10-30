@@ -72,7 +72,10 @@ class BackupService
 
         $this->list()->slice(self::KEEP)->reject(fn ($old) => $old['name'] === $keep)
             ->each(fn ($old) => File::delete($this->dir().'/'.$old['name']));
-        ActivityLog::record('backup_made', $by, basename($file).' ('.round(filesize($file) / 1048576, 1).' MB)');
+        // Hourly backups would fill the log; only failures and the ones a person makes are recorded.
+        if ($by) {
+            ActivityLog::record('backup_made', $by, basename($file).' ('.round(filesize($file) / 1048576, 1).' MB)');
+        }
 
         return basename($file);
     }

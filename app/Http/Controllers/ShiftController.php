@@ -30,7 +30,8 @@ class ShiftController extends Controller
 
         // Handover: the opening count is checked against the last closing count.
         // A difference needs a reason and goes to the owner (evaluators, Oct 28).
-        $lastClose = Shift::with('user')->where('status', 'closed')->latest('closed_at')->first();
+        // With another shift still open the drawer isn't a handover from the last close.
+        $lastClose = Shift::where('status', 'open')->exists() ? null : Shift::with('user')->where('status', 'closed')->latest('closed_at')->first();
         $difference = $lastClose ? round((float) $request->starting_cash - (float) $lastClose->ending_cash, 2) : 0.0;
         $notes = null;
         if ($difference != 0) {
