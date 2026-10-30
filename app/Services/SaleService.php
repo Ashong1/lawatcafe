@@ -30,6 +30,11 @@ class SaleService
             return ['success' => false, 'message' => 'That day was closed with a Z-Read, so its orders can no longer be voided.'];
         }
 
+        // Its refund already came out of the drawer; voiding too would count that cash twice.
+        if ((float) Sale::whereKey($sale->id)->value('refunded_amount') > 0) {
+            return ['success' => false, 'message' => 'Part of this order was refunded, so it can\'t be voided. Refund the rest instead.'];
+        }
+
         $sale->update(['status' => 'cancelled']);
 
         return [
@@ -79,26 +84,33 @@ class SaleService
      */
     public function approveVoidRequest(SaleVoidRequest $request, User $admin): array
     {
-        if ($request->status !== 'pending') {
-            return ['success' => false, 'message' => 'This request has already been reviewed.'];
+        $result = DB::transaction(function () use ($request, $admin) {
+            $request = SaleVoidRequest::lockForUpdate()->find($request->id);
+            if ($request->status !== 'pending') {
+                return ['success' => false, 'message' => 'This request has already been reviewed.'];
+            }
+            $sale = Sale::lockForUpdate()->find($request->sale_id);
+
+            // Re-checked now: the order may have changed since the request (voided, refunded, Z-Read).
+            $result = $request->type === 'refund'
+                ? $this->applyRefund($sale, collect($request->items ?? [])->pluck('qty', 'id')->all(), $request->reason, $request->requestedBy, $admin)
+                : $this->void($sale, $admin->id);
+
+            if ($result['success']) {
+                $request->update(['status' => 'approved', 'reviewed_by' => $admin->id, 'reviewed_at' => now()]);
+            }
+
+            return $result;
+        });
+
+        if ($result['success']) {
+            Notification::send($request->requestedBy, new SystemAlert(
+                ucfirst($request->type).' Request Approved',
+                'Your '.$request->type.' request for order #'.substr($request->sale->transaction_number, -4).' was approved.',
+                'check-circle',
+                route('pos.history')
+            ));
         }
-
-        $result = $request->type === 'refund'
-            ? $this->applyRefund($request->sale, (float) $request->amount, $request->items ?? [], $request->reason, $request->requestedBy)
-            : $this->void($request->sale, $admin->id);
-
-        $request->update([
-            'status' => 'approved',
-            'reviewed_by' => $admin->id,
-            'reviewed_at' => now(),
-        ]);
-
-        Notification::send($request->requestedBy, new SystemAlert(
-            ucfirst($request->type).' Request Approved',
-            'Your '.$request->type.' request for order #'.substr($request->sale->transaction_number, -4).' was approved.',
-            'check-circle',
-            route('pos.history')
-        ));
 
         return $result;
     }
@@ -138,44 +150,23 @@ class SaleService
      */
     public function refund(Sale $sale, array $lines, string $reason, User $actor): array
     {
-        if ($sale->status === 'cancelled') {
-            return ['success' => false, 'message' => 'A voided order cannot be refunded.'];
-        }
-
-        $items = $sale->items()->whereIn('id', array_keys($lines))->get()->keyBy('id');
-        $picked = [];
-        foreach ($lines as $id => $qty) {
-            $qty = (int) $qty;
-            if ($qty < 1) {
-                continue;
-            }
-            if (! isset($items[$id]) || $qty > $items[$id]->quantity) {
-                return ['success' => false, 'message' => 'Choose only items from this order, up to the quantity bought.'];
-            }
-            $picked[] = ['item' => $items[$id]->item_name, 'qty' => $qty, 'amount' => round($qty * (float) $items[$id]->price, 2)];
-        }
-        $amount = round(array_sum(array_column($picked, 'amount')), 2);
-        $refundable = round((float) $sale->total_amount - (float) $sale->refunded_amount, 2);
-
-        if ($amount <= 0) {
-            return ['success' => false, 'message' => 'Choose at least one item to refund.'];
-        }
-        if ($amount > $refundable) {
-            return ['success' => false, 'message' => 'Only ₱'.number_format($refundable, 2).' of this order is left to refund.'];
+        if (SaleVoidRequest::where('sale_id', $sale->id)->where('status', 'pending')->exists()) {
+            return ['success' => false, 'message' => 'A request for this order is already waiting for the owner. Approve or reject it first.'];
         }
 
         if ($actor->isAdminOrAbove()) {
-            return $this->applyRefund($sale, $amount, $picked, $reason, $actor);
+            return DB::transaction(fn () => $this->applyRefund(Sale::lockForUpdate()->find($sale->id), $lines, $reason, $actor, $actor));
         }
 
-        if (SaleVoidRequest::where('sale_id', $sale->id)->where('status', 'pending')->exists()) {
-            return ['success' => false, 'message' => 'A request for this order is already waiting for the owner.'];
+        $check = $this->checkRefund($sale, $lines);
+        if (isset($check['error'])) {
+            return ['success' => false, 'message' => $check['error']];
         }
-        SaleVoidRequest::create(['sale_id' => $sale->id, 'type' => 'refund', 'amount' => $amount, 'items' => $picked,
+        SaleVoidRequest::create(['sale_id' => $sale->id, 'type' => 'refund', 'amount' => $check['amount'], 'items' => $check['picked'],
             'requested_by' => $actor->id, 'reason' => $reason, 'status' => 'pending']);
         Notification::send(User::active()->whereIn('role', ['admin', 'super_admin'])->get(), new SystemAlert(
             'Refund Request Pending',
-            "{$actor->name} asked to refund ₱".number_format($amount, 2).' of order #'.substr($sale->transaction_number, -4).': "'.$reason.'"',
+            "{$actor->name} asked to refund ₱".number_format($check['amount'], 2).' of order #'.substr($sale->transaction_number, -4).': "'.$reason.'"',
             'undo-2',
             route('pos.history')
         ));
@@ -183,19 +174,89 @@ class SaleService
         return ['success' => true, 'message' => 'Refund request sent to the owner.'];
     }
 
-    /** Records the refund on the order; cash comes out of the open shift's drawer as a cash-out. */
-    private function applyRefund(Sale $sale, float $amount, array $items, string $reason, ?User $requester): array
+    /**
+     * Everything a refund must pass, for a request and again when it's approved.
+     * Prices are what the customer actually paid (after the discount), and an
+     * item can't be refunded more times than it was bought.
+     *
+     * @return array{picked: list<array>, amount: float}|array{error: string}
+     */
+    private function checkRefund(Sale $sale, array $lines): array
     {
-        return DB::transaction(function () use ($sale, $amount, $items, $reason, $requester) {
-            $sale->increment('refunded_amount', $amount);
+        if ($sale->status === 'cancelled') {
+            return ['error' => 'A voided order cannot be refunded.'];
+        }
+        if (ZReading::closes($sale->created_at)) {
+            return ['error' => 'That day was closed with a Z-Read, so its orders can no longer be refunded.'];
+        }
 
-            if ($sale->payment_method === 'Cash') {
-                $shift = Shift::where('status', 'open')->where('user_id', $requester?->id)->first() ?? Shift::where('status', 'open')->latest('opened_at')->first();
-                $shift?->transactions()->create(['type' => 'pay_out', 'amount' => $amount, 'user_id' => $requester?->id,
-                    'reason' => 'Refund #'.substr($sale->transaction_number, -4).': '.collect($items)->map(fn ($i) => "{$i['qty']}× {$i['item']}")->implode(', ')." ({$reason})"]);
+        $paidShare = (float) $sale->discount_amount > 0
+            ? (float) $sale->total_amount / ((float) $sale->total_amount + (float) $sale->discount_amount) : 1.0;
+        $alreadyRefunded = SaleVoidRequest::where('sale_id', $sale->id)->where('type', 'refund')->where('status', 'approved')->get()
+            ->flatMap(fn ($r) => $r->items ?? [])->groupBy('id')->map(fn ($rows) => $rows->sum('qty'));
+        $items = $sale->items()->whereIn('id', array_keys($lines))->get()->keyBy('id');
+
+        $picked = [];
+        foreach ($lines as $id => $qty) {
+            $qty = (int) $qty;
+            if ($qty < 1) {
+                continue;
             }
+            $item = $items[$id] ?? null;
+            if (! $item || $item->type === 'wifi') {
+                return ['error' => 'Choose only food and drink items from this order. Wi-Fi codes can\'t be refunded.'];
+            }
+            $left = $item->quantity - (int) ($alreadyRefunded[$id] ?? 0);
+            if ($qty > $left) {
+                return ['error' => "Only {$left} × {$item->item_name} is left to refund on this order."];
+            }
+            $picked[] = ['id' => $item->id, 'item' => $item->item_name, 'qty' => $qty, 'amount' => round($qty * (float) $item->price * $paidShare, 2)];
+        }
+        $amount = round(array_sum(array_column($picked, 'amount')), 2);
+        $refundable = round((float) $sale->total_amount - (float) $sale->refunded_amount, 2);
 
-            return ['success' => true, 'message' => 'Refunded ₱'.number_format($amount, 2).' on order #'.substr($sale->transaction_number, -4).'.'];
-        });
+        if ($amount <= 0) {
+            return ['error' => 'Choose at least one item to refund.'];
+        }
+        if ($amount > $refundable + 0.01) {
+            return ['error' => 'Only ₱'.number_format($refundable, 2).' of this order is left to refund.'];
+        }
+
+        return ['picked' => $picked, 'amount' => min($amount, $refundable)];
+    }
+
+    /**
+     * Checks, records the refund on the order (an approved entry in the queue,
+     * so every refund is in the audit trail) and takes cash out of a drawer.
+     * Cash comes from the requester's open shift, else the approver's, else
+     * the one open shift; with no clear drawer it's refused.
+     */
+    private function applyRefund(Sale $sale, array $lines, string $reason, ?User $requester, User $approver): array
+    {
+        $check = $this->checkRefund($sale, $lines);
+        if (isset($check['error'])) {
+            return ['success' => false, 'message' => $check['error']];
+        }
+
+        $shift = null;
+        if ($sale->payment_method === 'Cash') {
+            $open = Shift::with('user')->where('status', 'open')->get();
+            $shift = $open->firstWhere('user_id', $requester?->id) ?? $open->firstWhere('user_id', $approver->id) ?? ($open->count() === 1 ? $open->first() : null);
+            if (! $shift) {
+                return ['success' => false, 'message' => $open->isEmpty()
+                    ? 'A cash refund comes out of a drawer: start a shift on the register first.'
+                    : 'More than one shift is open; refund it from the register of the person giving back the cash.'];
+            }
+        }
+
+        $sale->increment('refunded_amount', $check['amount']);
+        $shift?->transactions()->create(['type' => 'pay_out', 'amount' => $check['amount'], 'user_id' => $approver->id,
+            'reason' => 'Refund #'.substr($sale->transaction_number, -4).': '.collect($check['picked'])->map(fn ($i) => "{$i['qty']}× {$i['item']}")->implode(', ')." ({$reason})"]);
+        if ($requester?->id === $approver->id) {
+            SaleVoidRequest::create(['sale_id' => $sale->id, 'type' => 'refund', 'amount' => $check['amount'], 'items' => $check['picked'],
+                'requested_by' => $approver->id, 'reason' => $reason, 'status' => 'approved', 'reviewed_by' => $approver->id, 'reviewed_at' => now()]);
+        }
+
+        return ['success' => true, 'message' => 'Refunded ₱'.number_format($check['amount'], 2).' on order #'.substr($sale->transaction_number, -4).($shift ? ' from '.$shift->user->name."'s drawer." : '.')];
     }
 }

@@ -9,6 +9,22 @@ the history was rewritten.
 
 ---
 
+## 1.43.2 — Fixes from the pre-defense review (money)
+*build 251*
+
+- Refunds pay back what the customer actually paid (after Senior/PWD
+  discount), an item can't be refunded twice, Wi-Fi codes can't be refunded,
+  and a Z-Read day can't be refunded.
+- Approving a staff request re-checks the order (and locks it), and a request
+  only shows as approved if it went through. The owner can't refund directly
+  while a request for that order is waiting. Owner refunds are now logged in
+  the same queue.
+- A partly refunded order can't be voided (it booked a false shortage).
+- Cash refunds need an open drawer and say whose drawer paid.
+- No shift can start after the day's Z-Read; two Z-Reads at once give a clear
+  message.
+- CSV exports can't run spreadsheet formulas from names.
+
 ## 1.43.0 — Wi-Fi codes per order; ask before every change
 *builds 249–250*
 

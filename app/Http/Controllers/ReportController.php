@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\SalesReportService;
 use App\Services\StockReportService;
+use App\Support\Csv;
 use App\Support\ReportPeriod;
 use Illuminate\Http\Request;
 
@@ -24,9 +25,9 @@ class ReportController extends Controller
 
         return response()->streamDownload(function () use ($report, $labels, $period) {
             $out = fopen('php://output', 'w');
-            fputcsv($out, [ucfirst($period->bucket()), 'Net sales (PHP)']);
+            fputcsv($out, Csv::safe([ucfirst($period->bucket()), 'Net sales (PHP)']));
             foreach ($report['series'] as $key => $total) {
-                fputcsv($out, [$labels[$key], number_format($total, 2, '.', '')]);
+                fputcsv($out, Csv::safe([$labels[$key], number_format($total, 2, '.', '')]));
             }
             fputcsv($out, ['Total ('.$report['orders'].' orders)', number_format($report['net'], 2, '.', '')]);
             fclose($out);
@@ -49,7 +50,7 @@ class ReportController extends Controller
             $out = fopen('php://output', 'w');
             fputcsv($out, ['Ingredient', 'Unit', 'Start', 'Received', 'Used in sales', 'Wasted', 'Adjusted', 'End', 'Running low']);
             foreach ($report['rows'] as $r) {
-                fputcsv($out, [$r['ingredient'], $r['unit'], $r['start'], $r['received'], $r['used'], $r['wasted'], $r['adjusted'], $r['end'], $r['low'] ? 'Yes' : 'No']);
+                fputcsv($out, Csv::safe([$r['ingredient'], $r['unit'], $r['start'], $r['received'], $r['used'], $r['wasted'], $r['adjusted'], $r['end'], $r['low'] ? 'Yes' : 'No']));
             }
             fclose($out);
         }, 'lawatkape-stock-'.$period->period.'-'.$period->start->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);

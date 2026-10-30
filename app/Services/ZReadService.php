@@ -29,7 +29,17 @@ class ZReadService
 
             $figures = Shift::salesFigures(fn () => Sale::whereDate('created_at', $day));
 
-            return ZReading::create([
+            try {
+                return $this->create($day, $by, $figures);
+            } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+                throw new RuntimeException('Someone else just took the Z-Read. Refresh to see it.');
+            }
+        });
+    }
+
+    private function create(Carbon $day, User $by, array $figures): ZReading
+    {
+        return ZReading::create([
                 'number' => (int) ZReading::max('number') + 1,
                 'business_date' => $day->toDateString(),
                 'grand_total' => (float) Sale::revenue()->where('created_at', '<=', $day->copy()->endOfDay())->sum('total_amount'),
@@ -38,6 +48,5 @@ class ZReadService
                 'totals' => $figures,
                 'user_id' => $by->id,
             ]);
-        });
     }
 }

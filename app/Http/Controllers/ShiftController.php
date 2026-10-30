@@ -18,6 +18,11 @@ class ShiftController extends Controller
             'starting_cash' => 'required|numeric|min:0',
         ]);
 
+        // The day is closed once its Z-Read is taken; a new shift would sell outside any Z-Read.
+        if (\App\Models\ZReading::closes(today())) {
+            return redirect()->back()->with('error', "Today was closed with the Z-Read, so no new shift can start until tomorrow.");
+        }
+
         // Ensure user doesn't already have an open shift
         if (Shift::where('user_id', auth()->id())->where('status', 'open')->exists()) {
             return redirect()->back()->with('error', 'You already have an open shift.');

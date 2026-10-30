@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Sale;
 use App\Models\SaleVoidRequest;
 use App\Models\Setting;
+use App\Support\Csv;
 use App\Support\ReportPeriod;
 use App\Services\SaleService;
 use Illuminate\Http\Request;
@@ -39,14 +40,14 @@ class OrderHistoryController extends Controller
             $out = fopen('php://output', 'w');
             fputcsv($out, ['Order no.', 'Date', 'Time', 'Type', 'Items', 'Payment', 'Discount', 'Total', 'Refunded', 'Status', 'Cashier']);
             foreach ($sales as $sale) {
-                fputcsv($out, [
+                fputcsv($out, Csv::safe([
                     $sale->transaction_number, $sale->created_at->format('Y-m-d'), $sale->created_at->format('g:i A'),
                     $sale->order_type === 'takeaway' ? 'Take away' : 'Dine in',
                     $sale->items->map(fn ($i) => $i->quantity.'× '.$i->item_name)->implode(', '),
                     $sale->payment_method, number_format((float) $sale->discount_amount, 2, '.', ''),
                     number_format((float) $sale->total_amount, 2, '.', ''), number_format((float) $sale->refunded_amount, 2, '.', ''),
                     $sale->status === 'cancelled' ? 'Voided' : ucfirst($sale->status), $sale->user?->name,
-                ]);
+                ]));
             }
             fclose($out);
         }, 'lawatkape-orders-'.$period->period.'-'.$period->start->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
