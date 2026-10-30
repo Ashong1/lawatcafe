@@ -113,6 +113,10 @@
                         <input type="number" min="1" id="bw-busy" name="bw_busy_guests" value="{{ $line['busy_guests'] }}" class="w-full min-h-[44px] bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 text-base sm:text-sm font-bold">
                     </div>
                     <button type="submit" class="min-h-[44px] rounded-full bg-[#FDF8F5] border border-[#F0E6D2] text-[#3E2723] text-xs font-bold uppercase tracking-wide hover:bg-[#F0E6D2]">Update advice</button>
+                    <label class="sm:col-span-3 flex items-start gap-3 min-h-[44px] cursor-pointer">
+                        <input type="checkbox" name="bw_auto_fit_plans" value="1" @checked($line['auto_fit']) class="mt-1 w-5 h-5 rounded border-[#D7CCC8] text-[#3E2723] focus:ring-[#3E2723]">
+                        <span class="text-sm text-[#3E2723]"><strong>Let Barista AI lower a plan</strong> when the daily test shows it's faster than your internet can give guests. You're told every time.</span>
+                    </label>
                 </form>
             </div>
 

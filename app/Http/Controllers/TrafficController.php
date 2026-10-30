@@ -57,6 +57,7 @@ class TrafficController extends Controller
             'history' => array_slice($speed->history(), 0, 7),
             'reserve' => $reserve,
             'busy_guests' => $busyGuests,
+            'auto_fit' => Setting::get('bw_auto_fit_plans', '1') === '1',
             'advice' => ($latest = $speed->latest()) ? InternetSpeedTest::recommend($latest['down'], $reserve, $busyGuests, [
                 'Free' => (float) Setting::get('bw_free_down', TrafficShapingService::PLAN_DEFAULTS['bw_free_down']),
                 'Premium' => (float) Setting::get('bw_premium_down', TrafficShapingService::PLAN_DEFAULTS['bw_premium_down']),
@@ -84,6 +85,7 @@ class TrafficController extends Controller
         foreach ($validated as $key => $value) {
             Setting::set($key, (string) $value);
         }
+        Setting::set('bw_auto_fit_plans', $request->boolean('bw_auto_fit_plans') ? '1' : '0');
 
         return back()->with('success', 'Saved. The advice below uses the new numbers.');
     }

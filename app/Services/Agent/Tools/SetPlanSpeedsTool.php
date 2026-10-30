@@ -57,7 +57,8 @@ class SetPlanSpeedsTool implements AgentTool
 
     public function permissionTier(): string
     {
-        return PermissionResolver::TIER_CONFIRM;
+        // AI-managed by default (owner, Oct 30); Settings → Barista AI can make it ask first.
+        return PermissionResolver::TIER_AUTO;
     }
 
     public function execute(array $arguments, ?User $actor, array $context = []): ToolResult

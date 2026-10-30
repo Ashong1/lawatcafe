@@ -80,18 +80,31 @@ class WatchAdultSites extends Command
                 continue;
             }
 
+            // Not on the block list yet: blocked on the spot (owner, Oct 30), unless switched off on Site Blocking.
+            $autoBlocked = $hit['allowed'] && Setting::get('ai_auto_block_adult_sites', '1') === '1'
+                && $pihole->blockDomain($hit['site'], 'Blocked automatically by Barista AI');
+
             $admins ??= User::active()->whereIn('role', ['admin', 'super_admin'])->get();
-            Notification::send($admins, $this->alertFor($hit));
+            Notification::send($admins, $this->alertFor($hit, $autoBlocked));
             $this->line(sprintf('%s -> %s (%s)', $hit['client'], $hit['site'], $hit['allowed'] ? 'allowed' : 'blocked'));
         }
 
         return self::SUCCESS;
     }
 
-    private function alertFor(array $hit): SystemAlert
+    private function alertFor(array $hit, bool $autoBlocked = false): SystemAlert
     {
         $voucher = Voucher::where('ip_address', $hit['client'])->whereNotNull('used_at')->latest('used_at')->first();
         $who = $voucher ? "Guest on voucher {$voucher->code} ({$hit['client']})" : "Device {$hit['client']}";
+
+        if ($autoBlocked) {
+            return new SystemAlert(
+                'Adult site blocked automatically',
+                "{$who} opened {$hit['site']}. Barista AI added it to the block list for all guests. Unblock it on Site Blocking if that was a mistake.",
+                'shield-check',
+                route('network.site-blocking')
+            );
+        }
 
         return $hit['allowed']
             ? new SystemAlert(

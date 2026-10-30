@@ -59,6 +59,7 @@ class WatchAdultSitesTest extends TestCase
 
     public function test_an_allowed_adult_lookup_notifies_admins_with_a_block_link(): void
     {
+        \App\Models\Setting::set('ai_auto_block_adult_sites', '0'); // alert-only mode
         Notification::fake();
         $admin = User::factory()->create(['role' => 'admin']);
         $staff = User::factory()->create(['role' => 'staff']);
@@ -92,6 +93,7 @@ class WatchAdultSitesTest extends TestCase
 
     public function test_the_same_device_and_site_alerts_only_once_per_cooldown(): void
     {
+        \App\Models\Setting::set('ai_auto_block_adult_sites', '0'); // alert-only mode
         Notification::fake();
         $admin = User::factory()->create(['role' => 'admin']);
 

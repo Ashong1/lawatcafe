@@ -9,6 +9,21 @@ the history was rewritten.
 
 ---
 
+## 1.32.0 — Barista AI runs the Wi-Fi speeds and blocks adult sites
+*build 235*
+
+- **Speeds are AI-managed by default.** Automatic speed is on for new
+  installs; Barista AI may change the Free and Premium plan speeds without
+  asking (Settings → Barista AI can make it ask first again); after the daily
+  internet test it lowers any plan set faster than the line can give guests,
+  and tells the admins. Off switch: "Let Barista AI lower a plan" on
+  Wi-Fi Speed.
+- **Adult sites are blocked on the spot.** When a guest opens one that isn't
+  on the block list, Barista AI blocks it for everyone and tells the admins.
+  Off switch: "Barista AI blocks new ones" on Site Blocking.
+- Blocking devices, disconnecting guests and making Wi-Fi codes still need
+  an admin's approval.
+
 ## 1.31.0 — Orders to make, on the register; real internet speed
 *builds 233–234*
 

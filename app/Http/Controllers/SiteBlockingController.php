@@ -95,6 +95,17 @@ class SiteBlockingController extends Controller
      * named presets. Gravity rebuilds after the response: it downloads the list
      * and can take a minute.
      */
+    /** Whether Barista AI blocks an adult site the moment a guest opens one (network:watch-adult-sites). */
+    public function toggleAutoAdult(Request $request)
+    {
+        $enabled = (bool) $request->validate(['enabled' => 'required|boolean'])['enabled'];
+        \App\Models\Setting::set('ai_auto_block_adult_sites', $enabled ? '1' : '0');
+
+        return redirect()->back()->with('success', $enabled
+            ? 'Barista AI will block new adult sites as soon as a guest opens one, and tell you.'
+            : 'Barista AI will only alert you about new adult sites; you decide whether to block them.');
+    }
+
     public function toggleAdultList(Request $request, PiholeService $pihole)
     {
         $enabled = $request->validate(['enabled' => 'required|boolean'])['enabled'];

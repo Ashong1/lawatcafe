@@ -24,7 +24,7 @@ class AdaptiveBandwidthService
 {
     /** Settings and their defaults, so the page and the loop cannot disagree. */
     public const DEFAULTS = [
-        'bw_adaptive_enabled' => '0',
+        'bw_adaptive_enabled' => '1',
         'bw_adaptive_min' => '5',
         'bw_adaptive_max' => '20',
     ];

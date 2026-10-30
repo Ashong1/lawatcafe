@@ -72,6 +72,17 @@
                                 @endif
                             </button>
                         </form>
+                        @php($autoAdult = \App\Models\Setting::get('ai_auto_block_adult_sites', '1') === '1')
+                        <form action="{{ route('network.site-blocking.auto-adult') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="enabled" value="{{ $autoAdult ? '0' : '1' }}">
+                            <button type="submit" aria-pressed="{{ $autoAdult ? 'true' : 'false' }}"
+                                    title="When a guest opens an adult site that isn't blocked yet, Barista AI blocks it and tells you"
+                                    class="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-full border-2 text-sm font-bold transition active:scale-95 {{ $autoAdult ? 'bg-[#3E2723] border-[#3E2723] text-white' : 'bg-white border-dashed border-[#795548] text-[#795548] hover:bg-[#FDF8F5]' }}">
+                                <x-lucide-bot class="w-4 h-4" />
+                                Barista AI blocks new ones: {{ $autoAdult ? 'On' : 'Off' }}
+                            </button>
+                        </form>
                     @endif
 
                     @foreach($sites as $site)
