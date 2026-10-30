@@ -48,6 +48,11 @@ return [
         'key' => env('GROQ_API_KEY'),
     ],
 
+    'cloudflare' => [
+        'key' => env('CLOUDFLARE_API_TOKEN'),
+        'account' => env('CLOUDFLARE_ACCOUNT_ID'),
+    ],
+
     'opnsense' => [
         'ip' => env('OPNSENSE_IP', '192.168.2.251'),
         'url' => env('OPNSENSE_API_URL', 'https://192.168.2.251'),

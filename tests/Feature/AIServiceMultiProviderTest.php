@@ -265,4 +265,52 @@ class AIServiceMultiProviderTest extends TestCase
         Http::assertSent(fn ($r) => ($r->data()['messages'][1]['tool_calls'][0]['extra_content']['google']['thought_signature'] ?? null) === 'skip_thought_signature_validator'
             && $r->data()['messages'][1]['tool_calls'][0]['function']['arguments'] === '{}');
     }
+
+    /** Owner (Oct 30): add Cloudflare Workers AI the same way, set up from the settings page. */
+    public function test_cloudflare_is_set_up_from_the_page_and_used_before_openrouter(): void
+    {
+        config(['services.openrouter.key' => null]);
+        $owner = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($owner)->get(route('admin.settings.ai-providers'))->assertSee('Cloudflare Workers AI API Key')->assertSee('Cloudflare Account ID');
+
+        $this->actingAs($owner)->post(route('admin.settings.ai-providers.update'), ['cloudflare_api_key' => 'cf-token', 'cloudflare_account_id' => 'abc123', 'openrouter_api_key' => 'or-key'])
+            ->assertSessionHas('success');
+        $this->assertSame('cf-token', AIService::providerKey('cloudflare'));
+
+        Http::fake([
+            'api.cloudflare.com/client/v4/accounts/abc123/ai/v1/chat/completions' => Http::response($this->sse('From Cloudflare.')),
+            '*' => Http::response($this->sse('Wrong provider.')),
+        ]);
+        $reply = app(AIService::class)->chatWithToolsStreaming([
+            ['role' => 'system', 'content' => 'Rule one.'], ['role' => 'system', 'content' => 'Rule two.'], ['role' => 'user', 'content' => 'hi'],
+        ], [], fn () => null);
+
+        $this->assertSame('From Cloudflare.', $reply['choices'][0]['message']['content']);
+        Http::assertSent(function ($r) {
+            $m = $r->data()['messages'];
+
+            // One system message: Workers AI's chat templates reject several.
+            return $r->hasHeader('Authorization', 'Bearer cf-token') && $r->data()['model'] === '@cf/openai/gpt-oss-20b'
+                && count($m) === 2 && $m[0] === ['role' => 'system', 'content' => "Rule one.\n\nRule two."];
+        });
+    }
+
+    public function test_cloudflare_without_an_account_id_is_not_configured(): void
+    {
+        Setting::set('cloudflare_api_key', Crypt::encryptString('cf-token'));
+
+        $this->assertFalse(app(AIService::class)->getProviderStatuses()['cloudflare']['configured']);
+    }
+
+    public function test_cloudflare_scan_reads_its_text_generation_models(): void
+    {
+        $this->keys(['cloudflare']);
+        Setting::set('cloudflare_account_id', 'abc123');
+        Http::fake(['api.cloudflare.com/client/v4/accounts/abc123/ai/models/search*' => Http::response(['result' => [
+            ['name' => '@cf/openai/gpt-oss-20b'], ['name' => '@cf/qwen/qwen3-30b-a3b-fp8'], ['name' => '@cf/meta/llama-3.1-8b-instruct-fp8-fast'],
+        ]])]);
+
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))->getJson(route('admin.settings.ai-providers.models.scan', 'cloudflare'))
+            ->assertOk()->assertExactJson(['models' => ['@cf/meta/llama-3.1-8b-instruct-fp8-fast']]);
+    }
 }

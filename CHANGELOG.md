@@ -9,6 +9,16 @@ the history was rewritten.
 
 ---
 
+## 1.50.0 — Cloudflare Workers AI
+*build 275*
+
+- Barista AI routes Gemini → Groq → **Cloudflare Workers AI** → OpenRouter.
+  Set up in Barista AI Settings: the Workers AI API token (stored encrypted)
+  and the Cloudflare Account ID. Defaults: @cf/openai/gpt-oss-20b and
+  @cf/qwen/qwen3-30b-a3b-fp8, the cheapest per token on the free 10,000
+  Neurons a day. Several system messages are merged into one for its chat
+  templates; Scan for more models reads its Text Generation catalogue.
+
 ## 1.49.4 — Linux app opens on Ubuntu 24
 *build 274*
 

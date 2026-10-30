@@ -84,7 +84,14 @@ class SettingController extends Controller
     public function updateAiProviders(Request $request)
     {
         $fields = array_map(fn ($p) => "{$p}_api_key", array_keys(AIService::PROVIDERS));
-        $validated = $request->validate(array_fill_keys($fields, 'nullable|string|max:500'));
+        $validated = $request->validate(array_fill_keys($fields, 'nullable|string|max:500')
+            + ['cloudflare_account_id' => ['nullable', 'string', 'regex:/^[a-f0-9]{32}$|^[A-Za-z0-9]{3,64}$/']]);
+
+        // Not a secret: the account the Cloudflare token belongs to.
+        if ($account = trim((string) ($validated['cloudflare_account_id'] ?? ''))) {
+            Setting::set('cloudflare_account_id', $account);
+        }
+        unset($validated['cloudflare_account_id']);
 
         $saved = 0;
         foreach (array_filter($validated) as $field => $key) {

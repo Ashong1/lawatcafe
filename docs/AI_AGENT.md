@@ -135,7 +135,7 @@ asked and who approved.
 ## The model: providers, fallback and budget
 
 - **Three providers, tried in order: Google Gemini → Groq → OpenRouter**
-  (`AIService::PROVIDERS`, since 1.46). A provider without a key is skipped;
+  (`AIService::PROVIDERS`, since 1.46; Cloudflare Workers AI before OpenRouter since 1.50). A provider without a key is skipped;
   one that fails or runs out hands over to the next. All three use the
   OpenAI chat format. Keys come from Settings → Barista AI Settings (stored
   encrypted, never shown again) or `GEMINI_API_KEY` / `GROQ_API_KEY` /

@@ -39,6 +39,8 @@ class AIService
     public const PROVIDERS = [
         'gemini' => ['label' => 'Google Gemini', 'url' => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'],
         'groq' => ['label' => 'Groq', 'url' => 'https://api.groq.com/openai/v1/chat/completions'],
+        // {account}: the Cloudflare account ID, entered next to its token.
+        'cloudflare' => ['label' => 'Cloudflare Workers AI', 'url' => 'https://api.cloudflare.com/client/v4/accounts/{account}/ai/v1/chat/completions'],
         'openrouter' => ['label' => 'OpenRouter', 'url' => 'https://openrouter.ai/api/v1/chat/completions'],
     ];
 
@@ -46,6 +48,9 @@ class AIService
     protected $geminiModels = ['gemini-3.5-flash', 'gemini-flash-lite-latest'];
 
     protected $groqModels = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'];
+
+    // The cheapest per token on the free 10,000 Neurons a day.
+    protected $cloudflareModels = ['@cf/openai/gpt-oss-20b', '@cf/qwen/qwen3-30b-a3b-fp8'];
 
     // Curated free models, best first: the fast path only tries the first two
     // healthy ones, so the head of the list should be the models that pick the
@@ -81,9 +86,23 @@ class AIService
         $this->openRouterKey = $this->keys['openrouter'];
     }
 
+    public static function cloudflareAccount(): ?string
+    {
+        return config('services.cloudflare.account') ?: Setting::get('cloudflare_account_id');
+    }
+
+    /** The provider's chat endpoint; Cloudflare's carries the account ID. */
+    private function urlFor(string $provider): string
+    {
+        return str_replace('{account}', (string) self::cloudflareAccount(), self::PROVIDERS[$provider]['url']);
+    }
+
     /** The server's .env key first, else the one saved (encrypted) in Barista AI Settings. */
     public static function providerKey(string $provider): ?string
     {
+        if ($provider === 'cloudflare' && ! self::cloudflareAccount()) {
+            return null;   // the token is no use without the account it belongs to
+        }
         if ($key = config("services.{$provider}.key")) {
             return $key;
         }
@@ -122,7 +141,7 @@ class AIService
 
     public function getModel()
     {
-        return 'Gemini, Groq and OpenRouter, in that order';
+        return 'Gemini, Groq, Cloudflare and OpenRouter, in that order';
     }
 
     /**
@@ -188,6 +207,7 @@ class AIService
             'openrouter' => $this->openRouterModels,
             'gemini' => $this->geminiModels,
             'groq' => $this->groqModels,
+            'cloudflare' => $this->cloudflareModels,
             default => [],
         };
     }
@@ -221,7 +241,7 @@ class AIService
 
         $messages = [['role' => 'user', 'content' => 'Reply with the single word: OK.']];
         $ok = isset(self::PROVIDERS[$provider]) && $this->keys[$provider]
-            && $this->testOpenAiCompatibleModel($newModel, self::PROVIDERS[$provider]['url'], $this->headersFor($provider), $messages, $provider);
+            && $this->testOpenAiCompatibleModel($newModel, $this->urlFor($provider), $this->headersFor($provider), $messages, $provider);
 
         return ['replaced' => true, 'new_model_ok' => $ok];
     }
@@ -244,8 +264,17 @@ class AIService
 
         if ($provider === 'openrouter') {
             $ids = $this->freeModelIds();
+        } elseif ($provider === 'cloudflare') {
+            // Workers AI has no /models list on its OpenAI endpoint; its own search does.
+            try {
+                $response = Http::withHeaders($this->headersFor($provider))->timeout(15)
+                    ->get('https://api.cloudflare.com/client/v4/accounts/'.self::cloudflareAccount().'/ai/models/search', ['task' => 'Text Generation']);
+                $ids = $response->successful() ? array_column($response->json('result') ?? [], 'name') : null;
+            } catch (\Exception $e) {
+                $ids = null;
+            }
         } else {
-            $url = str_replace('/chat/completions', '/models', self::PROVIDERS[$provider]['url']);
+            $url = str_replace('/chat/completions', '/models', $this->urlFor($provider));
             try {
                 $response = Http::withHeaders($this->headersFor($provider))->timeout(15)->get($url);
                 $ids = $response->successful() ? array_column($response->json('data') ?? [], 'id') : null;
@@ -284,7 +313,7 @@ class AIService
         $tool = ['name' => 'get_shop_time', 'description' => "Returns the shop's current local time.", 'parameters' => ['type' => 'object', 'properties' => new \stdClass]];
 
         try {
-            $response = Http::timeout(20)->withHeaders($this->headersFor($provider))->post(self::PROVIDERS[$provider]['url'], [
+            $response = Http::timeout(20)->withHeaders($this->headersFor($provider))->post($this->urlFor($provider), [
                 'model' => $model,
                 'messages' => [['role' => 'user', 'content' => 'What time is it at the shop right now? Use the tool.']],
                 'tools' => $this->toOpenAiTools([$tool]),
@@ -461,7 +490,7 @@ class AIService
         $models = isset(self::PROVIDERS[$provider]) && $this->keys[$provider] ? $this->activeModels($provider) : [];
 
         foreach ($models as $model) {
-            $this->testOpenAiCompatibleModel($model, self::PROVIDERS[$provider]['url'], $this->headersFor($provider), $messages, $provider) ? $ok++ : $failed++;
+            $this->testOpenAiCompatibleModel($model, $this->urlFor($provider), $this->headersFor($provider), $messages, $provider) ? $ok++ : $failed++;
         }
 
         if (! empty($models)) {
@@ -481,7 +510,7 @@ class AIService
     {
         $started = microtime(true);
         $reason = $this->keys[$provider] ?? null
-            ? $this->testOpenAiCompatibleModel($model, self::PROVIDERS[$provider]['url'], $this->headersFor($provider), [['role' => 'user', 'content' => 'Reply with the single word: OK.']], $provider, true)
+            ? $this->testOpenAiCompatibleModel($model, $this->urlFor($provider), $this->headersFor($provider), [['role' => 'user', 'content' => 'Reply with the single word: OK.']], $provider, true)
             : 'no_key';
 
         return ['ok' => $reason === null, 'ms' => (int) round((microtime(true) - $started) * 1000), 'reason' => $reason];
@@ -568,7 +597,7 @@ class AIService
 
             $response = $this->streamOpenAiCompatibleLoop(
                 $models,
-                self::PROVIDERS[$provider]['url'],
+                $this->urlFor($provider),
                 $this->headersFor($provider),
                 $messages,
                 $tools,
@@ -1011,7 +1040,7 @@ class AIService
                 if (! empty($tools)) {
                     $payload['tools'] = $this->toOpenAiTools($tools);
                 }
-                $response = Http::timeout($timeout)->withHeaders($this->headersFor($provider))->post(self::PROVIDERS[$provider]['url'], $payload);
+                $response = Http::timeout($timeout)->withHeaders($this->headersFor($provider))->post($this->urlFor($provider), $payload);
                 if ($response->successful()) {
                     $this->recordModelResult($provider, $model, true);
 
@@ -1073,6 +1102,15 @@ class AIService
      */
     private function toOpenAiMessages(array $messages, string $provider): array
     {
+        if ($provider === 'cloudflare') {
+            // Workers AI's strict chat templates take one system message.
+            $system = array_filter($messages, fn ($m) => ($m['role'] ?? null) === 'system');
+            if (count($system) > 1) {
+                $messages = [['role' => 'system', 'content' => implode("\n\n", array_column($system, 'content'))],
+                    ...array_values(array_filter($messages, fn ($m) => ($m['role'] ?? null) !== 'system'))];
+            }
+        }
+
         return array_map(function (array $m) use ($provider) {
             if (($m['role'] ?? null) !== 'assistant' || empty($m['tool_calls'])) {
                 return $m;
@@ -1665,7 +1703,7 @@ Return ONLY a JSON array, at most 5 items:
                 .'Keep product names as they are. No emoji. '
                 .'Answer with ONLY this JSON: {"en": "...", "tl": "..."}';
 
-            $response = Http::timeout($timeout)->withHeaders($this->headersFor($provider))->post(self::PROVIDERS[$provider]['url'], [
+            $response = Http::timeout($timeout)->withHeaders($this->headersFor($provider))->post($this->urlFor($provider), [
                 'model' => $model,
                 'messages' => [['role' => 'user', 'content' => $prompt]],
             ]);

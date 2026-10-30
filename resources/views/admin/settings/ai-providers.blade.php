@@ -84,6 +84,13 @@
                                 </button>
                             </div>
                         </div>
+                        @if ($p === 'cloudflare')
+                            <div class="mt-3">
+                                <label for="cloudflare_account_id" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Cloudflare Account ID</label>
+                                <input id="cloudflare_account_id" type="text" name="cloudflare_account_id" value="{{ \App\Services\AIService::cloudflareAccount() }}" autocomplete="off"
+                                       class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all" placeholder="From dash.cloudflare.com → AI → Workers AI">
+                            </div>
+                        @endif
                     @endforeach
 
                     <button type="submit" class="w-full py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-2xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-3">

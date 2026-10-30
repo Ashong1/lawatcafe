@@ -376,28 +376,28 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/ai-providers', [SettingController::class, 'updateAiProviders'])->name('ai-providers.update');
             Route::middleware([RoleMiddleware::class.':super_admin'])->group(function () {
                 Route::post('/ai-providers/{provider}/models/test', [SettingController::class, 'testAiModel'])
-                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->whereIn('provider', array_keys(\App\Services\AIService::PROVIDERS))
                     ->middleware('throttle:60,1')
                     ->name('ai-providers.models.test');
                 Route::get('/ai-providers/{provider}/models/scan', [SettingController::class, 'scanAiModels'])
-                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->whereIn('provider', array_keys(\App\Services\AIService::PROVIDERS))
                     ->middleware('throttle:10,1')
                     ->name('ai-providers.models.scan');
                 Route::post('/ai-providers/{provider}/models/check', [SettingController::class, 'checkAiModel'])
-                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->whereIn('provider', array_keys(\App\Services\AIService::PROVIDERS))
                     ->middleware('throttle:60,1')
                     ->name('ai-providers.models.check');
                 Route::post('/ai-providers/{provider}/models/add', [SettingController::class, 'addAiModel'])
-                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->whereIn('provider', array_keys(\App\Services\AIService::PROVIDERS))
                     ->name('ai-providers.models.add');
                 Route::post('/ai-providers/{provider}/test', [SettingController::class, 'testAiProvider'])
-                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->whereIn('provider', array_keys(\App\Services\AIService::PROVIDERS))
                     ->name('ai-providers.test');
                 Route::post('/ai-providers/{provider}/models/replace', [SettingController::class, 'replaceProviderModel'])
-                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->whereIn('provider', array_keys(\App\Services\AIService::PROVIDERS))
                     ->name('ai-providers.models.replace');
                 Route::post('/ai-providers/{provider}/models/reset', [SettingController::class, 'resetProviderModels'])
-                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->whereIn('provider', array_keys(\App\Services\AIService::PROVIDERS))
                     ->name('ai-providers.models.reset');
                 Route::get('/network', [SettingController::class, 'network'])->name('network');
                 Route::post('/network', [SettingController::class, 'updateNetwork'])->name('network.update');
