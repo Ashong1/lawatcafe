@@ -9,6 +9,18 @@ the history was rewritten.
 
 ---
 
+## 1.36.0 — Receive deliveries by purchase order
+*build 240*
+
+- Every sent purchase order has a **PO number** (PO-00042), shown on Purchase
+  Orders, in the supplier's email ("please put it on your delivery receipt")
+  and on Receive Delivery.
+- **Receive** on a pending order opens the form already filled in (supplier,
+  ingredient, quantity ordered, cost); staff only fix what really arrived.
+  Matching is exact to that PO; a short delivery still waits for the owner.
+- "Supplier's receipt / DR no." replaces "Invoice no."; typing a supplier by
+  hand suggests the saved suppliers.
+
 ## 1.35.0 — Refunds
 *build 239*
 

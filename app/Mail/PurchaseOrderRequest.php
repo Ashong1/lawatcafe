@@ -17,7 +17,7 @@ class PurchaseOrderRequest extends Mailable implements ShouldQueue
 
     public function build()
     {
-        return $this->subject("Purchase Order — {$this->draft->ingredient->name}")
+        return $this->subject("Purchase Order {$this->draft->po_number} — {$this->draft->ingredient->name}")
             ->text('emails.purchase-order-request');
     }
 }

@@ -18,13 +18,14 @@ class StaffDeliveryController extends Controller
             ->get();
 
         $ingredients = Ingredient::orderBy('name')->get();
+        $suppliers = \App\Models\Supplier::orderBy('name')->pluck('name');
 
         $myDeliveries = IngredientDelivery::with('items.ingredient')
             ->where('user_id', auth()->id())
             ->latest()
             ->paginate(10);
 
-        return view('staff.deliveries', compact('pendingOrders', 'ingredients', 'myDeliveries'));
+        return view('staff.deliveries', compact('pendingOrders', 'ingredients', 'myDeliveries', 'suppliers'));
     }
 
     public function store(Request $request, DeliveryReceivingService $service)
@@ -38,6 +39,7 @@ class StaffDeliveryController extends Controller
             'items.*.ingredient_id' => 'required|exists:ingredients,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.cost_per_unit' => 'required|numeric|min:0',
+            'items.*.purchase_order_draft_id' => 'nullable|integer|exists:purchase_order_drafts,id',
         ]);
 
         $delivery = $service->recordStaffDelivery($validated, auth()->id());

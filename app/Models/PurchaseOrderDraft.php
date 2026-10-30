@@ -18,6 +18,12 @@ class PurchaseOrderDraft extends Model
         'created_by_user_id',
     ];
 
+    /** The number staff and suppliers see: the draft's id, padded (PO-00042). */
+    public function getPoNumberAttribute(): string
+    {
+        return 'PO-'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);
+    }
+
     public function ingredient()
     {
         return $this->belongsTo(Ingredient::class);

@@ -6,6 +6,8 @@ Lawa't Kape would like to order:
 
 {!! $draft->ingredient->name !!}: {!! $draft->suggested_quantity !!} {!! $draft->ingredient->unit !!}
 
+Our order number is {!! $draft->po_number !!}. Please put it on your delivery receipt.
+
 Please reply to this email to confirm the order and delivery date.
 
 Thank you,

@@ -23,27 +23,34 @@
     {{-- Pending Purchase Orders --}}
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
         <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-1">Pending Orders</h3>
-        <p class="text-xs text-[#6D4C41] mb-6 font-medium">Orders sent to suppliers that haven't arrived yet. Check what came against these.</p>
+        <p class="text-xs text-[#6D4C41] mb-6 font-medium">Orders sent to suppliers that haven't arrived yet. Tap Receive when one arrives: the form fills in what was ordered.</p>
 
         <div class="overflow-x-auto pr-2">
             <table class="lk-stack w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
+                        <th class="pb-3 font-bold">PO no.</th>
                         <th class="pb-3 font-bold">Ingredient</th>
                         <th class="pb-3 font-bold">Supplier</th>
                         <th class="pb-3 font-bold text-right">Expected</th>
+                        <th class="pb-3"><span class="sr-only">Receive</span></th>
                     </tr>
                 </thead>
                 <tbody class="text-sm">
                     @forelse($pendingOrders as $order)
                     <tr class="border-b border-[#FAFAFA]">
+                        <td class="py-3 font-mono font-bold text-[#3E2723]">{{ $order->po_number }}</td>
                         <td class="py-3 font-bold text-[#3E2723]">{{ $order->ingredient->name }}</td>
                         <td class="py-3 text-[#795548] font-medium">{{ $order->supplier->name ?? 'No supplier on file' }}</td>
                         <td class="py-3 text-right font-bold text-[#3E2723]">{{ number_format($order->suggested_quantity, 2) }}{{ $order->ingredient->unit }}</td>
+                        <td class="py-3 text-right">
+                            <button type="button" @click="receiveOrder({{ Js::from(['po' => $order->po_number, 'id' => $order->id, 'supplier' => $order->supplier->name ?? '', 'ingredient_id' => $order->ingredient_id, 'quantity' => (float) $order->suggested_quantity, 'cost' => (float) $order->estimated_unit_cost]) }})"
+                                    class="min-h-[44px] px-4 rounded-full bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide hover:bg-[#271815] whitespace-nowrap">Receive</button>
+                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="3" class="py-10 text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide">Nothing on order right now.</td>
+                        <td colspan="5" class="py-10 text-center text-[#6D4C41] text-xs font-bold uppercase tracking-wide">Nothing on order right now.</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -132,14 +139,15 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
                             <label for="dlv-supplier" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Supplier</label>
-                            <input type="text" id="dlv-supplier" name="supplier_name" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                            <input type="text" id="dlv-supplier" name="supplier_name" x-model="supplier" :readonly="fromPo" list="dlv-suppliers" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                            <datalist id="dlv-suppliers">@foreach ($suppliers as $name)<option value="{{ $name }}">@endforeach</datalist>
                         </div>
                         <div>
                             <label for="dlv-date" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Date</label>
                             <input type="date" id="dlv-date" name="delivery_date" value="{{ date('Y-m-d') }}" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                         </div>
                         <div>
-                            <label for="dlv-ref" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Invoice no.</label>
+                            <label for="dlv-ref" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide ml-1">Supplier's receipt / DR no.</label>
                             <input type="text" id="dlv-ref" name="reference_number" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-base sm:text-sm font-bold focus:outline-none focus:border-[#3E2723] transition-all">
                         </div>
                     </div>
@@ -159,6 +167,8 @@
                                     <div class="flex gap-3">
                                         <div class="flex-[3]">
                                             <label class="block text-xs text-[#6D4C41] font-bold uppercase mb-1">Ingredient</label>
+                                            <input type="hidden" :name="'items['+index+'][purchase_order_draft_id]'" :value="item.po_id || ''">
+                                            <p x-show="item.po" class="text-xs font-bold text-blue-800 mb-1" x-text="item.po + ' — ordered ' + item.ordered"></p>
                                             <select :name="'items['+index+'][ingredient_id]'" x-model="item.ingredient_id" @change="item.use_packs = getIngredient(item.ingredient_id)?.packaging_unit ? true : false" required :aria-label="'Ingredient ' + (index + 1)" class="w-full min-h-[44px] p-2 border border-[#F0E6D2] rounded-lg text-base sm:text-xs bg-white font-bold text-[#3E2723] focus:border-[#3E2723] outline-none">
                                                 <option value="">Choose an ingredient</option>
                                                 <template x-for="ing in ingredients" :key="ing.id">
@@ -228,7 +238,19 @@
             ingredients: @js($ingredients),
             items: [{ ingredient_id: '', quantity: '', cost_per_unit: '', packs: '', use_packs: false }],
 
+            supplier: '',
+            fromPo: false,
+            receiveOrder(po) {
+                this.supplier = po.supplier;
+                this.fromPo = po.supplier !== '';
+                this.items = [{ ingredient_id: po.ingredient_id, quantity: po.quantity, cost_per_unit: po.cost || '', packs: '', use_packs: false, po_id: po.id, po: po.po, ordered: po.quantity }];
+                this.updateFromQty(0);
+                this.submitting = false;
+                this.isModalOpen = true;
+            },
             openAddModal() {
+                this.supplier = '';
+                this.fromPo = false;
                 this.items = [{ ingredient_id: '', quantity: '', cost_per_unit: '', packs: '', use_packs: false }];
                 this.submitting = false;
                 this.isModalOpen = true;

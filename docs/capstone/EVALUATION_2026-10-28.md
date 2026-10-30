@@ -33,7 +33,7 @@ Status legend: **Done** = already in the code · **Partial** · **To do** · **Q
 | 10 | R1 10:07–11:09; R2 29:15–30:20 | Record the date received and the expiration date when restocking (FIFO); system shows what expires today / next week / next month instead of hand-entered wastage | To do |
 | 11 | R1 06:47–09:00 | Wastage can't exceed what one opened package holds (error trapping) | Done v1.29.0.221 |
 | 12 | R1 44:00–45:15 | Wastage of partial amounts (e.g. 50 ml spilled), not whole servings | Done — wastage is entered in ml/g already |
-| 13 | R1 11:17–13:05, 34:10–40:00 | Receive Deliveries: enter the PO reference number → checklist of expected items; add the supplier's own DR/SI number field; pick the supplier instead of retyping | To do — staff currently type supplier and items by hand |
+| 13 | R1 11:17–13:05, 34:10–40:00 | Receive Deliveries: enter the PO reference number → checklist of expected items; add the supplier's own DR/SI number field; pick the supplier instead of retyping | Done v1.36.0.240 (PO numbers, Receive fills the checklist, DR no.) |
 | 14 | R2 31:50–33:14 | Activity Log grouped by category (security vs inventory), date filter; stock / daily / weekly reports | Partial — stock report done v1.30.0.232; Activity Log grouping to do |
 
 ## Wi-Fi and network

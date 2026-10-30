@@ -43,6 +43,7 @@
                     @forelse($purchaseOrders as $po)
                     <tr class="border-b border-[#FAFAFA] group hover:bg-[#FDF8F5]/50 transition-colors">
                         <td class="py-4">
+                            <span class="font-mono text-xs font-bold text-[#795548] block">{{ $po->po_number }}</span>
                             <span class="font-bold text-[#4A3B32]">{{ $po->ingredient->name ?? 'Unknown ingredient' }}</span>
                             <span class="text-xs text-[#795548] font-bold block md:hidden">{{ $po->supplier->name ?? 'No supplier linked' }}</span>
                         </td>

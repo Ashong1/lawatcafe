@@ -40,7 +40,12 @@ class DeliveryReceivingService
             $allMatched = true;
 
             foreach ($data['items'] as $itemData) {
-                $draft = $this->findMatchingDraft($itemData['ingredient_id'], $itemData['quantity'], $data['supplier_name']);
+                // Received against a PO: match that order exactly; otherwise look for one.
+                $draft = ! empty($itemData['purchase_order_draft_id'])
+                    ? PurchaseOrderDraft::where('id', $itemData['purchase_order_draft_id'])->where('status', 'sent')
+                        ->where('ingredient_id', $itemData['ingredient_id'])->get()
+                        ->first(fn ($d) => abs((float) $d->suggested_quantity - (float) $itemData['quantity']) < 0.01)
+                    : $this->findMatchingDraft($itemData['ingredient_id'], $itemData['quantity'], $data['supplier_name']);
 
                 IngredientDeliveryItem::create([
                     'ingredient_delivery_id' => $delivery->id,
