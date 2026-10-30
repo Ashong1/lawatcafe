@@ -59,7 +59,7 @@
                 const text = single
                     ? orders[0].order_type + ' · ' + orders[0].items
                     : orders.map(o => '#' + o.number + ' (' + mins(o.minutes) + ')').join(', ');
-                const onKds = window.location.pathname.startsWith('/kds');
+                const onKds = window.location.pathname.startsWith('/pos');
 
                 this.chime();
 

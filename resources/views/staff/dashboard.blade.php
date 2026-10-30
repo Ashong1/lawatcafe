@@ -57,14 +57,14 @@
             </a>
         </div>
 
-        <a href="{{ route('kds.index') }}" class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col hover:border-[#3E2723]/40 hover:shadow-md transition-all relative">
+        <a href="{{ route('pos') }}" class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] flex flex-col hover:border-[#3E2723]/40 hover:shadow-md transition-all relative">
             <h3 class="text-sm font-bold text-[#3E2723] flex items-center gap-2 mb-4">
                 <x-lucide-clock class="w-4 h-4 text-[#795548]" /> Kitchen queue
             </h3>
             <span class="text-5xl font-bold transition-colors duration-500"
                   :class="pendingOrdersCount > 5 ? 'text-red-600' : (pendingOrdersCount > 0 ? 'text-amber-700' : 'text-green-700')"
                   x-text="pendingOrdersCount" aria-live="polite" aria-atomic="true">{{ $pendingOrdersCount }}</span>
-            <span class="text-xs font-medium text-[#6D4C41] mt-1">orders waiting &middot; open kitchen display &rarr;</span>
+            <span class="text-xs font-medium text-[#6D4C41] mt-1">orders waiting &middot; make them on the register &rarr;</span>
             <div x-show="pendingOrdersCount > 5" class="absolute top-5 right-5 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
         </a>
     </div>

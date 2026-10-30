@@ -20,8 +20,7 @@ final class PageCatalog
 
     /** route name => [label, what it's for, audiences] */
     private const PAGES = [
-        'pos' => ['Register', 'Ring up orders and sell Wi-Fi codes.', [ToolRegistry::AUDIENCE_STAFF, ToolRegistry::AUDIENCE_ADMIN]],
-        'kds.index' => ['Kitchen Display', 'Orders waiting to be made; mark items and orders done.', [ToolRegistry::AUDIENCE_STAFF, ToolRegistry::AUDIENCE_ADMIN]],
+        'pos' => ['Register', 'Ring up orders, make them (Orders to make: Start, Done) and sell Wi-Fi codes.', [ToolRegistry::AUDIENCE_STAFF, ToolRegistry::AUDIENCE_ADMIN]],
         'pos.history' => ['Orders', 'Past sales and orders; request or approve voids.', self::ALL_STAFF],
         'network.sessions' => ["Wi-Fi & Network > Who's Online", 'See who is connected to the guest Wi-Fi, disconnect a device, add time, see data used.', self::ALL_STAFF],
         'network.vouchers.index' => ['Wi-Fi & Network > Wi-Fi Codes', 'Make, print, search and delete Wi-Fi codes.', self::ALL_STAFF],

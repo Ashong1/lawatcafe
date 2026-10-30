@@ -9,6 +9,17 @@ the history was rewritten.
 
 ---
 
+## 1.40.0 — Register and Kitchen Display are one screen
+*build 244*
+
+- **The Register shows Menu | Orders to make | Current order side by side**
+  (from desktop width), so the one person on duty takes and makes orders on
+  the same screen. On phones and small tablets the "Orders to make" button
+  opens the same list.
+- **Kitchen Display is gone from the sidebar**; its old address opens the
+  Register. The staff dashboard's kitchen queue and the waiting-order
+  reminder point to the Register.
+
 ## 1.39.0 — Check a delivery by PO number
 *build 243*
 

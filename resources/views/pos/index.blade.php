@@ -105,7 +105,7 @@
                 <div class="hidden md:flex md:w-auto flex-wrap justify-end gap-2 sm:gap-3 items-center">
                     {{-- Orders to make: the kitchen list, on the register --}}
                     <button type="button" @click="ordersOpen = true" data-orders-count="{{ $waitingOrders->count() }}"
-                            class="relative min-h-[44px] bg-[#3E2723] hover:bg-[#271815] text-white px-3 sm:px-5 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                            class="xl:hidden relative min-h-[44px] bg-[#3E2723] hover:bg-[#271815] text-white px-3 sm:px-5 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center justify-center gap-2 whitespace-nowrap">
                         <x-lucide-chef-hat class="w-4 h-4" />
                         <span class="hidden xl:inline">Orders to make</span><span class="xl:hidden">To make</span>
                         <span x-show="ordersCount > 0" x-text="ordersCount" class="min-w-[1.5rem] h-6 px-1.5 rounded-full bg-amber-500 text-[#3E2723] text-xs font-bold inline-flex items-center justify-center">{{ $waitingOrders->count() }}</span>
@@ -286,6 +286,19 @@
                 Cancel
             </button>
     </x-modal-shell>
+
+    {{-- Orders to make, always on screen from xl: one person takes and makes the orders (owner, Oct 30).
+         Below xl the "Orders to make" button opens the same list as a side panel. --}}
+    <section data-orders-column aria-labelledby="orders-column-title" class="hidden xl:flex flex-col w-80 2xl:w-96 shrink-0 h-full overflow-hidden border-l border-[#F0E6D2] bg-[#FDF8F5]">
+        <div class="flex items-center justify-between gap-2 px-4 py-4 border-b border-[#F0E6D2] bg-white">
+            <h2 id="orders-column-title" class="text-sm font-bold text-[#3E2723] uppercase tracking-wide flex items-center gap-2">
+                <x-lucide-chef-hat class="w-4 h-4" /> Orders to make
+            </h2>
+            <span x-text="ordersCount" class="min-w-[1.75rem] h-7 px-2 rounded-full text-xs font-bold inline-flex items-center justify-center"
+                  :class="ordersCount > 0 ? 'bg-amber-500 text-[#3E2723]' : 'bg-[#F0E6D2] text-[#795548]'">{{ $waitingOrders->count() }}</span>
+        </div>
+        <div class="flex-1 min-h-0 overflow-y-auto p-3" x-html="ordersHtml"></div>
+    </section>
 
     {{-- Cart Sidebar (Right) — desktop/tablet-landscape only; below `lg` the cart is a bottom-sheet, see below --}}
     <div data-chat-avoid class="hidden lg:flex bg-white p-5 flex-col shrink-0 border-l border-[#F0E6D2] shadow-[-10px_0_30px_rgba(62,39,35,0.05)] h-full z-10 overflow-hidden lg:w-[28rem]">

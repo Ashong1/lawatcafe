@@ -84,7 +84,7 @@ class SuperAdminRegisterAccessTest extends TestCase
             $user = User::factory()->create(['role' => $role]);
 
             $this->actingAs($user)->get(route('pos'))->assertOk();
-            $this->actingAs($user)->get(route('kds.index'))->assertOk();
+            $this->actingAs($user)->get(route('kds.index'))->assertRedirect(route('pos'));
         }
     }
 
@@ -114,6 +114,7 @@ class SuperAdminRegisterAccessTest extends TestCase
         $adminSidebar = $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('dashboard'));
         $adminSidebar->assertSee('href="/pos"', false);
         $adminSidebar->assertSee('Open Register', false);
-        $adminSidebar->assertSee('Kitchen Display', false);
+        // The Kitchen Display is the Register's "Orders to make" column now (owner, Oct 30).
+        $adminSidebar->assertDontSee('Kitchen Display', false);
     }
 }

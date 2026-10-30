@@ -12,7 +12,7 @@ class OrderWaitController extends Controller
         return response()->json([
             'minutes' => OrderWaitService::reminderMinutes(),
             'orders' => $orders->waiting(),
-            'kds_url' => route('kds.index'),
+            'kds_url' => route('pos'),
         ]);
     }
 }

@@ -65,4 +65,16 @@ class RegisterOrdersPanelTest extends TestCase
             ->assertJsonPath('html', fn ($html) => str_contains($html, 'data-orders-panel') && ! str_contains($html, '#0041'));
         $this->assertSame('completed', $sale->fresh()->status);
     }
+
+    public function test_the_register_and_kitchen_display_are_one_screen(): void
+    {
+        Shift::create(['user_id' => $this->staff->id, 'starting_cash' => 500, 'status' => 'open', 'opened_at' => now()]);
+        $this->order('TRN-00000041', 'pending');
+
+        $page = $this->actingAs($this->staff)->get(route('pos'))->assertOk();
+        $page->assertSee('data-orders-column', false)->assertDontSee('title="Kitchen Display"', false);
+
+        $this->actingAs($this->staff)->get('/kds')->assertRedirect(route('pos'));
+        $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('dashboard'))->assertDontSee('title="Kitchen Display"', false);
+    }
 }

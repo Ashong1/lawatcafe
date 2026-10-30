@@ -62,6 +62,6 @@ class StaffControllerTest extends TestCase
         $this->actingAs($staff)->get(route('staff.dashboard'))
             ->assertOk()
             ->assertSee(route('pos', ['category' => 'Wi-Fi']), false)
-            ->assertSee(route('kds.index'), false);
+            ->assertSee(route('pos'), false);
     }
 }

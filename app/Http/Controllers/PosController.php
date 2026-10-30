@@ -347,7 +347,7 @@ class PosController extends Controller
                 'New Order!',
                 "Transaction #{$sale->transaction_number} was just placed.",
                 'shopping-bag',
-                route('kds.index')
+                route('pos')
             ));
 
             return response()->json([

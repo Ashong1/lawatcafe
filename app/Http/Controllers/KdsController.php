@@ -8,19 +8,10 @@ use Illuminate\Http\Request;
 
 class KdsController extends Controller
 {
+    /** The Kitchen Display is part of the Register now (Orders to make column); the old address opens it. */
     public function index()
     {
-        // Fetch pending and preparing orders
-        $orders = $this->pendingAndPreparingOrders();
-
-        // Fetch recently completed orders for recall (last 10)
-        $recentlyCompleted = Sale::with(['items.product', 'user'])
-            ->where('status', 'completed')
-            ->latest('updated_at')
-            ->take(10)
-            ->get();
-
-        return view('kds.index', compact('orders', 'recentlyCompleted'));
+        return redirect()->route('pos');
     }
 
     /**
