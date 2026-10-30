@@ -84,7 +84,11 @@ class ChatStreamResponder
                 // label: the owner-facing wording (AgentActivityEntry), so the
                 // chat's cards don't print raw tool names like "blockSites".
                 'pending' => array_map(fn ($p) => $p + ['label' => AgentActivityEntry::labelFor($p['tool'] ?? '', true)], $result['pending'] ?? []),
-                'executed' => array_map(fn ($e) => $e + ['label' => AgentActivityEntry::labelFor($e['tool'] ?? '', false)], $result['executed'] ?? []),
+                // changes: a tool that writes (anything not 'auto'), so the page behind the chat reloads.
+                'executed' => array_map(fn ($e) => $e + [
+                    'label' => AgentActivityEntry::labelFor($e['tool'] ?? '', false),
+                    'changes' => ($this->tools()[$e['tool'] ?? '']?->permissionTier() ?? 'auto') !== 'auto',
+                ], $result['executed'] ?? []),
             ];
             if ($conversation) {
                 $meta['conversation_id'] = $conversation->id;
@@ -138,6 +142,12 @@ class ChatStreamResponder
             ? 'The internet is down at the moment, so our AI helper can\'t answer. Our staff at the counter are happy to help!'
             : 'The shop\'s internet is down, so Barista AI can\'t reach its AI service right now. '
                 .'Everything else still works: the register, vouchers, the Wi-Fi login and the reports. I\'ll be back as soon as the internet returns.';
+    }
+
+    /** Every tool by name (the super admin set includes all the others). */
+    private function tools(): array
+    {
+        return app(ToolRegistry::class)->forAudience(ToolRegistry::AUDIENCE_SUPER_ADMIN);
     }
 
     private function emit(array $payload): void

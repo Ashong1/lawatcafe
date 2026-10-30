@@ -134,6 +134,14 @@ export default function registerAgentChat(Alpine) {
         initialY: 0,
 
         init() {
+            // Reopen after refreshAfterChange() reloaded the page.
+            try {
+                if (sessionStorage.getItem('lk_chat_reopen')) {
+                    sessionStorage.removeItem('lk_chat_reopen');
+                    this.$nextTick(() => { this.open = true; this.clampPosition(); this.scrollToBottom(); });
+                }
+            } catch (e) {}
+
             // Restores the conversation across full page navigations (this app has no
             // SPA routing, so every link click destroys and recreates this component).
             // sessionStorage rather than localStorage: these terminals/kiosks are often
@@ -293,6 +301,19 @@ export default function registerAgentChat(Alpine) {
                 this.isDragging = false;
                 this.clampPosition();
             }, 50);
+        },
+
+        // Barista AI changed something: reload the page behind the chat so it shows
+        // the change, and reopen the chat after. Never on the register, where a
+        // reload would lose an unfinished order.
+        refreshAfterChange() {
+            if (document.querySelector('[data-chat-no-refresh]')) {
+                this.toast('success', 'Done. Refresh the page to see the change.');
+                return;
+            }
+            this.save();
+            try { sessionStorage.setItem('lk_chat_reopen', '1'); } catch (e) {}
+            setTimeout(() => window.location.reload(), 1500);
         },
 
         toggle() {
@@ -604,6 +625,7 @@ export default function registerAgentChat(Alpine) {
                                 if (queued) await typeOut();
                             }
 
+                            if ((event.executed || []).some((e) => e.changes)) this.refreshAfterChange();
                             (event.executed || []).forEach(e => {
                                 this.history.push({ kind: 'executed', tool: e.tool, label: e.label, message: (e.result && e.result.message) || 'Done.', download: e.result && e.result.data && e.result.data.download });
                             });
@@ -711,6 +733,7 @@ export default function registerAgentChat(Alpine) {
                 entry.resolved = true;
                 entry.resolution = data.success ? 'approved' : 'failed';
                 entry.resolutionMessage = data.message;
+                if (data.success) this.refreshAfterChange();
                 if (!data.success) this.toast('error', data.message || 'Could not confirm this action.');
             } catch (error) {
                 this.toast('error', 'Could not reach the server to confirm this action.');

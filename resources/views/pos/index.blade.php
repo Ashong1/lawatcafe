@@ -63,7 +63,7 @@
     }
 </style>
 
-<div x-data="posSystem()" class="bg-[#FDF8F5] w-full flex-1 lg:h-full flex items-stretch text-[#4A3B32] lg:overflow-hidden" style="font-family: 'Montserrat', sans-serif;">
+<div x-data="posSystem()" data-chat-no-refresh class="bg-[#FDF8F5] w-full flex-1 lg:h-full flex items-stretch text-[#4A3B32] lg:overflow-hidden" style="font-family: 'Montserrat', sans-serif;">
 
     {{-- Menu Area (Left) --}}
     <div class="flex-1 min-w-0 p-3 sm:p-4 md:p-8 pb-28 lg:pb-8 flex flex-col lg:overflow-hidden">

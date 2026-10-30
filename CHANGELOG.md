@@ -9,6 +9,15 @@ the history was rewritten.
 
 ---
 
+## 1.54.2 — The page shows Barista AI's changes
+*build 288*
+
+- When Barista AI changes something (restock, block a device, make Wi-Fi
+  codes…), straight away or after you tap Approve, the page behind the chat
+  reloads after a moment so it shows the change, and the chat reopens where
+  you were. Read-only answers don't reload anything. On the register it
+  never reloads (an order in progress would be lost); it says to refresh.
+
 ## 1.54.1 — Arrow keys bring back earlier messages
 *build 287*
 
