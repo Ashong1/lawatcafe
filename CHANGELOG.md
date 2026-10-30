@@ -9,6 +9,16 @@ the history was rewritten.
 
 ---
 
+## 1.43.0 — Wi-Fi codes per order
+*build 249*
+
+- One Wi-Fi code per phone stays. When an order reaches the free Wi-Fi
+  minimum, the cart has **"Free Wi-Fi codes – 1 +"** so a group gets one each
+  (up to 10). "Place this order?" now spells out the codes to be made
+  ("3 Wi-Fi codes · 2 free Wi-Fi codes (60 mins)").
+- The register refuses a zero or impossibly large quantity, and more than 20
+  Wi-Fi codes in one order, with a plain message, and makes nothing.
+
 ## 1.42.0 — Orders by day, week, month or year; export
 *build 248*
 

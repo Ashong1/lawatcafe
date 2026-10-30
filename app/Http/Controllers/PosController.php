@@ -135,7 +135,10 @@ class PosController extends Controller
         $request->validate([
             'total_amount' => 'required|numeric',
             'amount_received' => 'required|numeric',
-            'cart' => 'required|array',
+            'cart' => 'required|array|min:1',
+            'cart.*.quantity' => 'required|integer|min:1|max:50',
+            // One Wi-Fi code per device (owner, Oct 30): the cashier picks how many free codes a qualifying order gets.
+            'free_wifi_codes' => 'nullable|integer|min:1|max:10',
             'payment_method' => ['nullable', Rule::in(app(EwalletPaymentService::class)->acceptedMethods())],
             // Read off the customer's "sent" screen; the only proof an e-wallet payment happened.
             'payment_reference' => ['nullable', 'required_unless:payment_method,Cash,null', 'string', 'min:4', 'max:40', 'regex:/^[A-Za-z0-9 -]+$/'],
@@ -145,12 +148,20 @@ class PosController extends Controller
             'shift_id' => 'required|exists:shifts,id',
         ], [
             'payment_method.in' => 'That payment method is not set up. Reload the register.',
+            'cart.*.quantity.max' => 'That is too many of one item for a single order. Check the quantity.',
+            'cart.*.quantity.min' => 'An item has a quantity of zero. Remove it or set a quantity.',
+            'free_wifi_codes.max' => 'Up to 10 free Wi-Fi codes per order.',
             'payment_reference.required_unless' => 'Type the reference number from the customer\'s "sent" screen.',
             'payment_reference.min' => 'The reference number looks too short. Check the customer\'s screen.',
             'payment_reference.regex' => 'The reference number can only have letters and numbers.',
         ]);
 
         // Pre-fetch all products in the cart with ingredients to avoid N+1
+        if (collect($request->cart)->where('type', 'wifi')->sum('quantity') > 20) {
+            return response()->json(['success' => false, 'message' => 'Up to 20 Wi-Fi codes per order. Split it into two orders.',
+                'errors' => ['cart.0.quantity' => ['Up to 20 Wi-Fi codes per order.']]], 422);
+        }
+
         $productIds = collect($request->cart)->where('type', 'product')->pluck('id')->toArray();
         $products = Product::with('ingredients')->whereIn('id', $productIds)->get()->keyBy('id');
         $wifiDurations = json_decode(Setting::get('voucher_durations', '{"20":60,"50":180,"100":1440}'), true);
@@ -328,17 +339,17 @@ class PosController extends Controller
             if ($freeWifiMin > 0 && $finalTotal >= $freeWifiMin) {
                 // Check if they already purchased a wifi voucher explicitly to prevent stacking, or allow it. Let's allow it as a bonus.
                 $hasWifi = true;
-                $freeCode = Voucher::generateCode('FREE');
-                Voucher::create([
-                    'code' => $freeCode,
-                    'duration_minutes' => $freeWifiDuration,
-                    'tier' => 'free',
-                    'is_used' => false,
-                    'sale_id' => $sale->id,
-                ]);
-
-                // Add to generated codes list, but mark it as free for the UI if needed
-                array_unshift($generatedCodes, $freeCode); // Put the free code first
+                for ($n = 0; $n < (int) $request->input('free_wifi_codes', 1); $n++) {
+                    $freeCode = Voucher::generateCode('FREE');
+                    Voucher::create([
+                        'code' => $freeCode,
+                        'duration_minutes' => $freeWifiDuration,
+                        'tier' => 'free',
+                        'is_used' => false,
+                        'sale_id' => $sale->id,
+                    ]);
+                    array_unshift($generatedCodes, $freeCode); // free codes first
+                }
             }
 
             // Notify Staff of New Order

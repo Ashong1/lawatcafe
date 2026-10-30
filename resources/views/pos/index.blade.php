@@ -483,6 +483,7 @@
             showQrModal: false,
             showModal: false,
             ordersOpen: false,
+            freeWifiCodes: 1,
             ordersCount: {{ $waitingOrders->count() }},
             ordersHtml: @js(view('pos.partials.orders-panel', ['orders' => $waitingOrders])->render()),
             showVariantModal: false,
@@ -728,6 +729,7 @@
 
             resetCart() {
                 this.cart = [];
+                this.freeWifiCodes = 1;
                 this.amountTendered = 0;
                 this.paymentMethod = 'Cash';
                 this.paymentReference = '';
@@ -809,6 +811,11 @@
                 const tendered = this.amountTendered || this.grandTotal;
                 const parts = [this.cart.reduce((n, i) => n + i.quantity, 0) + ' item(s)', 'Total ' + peso(this.grandTotal), this.paymentMethod];
                 if (this.paymentMethod === 'Cash') parts.push('Change ' + peso(tendered - this.grandTotal));
+                // Wi-Fi codes are spelled out so the count is right before any are made.
+                const paidCodes = this.cart.filter(i => i.type === 'wifi').reduce((n, i) => n + i.quantity, 0);
+                const freeCodes = this.freeWifiMinAmount > 0 && this.grandTotal >= this.freeWifiMinAmount ? this.freeWifiCodes : 0;
+                if (paidCodes) parts.push(paidCodes + ' Wi-Fi code' + (paidCodes > 1 ? 's' : ''));
+                if (freeCodes) parts.push(freeCodes + ' free Wi-Fi code' + (freeCodes > 1 ? 's' : '') + ' (' + this.freeWifiDuration + ' mins)');
                 window.confirmAction({
                     title: 'Place this order?',
                     text: parts.join(' · '),
@@ -843,6 +850,7 @@
                             payment_reference: this.paymentMethod === 'Cash' ? null : this.paymentReference.trim(),
                             amount_received: this.paymentMethod === 'Cash' ? (this.amountTendered || this.grandTotal) : this.grandTotal,
                             order_type: this.orderType,
+                            free_wifi_codes: this.freeWifiCodes,
                             shift_id: {{ $activeShift ? $activeShift->id : 'null' }}
                         })
                     });

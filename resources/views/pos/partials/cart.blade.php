@@ -127,6 +127,15 @@
                  :class="grandTotal >= freeWifiMinAmount ? 'bg-[#1565C0]' : 'bg-[#3E2723]'"
                  :style="`width: ${Math.min(100, (grandTotal / freeWifiMinAmount) * 100)}%`"></div>
         </div>
+        {{-- One code per device: a group gets one each (owner, Oct 30). --}}
+        <div x-show="grandTotal >= freeWifiMinAmount" class="flex items-center justify-between gap-2">
+            <span class="text-xs font-bold text-[#1565C0]">Free Wi-Fi codes (one per phone)</span>
+            <div class="flex items-center gap-1">
+                <button type="button" @click="freeWifiCodes = Math.max(1, freeWifiCodes - 1)" aria-label="One fewer free Wi-Fi code" class="w-11 h-11 lg:w-9 lg:h-9 rounded-full border border-[#E3F2FD] bg-white text-[#1565C0] font-bold">−</button>
+                <span class="w-6 text-center text-sm font-bold text-[#1565C0]" x-text="freeWifiCodes" aria-live="polite"></span>
+                <button type="button" @click="freeWifiCodes = Math.min(10, freeWifiCodes + 1)" aria-label="One more free Wi-Fi code" class="w-11 h-11 lg:w-9 lg:h-9 rounded-full border border-[#E3F2FD] bg-white text-[#1565C0] font-bold">+</button>
+            </div>
+        </div>
     </div>
 
     <div>

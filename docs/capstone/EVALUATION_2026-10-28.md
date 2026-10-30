@@ -41,7 +41,7 @@ Status legend: **Done** = already in the code · **Partial** · **To do** · **Q
 | # | Where | Request | Status |
 |---|---|---|---|
 | 15 | R1 02:54–06:22 | Show the actual measured internet speed next to the plan-speed settings, an estimate of how many users fit, and keep bandwidth reserved for the shop | Done v1.31.0.234 (Your internet line card) |
-| 16 | R1 13:09–15:25 | One shareable code with a user limit instead of one code per person (database efficiency) | To do — reverses one-code-per-device |
+| 16 | R1 13:09–15:25 | One shareable code with a user limit instead of one code per person (database efficiency) | Decided: one code per device kept (owner); codes per order chosen at checkout and confirmed, v1.43.0.249 |
 | 17 | R2 20:18–21:08 | Wrong voucher code: block automatically after 3 tries | Done v1.29.0.220 (5-minute block) |
 | — | R1 50:35 | "Unnamed device" in the device list | Question — dual-NIC ports; label them |
 
