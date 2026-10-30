@@ -406,6 +406,9 @@ Route::middleware(['auth'])->group(function () {
                 // whether this POS may issue printed customer receipts is a
                 // compliance decision, not a shop-floor one.
                 Route::post('/receipt-printing', [SettingController::class, 'updateReceiptPrinting'])->name('receipt-printing.update');
+                Route::post('/ai-providers/{provider}/limit', [SettingController::class, 'updateAiDailyLimit'])
+                    ->whereIn('provider', array_keys(\App\Services\AIService::PROVIDERS))
+                    ->name('ai-providers.limit');
                 Route::get('/ai-routing', [\App\Http\Controllers\AiRoutingController::class, 'index'])->name('ai-routing');
                 Route::get('/ai-routing/feed', [\App\Http\Controllers\AiRoutingController::class, 'feed'])->name('ai-routing.feed');
                 Route::get('/agent', [SettingController::class, 'agent'])->name('agent');

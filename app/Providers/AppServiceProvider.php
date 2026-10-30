@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\AiUsage;
 use App\Models\ActivityLog;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Lockout;
@@ -42,6 +43,14 @@ class AppServiceProvider extends ServiceProvider
         // site individually — this has no downside for LAN-IP targets like
         // OpnSenseService's (an already-literal IP skips resolution entirely).
         Http::globalOptions(['force_ip_resolve' => 'v4']);
+
+        // Count every AI service's requests (AiUsage), not only OpenRouter's.
+        Http::globalMiddleware(fn (callable $handler) => fn ($request, array $options) => $handler($request, $options)
+            ->then(function ($response) use ($request) {
+                AiUsage::observe((string) $request->getUri(), $response);
+
+                return $response;
+            }));
 
         Event::listen(fn (Login $e) => ActivityLog::record('signed_in', $e->user));
         Event::listen(fn (Logout $e) => $e->user && ActivityLog::record('signed_out', $e->user));

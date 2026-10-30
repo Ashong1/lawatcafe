@@ -9,6 +9,16 @@ the history was rewritten.
 
 ---
 
+## 1.53.0 — AI usage for every service
+*build 283*
+
+- Barista AI Settings → **AI usage today** covers every service, not only
+  OpenRouter: requests used today (answered · failed), the last 7 days, and
+  what's left with a progress bar. "Left" comes from the service when it
+  reports it (Groq's daily request headers, OpenRouter's free count) or from
+  a daily limit the super admin enters on that service's card. A totals row
+  covers all services. Every AI call is counted, including model tests.
+
 ## 1.52.3 — Off-topic guard in code; answers from the shop's data
 *build 282*
 

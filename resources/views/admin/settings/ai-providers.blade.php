@@ -13,7 +13,7 @@
                 </h2>
                 <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">
                     @if (auth()->user()->isSuperAdmin())
-                        Barista AI tries Google Gemini first, then Groq, then OpenRouter, moving to the next one if a provider fails or runs out.
+                        Barista AI tries {{ collect(\App\Services\AIService::PROVIDERS)->pluck('label')->join(', ', ', then ') }}, in that order, moving to the next one if a provider fails or runs out.
                         Every answer still gets its numbers from the shop's own data, whichever provider writes it.
                     @else
                         Barista AI uses a few online AI services and switches between them by itself. All you need here is the keys.
@@ -25,37 +25,76 @@
         <div class="space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
-            {{-- Read from OpenRouter (free to read), cached 5 minutes in AiBudget::account(). --}}
+            {{-- Counted by the system for every service (AiUsage); OpenRouter's credit is read from its account. --}}
             <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
-                <div class="flex items-center gap-3 mb-6">
+                <div class="flex items-center gap-3 mb-5">
                     <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700">
                         <x-lucide-wallet class="w-6 h-6" />
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">OpenRouter Usage</h3>
-                        <p class="text-xs text-[#6D4C41] font-medium italic">From your OpenRouter account, updated every 5 minutes.</p>
+                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">AI usage today</h3>
+                        <p class="text-xs text-[#6D4C41] font-medium italic">Requests counted by the system for every service, plus what each service reports.</p>
                     </div>
                 </div>
-                @if ($usage)
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="p-4 rounded-2xl bg-[#FDF8F5] border border-[#F0E6D2]">
-                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">AI credit balance</p>
-                            <p class="text-2xl font-bold mt-1 {{ $usage['balance'] < 0 ? 'text-red-700' : 'text-[#3E2723]' }}">{{ $usage['balance'] < 0 ? '-' : '' }}${{ number_format(abs($usage['balance']), 2) }}</p>
-                        </div>
-                        <div class="p-4 rounded-2xl bg-[#FDF8F5] border border-[#F0E6D2]">
-                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Free AI requests today</p>
-                            <p class="text-2xl font-bold mt-1 text-[#3E2723]">{{ number_format($usage['free_used']) }} of {{ number_format($usage['free_limit']) }}</p>
-                            <p class="text-xs text-[#6D4C41] mt-1">Resets 8:00 AM.</p>
-                        </div>
-                    </div>
-                    @if ($usage['balance'] < 0)
-                        <p class="mt-4 text-sm font-medium text-red-800 bg-red-50 border border-red-200 rounded-xl p-3">
-                            The balance is below zero, so the daily limit drops to {{ number_format($usage['free_limit']) }} free requests. Add credit on openrouter.ai to raise it.
-                        </p>
-                    @endif
-                @else
-                    <p class="text-sm text-[#6D4C41]">Couldn't reach OpenRouter just now. Check the internet connection or the API key below.</p>
-                @endif
+                <ul class="divide-y divide-[#F0E6D2]">
+                    @foreach ($providers as $p => $provider)
+                        @php $u = $usageToday[$p]; $q = $u['quota']; @endphp
+                        <li class="py-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="flex items-center gap-2 min-w-0">
+                                    <span class="w-2 h-2 rounded-full shrink-0 {{ $provider['configured'] ? 'bg-green-500' : 'bg-[#D7CCC8]' }}"></span>
+                                    <span class="text-sm font-bold text-[#3E2723] truncate">{{ $provider['label'] }}</span>
+                                </span>
+                                @if (! $provider['configured'])
+                                    <span class="text-sm text-[#795548]">not set up</span>
+                                @elseif ($q)
+                                    <span class="text-sm font-bold shrink-0 {{ $q['remaining'] === 0 ? 'text-red-700' : 'text-green-700' }}">{{ number_format($q['remaining']) }} left</span>
+                                @endif
+                            </div>
+                            @if ($provider['configured'])
+                                @if ($q)
+                                    <div class="mt-2 ml-4 h-2 rounded-full bg-[#F0E6D2] overflow-hidden" title="{{ number_format($q['used']) }} of {{ number_format($q['limit']) }} used today ({{ $q['source'] }})">
+                                        <div class="h-full rounded-full {{ $q['used'] >= $q['limit'] ? 'bg-red-500' : ($q['used'] >= 0.8 * $q['limit'] ? 'bg-amber-500' : 'bg-green-500') }}" style="width: {{ min(100, $q['limit'] ? round(100 * $q['used'] / $q['limit']) : 0) }}%"></div>
+                                    </div>
+                                @endif
+                                <dl class="mt-2 ml-4 grid grid-cols-3 gap-2 text-xs">
+                                    <div><dt class="text-[#795548]">Used today</dt><dd class="font-bold text-[#3E2723]">{{ number_format($q['used'] ?? $u['answered'] + $u['failed']) }}{{ $q ? ' of '.number_format($q['limit']) : '' }}</dd></div>
+                                    <div><dt class="text-[#795548]">Answered · failed</dt><dd class="font-bold text-[#3E2723]">{{ number_format($u['answered']) }} · <span class="{{ $u['failed'] ? 'text-red-700' : '' }}">{{ number_format($u['failed']) }}</span></dd></div>
+                                    <div><dt class="text-[#795548]">Last 7 days</dt><dd class="font-bold text-[#3E2723]">{{ number_format($u['week']) }}</dd></div>
+                                </dl>
+                                <p class="mt-1.5 ml-4 text-xs text-[#6D4C41]">
+                                    @if ($p === 'openrouter' && $usage)
+                                        Credit <span class="{{ $usage['balance'] < 0 ? 'text-red-700 font-bold' : '' }}">{{ $usage['balance'] < 0 ? '-' : '' }}${{ number_format(abs($usage['balance']), 2) }}</span> · {{ number_format($usage['free_used']) }} of {{ number_format($usage['free_limit']) }} free requests used today.
+                                        @if ($usage['balance'] < 0)
+                                            <span class="block text-red-800">The balance is below zero, so it's held to {{ number_format($usage['free_limit']) }} free requests a day. Add credit on openrouter.ai to raise it.</span>
+                                        @endif
+                                    @elseif ($p === 'openrouter')
+                                        Couldn't reach OpenRouter just now to read its credit.
+                                    @elseif ($q)
+                                        Remaining is {{ $q['source'] }}.{{ $u['limits'] ? ' '.implode(' · ', array_diff($u['limits'], [number_format($q['remaining']).' of '.number_format($q['limit']).' requests left'])) : '' }}
+                                    @elseif ($u['limits'])
+                                        {{ implode(' · ', $u['limits']) }}
+                                    @elseif ($p === 'groq')
+                                        Groq reports what's left with each answer; it shows here after its next one.
+                                    @elseif ($p === 'cloudflare')
+                                        Free: 10,000 Neurons a day (see the Workers AI dashboard). {{ auth()->user()->isSuperAdmin() ? 'Set a daily request limit on its card to see what\'s left here.' : '' }}
+                                    @else
+                                        This service doesn't report what's left. {{ auth()->user()->isSuperAdmin() ? 'Set its daily limit on its card to track it here.' : '' }}
+                                    @endif
+                                </p>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+                @php
+                    $totalToday = collect($usageToday)->sum(fn ($u) => $u['answered'] + $u['failed']);
+                    $totalWeek = collect($usageToday)->sum('week');
+                @endphp
+                <div class="mt-3 pt-3 border-t-2 border-[#F0E6D2] flex items-center justify-between text-sm">
+                    <span class="font-bold text-[#3E2723]">All services</span>
+                    <span class="text-[#3E2723]"><span class="font-bold">{{ number_format($totalToday) }}</span> today · <span class="font-bold">{{ number_format($totalWeek) }}</span> in 7 days</span>
+                </div>
+                <p class="mt-3 text-xs text-[#6D4C41]">Counts restart at midnight; most free allowances reset at 8:00 AM.</p>
             </div>
 
             {{-- API Keys — env vars always take priority; these are only used as a fallback. --}}
@@ -164,6 +203,15 @@
                     </div>
                 </div>
 
+                @if ($provider['configured'] && $key !== 'openrouter')
+                    <form action="{{ route('admin.settings.ai-providers.limit', $key) }}" method="POST" class="mb-3 flex items-center gap-2">
+                        @csrf
+                        <label for="limit-{{ $key }}" class="text-xs font-bold uppercase tracking-wide text-[#795548] shrink-0">Free requests a day</label>
+                        <input id="limit-{{ $key }}" type="number" min="1" name="daily_limit" value="{{ \App\Models\Setting::get("ai_daily_limit_{$key}") }}" placeholder="{{ $key === 'groq' ? 'reported by Groq' : 'e.g. 1000' }}"
+                               class="min-w-0 flex-1 min-h-[36px] bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-lg px-3 text-base sm:text-sm font-bold focus:outline-none focus:border-[#3E2723]">
+                        <button type="submit" class="min-h-[36px] px-3 rounded-lg bg-[#FDF8F5] border-2 border-[#F0E6D2] text-xs font-bold uppercase tracking-wide text-[#3E2723] hover:bg-white">Save</button>
+                    </form>
+                @endif
                 <div class="divide-y divide-[#F0E6D2]">
                     @foreach ($provider['models'] as $model)
                         <div class="py-2" x-data="{ editing: false, saving: false, isCustom: false, id: @js($key.'|'.$model['name']) }"

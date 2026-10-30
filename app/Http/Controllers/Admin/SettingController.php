@@ -73,7 +73,9 @@ class SettingController extends Controller
     {
         $providers = $ai->getProviderStatuses();
         $usage = $budget->account();
-        return view('admin.settings.ai-providers', compact('providers', 'usage'));
+        $usageToday = app(\App\Services\AiUsage::class)->detailed($usage);
+
+        return view('admin.settings.ai-providers', compact('providers', 'usage', 'usageToday'));
     }
 
     /**
@@ -114,6 +116,16 @@ class SettingController extends Controller
         $result = $ai->testProvider($provider);
 
         return redirect()->back()->with('success', "Tested {$provider}: {$result['ok']} model(s) healthy, {$result['failed']} failed.");
+    }
+
+    /** A service's free daily request limit, for those that don't report what's left. */
+    public function updateAiDailyLimit(Request $request, string $provider)
+    {
+        abort_unless(isset(AIService::PROVIDERS[$provider]), 404);
+        $validated = $request->validate(['daily_limit' => 'nullable|integer|min:1|max:10000000']);
+        Setting::set("ai_daily_limit_{$provider}", $validated['daily_limit'] ?? null);
+
+        return back()->with('success', AIService::PROVIDERS[$provider]['label'].': '.($validated['daily_limit'] ?? null ? 'daily limit set to '.number_format($validated['daily_limit']).' requests.' : 'daily limit cleared.'));
     }
 
     /** One model, one short request: the page runs these in the background. */
