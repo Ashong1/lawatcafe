@@ -162,7 +162,10 @@
 
     <div x-show="paymentMethod === 'Cash'">
         <label class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-1.5">Cash received (₱)</label>
-        <input type="number" inputmode="decimal" aria-label="Cash received in pesos" x-model.number="amountTendered" class="w-full py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-base font-bold text-[#3E2723] tabular-nums" placeholder="Blank = exact amount">
+        <div class="flex gap-2">
+        <input type="number" inputmode="decimal" min="0" step="0.01" aria-label="Cash received in pesos" x-model.number="amountTendered" class="flex-1 min-w-0 py-2 px-3 border border-[#F0E6D2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E2723] bg-[#FAFAFA] transition-all text-base font-bold text-[#3E2723] tabular-nums" placeholder="How much did they give?">
+        <button type="button" @click="amountTendered = grandTotal" :disabled="cart.length === 0" class="shrink-0 min-h-[44px] px-4 rounded-lg border border-[#F0E6D2] bg-[#FAFAFA] text-[#3E2723] text-xs font-bold uppercase tracking-wide hover:bg-[#FDF8F5] disabled:opacity-50">Exact</button>
+        </div>
     </div>
 
     <div x-show="paymentMethod !== 'Cash'" x-cloak x-id="['payref']" class="flex gap-2 items-end">
@@ -206,6 +209,6 @@
         <template x-if="isProcessing">
             <x-lucide-loader-2 class="w-4 h-4 animate-spin" />
         </template>
-        <span x-text="isProcessing ? 'Processing...' : (paymentMethod !== 'Cash' && !paymentReady ? 'Type the reference no.' : (amountTendered > 0 && amountTendered < grandTotal ? 'Short by ₱' + (grandTotal - amountTendered).toFixed(2) : 'Place Order'))"></span>
+        <span x-text="isProcessing ? 'Processing...' : (paymentMethod !== 'Cash' && !paymentReady ? 'Type the reference no.' : (amountTendered > 0 && amountTendered < grandTotal ? 'Short by ₱' + (grandTotal - amountTendered).toFixed(2) : (!paymentReady ? 'Type the cash received' : 'Place Order')))"></span>
     </button>
 </div>

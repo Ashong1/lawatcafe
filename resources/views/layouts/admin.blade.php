@@ -212,9 +212,6 @@
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Dashboard</span>
             </a>
             {{-- Both hidden for super_admin, which is the developer/system
@@ -228,9 +225,6 @@
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Register</span>
             </a>
             @endunless
@@ -240,9 +234,6 @@
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Orders</span>
             </a>
             <a href="{{ route('admin.finance.z-reads') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('admin.finance.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="End of Day (Z-Reads)">
@@ -251,9 +242,6 @@
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">End of Day</span>
             </a>
             <a href="{{ route('reports.sales') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('reports.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Reports">
@@ -262,15 +250,12 @@
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Reports</span>
             </a>
 
             <!-- Inventory Dropdown -->
             <div class="space-y-1">
-                <button @click="menus.inventory = !menus.inventory" 
+                <button @click="toggleMenu('inventory')" 
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->is('inventory*') ? 'text-amber-400' : 'text-[#A1887F]' }}"
                         title="Inventory">
                     <div class="flex items-center">
@@ -279,23 +264,17 @@
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Inventory</span>
                     </div>
                     <x-lucide-chevron-down x-show="navLabelsVisible"
                                      x-transition:enter="transition ease-in-out duration-300"
                                      x-transition:enter-start="opacity-0"
                                      x-transition:enter-end="opacity-100"
-                                     x-transition:leave="transition ease-in-out duration-300"
-                                     x-transition:leave-start="opacity-100"
-                                     x-transition:leave-end="opacity-0"
                                      class="w-4 h-4 transition-transform duration-700" x-bind:class="menus.inventory ? 'rotate-180' : ''" />
                 </button>
                 <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
                      style="grid-template-rows: 0fr"
-                     x-bind:style="(menus.inventory && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                     x-bind:style="navLabelsVisible ? (menus.inventory ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr') : 'grid-template-rows: 0fr; transition: none'">
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
                             <a href="/inventory/products" class="block py-2 text-xs {{ request()->is('inventory/products') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Products</a>
@@ -313,7 +292,7 @@
 
             <!-- Network Dropdown -->
             <div class="space-y-1">
-                <button @click="menus.network = !menus.network" 
+                <button @click="toggleMenu('network')" 
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->is('network*') ? 'text-amber-400' : 'text-[#A1887F]' }}"
                         title="Wi-Fi & Network">
                     <div class="flex items-center">
@@ -322,23 +301,17 @@
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Wi-Fi &amp; Network</span>
                     </div>
                     <x-lucide-chevron-down x-show="navLabelsVisible"
                                      x-transition:enter="transition ease-in-out duration-300"
                                      x-transition:enter-start="opacity-0"
                                      x-transition:enter-end="opacity-100"
-                                     x-transition:leave="transition ease-in-out duration-300"
-                                     x-transition:leave-start="opacity-100"
-                                     x-transition:leave-end="opacity-0"
                                      class="w-4 h-4 transition-transform duration-700" x-bind:class="menus.network ? 'rotate-180' : ''" />
                 </button>
                 <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
                      style="grid-template-rows: 0fr"
-                     x-bind:style="(menus.network && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                     x-bind:style="navLabelsVisible ? (menus.network ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr') : 'grid-template-rows: 0fr; transition: none'">
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
                             <a href="/network/sessions" class="block py-2 text-xs {{ request()->is('network/sessions') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Who's Online</a>
@@ -357,7 +330,7 @@
 
             <!-- Barista AI Dropdown -->
             <div class="space-y-1">
-                <button @click="menus.ai = !menus.ai"
+                <button @click="toggleMenu('ai')"
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ $aiActive ? 'text-amber-400' : 'text-[#A1887F]' }}"
                         title="Barista AI">
                     <div class="flex items-center">
@@ -366,23 +339,17 @@
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Barista AI</span>
                     </div>
                     <x-lucide-chevron-down x-show="navLabelsVisible"
                                      x-transition:enter="transition ease-in-out duration-300"
                                      x-transition:enter-start="opacity-0"
                                      x-transition:enter-end="opacity-100"
-                                     x-transition:leave="transition ease-in-out duration-300"
-                                     x-transition:leave-start="opacity-100"
-                                     x-transition:leave-end="opacity-0"
                                      class="w-4 h-4 transition-transform duration-700" x-bind:class="menus.ai ? 'rotate-180' : ''" />
                 </button>
                 <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
                      style="grid-template-rows: 0fr"
-                     x-bind:style="(menus.ai && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                     x-bind:style="navLabelsVisible ? (menus.ai ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr') : 'grid-template-rows: 0fr; transition: none'">
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
                             <a href="{{ route('admin.analytics') }}" class="block py-2 text-xs {{ request()->is('admin/analytics') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Sales Forecast</a>
@@ -396,7 +363,7 @@
 
             <!-- Settings Dropdown (Consolidated) -->
             <div class="space-y-1">
-                <button @click="menus.settings = !menus.settings"
+                <button @click="toggleMenu('settings')"
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->routeIs('admin.settings.store') || request()->routeIs('admin.settings.ai-providers*') || request()->is('accounts*') ? 'text-amber-400' : 'text-[#A1887F]' }}"
                         title="Settings">
                     <div class="flex items-center">
@@ -405,23 +372,17 @@
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">Settings</span>
                     </div>
                     <x-lucide-chevron-down x-show="navLabelsVisible"
                                      x-transition:enter="transition ease-in-out duration-300"
                                      x-transition:enter-start="opacity-0"
                                      x-transition:enter-end="opacity-100"
-                                     x-transition:leave="transition ease-in-out duration-300"
-                                     x-transition:leave-start="opacity-100"
-                                     x-transition:leave-end="opacity-0"
                                      class="w-4 h-4 transition-transform duration-700" x-bind:class="menus.settings ? 'rotate-180' : ''" />
                 </button>
                 <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
                      style="grid-template-rows: 0fr"
-                     x-bind:style="(menus.settings && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                     x-bind:style="navLabelsVisible ? (menus.settings ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr') : 'grid-template-rows: 0fr; transition: none'">
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
                             <a href="{{ route('accounts.index') }}" class="block py-2 text-xs {{ request()->is('accounts*') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">{{ auth()->user()->isSuperAdmin() ? 'Staff & Admin Accounts' : 'Staff Accounts' }}</a>
@@ -435,7 +396,7 @@
 
             @if(auth()->user()->isSuperAdmin())
             <div class="space-y-1">
-                <button @click="menus.system = !menus.system"
+                <button @click="toggleMenu('system')"
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'text-amber-400' : 'text-[#A1887F]' }}"
                         title="System Administration — super_admin only">
                     <div class="flex items-center">
@@ -444,23 +405,17 @@
                       x-transition:enter="transition ease-in-out duration-300"
                       x-transition:enter-start="opacity-0"
                       x-transition:enter-end="opacity-100"
-                      x-transition:leave="transition ease-in-out duration-300"
-                      x-transition:leave-start="opacity-100"
-                      x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">System Administration</span>
                     </div>
                     <x-lucide-chevron-down x-show="navLabelsVisible"
                                      x-transition:enter="transition ease-in-out duration-300"
                                      x-transition:enter-start="opacity-0"
                                      x-transition:enter-end="opacity-100"
-                                     x-transition:leave="transition ease-in-out duration-300"
-                                     x-transition:leave-start="opacity-100"
-                                     x-transition:leave-end="opacity-0"
                                      class="w-4 h-4 transition-transform duration-700" x-bind:class="menus.system ? 'rotate-180' : ''" />
                 </button>
                 <div class="grid transition-[grid-template-rows] duration-700 ease-in-out"
                      style="grid-template-rows: 0fr"
-                     x-bind:style="(menus.system && navLabelsVisible) ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr'">
+                     x-bind:style="navLabelsVisible ? (menus.system ? 'grid-template-rows: 1fr' : 'grid-template-rows: 0fr') : 'grid-template-rows: 0fr; transition: none'">
                     <div class="overflow-hidden">
                         <div class="pl-11 space-y-1 pt-1">
                             <a href="{{ route('admin.settings.network') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.network') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Network Config</a>
@@ -473,7 +428,7 @@
         </nav>
 
         <div class="px-6 py-3 border-t border-[#5D4037] shrink-0 text-center">
-            <span x-show="navLabelsVisible" class="text-xs text-[#795548] font-bold tracking-wide uppercase">Lawa't Kape v{{ config('app.version') }}</span>
+            <span x-show="navLabelsVisible" class="text-xs text-[#795548] font-bold tracking-wide whitespace-nowrap uppercase">Lawa't Kape v{{ config('app.version') }}</span>
             <span x-show="!navLabelsVisible" class="text-xs text-[#795548] font-bold">v1</span>
         </div>
     </aside>
@@ -612,6 +567,15 @@
                 // collapsed cookie must not follow you onto a phone.
                 get navLabelsVisible() {
                     return this.isDesktop ? this.sidebarOpen : true;
+                },
+                // A group icon in the collapsed rail has no submenu to show, so it opens the sidebar on that group.
+                toggleMenu(name) {
+                    if (!this.navLabelsVisible) {
+                        this.sidebarOpen = true;
+                        this.menus[name] = true;
+                    } else {
+                        this.menus[name] = !this.menus[name];
+                    }
                 },
                 // Starts empty (every key falsy) on purpose — see the comment
                 // in init() below for why.

@@ -778,10 +778,10 @@
                 return this.wallets.find((w) => w.label === this.paymentMethod) || null;
             },
 
-            // Cash: enough tendered (or blank = exact). E-wallet: the reference
-            // number from the customer's "sent" screen.
+            // Cash: the cash received, at least the total (blank only for a free order).
+            // E-wallet: the reference number from the customer's "sent" screen.
             get paymentReady() {
-                if (this.paymentMethod === 'Cash') return !(this.amountTendered > 0 && this.amountTendered < this.grandTotal);
+                if (this.paymentMethod === 'Cash') return this.amountTendered > 0 ? this.amountTendered >= this.grandTotal : this.grandTotal === 0;
                 return this.paymentReference.trim().length >= 4;
             },
 
@@ -808,7 +808,7 @@
             confirmCheckout() {
                 if (this.cart.length === 0 || this.isProcessing || !this.paymentReady) return;
                 const peso = (n) => '₱' + Number(n).toFixed(2);
-                const tendered = this.amountTendered || this.grandTotal;
+                const tendered = Number(this.amountTendered) || 0;
                 const parts = [this.cart.reduce((n, i) => n + i.quantity, 0) + ' item(s)', 'Total ' + peso(this.grandTotal), this.paymentMethod];
                 if (this.paymentMethod === 'Cash') parts.push('Change ' + peso(tendered - this.grandTotal));
                 // Wi-Fi codes are spelled out so the count is right before any are made.
@@ -848,7 +848,7 @@
                             discount_amount: this.calculatedDiscount,
                             payment_method: this.paymentMethod,
                             payment_reference: this.paymentMethod === 'Cash' ? null : this.paymentReference.trim(),
-                            amount_received: this.paymentMethod === 'Cash' ? (this.amountTendered || this.grandTotal) : this.grandTotal,
+                            amount_received: this.paymentMethod === 'Cash' ? (Number(this.amountTendered) || 0) : this.grandTotal,
                             order_type: this.orderType,
                             free_wifi_codes: this.freeWifiCodes,
                             shift_id: {{ $activeShift ? $activeShift->id : 'null' }}

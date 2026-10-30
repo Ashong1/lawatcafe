@@ -9,6 +9,18 @@ the history was rewritten.
 
 ---
 
+## 1.44.2 — Sidebar and register fixes
+*build 256*
+
+- **Collapsed sidebar**: clicking a group icon (Inventory, Wi-Fi & Network,
+  Barista AI, Settings, System) now opens the sidebar on that group; before,
+  it did nothing. Labels and the version line hide at once when collapsing
+  instead of spilling out of the narrow rail, and open groups fold away
+  without leaving a gap.
+- **Register**: a cash order can't be placed until the cash received is typed
+  (at least the total). An **Exact** button fills in the total for exact
+  payments.
+
 ## 1.44.0 — Remote access
 *builds 254–255*
 
