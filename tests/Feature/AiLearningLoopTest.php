@@ -492,6 +492,16 @@ class AiLearningLoopTest extends TestCase
         $this->assertFalse(\App\Services\Agent\CapabilityGap::looksLikeGap("That's outside what I help with here. I can check sales, stock or the Wi-Fi for you."));
     }
 
+    /** Oct 30 live run: "I can't download sales report files yet" wasn't recorded (verb list missed it). */
+    public function test_any_i_cant_verb_is_a_gap_and_report_downloads_are_in_scope(): void
+    {
+        foreach (["I can't download sales report files yet.", 'I cannot export that to Excel.', 'I can’t print receipts from here.'] as $reply) {
+            $this->assertTrue(\App\Services\Agent\CapabilityGap::looksLikeGap($reply), $reply);
+        }
+        $this->assertStringContainsString('downloading, exporting or printing', app(AIService::class)->buildAdminSystemPrompt());
+        $this->assertStringContainsString('is in scope, never "outside what I help with"', app(AIService::class)->buildAdminSystemPrompt());
+    }
+
     /** A settled transcript alone can trip a run — no explicit rating needed. */
     public function test_conversations_count_towards_the_evidence_threshold(): void
     {

@@ -9,6 +9,17 @@ the history was rewritten.
 
 ---
 
+## 1.53.2 — "I can't" is always studied; report downloads are in scope
+*build 285*
+
+- Barista AI said "I can't download sales report files yet… queued to be
+  studied" but nothing was queued: the detector only knew some verbs. Any
+  "I can't <verb>" is now recorded for the learning step.
+- Downloading, exporting or printing the system's reports is in scope; a
+  system task without a tool is answered with where to do it, never "outside
+  what I help with". Checked live: after one study run it answers "go to
+  Reports > Sales and use the download option".
+
 ## 1.53.1 — Larger text on desktop
 *build 284*
 

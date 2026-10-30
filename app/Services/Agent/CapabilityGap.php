@@ -20,7 +20,8 @@ final class CapabilityGap
     private const PATTERNS = [
         "/\\b(?:don'?t|do not|doesn'?t|does not) have (?:a|an|any|the)? ?(?:tool|ability|access|way|capability|function)/i",
         "/\\b(?:i'?m|i am) (?:not able|unable) to\\b/i",
-        "/\\bi (?:can'?t|cannot|can not) (?:do|block|unblock|perform|access|change|create|delete|add|remove|send|update|edit|set|turn|manage|see|view)\\b/i",
+        // Any verb: a fixed list missed "I can't download/export/print" (Oct 30).
+        "/\\bi (?:can'?t|cannot|can not) [a-z]+/i",
         '/\\b(?:is not|isn\'?t) something i can\\b/i',
         '/\\bbeyond (?:my|what i) (?:current )?(?:capabilities|abilities|can)\\b/i',
         '/\\bno (?:tool|function) (?:for|to|that)\\b/i',
