@@ -140,7 +140,7 @@
                 </button>
             </div>
 
-            <form :action="formAction" method="POST" class="flex flex-col" @submit="submitting = true">
+            <form :action="formAction" method="POST" class="flex flex-col" @submit="submitting = true" data-confirm="Save this supplier?" data-confirm-text="Purchase orders and deliveries use these details.">
                 @csrf
                 <template x-if="isEditing">
                     <input type="hidden" name="_method" value="PATCH">

@@ -24,7 +24,7 @@
                     <h3 id="ban-device-heading" class="text-xl font-bold text-[#3E2723] mb-2">Block a device</h3>
                     <p class="text-sm text-[#795548] mb-6 font-medium leading-relaxed">For a device that isn't online right now. Its MAC address is in the phone's Wi-Fi settings (Android: Wi-Fi → the network → MAC address; iPhone: Wi-Fi → ⓘ → Wi-Fi Address).</p>
 
-                    <form action="{{ route('network.blocklist.store') }}" method="POST" class="space-y-6" @submit="submitting = true">
+                    <form action="{{ route('network.blocklist.store') }}" method="POST" class="space-y-6" @submit="submitting = true" data-confirm="Block this device?" data-confirm-text="It is disconnected now and cannot get back on the Wi-Fi until unblocked.">
                         @csrf
                         <div>
                             <label for="mac_address" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">MAC address</label>

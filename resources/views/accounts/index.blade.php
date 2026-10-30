@@ -166,7 +166,7 @@
             <h2 id="account-modal-title" class="text-xl sm:text-2xl font-bold text-[#3E2723] mb-1 tracking-tight" x-text="isEditing ? 'Edit ' + (formData.name || 'account') : '{{ $onlyStaff ? 'Add a staff member' : 'Add someone' }}'"></h2>
             <p class="text-xs text-[#795548] mb-6 font-medium" x-text="isEditing ? 'Change their details. To change a password, email them a link below.' : 'They\'ll get an email to choose their own password. You never need to know it.'"></p>
 
-            <form :action="formAction" method="POST" class="space-y-5" @submit="submitting = true">
+            <form :action="formAction" method="POST" class="space-y-5" @submit="submitting = true" data-confirm="Save this account?" data-confirm-text="The person signs in with these details.">
                 @csrf
                 <template x-if="isEditing">
                     <input type="hidden" name="_method" value="PUT">

@@ -121,7 +121,7 @@
                 {{-- x-data supplies the `submitting` flag <x-submit-button> reads;
                      without it the button renders with no label. --}}
                 <form action="{{ route('network.site-blocking.store') }}" method="POST" class="flex gap-2"
-                      x-data="{ submitting: false }" @submit="submitting = true">
+                      x-data="{ submitting: false }" @submit="submitting = true" data-confirm="Block this site?" data-confirm-text="No guest can open it on the shop Wi-Fi.">
                     @csrf
                     {{-- ?domain= pre-fills from an adult-site alert (WatchAdultSites), so blocking what it found is one tap. --}}
                     <input type="text" name="domain" required placeholder="Add a site, e.g. example.com" value="{{ old('domain', request('domain')) }}"

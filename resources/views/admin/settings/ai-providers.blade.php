@@ -69,7 +69,7 @@
                     </div>
                 </div>
 
-                <form action="{{ route('admin.settings.ai-providers.update') }}" method="POST" class="space-y-6">
+                <form action="{{ route('admin.settings.ai-providers.update') }}" method="POST" class="space-y-6" data-confirm="Save the AI key?" data-confirm-text="Barista AI uses this key from now on.">
                     @csrf
                     @foreach (['openrouter_api_key' => 'OpenRouter API Key'] as $field => $label)
                         <div>

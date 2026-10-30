@@ -9,8 +9,8 @@ the history was rewritten.
 
 ---
 
-## 1.43.0 — Wi-Fi codes per order
-*build 249*
+## 1.43.0 — Wi-Fi codes per order; ask before every change
+*builds 249–250*
 
 - One Wi-Fi code per phone stays. When an order reaches the free Wi-Fi
   minimum, the cart has **"Free Wi-Fi codes – 1 +"** so a group gets one each
@@ -18,6 +18,10 @@ the history was rewritten.
   ("3 Wi-Fi codes · 2 free Wi-Fi codes (60 mins)").
 - The register refuses a zero or impossibly large quantity, and more than 20
   Wi-Fi codes in one order, with a plain message, and makes nothing.
+- **"Are you sure?" on the rest of the one-click actions**: making Wi-Fi
+  codes, blocking a device or site, trusting a device, recording deliveries,
+  saving categories, suppliers, store settings, Wi-Fi prices, Barista AI
+  permissions, the AI key and staff accounts.
 
 ## 1.42.0 — Orders by day, week, month or year; export
 *build 248*

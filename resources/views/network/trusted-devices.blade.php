@@ -173,7 +173,7 @@
             </summary>
             <p class="text-xs text-[#6D4C41] font-medium mt-3 mb-4">Only if the device isn't in the list above, for example because it is switched off.</p>
 
-            <form action="{{ route('network.allowed-addresses.macs.store') }}" method="POST" class="mb-4" x-data="{ submitting: false }" @submit="submitting = true">
+            <form action="{{ route('network.allowed-addresses.macs.store') }}" method="POST" class="mb-4" x-data="{ submitting: false }" @submit="submitting = true" data-confirm="Trust this device?" data-confirm-text="It will go online without a Wi-Fi code from now on.">
                 @csrf
                 <label for="manual-mac" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">MAC address</label>
                 <div class="flex gap-2">
@@ -183,7 +183,7 @@
                 </div>
             </form>
 
-            <form action="{{ route('network.allowed-addresses.ips.store') }}" method="POST" x-data="{ submitting: false }" @submit="submitting = true">
+            <form action="{{ route('network.allowed-addresses.ips.store') }}" method="POST" x-data="{ submitting: false }" @submit="submitting = true" data-confirm="Trust this device?" data-confirm-text="It will go online without a Wi-Fi code from now on.">
                 @csrf
                 <label for="manual-ip" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Fixed IP address</label>
                 <div class="flex gap-2">

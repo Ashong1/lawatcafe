@@ -15,7 +15,7 @@
             </div>
         </div>
 
-        <form action="{{ route('admin.settings.agent.update') }}" method="POST">
+        <form action="{{ route('admin.settings.agent.update') }}" method="POST" data-confirm="Save Barista AI permissions?" data-confirm-text="This changes what the AI may do without asking.">
             @csrf
             <div class="max-w-3xl mx-auto space-y-6">
 

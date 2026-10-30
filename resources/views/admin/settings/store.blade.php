@@ -15,7 +15,7 @@
             </div>
         </div>
 
-        <form action="{{ route('admin.settings.store.update') }}" method="POST" enctype="multipart/form-data" x-data="{ submitting: false }" @submit="submitting = true">
+        <form action="{{ route('admin.settings.store.update') }}" method="POST" enctype="multipart/form-data" x-data="{ submitting: false }" @submit="submitting = true" data-confirm="Save store settings?" data-confirm-text="Hours, receipts and reminders change right away.">
             @csrf
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 

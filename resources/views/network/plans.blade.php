@@ -57,7 +57,7 @@
                 </button>
             </div>
 
-            <form action="{{ route('admin.settings.store.update') }}" method="POST">
+            <form action="{{ route('admin.settings.store.update') }}" method="POST" data-confirm="Save Wi-Fi prices?" data-confirm-text="The register sells codes at these prices from now on.">
                 @csrf
                 
                 <input type="hidden" name="free_wifi_min_amount" :value="freeMinAmount">

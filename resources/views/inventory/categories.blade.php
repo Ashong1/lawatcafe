@@ -108,7 +108,7 @@
                 <p class="text-xs text-[#795548] font-medium mt-1">A name, an icon and a color for one section of the menu.</p>
             </div>
 
-            <form :action="formAction" method="POST" @submit="submitting = true">
+            <form :action="formAction" method="POST" @submit="submitting = true" data-confirm="Save this category?" data-confirm-text="The register menu uses it right away.">
                 @csrf
                 <template x-if="isEditing">
                     <input type="hidden" name="_method" value="PUT">

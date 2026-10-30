@@ -189,7 +189,7 @@
                 <p class="text-sm text-[#795548] font-medium mt-1">Enter what actually arrived. It's checked against the orders on file.</p>
             </div>
 
-            <form action="{{ route('staff.deliveries.store') }}" method="POST" @submit="submitting = true">
+            <form action="{{ route('staff.deliveries.store') }}" method="POST" @submit="submitting = true" data-confirm="Record this delivery?" data-confirm-text="If it matches an order, stock goes up right away.">
                 @csrf
                 <div class="p-5 sm:p-8 space-y-6">
                     <div class="grid grid-cols-2 gap-4">

@@ -212,7 +212,7 @@
     <x-modal-shell show="isModalOpen" max-width="xl" panel-class="rounded-2xl p-5 sm:p-8" labelled-by="generate-vouchers-heading">
             <h2 id="generate-vouchers-heading" class="text-2xl font-bold text-[#3E2723] mb-6">Make Wi-Fi codes</h2>
 
-            <form action="{{ route('network.vouchers.generate') }}" method="POST" @submit="submitting = true">
+            <form action="{{ route('network.vouchers.generate') }}" method="POST" @submit="submitting = true" data-confirm="Make these Wi-Fi codes?" data-confirm-text="Each code works on one phone once a guest enters it.">
                 @csrf
                 <div class="mb-4">
                     <label for="quantity" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2">How many (up to 100)</label>

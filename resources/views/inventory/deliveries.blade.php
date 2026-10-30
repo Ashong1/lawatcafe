@@ -150,7 +150,7 @@
                 <p class="text-xs text-[#795548] font-medium mt-1">Who delivered and what came in. Stock updates when you save.</p>
             </div>
 
-            <form action="{{ route('inventory.deliveries.store') }}" method="POST" @submit="submitting = true">
+            <form action="{{ route('inventory.deliveries.store') }}" method="POST" @submit="submitting = true" data-confirm="Record this delivery?" data-confirm-text="Ingredient stock goes up as soon as you save.">
                 @csrf
                 <div class="p-8 space-y-6">
                     <div class="grid grid-cols-2 gap-4">
