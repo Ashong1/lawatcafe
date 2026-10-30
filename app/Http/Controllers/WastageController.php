@@ -54,7 +54,6 @@ class WastageController extends Controller
 
             // Log the inventory change
             InventoryLog::create([
-                'type' => 'wastage',
                 'ingredient_id' => $ingredient->id,
                 'change_amount' => -$request->quantity,
                 'after_amount' => $ingredient->current_stock,
@@ -78,7 +77,6 @@ class WastageController extends Controller
             $ingredient->save();
 
             InventoryLog::create([
-                'type' => 'wastage',
                 'ingredient_id' => $ingredient->id,
                 'change_amount' => $wastage->quantity,
                 'after_amount' => $ingredient->current_stock,

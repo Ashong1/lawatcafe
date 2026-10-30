@@ -135,7 +135,6 @@ class DeliveryReceivingService
             $ingredient->save();
 
             InventoryLog::create([
-                'type' => 'delivery',
                 'ingredient_id' => $ingredient->id,
                 'change_amount' => $item->quantity,
                 'after_amount' => $ingredient->current_stock,

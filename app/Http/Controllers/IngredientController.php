@@ -46,7 +46,6 @@ class IngredientController extends Controller
 
         // Log the initial stock
         InventoryLog::create([
-            'type' => 'adjustment',
             'ingredient_id' => $ingredient->id,
             'change_amount' => $ingredient->current_stock,
             'after_amount' => $ingredient->current_stock,
@@ -79,7 +78,6 @@ class IngredientController extends Controller
 
         if ($oldStock != $newStock) {
             InventoryLog::create([
-                'type' => 'adjustment',
                 'ingredient_id' => $ingredient->id,
                 'change_amount' => $newStock - $oldStock,
                 'after_amount' => $newStock,
@@ -135,7 +133,7 @@ class IngredientController extends Controller
 
         $logs = $query->paginate(20);
         $ingredients = Ingredient::orderBy('name')->get();
-        $users = User::orderBy('name')->get();
+        $users = User::whereIn('role', ['admin', 'super_admin'])->orderBy('name')->get();
 
         return view('inventory.logs', compact('logs', 'ingredients', 'users'));
     }

@@ -293,7 +293,6 @@ class PosController extends Controller
 
                             // Log the deduction
                             InventoryLog::create([
-                                'type' => 'sale',
                                 'ingredient_id' => $ingredient->id,
                                 'change_amount' => -$quantityToDeduct,
                                 'after_amount' => $ingredient->current_stock,

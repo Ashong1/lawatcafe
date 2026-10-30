@@ -77,7 +77,6 @@ class IngredientDeliveryController extends Controller
 
                 // Log the inventory change
                 InventoryLog::create([
-                    'type' => 'delivery',
                     'ingredient_id' => $ingredient->id,
                     'change_amount' => $itemData['quantity'],
                     'after_amount' => $ingredient->current_stock,

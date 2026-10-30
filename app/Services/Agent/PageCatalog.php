@@ -42,7 +42,6 @@ final class PageCatalog
         'inventory.wastage.index' => ['Inventory > Wastage', 'Record spoiled or wasted stock.', self::ADMIN],
         'inventory.logs' => ['Inventory > Stock History', 'History of every stock change.', self::ADMIN],
         'reports.sales' => ['Reports > Sales', 'Sales for a day, week, month or year: totals, cash vs e-wallet, best sellers and slow movers. Print or download.', self::ADMIN],
-        'reports.stock' => ['Reports > Stock', 'Stock for a day, week, month or year: start, received, used in sales, wasted, adjusted and end per ingredient; most used, most wasted, running low.', self::ADMIN],
         'admin.finance.z-reads' => ['End of Day', 'Z-reads: each shift\'s cash count against what was expected.', self::ADMIN],
         'admin.analytics' => ['Barista AI > Sales Forecast', 'Sales charts and the 7-day forecast.', self::ADMIN],
         'admin.ai.actions.index' => ['Barista AI > Actions & Approvals', 'What Barista AI has done, and actions waiting for approval.', self::ADMIN],
