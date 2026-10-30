@@ -34,6 +34,8 @@ Feedback list: [docs/capstone/EVALUATION_2026-10-28.md](docs/capstone/EVALUATION
   are kept.
 - **Archived accounts get no alerts or emails** (shift shortages, low stock,
   network, deliveries).
+- **Profile no longer has "Delete Account"**: only the owner archives
+  accounts, so no account (or its sales) can disappear.
 
 ## 1.28.0 — Confirmations and sign-in lockout
 *build 217*

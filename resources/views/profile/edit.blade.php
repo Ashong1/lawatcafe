@@ -28,12 +28,6 @@
                 @include('profile.partials.update-password-form')
             </div>
         </div>
-
-        <div class="bg-[#FFF3E0]/50 p-6 md:p-8 rounded-2xl border border-red-100 shadow-sm">
-            <div class="max-w-xl">
-                @include('profile.partials.delete-user-form')
-            </div>
-        </div>
     </div>
 </div>
 @endsection
