@@ -101,9 +101,11 @@
                      appearance starts. --}}
                 <div class="grid grid-cols-2 place-items-center w-full gap-4 flex-1
                             sm:flex sm:flex-row sm:justify-center sm:items-center md:gap-6">
-                    <x-system-gauge label-top="CPU" label-bottom="Load" colour="amber" value-expr="Math.round(liveData.cpuLoad) + '%'" dash-expr="liveData.cpuLoad" :fallback="number_format($cpuLoad, 0) . '%'" />
-                    <x-system-gauge label-top="Mem" label-bottom="Usage" colour="blue" value-expr="Math.round(liveData.memoryUsage) + '%'" dash-expr="liveData.memoryUsage" :fallback="number_format($memoryUsage, 0) . '%'" />
-                    <x-system-gauge label-top="CPU" label-bottom="Temp" colour="red" value-expr="liveData.cpuTemp + '°'" dash-expr="Math.min(liveData.cpuTemp, 100)" :fallback="$cpuTemp . '°'" />
+                    <x-system-gauge label-top="CPU" label-bottom="Load" colour="amber" value-expr="Math.round(liveData.cpuLoad) + '%'" dash-expr="liveData.cpuLoad" :fallback="number_format($cpuLoad, 0) . '%'" :detail="isset($specs) ? $specs['cores'].' '.Str::plural('core', $specs['cores']) : ''" />
+                    <x-system-gauge label-top="Mem" label-bottom="Usage" colour="blue" value-expr="Math.round(liveData.memoryUsage) + '%'" dash-expr="liveData.memoryUsage" :fallback="number_format($memoryUsage, 0) . '%'"
+                                    detail-expr="liveData.memoryTotalGb ? Number(liveData.memoryUsedGb).toFixed(1) + ' of ' + Number(liveData.memoryTotalGb).toFixed(1) + ' GB' : ''"
+                                    :detail="isset($memoryTotalGb) ? number_format($memoryUsedGb, 1).' of '.number_format($memoryTotalGb, 1).' GB' : ''" />
+                    <x-system-gauge label-top="CPU" label-bottom="Temp" colour="red" value-expr="liveData.cpuTemp + '°'" dash-expr="Math.min(liveData.cpuTemp, 100)" :fallback="$cpuTemp . '°'" detail="degrees C" />
 
                     {{-- Disk is not in the live poll (liveStats() omits it, since
                          it moves far too slowly to be worth a 3s round trip), so
@@ -118,28 +120,18 @@
                                 <span class="text-xs font-bold {{ $diskUsage > 90 ? 'text-red-700' : 'text-slate-700' }}">{{ number_format($diskUsage, 0) }}%</span>
                             </div>
                         </div>
-                        <span class="text-xs font-bold uppercase tracking-wide text-[#4A3B32] leading-tight">Disk<br>Usage</span>
+                        <span class="text-xs font-bold uppercase tracking-wide text-[#4A3B32] leading-tight">Disk<br>Usage
+                            @isset($diskTotalGb)<span class="block mt-0.5 font-medium normal-case tracking-normal text-[#795548] whitespace-nowrap">{{ number_format($diskUsedGb, 1) }} of {{ $diskTotalGb }} GB</span>@endisset
+                        </span>
                     </div>
                 </div>
 
                 {{-- The real machine, read live (ServerSpecs). --}}
                 @isset($specs)
-                    <dl class="mt-6 pt-5 border-t border-[#F0E6D2] grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                        @foreach ([
-                            'Processor' => $specs['processor'].' · '.$specs['cores'].' '.Str::plural('core', $specs['cores']),
-                            'Memory' => $specs['memory'],
-                            'Disk' => $specs['disk'],
-                            'Running for' => $specs['uptime'],
-                            'System' => $specs['system'],
-                            'Runs on' => $specs['runs_on'],
-                            'Software' => $specs['software'],
-                        ] as $label => $value)
-                            <div class="min-w-0 {{ in_array($label, ['Processor', 'System', 'Runs on'], true) ? 'sm:col-span-2' : '' }}">
-                                <dt class="text-xs font-bold uppercase tracking-wide text-[#795548]">{{ $label }}</dt>
-                                <dd class="font-medium text-[#3E2723] break-words">{{ $value }}</dd>
-                            </div>
-                        @endforeach
-                    </dl>
+                    <p class="mt-5 pt-4 border-t border-[#F0E6D2] text-sm text-[#6D4C41] leading-relaxed">
+                        <span class="font-bold text-[#3E2723]">{{ $specs['processor'] }}</span>
+                        · {{ $specs['system'] }} · {{ $specs['runs_on'] }} · up {{ $specs['uptime'] }}
+                    </p>
                 @endisset
             </div>
 
@@ -349,6 +341,8 @@ document.addEventListener('alpine:init', () => {
             bandwidthUp: 0,
             cpuLoad: {{ $cpuLoad ?? 0 }},
             memoryUsage: {{ $memoryUsage ?? 0 }},
+            memoryUsedGb: {{ Js::from($memoryUsedGb ?? null) }},
+            memoryTotalGb: {{ Js::from($memoryTotalGb ?? null) }},
             cpuTemp: {{ $cpuTemp ?? 0 }},
             activeGuests: {{ $activeGuests ?? 0 }},
             lastRawIn: {{ $rawIn ?? 0 }},

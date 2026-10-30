@@ -26,7 +26,15 @@ class ServerSpecsTest extends TestCase
 
     public function test_the_system_dashboard_shows_them(): void
     {
+        // Owner (Oct 30): the amounts at the gauges, e.g. "1.5 of 5.0 GB".
         $this->actingAs(User::factory()->create(['role' => 'super_admin']))->get(route('dashboard'))
-            ->assertOk()->assertSee('Processor')->assertSee('Memory')->assertSee('Runs on');
+            ->assertOk()->assertSee('memoryUsedGb', false)->assertSeeInOrder(['Mem', ' of ', 'GB'])->assertSee('cores')->assertSee('Proxmox');
+    }
+
+    public function test_the_live_feed_carries_memory_in_gb(): void
+    {
+        $this->mock(\App\Services\OpnSenseService::class, fn ($m) => $m->shouldReceive('getInterfaceStats', 'listSessions', 'getArpTable', 'getDhcpLeases')->andReturn([]));
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))->getJson(route('admin.live-stats'))
+            ->assertOk()->assertJsonStructure(['memoryUsedGb', 'memoryTotalGb']);
     }
 }

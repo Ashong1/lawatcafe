@@ -118,6 +118,7 @@ class DashboardController extends Controller
         return Cache::remember('system_health', 30, function () {
             $cpuLoad = function_exists('sys_getloadavg') ? sys_getloadavg()[0] * 10 : 12;
             $memoryUsage = 0;
+            $memUsedGb = $memTotalGb = $diskUsedGb = $diskTotalGb = null;
             $cpuTemp = 0;
             $diskUsage = 0;
 
@@ -131,6 +132,7 @@ class DashboardController extends Controller
                         $mem = preg_split('/\s+/', $free_arr[1]);
                         if (isset($mem[2]) && isset($mem[1]) && $mem[1] > 0) {
                             $memoryUsage = round($mem[2] / $mem[1] * 100);
+                            [$memUsedGb, $memTotalGb] = [round($mem[2] / 1048576, 1), round($mem[1] / 1048576, 1)];   // free reports KiB
                         }
                     }
                 }
@@ -148,6 +150,7 @@ class DashboardController extends Controller
                 $diskTotal = disk_total_space('/');
                 if ($diskTotal > 0) {
                     $diskUsage = round((($diskTotal - $diskFree) / $diskTotal) * 100);
+                    [$diskUsedGb, $diskTotalGb] = [round(($diskTotal - $diskFree) / 1024 ** 3, 1), round($diskTotal / 1024 ** 3)];
                 }
             }
 
@@ -156,6 +159,8 @@ class DashboardController extends Controller
                 'memoryUsage' => $memoryUsage ?: 45,
                 'cpuTemp' => $cpuTemp ?: 42,
                 'diskUsage' => $diskUsage ?: 18,
+                'memoryUsedGb' => $memUsedGb, 'memoryTotalGb' => $memTotalGb,
+                'diskUsedGb' => $diskUsedGb, 'diskTotalGb' => $diskTotalGb,
             ];
         });
     }
@@ -563,6 +568,7 @@ class DashboardController extends Controller
         // 2. System Health
         $cpuLoad = function_exists('sys_getloadavg') ? sys_getloadavg()[0] * 10 : 12;
         $memoryUsage = 0;
+        $memUsedGb = $memTotalGb = null;
         $cpuTemp = 0;
         if (PHP_OS_FAMILY === 'Linux') {
             $free = shell_exec('free');
@@ -572,6 +578,7 @@ class DashboardController extends Controller
                     $mem = preg_split('/\s+/', $free_arr[1]);
                     if (isset($mem[2]) && isset($mem[1]) && $mem[1] > 0) {
                         $memoryUsage = round($mem[2] / $mem[1] * 100);
+                        [$memUsedGb, $memTotalGb] = [round($mem[2] / 1048576, 1), round($mem[1] / 1048576, 1)];
                     }
                 }
             }
@@ -596,6 +603,8 @@ class DashboardController extends Controller
             'rawOut' => (int) ($iface['outbytes'] ?? 0),
             'cpuLoad' => $cpuLoad,
             'memoryUsage' => $memoryUsage ?: 45,
+            'memoryUsedGb' => $memUsedGb,
+            'memoryTotalGb' => $memTotalGb,
             'cpuTemp' => $cpuTemp ?: 42,
             'activeGuests' => $activeGuests,
         ]);

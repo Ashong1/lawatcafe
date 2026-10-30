@@ -12,6 +12,10 @@
     // Server-rendered value, shown before Alpine boots so the gauge is never
     // blank on first paint.
     'fallback' => '',
+    // The real amount under the label, e.g. "1.5 of 5.0 GB": live (an Alpine
+    // expression) and/or as server-rendered text.
+    'detailExpr' => null,
+    'detail' => '',
 ])
 
 @php
@@ -38,5 +42,9 @@
             <span class="text-xs font-bold {{ $text }}" x-text="{{ $valueExpr }}">{{ $fallback }}</span>
         </div>
     </div>
-    <span class="text-xs font-bold uppercase tracking-wide text-[#4A3B32] leading-tight">{{ $labelTop }}<br>{{ $labelBottom }}</span>
+    <span class="text-xs font-bold uppercase tracking-wide text-[#4A3B32] leading-tight">{{ $labelTop }}<br>{{ $labelBottom }}
+        @if ($detailExpr || $detail)
+            <span class="block mt-0.5 font-medium normal-case tracking-normal text-[#795548] whitespace-nowrap" @if ($detailExpr) x-text="{{ $detailExpr }}" @endif>{{ $detail }}</span>
+        @endif
+    </span>
 </div>

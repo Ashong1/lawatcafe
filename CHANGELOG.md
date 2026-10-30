@@ -9,6 +9,13 @@ the history was rewritten.
 
 ---
 
+## 1.54.5 — Real amounts at the gauges
+*build 291*
+
+- Application Host shows the amounts under each gauge: CPU cores, memory
+  used of total (e.g. 1.5 of 5.0 GB, updated live), temperature in °C, and
+  disk used of total (e.g. 9.0 of 20 GB). The specs are one line below.
+
 ## 1.54.4 — Server specs on the system dashboard
 *build 290*
 
