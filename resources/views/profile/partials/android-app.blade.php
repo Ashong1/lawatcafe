@@ -8,7 +8,7 @@
         <img src="{{ asset('favicon.svg') }}" alt="" class="w-14 h-14 rounded-2xl shrink-0">
         <div class="flex-1 min-w-0">
             <h3 class="text-lg font-bold text-[#3E2723]">Lawa't Kape for Android</h3>
-            <p class="text-sm text-[#795548] mt-1">Run the whole system as an app on the shop phone: full screen, the screen stays on at the register, and order reminders vibrate. It works on the shop Wi-Fi.</p>
+            <p class="text-sm text-[#795548] mt-1">Run the whole system as an app on the shop phone: full screen, the screen stays on at the register, and order reminders vibrate. In the shop it connects directly; elsewhere it uses the remote link while Remote access is on. If an older version is installed, install this one over it.</p>
 
             <ol class="mt-4 space-y-2 text-sm text-[#4A3B32] list-decimal pl-5">
                 <li>On the phone, connect to the shop Wi-Fi and open this page.</li>
@@ -19,7 +19,7 @@
             <p class="text-xs text-[#795548] mt-3">So the phone doesn't get the guest Wi-Fi sign-in page, an admin should add it on Network → Trusted Devices.</p>
 
             @if(\App\Http\Controllers\AndroidAppController::available())
-                <a href="{{ route('app.android') }}" class="mt-5 inline-flex items-center justify-center gap-2 min-h-[44px] px-6 rounded-full bg-[#3E2723] hover:bg-[#271815] text-white text-sm font-bold transition">
+                <a href="{{ route('app.android', ['v' => \App\Http\Controllers\AndroidAppController::version()]) }}" class="mt-5 inline-flex items-center justify-center gap-2 min-h-[44px] px-6 rounded-full bg-[#3E2723] hover:bg-[#271815] text-white text-sm font-bold transition">
                     <x-lucide-download class="w-4 h-4" /> Download the app
                 </a>
             @else
@@ -46,12 +46,12 @@
              },
          }">
         <h3 class="text-lg font-bold text-[#3E2723]">Windows and Linux computers</h3>
-        <p class="text-sm text-[#795548] mt-1">The system as an app with its own window and icon. It shows the live system, so it never needs updating. The computer must be on the shop network.</p>
+        <p class="text-sm text-[#795548] mt-1">The system as an app with its own window and icon. It shows the live system, so it rarely needs updating. In the shop it connects directly; elsewhere it uses the remote link while Remote access is on (Connection menu: Automatic, In the shop, From anywhere).</p>
 
         <div class="mt-4 flex flex-col sm:flex-row gap-3">
-            @foreach(['windows' => ['Download for Windows', 'installer'], 'linux' => ['Download for Linux', '.AppImage']] as $os => [$label, $ext])
+            @foreach(['windows' => ['Download for Windows', 'installer'], 'linux' => ['Download for Linux', '.deb (Ubuntu)']] as $os => [$label, $ext])
                 @if(\App\Http\Controllers\DesktopAppController::available($os))
-                    <a href="{{ route('app.desktop', $os) }}" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 rounded-full bg-[#3E2723] hover:bg-[#271815] text-white text-sm font-bold transition">
+                    <a href="{{ route('app.desktop', ['os' => $os, 'v' => \App\Http\Controllers\DesktopAppController::version($os)]) }}" class="inline-flex items-center justify-center gap-2 min-h-[44px] px-6 rounded-full bg-[#3E2723] hover:bg-[#271815] text-white text-sm font-bold transition">
                         <x-lucide-download class="w-4 h-4" /> {{ $label }} <span class="font-normal opacity-80">{{ $ext }}</span>
                     </a>
                 @endif
@@ -59,7 +59,7 @@
         </div>
         <ul class="mt-3 space-y-1 text-xs text-[#795548] list-disc pl-5">
             <li><span class="font-bold">Windows:</span> open the downloaded setup and follow the steps; it adds Lawa't Kape to the Start menu and desktop, and you can remove it from <span class="font-bold">Settings → Apps</span>. If Windows says it protected your PC, click <span class="font-bold">More info → Run anyway</span>.</li>
-            <li><span class="font-bold">Linux:</span> right-click the file → Properties → allow running it as a program (or <code>chmod +x LawatKape-linux.AppImage</code>), then double-click it.</li>
+            <li><span class="font-bold">Linux (Ubuntu):</span> open the downloaded <code>.deb</code> to install it with App Center, or run <code>sudo apt install ./LawatKape-linux.deb</code> in the Downloads folder. Then open <span class="font-bold">Lawat Kape</span> from the app menu.</li>
         </ul>
 
         <h4 class="mt-6 text-sm font-bold text-[#3E2723]">Or install it from the browser</h4>

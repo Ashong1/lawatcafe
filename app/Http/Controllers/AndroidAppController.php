@@ -19,12 +19,20 @@ class AndroidAppController extends Controller
         return is_file(self::path());
     }
 
+    /** Changes with every build, so each new build gets a new download link. */
+    public static function version(): int
+    {
+        return (int) @filemtime(self::path());
+    }
+
     public function download()
     {
         abort_unless(self::available(), 404, "The Android app hasn't been built on this server yet.");
 
         return response()->download(self::path(), 'LawatKape.apk', [
             'Content-Type' => 'application/vnd.android.package-archive',
-        ]);
+            // A new build must never come from a cache (phones kept getting the old app).
+            'Cache-Control' => 'no-store',
+        ])->setPrivate();
     }
 }

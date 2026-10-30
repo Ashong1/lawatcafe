@@ -9,6 +9,19 @@ the history was rewritten.
 
 ---
 
+## 1.49.3 — Desktop app 1.1, Linux .deb, fresh app downloads
+*build 273*
+
+- **Windows and Linux app 1.1** (Profile): a **Connection** menu
+  (Automatic / In the shop / From anywhere). Automatic checks in about a
+  second whether the shop answers, otherwise uses the remote link — the
+  old app said "Can't reach the shop system" anywhere outside the shop.
+- **Linux is now a .deb** for Ubuntu (install with App Center or
+  `sudo apt install ./LawatKape-linux.deb`). The AppImage needed libfuse2
+  and tripped Ubuntu 24's sandbox rules.
+- App downloads are never cached and each build gets a new link: phones
+  kept installing the old Android app from a cache.
+
 ## 1.49.2 — Gemini and Groq really answer; smaller on phones
 *build 272*
 

@@ -1,7 +1,7 @@
 {
   "name": "lawatkape-desktop",
   "productName": "Lawa't Kape",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Lawa't Kape POS and Wi-Fi system for Windows and Linux",
   "author": "Lawa't Kape",
   "homepage": "https://lawatkape.aserotech.com",
@@ -19,6 +19,7 @@
     "artifactName": "LawatKape-${os}.${ext}",
     "files": [
       "main.js",
+      "preload.js",
       "offline.html",
       "icon.png"
     ],
@@ -29,7 +30,8 @@
     "linux": {
       "target": "AppImage",
       "icon": "icon.png",
-      "category": "Office"
+      "category": "Office",
+      "maintainer": "Lawa't Kape <noreply@lawatkape.aserotech.com>"
     },
     "win": {
       "target": "dir",
