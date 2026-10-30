@@ -75,6 +75,12 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if (! Auth::user()->isAdminOrAbove() && \App\Services\RemoteAccessService::isRemoteRequest($this)) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages(['email' => \App\Services\RemoteAccessService::STAFF_MESSAGE]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

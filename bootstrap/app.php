@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\IdleSessionTimeout;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\RemoteAccessAdminsOnly;
 use App\Http\Middleware\SignOutRemovedAccounts;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -53,6 +54,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->appendToGroup('web', [
             SignOutRemovedAccounts::class,
+            RemoteAccessAdminsOnly::class,
             IdleSessionTimeout::class,
         ]);
     })

@@ -19,6 +19,14 @@ class RemoteAccessService
 {
     public const SERVICE = 'lawatkape-remote';
 
+    public const STAFF_MESSAGE = 'From outside the shop only the owner and admins can sign in. Staff can sign in at the shop.';
+
+    /** Whether this request came in through the remote link (the tunnel only serves that name). */
+    public static function isRemoteRequest(\Illuminate\Http\Request $request): bool
+    {
+        return $request->getHost() === parse_url(config('services.remote_access.url'), PHP_URL_HOST);
+    }
+
     public function url(): string
     {
         return config('services.remote_access.url');

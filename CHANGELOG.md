@@ -10,13 +10,16 @@ the history was rewritten.
 ---
 
 ## 1.44.0 — Remote access
-*build 254*
+*builds 254–255*
 
 - **Settings → Security → Remote access**: the owner or super admin can turn
   on a secure Cloudflare link to the system (lawatkape-remote.aserotech.com)
   to use it from anywhere, with no router changes, and turn it off again. Off
   by default; stays on until turned off. Each switch asks first, is logged,
   and alerts the other owners.
+- **Only the owner and admins can sign in through the remote link**; staff
+  are told to sign in at the shop (a phone's MAC address isn't visible over
+  the internet, so the account's role is the check).
 
 ## 1.43.4 — Minor fixes from the review
 *build 253*
