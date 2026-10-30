@@ -21,10 +21,10 @@ class SignOutRemovedAccounts
             $request->session()->regenerateToken();
 
             if ($request->ajax() || $request->expectsJson()) {
-                return response()->json(['message' => 'This account was removed.'], 401);
+                return response()->json(['message' => 'This account was archived.'], 401);
             }
 
-            return redirect()->route('login')->with('error', 'This account was removed. Ask the owner if you need access again.');
+            return redirect()->route('login')->with('error', 'This account was archived. Ask the owner if you need access again.');
         }
 
         return $next($request);

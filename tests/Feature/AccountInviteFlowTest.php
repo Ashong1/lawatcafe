@@ -175,11 +175,11 @@ class AccountInviteFlowTest extends TestCase
 
         $this->assertDatabaseHas('users', ['id' => $staff->id]);
         $this->assertSame(1, Sale::where('user_id', $staff->id)->count());
-        $this->actingAs($admin)->get(route('accounts.index'))->assertSee('Removed (1)');
+        $this->actingAs($admin)->get(route('accounts.index'))->assertSee('Archived (1)');
 
         auth()->logout();
         $this->post('/login', ['email' => 'ben', 'password' => 'kape-2026'])
-            ->assertSessionHasErrors(['email' => 'This account was removed. Ask the owner if you need access again.']);
+            ->assertSessionHasErrors(['email' => 'This account was archived. Ask the owner if you need access again.']);
         $this->assertGuest();
 
         $this->actingAs($admin)->post(route('accounts.restore', $staff));
@@ -188,13 +188,15 @@ class AccountInviteFlowTest extends TestCase
         $this->assertAuthenticatedAs($staff);
     }
 
-    public function test_removing_someone_with_no_history_deletes_them(): void
+    // Evaluators (Oct 28): never a permanent delete, so the account can come back.
+    public function test_archiving_someone_with_no_history_keeps_them_restorable(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))->delete(route('accounts.destroy', $staff));
+        $this->actingAs(User::factory()->create(['role' => 'admin']))->delete(route('accounts.destroy', $staff))
+            ->assertSessionHas('success', "Archived {$staff->name}. They can no longer sign in; their past sales and shifts stay in the reports.");
 
-        $this->assertDatabaseMissing('users', ['id' => $staff->id]);
+        $this->assertNotNull($staff->fresh()->deactivated_at);
     }
 
     public function test_a_removed_person_still_signed_in_is_signed_out(): void

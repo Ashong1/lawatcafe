@@ -22,7 +22,7 @@ class ActivityLog extends Model
         'password_reset' => 'Reset their password',
         'account_added' => 'Added an account',
         'account_changed' => 'Changed an account',
-        'account_removed' => 'Removed an account',
+        'account_removed' => 'Archived an account',
         'account_restored' => 'Restored an account',
         'backup_made' => 'Database backup made',
         'backup_failed' => 'Database backup failed',

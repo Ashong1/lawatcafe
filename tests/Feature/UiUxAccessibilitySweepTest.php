@@ -62,7 +62,7 @@ class UiUxAccessibilitySweepTest extends TestCase
             $response->assertSee("id=\"{$id}\"", false);
         }
         $response->assertSee('aria-label="Edit '.e($staff->name).'"', false);
-        $response->assertSee('aria-label="Remove '.e($staff->name).'"', false);
+        $response->assertSee('aria-label="Archive '.e($staff->name).'"', false);
     }
 
     public function test_network_vouchers_page_labels_fields_and_labels_bulk_delete(): void

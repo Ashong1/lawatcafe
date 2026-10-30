@@ -71,7 +71,7 @@ class LoginRequest extends FormRequest
             Auth::guard('web')->logout();
 
             throw ValidationException::withMessages([
-                'email' => 'This account was removed. Ask the owner if you need access again.',
+                'email' => 'This account was archived. Ask the owner if you need access again.',
             ]);
         }
 

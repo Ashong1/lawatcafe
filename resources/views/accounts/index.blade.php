@@ -107,15 +107,15 @@
                                         @method('DELETE')
                                         <button type="button"
                                                 @click="window.confirmAction({
-                                                    title: 'Remove ' + {{ Js::from($user->name) }} + '?',
-                                                    text: 'They will no longer be able to sign in. Their past sales and shifts stay in the reports.',
+                                                    title: 'Archive ' + {{ Js::from($user->name) }} + '?',
+                                                    text: 'They will no longer be able to sign in. Their past sales and shifts stay in the reports, and you can restore them any time.',
                                                     icon: 'warning',
-                                                    confirmText: 'Yes, remove',
+                                                    confirmText: 'Yes, archive',
                                                     callback: () => document.getElementById('delete-form-{{ $user->id }}').submit()
                                                 })"
                                                 class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                                                title="Remove" aria-label="Remove {{ $user->name }}">
-                                            <x-lucide-trash-2 class="w-4 h-4" />
+                                                title="Archive" aria-label="Archive {{ $user->name }}">
+                                            <x-lucide-archive class="w-4 h-4" />
                                         </button>
                                     </form>
                                     @endif
@@ -137,7 +137,7 @@
     @if($removed->isNotEmpty())
         <details class="mt-6 bg-white rounded-2xl border border-[#F0E6D2] group">
             <summary class="cursor-pointer list-none flex items-center justify-between gap-3 px-5 min-h-[56px] text-sm font-bold text-[#3E2723]">
-                <span>Removed ({{ $removed->count() }})</span>
+                <span>Archived ({{ $removed->count() }})</span>
                 <x-lucide-chevron-down class="w-4 h-4 text-[#795548] transition group-open:rotate-180" />
             </summary>
             <div class="px-5 pb-4">
@@ -147,7 +147,7 @@
                         <li class="py-3 flex items-center justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="text-sm font-bold text-[#3E2723] truncate">{{ $person->name }}</p>
-                                <p class="text-xs text-[#6D4C41] truncate">{{ $person->username ?? $person->email }} · removed {{ $person->deactivated_at->diffForHumans() }}</p>
+                                <p class="text-xs text-[#6D4C41] truncate">{{ $person->username ?? $person->email }} · archived {{ $person->deactivated_at->diffForHumans() }}</p>
                             </div>
                             <form action="{{ route('accounts.restore', $person) }}" method="POST" class="shrink-0">
                                 @csrf

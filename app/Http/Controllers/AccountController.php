@@ -64,7 +64,7 @@ class AccountController extends Controller
         ], [
             'username.regex' => 'Use only small letters, numbers, dots, dashes or underscores — no spaces.',
             'username.unique' => 'Someone already has the username :input. Try adding a number or their last name.',
-            'email.unique' => 'This email already has an account. If they were removed, use Restore under "Removed" below.',
+            'email.unique' => 'This email already has an account. If they were archived, use Restore under "Archived" below.',
         ]);
 
         $user = $this->invites->invite($data, $request->getSchemeAndHttpHost());
@@ -116,24 +116,17 @@ class AccountController extends Controller
     public function destroy(User $account)
     {
         if (auth()->id() === $account->id) {
-            return redirect()->route('accounts.index')->with('error', 'You cannot delete your own account!');
+            return redirect()->route('accounts.index')->with('error', 'You cannot archive your own account.');
         }
 
         $this->authorizeTarget($account);
 
-        // Deleting would fail on their sales and shifts, and take their cash
-        // movements, wastage and deliveries with it, so they are switched off.
-        if ($account->hasWorkHistory()) {
-            $account->forceFill(['deactivated_at' => now()])->save();
-            ActivityLog::record('account_removed', auth()->user(), $account->name);
-
-            return redirect()->route('accounts.index')->with('success', "Removed {$account->name}. They can no longer sign in; their past sales and shifts stay in the reports.");
-        }
-
+        // Never a hard delete (evaluators, Oct 28): their sales and shifts stay
+        // linked and the owner can restore them later.
+        $account->forceFill(['deactivated_at' => now()])->save();
         ActivityLog::record('account_removed', auth()->user(), $account->name);
-        $account->delete();
 
-        return redirect()->route('accounts.index')->with('success', "Removed {$account->name}. They can no longer sign in.");
+        return redirect()->route('accounts.index')->with('success', "Archived {$account->name}. They can no longer sign in; their past sales and shifts stay in the reports.");
     }
 
     public function restore(User $account)

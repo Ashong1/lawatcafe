@@ -6,7 +6,6 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -95,21 +94,5 @@ class User extends Authenticatable
     public function isDeactivated(): bool
     {
         return $this->deactivated_at !== null;
-    }
-
-    /**
-     * Records that point at this account. Sales and shifts refuse a delete;
-     * cash movements, wastage and deliveries would be deleted with it.
-     */
-    public function hasWorkHistory(): bool
-    {
-        foreach (['sales' => 'user_id', 'shifts' => 'user_id', 'shift_transactions' => 'user_id', 'wastages' => 'user_id',
-            'ingredient_deliveries' => 'user_id', 'sale_void_requests' => 'requested_by'] as $table => $column) {
-            if (DB::table($table)->where($column, $this->id)->exists()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

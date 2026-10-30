@@ -328,10 +328,10 @@ Details in [AI_AGENT.md](AI_AGENT.md).
     the email can't go out; queued mail retries for 3 days while offline).
   - **Signing in** takes the username or the email. **Forgot password?**
     and **Email a new-password link** (in Edit) send the same kind of link.
-  - **Removing** someone with sales, shifts or other records switches the
-    account off instead of deleting it, so reports keep their name; a
-    signed-in removed person is signed out on their next click. **Removed**
-    lists them with **Restore**. Accounts with no records are deleted.
+  - **Archiving** switches an account off; nothing is ever deleted, so
+    reports keep the name and the owner can bring it back. A signed-in
+    archived person is signed out on their next click. **Archived** lists
+    them with **Restore**.
   - Code: `AccountController`, `AccountInviteService`,
     `Auth\AccountSetupController`, `SignOutRemovedAccounts`.
 - **Profile** (`/profile`, everyone): name, email, password.

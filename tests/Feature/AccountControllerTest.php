@@ -121,6 +121,6 @@ class AccountControllerTest extends TestCase
         $response = $this->actingAs($superAdmin)->delete(route('accounts.destroy', $admin));
 
         $response->assertRedirect(route('accounts.index'));
-        $this->assertDatabaseMissing('users', ['id' => $admin->id]);
+        $this->assertNotNull($admin->fresh()->deactivated_at);
     }
 }
