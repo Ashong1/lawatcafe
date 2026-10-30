@@ -447,6 +447,18 @@ class AiLearningLoopTest extends TestCase
             ->assertViewHas('pipeline', fn ($p) => $p['evidence'] === 1);
     }
 
+    /** Owner (Oct 30): asked to study what it can't do, the AI pushed back instead of saying it would. */
+    public function test_the_assistant_knows_how_it_learns(): void
+    {
+        $ai = app(AIService::class);
+
+        foreach ([$ai->buildAdminSystemPrompt(), $ai->buildStaffSystemPrompt(), $ai->buildSuperAdminSystemPrompt()] as $prompt) {
+            $this->assertStringContainsString('HOW YOU LEARN:', $prompt);
+            $this->assertStringContainsString('studied every 30 minutes', $prompt);
+            $this->assertStringContainsString('Barista AI → What It Learned', $prompt);
+        }
+    }
+
     /** A settled transcript alone can trip a run — no explicit rating needed. */
     public function test_conversations_count_towards_the_evidence_threshold(): void
     {

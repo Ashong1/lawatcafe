@@ -9,6 +9,16 @@ the history was rewritten.
 
 ---
 
+## 1.45.4 — The AI knows how it learns
+*build 262*
+
+- Asked to "study what you can't do", the assistant questioned the request
+  and listed tools it actually has (such as sending purchase orders) as
+  things it couldn't do. It now knows that every "I can't" is studied every
+  30 minutes and becomes a lesson under Barista AI → What It Learned. When
+  asked, it agrees, lists what it can't do yet, and checks its tools before
+  saying it can't.
+
 ## 1.45.3 — Learning every 30 minutes
 *build 261*
 

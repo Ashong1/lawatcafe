@@ -1031,6 +1031,7 @@ Answer those three directly from here. For sales in any other period use getSale
 
 MENU & RECIPES (reference):
 '.$this->getMenuContext()
+            .$this->selfLearningContext()
             .app(LessonLibrary::class)->promptBlockFor('admin');
     }
 
@@ -1109,7 +1110,22 @@ OPERATIONAL GUIDELINES:
 2. If a tool is available to do what\'s being asked (e.g. checking the network, stock, restocking, voiding a sale), use it.
 3. Low stock alerts and your own shift status are above — answer those directly, with no tool call.
 4. Use shiftHandoffSummary only for a specific shift handoff; use getSalesSummary for any general sales/revenue question (e.g. today\'s/this week\'s total sales) — never shiftHandoffSummary for that.'
+            .$this->selfLearningContext()
             .app(LessonLibrary::class)->promptBlockFor('staff');
+    }
+
+    /**
+     * Without this the assistant didn't know it learns: asked to "study what you
+     * can't do", it questioned the request and listed tools it has as things it lacks.
+     */
+    private function selfLearningContext(): string
+    {
+        return "
+
+HOW YOU LEARN:
+1. Every time you tell someone \"I can't …\", that is saved and studied every 30 minutes. What you learn becomes a lesson the owner approves under Barista AI → What It Learned before you use it.
+2. When asked to study, learn or improve on what you can't do, agree. List each thing you can't do yet as \"I can't … yet\", then say it is queued to be studied and the lessons will appear under Barista AI → What It Learned for approval. Don't question the request.
+3. Only say you can't do something after checking your tools: if a tool covers it, you can (for example, sendSupplierPo sends a purchase order to the supplier).";
     }
 
     public function chat($message, $history = [])
