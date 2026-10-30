@@ -9,6 +9,19 @@ the history was rewritten.
 
 ---
 
+## 1.46.1 — Test models in the background
+*build 265*
+
+- **Test models** (per provider) and **Test all models** buttons for the
+  owner. Each model is tested by its own short request, three at a time,
+  with a live spinner per row and its response time when done; the rest of
+  the system stays usable meanwhile (the old Test Now blocked the page).
+- Model lists checked live: Gemini now uses gemini-3.5-flash and
+  gemini-flash-lite-latest (gemini-flash-latest hung); Groq uses
+  gpt-oss-120b, qwen3.8-27b and gpt-oss-20b (Llama 3.3 was retired).
+- Gemini's and Groq's test, swap and reset buttons now work (their routes
+  only allowed OpenRouter).
+
 ## 1.46.0 — Gemini, Groq and OpenRouter routing
 *build 264*
 

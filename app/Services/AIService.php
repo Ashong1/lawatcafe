@@ -42,9 +42,10 @@ class AIService
         'openrouter' => ['label' => 'OpenRouter', 'url' => 'https://openrouter.ai/api/v1/chat/completions'],
     ];
 
-    protected $geminiModels = ['gemini-flash-latest', 'gemini-flash-lite-latest'];
+    // Checked live Oct 30: gemini-flash-latest hung past 25s; Groq retired llama-3.3-70b.
+    protected $geminiModels = ['gemini-3.5-flash', 'gemini-flash-lite-latest'];
 
-    protected $groqModels = ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b'];
+    protected $groqModels = ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'];
 
     // Curated free models, best first: the fast path only tries the first two
     // healthy ones, so the head of the list should be the models that pick the
@@ -383,10 +384,27 @@ class AIService
         return ['ok' => $ok, 'failed' => $failed];
     }
 
-    private function testOpenAiCompatibleModel(string $model, string $url, array $headers, array $messages, string $provider): bool
+    /**
+     * Test one model of a provider's list, for the page's per-model Test buttons
+     * (one short request each, so the page stays usable while they run).
+     *
+     * @return array{ok: bool, ms: int, reason: ?string}
+     */
+    public function testModel(string $provider, string $model): array
+    {
+        $started = microtime(true);
+        $reason = $this->keys[$provider] ?? null
+            ? $this->testOpenAiCompatibleModel($model, self::PROVIDERS[$provider]['url'], $this->headersFor($provider), [['role' => 'user', 'content' => 'Reply with the single word: OK.']], $provider, true)
+            : 'no_key';
+
+        return ['ok' => $reason === null, 'ms' => (int) round((microtime(true) - $started) * 1000), 'reason' => $reason];
+    }
+
+    /** @return bool|string|null true/false, or with $why: null when healthy, else the failure reason */
+    private function testOpenAiCompatibleModel(string $model, string $url, array $headers, array $messages, string $provider, bool $why = false): bool|string|null
     {
         try {
-            $response = Http::timeout(8)->withHeaders($headers)->post($url, ['model' => $model, 'messages' => $messages]);
+            $response = Http::timeout(15)->withHeaders($headers)->post($url, ['model' => $model, 'messages' => $messages]);
 
             if ($response->successful()) {
                 $normalized = $this->normalizeOpenAiResponse($response->json());
@@ -394,18 +412,17 @@ class AIService
                 if ($msg && ($msg['content'] || ! empty($msg['tool_calls']))) {
                     $this->recordModelResult($provider, $model, true);
 
-                    return true;
+                    return $why ? null : true;
                 }
             }
 
-            $this->recordModelResult($provider, $model, false, $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}");
-
-            return false;
+            $reason = $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}";
         } catch (\Exception $e) {
-            $this->recordModelResult($provider, $model, false, 'exception');
-
-            return false;
+            $reason = str_contains($e->getMessage(), 'timed out') ? 'timed_out' : 'exception';
         }
+        $this->recordModelResult($provider, $model, false, $reason);
+
+        return $why ? $reason : false;
     }
 
     private function recordProviderResult(string $provider, bool $success): void

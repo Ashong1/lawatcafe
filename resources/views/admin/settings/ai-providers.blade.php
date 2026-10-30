@@ -91,6 +91,18 @@
                 </form>
             </div>
 
+            @php $testable = collect($providers)->filter(fn ($p) => $p['configured'])->map(fn ($p) => array_column($p['models'], 'name')); @endphp
+            <div x-data="lkModelTests()" class="space-y-6">
+            @if ($testable->isNotEmpty())
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <p class="text-xs text-[#6D4C41] font-medium">Tests run in the background, three at a time; keep using the system meanwhile. Each OpenRouter test uses one of its free requests for the day.</p>
+                    <button type="button" @click="testAll(@js($testable))" :disabled="anyBusy()"
+                            class="min-h-[44px] px-5 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl text-xs font-bold uppercase tracking-wide transition disabled:opacity-60 flex items-center gap-2">
+                        <x-lucide-activity class="w-4 h-4" x-bind:class="anyBusy() ? 'animate-pulse' : ''" />
+                        <span x-text="anyBusy() ? 'Testing…' : 'Test all models'">Test all models</span>
+                    </button>
+                </div>
+            @endif
             @foreach ($providers as $key => $provider)
             <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
@@ -126,35 +138,42 @@
                                 Healthy
                             </span>
                         @endif
-
-                        @if (auth()->user()->isSuperAdmin())
-                        <form action="{{ route('admin.settings.ai-providers.test', $key) }}" method="POST" x-data="{ testing: false }" @submit="testing = true">
-                            @csrf
-                            <button type="submit" :disabled="testing" class="px-4 py-2 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl text-xs font-bold uppercase tracking-wide text-[#3E2723] hover:bg-white transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2">
-                                <svg x-show="testing" x-cloak class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                                </svg>
-                                <span x-text="testing ? 'Testing...' : 'Test Now'">Test Now</span>
-                            </button>
-                        </form>
+                        @if ($provider['configured'])
+                        <button type="button" @click="test(@js($key), @js(array_column($provider['models'], 'name')))" :disabled="busy(@js($key))"
+                                class="min-h-[44px] px-4 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl text-xs font-bold uppercase tracking-wide text-[#3E2723] hover:bg-white transition disabled:opacity-60 flex items-center gap-2">
+                            <svg x-show="busy(@js($key))" x-cloak class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <span x-text="busy(@js($key)) ? 'Testing…' : 'Test models'">Test models</span>
+                        </button>
                         @endif
                     </div>
                 </div>
 
                 <div class="divide-y divide-[#F0E6D2]">
                     @foreach ($provider['models'] as $model)
-                        <div class="py-3" x-data="{ editing: false, saving: false, isCustom: false }">
+                        <div class="py-3" x-data="{ editing: false, saving: false, isCustom: false, id: @js($key.'|'.$model['name']) }">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="flex items-center gap-2 min-w-0">
-                                    <span class="w-2 h-2 rounded-full shrink-0 {{ match($model['status']) {
+                                    <span x-show="!result(id)" class="w-2 h-2 rounded-full shrink-0 {{ match($model['status']) {
                                         'ok' => 'bg-green-500',
                                         'failed' => 'bg-red-500',
                                         default => 'bg-gray-300',
                                     } }}"></span>
+                                    <span x-show="result(id)" x-cloak class="w-2 h-2 rounded-full shrink-0"
+                                          x-bind:class="{ 'bg-amber-500 animate-ping': result(id)?.state === 'testing', 'bg-green-500': result(id)?.state === 'ok', 'bg-red-500': result(id)?.state === 'failed' }"></span>
                                     <span class="text-xs font-mono font-bold text-[#3E2723] truncate">{{ $model['name'] }}</span>
                                 </div>
-                                <div class="text-right shrink-0">
+                                <div x-show="result(id)" x-cloak class="text-right shrink-0 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider"
+                                     x-bind:class="{ 'text-amber-700': result(id)?.state === 'testing', 'text-green-700': result(id)?.state === 'ok', 'text-red-600': result(id)?.state === 'failed' }">
+                                    <svg x-show="result(id)?.state === 'testing'" class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                    </svg>
+                                    <span x-text="result(id) ? label(result(id)) : ''"></span>
+                                </div>
+                                <div x-show="!result(id)" class="text-right shrink-0">
                                     @if ($model['status'] === 'ok')
                                         <span class="text-xs font-bold text-green-700 uppercase tracking-wider">Healthy</span>
                                     @elseif ($model['status'] === 'failed')
@@ -230,7 +249,56 @@
                 @endif
             </div>
             @endforeach
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Per-model tests, each its own short request, so the page (and the shop) stays usable.
+    window.lkModelTests = () => ({
+        results: {},
+        queue: [],
+        running: 0,
+        testAll(byProvider) {
+            Object.entries(byProvider).forEach(([provider, models]) => this.test(provider, models));
+        },
+        test(provider, models) {
+            models.forEach((model) => {
+                const id = provider + '|' + model;
+                if (this.results[id]?.state === 'testing') return;
+                this.results[id] = { state: 'testing' };
+                this.queue.push([provider, model]);
+            });
+            this.pump();
+        },
+        // Three at a time: each test can hold a server worker for up to 15 seconds.
+        pump() {
+            while (this.running < 3 && this.queue.length) {
+                const [provider, model] = this.queue.shift();
+                this.running++;
+                fetch(@js(route('admin.settings.ai-providers.models.test', '__P__')).replace('__P__', provider), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': @js(csrf_token()) },
+                    body: JSON.stringify({ model }),
+                })
+                    .then((r) => (r.ok ? r.json() : { ok: false, reason: 'http_' + r.status }))
+                    .catch(() => ({ ok: false, reason: 'no_connection' }))
+                    .then((res) => {
+                        this.results[provider + '|' + model] = { state: res.ok ? 'ok' : 'failed', ms: res.ms, reason: res.reason };
+                        this.running--;
+                        this.pump();
+                    });
+            }
+        },
+        result(id) { return this.results[id] || null; },
+        busy(provider) { return Object.entries(this.results).some(([id, r]) => id.startsWith(provider + '|') && r.state === 'testing'); },
+        anyBusy() { return Object.values(this.results).some((r) => r.state === 'testing'); },
+        label(r) {
+            if (r.state === 'testing') return 'Testing…';
+            if (r.state === 'ok') return 'Healthy · ' + (r.ms / 1000).toFixed(1) + ' s';
+            return 'Failed — ' + String(r.reason || 'error').replaceAll('_', ' ');
+        },
+    });
+</script>
 @endsection

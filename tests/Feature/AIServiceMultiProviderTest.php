@@ -123,7 +123,7 @@ class AIServiceMultiProviderTest extends TestCase
         config(['services.openrouter.key' => null]);
         Setting::set('gemini_api_key', null);
         Setting::set('groq_api_key', null);
-        $this->actingAs($owner)->get(route('admin.settings.ai-providers'))->assertDontSee('Healthy');
+        $this->actingAs($owner)->get(route('admin.settings.ai-providers'))->assertDontSee('w-1.5 h-1.5 bg-green-500 rounded-full', false);
     }
 
     /** OpenRouter's reserve only guards OpenRouter: with Gemini or Groq in front, learning needn't wait for it. */
@@ -142,5 +142,33 @@ class AIServiceMultiProviderTest extends TestCase
 
         $this->keys(['gemini']);
         $this->assertTrue($budget->backgroundMaySpend());
+    }
+
+    /** Owner (Oct 30): test each model in the background with a live spinner, without tying up the page. */
+    public function test_one_model_is_tested_per_request_and_answers_json(): void
+    {
+        $this->keys(['groq']);
+        Http::fake(['api.groq.com/*' => Http::response(['choices' => [['message' => ['content' => 'OK']]]])]);
+        $owner = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($owner)->postJson(route('admin.settings.ai-providers.models.test', 'groq'), ['model' => 'openai/gpt-oss-120b'])
+            ->assertOk()->assertJson(['ok' => true, 'reason' => null])->assertJsonStructure(['ok', 'ms', 'reason']);
+
+        // Only models in the provider's list; nothing arbitrary.
+        $this->actingAs($owner)->postJson(route('admin.settings.ai-providers.models.test', 'groq'), ['model' => 'someone/else'])
+            ->assertUnprocessable();
+
+        $page = $this->actingAs($owner)->get(route('admin.settings.ai-providers'))->assertOk();
+        $page->assertSee('Test all models')->assertSee('Test models')->assertSee('lkModelTests', false);
+    }
+
+    public function test_a_failed_model_reports_why(): void
+    {
+        $this->keys(['groq']);
+        Http::fake(['api.groq.com/*' => Http::response(['error' => 'gone'], 404)]);
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->postJson(route('admin.settings.ai-providers.models.test', 'groq'), ['model' => 'openai/gpt-oss-120b'])
+            ->assertOk()->assertJson(['ok' => false, 'reason' => 'http_404']);
     }
 }

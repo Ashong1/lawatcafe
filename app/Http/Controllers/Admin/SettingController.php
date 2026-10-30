@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class SettingController extends Controller
 {
@@ -106,6 +107,15 @@ class SettingController extends Controller
         $result = $ai->testProvider($provider);
 
         return redirect()->back()->with('success', "Tested {$provider}: {$result['ok']} model(s) healthy, {$result['failed']} failed.");
+    }
+
+    /** One model, one short request: the page runs these in the background. */
+    public function testAiModel(Request $request, string $provider, AIService $ai)
+    {
+        abort_unless(isset(AIService::PROVIDERS[$provider]), 404);
+        $validated = $request->validate(['model' => ['required', 'string', Rule::in($ai->activeModels($provider))]]);
+
+        return response()->json($ai->testModel($provider, $validated['model']));
     }
 
     /**
