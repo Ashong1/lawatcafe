@@ -32,6 +32,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\RootRedirectController;
+use App\Http\Controllers\RemoteAccessController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ShiftController;
@@ -349,6 +350,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('accounts/{account}/send-link', [AccountController::class, 'sendLink'])->middleware('throttle:10,1')->name('accounts.send-link');
         Route::post('accounts/{account}/restore', [AccountController::class, 'restore'])->name('accounts.restore');
         Route::get('security', [ActivityLogController::class, 'index'])->name('security');
+        Route::post('remote-access/on', [RemoteAccessController::class, 'on'])->middleware('throttle:6,1')->name('remote-access.on');
+        Route::post('remote-access/off', [RemoteAccessController::class, 'off'])->name('remote-access.off');
         Route::post('system-power/start', [SystemPowerController::class, 'start'])->name('system-power.start');
         Route::post('system-power/{action}', [SystemPowerController::class, 'act'])
             ->whereIn('action', ['restart-app', 'shutdown-app', 'restart-server', 'shutdown-server'])

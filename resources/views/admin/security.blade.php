@@ -92,6 +92,32 @@
             <p class="mt-2">Everything goes back to how it was when that backup was made: sales, shifts, stock, menu, accounts and settings. Anything recorded after it is replaced. A fresh backup is made first, so you can undo a restore by restoring that one. Do it when the shop is closed; staff may need to sign in again.</p>
         </div>
 
+        {{-- Remote access (RemoteAccessService): a Cloudflare Tunnel to this server. Off by default. --}}
+        @php($remoteOn = $remote->isOn())
+        <div class="mt-6 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
+            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide flex items-center gap-2">
+                        <x-lucide-globe class="w-4 h-4" /> Remote access
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold {{ $remoteOn ? 'bg-green-100 text-green-800' : 'bg-[#F0E6D2] text-[#795548]' }}">{{ $remoteOn ? 'On' : 'Off' }}</span>
+                    </h3>
+                    <p class="text-sm text-[#6D4C41] mt-2">Open the system from anywhere — your phone at home, or someone helping you test — through a secure Cloudflare link. No router changes. It stays on until you turn it off; anyone with an account can sign in from outside while it's on.</p>
+                    <p class="mt-2 text-sm font-bold break-all"><a href="{{ $remote->url() }}" target="_blank" rel="noopener" class="text-[#3E2723] underline">{{ $remote->url() }}</a>{{ $remoteOn ? '' : ' (works once turned on)' }}</p>
+                </div>
+                @if ($remoteOn)
+                    <form method="POST" action="{{ route('remote-access.off') }}" class="shrink-0" data-confirm="Turn off remote access?" data-confirm-text="The system will only open inside the shop.">
+                        @csrf
+                        <button type="submit" class="min-h-[44px] px-5 rounded-full bg-red-600 text-white text-xs font-bold uppercase tracking-wide hover:bg-red-700 whitespace-nowrap">Turn off</button>
+                    </form>
+                @else
+                    <form method="POST" action="{{ route('remote-access.on') }}" class="shrink-0" data-confirm="Turn on remote access?" data-confirm-text="Anyone with an account can sign in from outside the shop until you turn it off.">
+                        @csrf
+                        <button type="submit" class="min-h-[44px] px-5 rounded-full bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide hover:bg-[#271815] whitespace-nowrap">Turn on</button>
+                    </form>
+                @endif
+            </div>
+        </div>
+
         <div class="mt-6 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
             <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-1">Activity Log</h3>
             <p class="text-xs text-[#6D4C41] mb-4">Sign-ins, accounts, backups and system power. Stock changes (sales, deliveries, wastage) are in <a href="{{ route('inventory.logs') }}" class="font-bold underline text-[#3E2723]">Stock History</a>.</p>

@@ -111,4 +111,9 @@ return [
         'app_password' => env('PIHOLE_APP_PASSWORD'),
     ],
 
+    // Remote access (Cloudflare Tunnel lawatkape-remote); see RemoteAccessService.
+    'remote_access' => [
+        'url' => env('REMOTE_ACCESS_URL', 'https://lawatkape-remote.aserotech.com'),
+    ],
+
 ];

@@ -32,6 +32,8 @@ class ActivityLog extends Model
         'app_started' => 'Turned the web app back on',
         'server_restarting' => 'Restarted the server',
         'server_shutting_down' => 'Shut down the server',
+        'remote_access_on' => 'Turned on remote access',
+        'remote_access_off' => 'Turned off remote access',
     ];
 
     /** Kinds of entry, so sign-ins, accounts, backups and system power can be read apart (evaluators, Oct 28). */
@@ -39,7 +41,7 @@ class ActivityLog extends Model
         'Sign-ins' => ['signed_in', 'signed_out', 'sign_in_failed', 'locked_out', 'password_reset'],
         'Accounts' => ['account_added', 'account_changed', 'account_removed', 'account_restored'],
         'Backups' => ['backup_made', 'backup_failed', 'backup_restored'],
-        'System' => ['app_restarted', 'app_shut_down', 'app_started', 'server_restarting', 'server_shutting_down'],
+        'System' => ['app_restarted', 'app_shut_down', 'app_started', 'server_restarting', 'server_shutting_down', 'remote_access_on', 'remote_access_off'],
     ];
 
     protected $fillable = ['user_id', 'event', 'detail', 'ip_address', 'user_agent'];

@@ -268,3 +268,16 @@ The app controls the shop's real firewall. Lessons learned the hard way:
 | Site blocking page: "Pi-hole not configured" | `PIHOLE_APP_PASSWORD` empty or wrong | Create a new app password in Pi-hole |
 | Order reminders keep chiming | Orders aren't being marked done on the kitchen display | Mark them done; the reminder time is in Settings → Store Settings |
 | Locked out of an account | | `sudo -u www-data php artisan user:reset-password someone@example.com` |
+
+## Remote access (Settings → Security)
+
+The **Remote access** card turns a Cloudflare Tunnel on and off: systemd
+service `lawatkape-remote` (`cloudflared ... run lawatkape-remote`, config in
+`/root/.cloudflared/config.yml`), reachable at `https://lawatkape-remote.aserotech.com`
+(`REMOTE_ACCESS_URL`). Off by default; it stays on until someone turns it off.
+Owners and super admins can switch it; every switch is in the Activity Log
+and the other owners get an alert. www-data may only start/stop that one
+service (enable/disable --now, so it survives a restart), via `/etc/sudoers.d/lawatkape-remote`:
+
+    www-data ALL=(root) NOPASSWD: /usr/bin/systemctl enable --now lawatkape-remote, /usr/bin/systemctl disable --now lawatkape-remote
+

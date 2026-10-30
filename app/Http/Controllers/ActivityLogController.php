@@ -35,6 +35,7 @@ class ActivityLogController extends Controller
             'logs' => $logs,
             'users' => User::orderBy('name')->get(['id', 'name']),
             'failedToday' => ActivityLog::where('event', 'sign_in_failed')->where('created_at', '>=', today())->count(),
+            'remote' => app(\App\Services\RemoteAccessService::class),
             'lastBackup' => app(BackupService::class)->list()->first()['made_at'] ?? null,
         ]);
     }
