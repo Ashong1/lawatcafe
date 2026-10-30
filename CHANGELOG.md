@@ -36,6 +36,10 @@ Feedback list: [docs/capstone/EVALUATION_2026-10-28.md](docs/capstone/EVALUATION
   network, deliveries).
 - **Profile no longer has "Delete Account"**: only the owner archives
   accounts, so no account (or its sales) can disappear.
+- Fixes from the batch review: the AI Usage card reads a key saved on the
+  page and doesn't stall offline; restoring the oldest backup no longer
+  deletes it first; only the shop's proxy may pass on a client's address,
+  so the per-device limits can't be dodged with a faked header.
 
 ## 1.28.0 — Confirmations and sign-in lockout
 *build 217*

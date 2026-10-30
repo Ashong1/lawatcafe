@@ -14,7 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*');
+        // Only Nginx Proxy Manager (.5) and the app itself may say who the
+        // client is; anyone else could fake X-Forwarded-For to dodge the
+        // per-device limits (wrong Wi-Fi codes, sign-in tries).
+        $middleware->trustProxies(at: ['192.168.2.5', '127.0.0.1']);
         $middleware->append(SecurityHeaders::class);
         // Settings → System Power's "shut down web app" pauses the staff system
         // only: guests can still sign in to the Wi-Fi.

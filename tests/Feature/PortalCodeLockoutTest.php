@@ -64,4 +64,25 @@ class PortalCodeLockoutTest extends TestCase
 
         $this->tryCode('FREE-USED')->assertSessionHas('error', 'This code has already been used.');
     }
+
+    public function test_a_faked_forwarded_address_does_not_reset_the_count(): void
+    {
+        foreach (['NOPE-0001', 'NOPE-0002', 'NOPE-0003'] as $i => $wrong) {
+            $this->withServerVariables(['REMOTE_ADDR' => '192.168.2.150'])
+                ->withHeader('X-Forwarded-For', "10.0.0.{$i}")
+                ->post(route('portal.authenticate'), ['passcode' => $wrong]);
+        }
+
+        $this->withServerVariables(['REMOTE_ADDR' => '192.168.2.150'])->withHeader('X-Forwarded-For', '10.0.0.9')
+            ->post(route('portal.authenticate'), ['passcode' => 'FREE-USED'])
+            ->assertSessionHas('error', fn ($m) => str_contains($m, 'Too many wrong codes'));
+    }
+
+    public function test_the_shop_proxy_still_passes_on_the_real_address(): void
+    {
+        $this->withServerVariables(['REMOTE_ADDR' => '192.168.2.5'])->withHeader('X-Forwarded-For', '192.168.2.150')
+            ->get(route('portal.index'));
+
+        $this->assertSame('192.168.2.150', request()->ip());
+    }
 }
