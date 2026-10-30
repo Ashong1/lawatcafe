@@ -18,6 +18,8 @@ Feedback list: [docs/capstone/EVALUATION_2026-10-28.md](docs/capstone/EVALUATION
 - **"Save this?" before inventory and network changes:** ingredients,
   restocks, products, wastage, reserved addresses and the automatic speed
   setting now ask first (plan speeds and fair use already did).
+- **Wi-Fi code typed wrong 3 times** from one device blocks that device for
+  5 minutes; a code that exists resets the count.
 
 ## 1.28.0 — Confirmations and sign-in lockout
 *build 217*

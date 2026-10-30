@@ -24,6 +24,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Notification;
 
 class CaptivePortalController extends Controller
@@ -540,6 +541,12 @@ class CaptivePortalController extends Controller
             // after autocorrect — so collapse whitespace and case before looking
             // up rather than blaming the guest for their keyboard.
             $code = strtoupper(preg_replace('/\s+/', '', (string) $request->passcode));
+            // 3 wrong codes from one device → 5-minute block (evaluators, Oct 28).
+            // Only codes that match nothing count: those are the guesses.
+            $wrongKey = 'portal-code-fail:'.$request->ip();
+            if (RateLimiter::tooManyAttempts($wrongKey, 3)) {
+                return redirect()->route('portal.index')->with('error', __('Too many wrong codes. Please wait :min minutes or ask the staff for help.', ['min' => (int) ceil(RateLimiter::availableIn($wrongKey) / 60)]));
+            }
             PortalEvent::record(PortalEvent::CODE_TRIED, $request->ip(), substr($code, 0, 32));
             $failed = function (string $reason, string $message) use ($request, $code) {
                 PortalEvent::record(PortalEvent::CODE_FAILED, $request->ip(), substr($code, 0, 32), ['reason' => $reason]);
@@ -571,8 +578,11 @@ class CaptivePortalController extends Controller
             // never shown, so a guest who mistyped their code just saw the form
             // reset with no explanation at all.
             if (! $voucher) {
+                RateLimiter::hit($wrongKey, 300);
+
                 return $failed('no_match', __('That code doesn\'t match any voucher — double-check it against your receipt.'));
             }
+            RateLimiter::clear($wrongKey);
 
             if (! $voucher->is_used && ($expiredOn = $voucher->unusedExpiresAt()) && $expiredOn->isPast()) {
                 return $failed('expired_unused', __('This code expired on :date. Please ask for a new one at the counter.', ['date' => $expiredOn->format('M j, Y')]));
