@@ -22,7 +22,7 @@ Status legend: **Done** = already in the code · **Partial** · **To do** · **Q
 | 5 | R1 18:20, 52:09 | X-Read (mid-shift) and Z-Read (end of day) reports, standard POS functions | Partial — Z-Reads/Shift Audits page exists; no X-Read |
 | 6 | R1 25:10–27:19 | Void should be approved on the spot (owner/admin verifies at the register), not left pending until the owner arrives | To do — reverses the v1 void-approval queue |
 | 7 | R1 27:33–28:27 | Return / refund transaction | To do |
-| 8 | R1 28:35–31:13 | Sales report by day, date range and month; best sellers per month/season | Partial — weekly chart + monthly totals only |
+| 8 | R1 28:35–31:13 | Sales report by day, date range and month; best sellers per month/season | Done v1.30.0.231 (Reports → Sales) |
 | 9 | R1 21:54–25:06 + owner | One person runs the shift: POS and kitchen display in one screen | To do |
 | — | R1 31:36–33:59 | Receipts / BIR, Senior & PWD discount, reprint | Question — all present |
 
@@ -34,7 +34,7 @@ Status legend: **Done** = already in the code · **Partial** · **To do** · **Q
 | 11 | R1 06:47–09:00 | Wastage can't exceed what one opened package holds (error trapping) | Done v1.29.0.221 |
 | 12 | R1 44:00–45:15 | Wastage of partial amounts (e.g. 50 ml spilled), not whole servings | Done — wastage is entered in ml/g already |
 | 13 | R1 11:17–13:05, 34:10–40:00 | Receive Deliveries: enter the PO reference number → checklist of expected items; add the supplier's own DR/SI number field; pick the supplier instead of retyping | To do — staff currently type supplier and items by hand |
-| 14 | R2 31:50–33:14 | Activity Log grouped by category (security vs inventory), date filter; stock / daily / weekly reports | Partial |
+| 14 | R2 31:50–33:14 | Activity Log grouped by category (security vs inventory), date filter; stock / daily / weekly reports | Partial — stock report done v1.30.0.232; Activity Log grouping to do |
 
 ## Wi-Fi and network
 
