@@ -77,4 +77,15 @@ class RegisterOrdersPanelTest extends TestCase
         $this->actingAs($this->staff)->get('/kds')->assertRedirect(route('pos'));
         $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('dashboard'))->assertDontSee('title="Kitchen Display"', false);
     }
+
+    public function test_the_register_actions_sit_in_one_toolbar_row(): void
+    {
+        Shift::create(['user_id' => $this->staff->id, 'starting_cash' => 500, 'status' => 'open', 'opened_at' => now()]);
+
+        $this->actingAs($this->staff)->get(route('pos'))->assertOk()
+            ->assertSee('data-register-toolbar', false)
+            ->assertSee('md:flex-nowrap', false)
+            ->assertSee('<span class="sr-only">Orders</span>', false)
+            ->assertSee('<span class="sr-only">X-Read</span>', false);
+    }
 }

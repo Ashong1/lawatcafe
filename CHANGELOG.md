@@ -9,13 +9,18 @@ the history was rewritten.
 
 ---
 
-## 1.41.0 — Pick suppliers from a list
-*build 246*
+## 1.41.0 — Pick suppliers from a list; a tidier register
+*builds 246–247*
 
 - **Supplier dropdown** on Receive Supplies (owner) and Receive Delivery
   (staff): tap a saved supplier instead of typing it; "Someone else…" for a
   new one. A delivery opened from a PO keeps its supplier.
 - Wastage reasons include **Spoiled (napanis)**.
+- **Register toolbar is one row**: search, then Orders, Cash and X-Read as
+  icon buttons (with labels on hover), then End Shift. Who's Online and
+  Download moved off the register (sidebar and Reports have them; the phone
+  menu keeps them). The menu cards size to the space they have, and the
+  Orders to make column shows from 1536 px wide (a button below that).
 
 ## 1.40.0 — Register and Kitchen Display are one screen
 *builds 244–245*

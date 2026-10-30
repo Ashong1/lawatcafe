@@ -67,11 +67,12 @@
 
     {{-- Menu Area (Left) --}}
     <div class="flex-1 min-w-0 p-3 sm:p-4 md:p-8 pb-28 lg:pb-8 flex flex-col lg:overflow-hidden">
-        <div class="flex-1 min-w-0 sm:bg-white p-0 sm:p-6 md:p-8 rounded-2xl sm:shadow-sm flex flex-col lg:overflow-hidden sm:border border-[#F0E6D2]">
+        <div class="flex-1 min-w-0 sm:bg-white p-0 sm:p-6 2xl:p-8 rounded-2xl sm:shadow-sm flex flex-col lg:overflow-hidden sm:border border-[#F0E6D2]">
             
-            <div class="flex flex-col md:flex-row justify-between items-center mb-3 sm:mb-8 gap-3 sm:gap-4 shrink-0">
+            {{-- One toolbar row (owner, Oct 30): search grows, secondary actions are icons with a tooltip, End Shift keeps its label. --}}
+            <div data-register-toolbar class="flex flex-col md:flex-row md:flex-nowrap justify-between items-center mb-3 sm:mb-6 gap-3 shrink-0">
                 
-                <div class="flex items-center gap-2 w-full max-w-md">
+                <div class="flex items-center gap-2 w-full md:flex-1 min-w-0 md:min-w-[9rem] md:max-w-md">
                 <div class="relative flex-1 min-w-0">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#795548]">
                         <x-lucide-search class="w-5 h-5 text-gray-400" />
@@ -102,34 +103,21 @@
                 </div>
                 </div>
                 
-                <div class="hidden md:flex md:w-auto flex-wrap justify-end gap-2 sm:gap-3 items-center">
+                <div class="hidden md:flex md:w-auto flex-nowrap justify-end gap-2 items-center shrink-0">
                     {{-- Orders to make: the kitchen list, on the register --}}
-                    <button type="button" @click="ordersOpen = true" data-orders-count="{{ $waitingOrders->count() }}"
-                            class="xl:hidden relative min-h-[44px] bg-[#3E2723] hover:bg-[#271815] text-white px-3 sm:px-5 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                    <button type="button" @click="ordersOpen = true" data-orders-count="{{ $waitingOrders->count() }}" title="Orders to make" aria-label="Orders to make"
+                            class="2xl:hidden relative min-h-[44px] min-w-[44px] bg-[#3E2723] hover:bg-[#271815] text-white px-3 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center justify-center gap-2 whitespace-nowrap">
                         <x-lucide-chef-hat class="w-4 h-4" />
-                        <span class="hidden xl:inline">Orders to make</span><span class="xl:hidden">To make</span>
+                        <span class="sr-only">Orders to make</span>
                         <span x-show="ordersCount > 0" x-text="ordersCount" class="min-w-[1.5rem] h-6 px-1.5 rounded-full bg-amber-500 text-[#3E2723] text-xs font-bold inline-flex items-center justify-center">{{ $waitingOrders->count() }}</span>
                     </button>
 
                     {{-- History Access --}}
-                    <a href="{{ route('pos.history') }}" class="min-h-[44px] bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#795548] hover:text-[#3E2723] px-3 sm:px-5 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center justify-center border border-[#F0E6D2] gap-2 whitespace-nowrap" title="Orders">
+                    <a href="{{ route('pos.history') }}" class="min-h-[44px] bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#795548] hover:text-[#3E2723] w-11 px-0 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center justify-center border border-[#F0E6D2] gap-2 whitespace-nowrap" title="Orders" aria-label="Orders">
                         <x-lucide-history class="w-4 h-4" />
-                        <span>Orders</span>
+                        <span class="sr-only">Orders</span>
                     </a>
 
-                    {{-- Admin Actions --}}
-                    @if(auth()->user()->isAdminOrAbove())
-                    <div class="contents md:flex md:gap-2 md:shrink-0">
-                        <a href="{{ route('network.sessions') }}" class="min-h-[44px] min-w-[44px] bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#795548] hover:text-[#3E2723] px-3 sm:px-4 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center justify-center border border-[#F0E6D2] gap-2" title="Who's Online" aria-label="Who's Online">
-                            <x-lucide-wifi class="w-4 h-4" />
-                            <span class="hidden xl:inline">Who's Online</span>
-                        </a>
-                        <a href="{{ route('sales.export') }}" class="min-h-[44px] min-w-[44px] bg-[#3E2723] hover:bg-[#271815] text-white px-3 sm:px-4 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center justify-center gap-2" title="Download today's sales" aria-label="Download today's sales">
-                            <x-lucide-download class="w-4 h-4" />
-                            <span class="hidden xl:inline">Download</span>
-                        </a>
-                    </div>
-                    @endif
 
                     {{-- Shift Management --}}
                     @if($activeShift)
@@ -137,14 +125,14 @@
                         <button type="button" 
                                 @click="recordCashAction()"
                                 title="Cash in or out" aria-label="Cash in or out"
-                                class="min-h-[44px] min-w-[44px] bg-white hover:bg-[#FDF8F5] text-[#3E2723] px-3 sm:px-4 rounded-full font-bold transition border border-[#F0E6D2] text-xs tracking-wider inline-flex items-center justify-center gap-2">
+                                class="min-h-[44px] w-11 bg-white hover:bg-[#FDF8F5] text-[#3E2723] px-0 rounded-full font-bold transition border border-[#F0E6D2] text-xs tracking-wider inline-flex items-center justify-center gap-2">
                             <x-lucide-banknote class="w-4 h-4" />
-                            <span class="hidden xl:inline">Cash</span>
+                            <span class="sr-only">Cash</span>
                         </button>
                         <a href="{{ route('shift.x-read', $activeShift->id) }}" target="_blank" title="X-Read: this shift's totals so far" aria-label="X-Read: this shift's totals so far"
-                           class="min-h-[44px] min-w-[44px] bg-white hover:bg-[#FDF8F5] text-[#3E2723] px-3 sm:px-4 rounded-full font-bold transition border border-[#F0E6D2] text-xs tracking-wider inline-flex items-center justify-center gap-2">
+                           class="min-h-[44px] w-11 bg-white hover:bg-[#FDF8F5] text-[#3E2723] px-0 rounded-full font-bold transition border border-[#F0E6D2] text-xs tracking-wider inline-flex items-center justify-center gap-2">
                             <x-lucide-receipt-text class="w-4 h-4" />
-                            <span class="hidden xl:inline">X-Read</span>
+                            <span class="sr-only">X-Read</span>
                         </a>
                         <a href="{{ route('shift.closing-report', $activeShift->id) }}" class="min-h-[44px] bg-amber-600 hover:bg-amber-700 text-white px-3 sm:px-5 rounded-full font-bold transition shadow-md shadow-amber-600/20 text-xs tracking-wider inline-flex items-center justify-center gap-2 whitespace-nowrap">
                             <x-lucide-lock class="w-4 h-4" />
@@ -172,7 +160,7 @@
                      for a precisely bounded internal scroll region only makes sense once the
                      ancestor chain is forced to viewport height, which only happens at `lg:` up. --}}
                 <div class="lg:absolute lg:inset-0 overflow-y-auto pb-6 pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#D7CCC8] [&::-webkit-scrollbar-thumb]:rounded-full">
-                    <div class="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4">
+                    <div class="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-3 sm:gap-4">
                         <template x-for="item in filteredProducts" :key="item.id">
                             <div @click="(item.type !== 'product' || item.inStock) && addToCart(item)"
                                  :class="item.type === 'product' && !item.inStock ? 'cursor-not-allowed' : 'cursor-pointer active:scale-[0.98]'"
@@ -287,9 +275,9 @@
             </button>
     </x-modal-shell>
 
-    {{-- Orders to make, always on screen from xl: one person takes and makes the orders (owner, Oct 30).
-         Below xl the "Orders to make" button opens the same list as a side panel. --}}
-    <section data-orders-column aria-labelledby="orders-column-title" class="hidden xl:flex flex-col w-80 2xl:w-96 shrink-0 h-full overflow-hidden border-l border-[#F0E6D2] bg-[#FDF8F5]">
+    {{-- Orders to make, always on screen from 2xl (1536px; below that three columns crush the menu): one person takes and makes the orders (owner, Oct 30).
+         Below 2xl the "Orders to make" button opens the same list as a side panel. --}}
+    <section data-orders-column aria-labelledby="orders-column-title" class="hidden 2xl:flex flex-col w-80 shrink-0 h-full overflow-hidden border-l border-[#F0E6D2] bg-[#FDF8F5]">
         <div class="flex items-center justify-between gap-2 px-4 py-4 border-b border-[#F0E6D2] bg-white">
             <h2 id="orders-column-title" class="text-sm font-bold text-[#3E2723] uppercase tracking-wide flex items-center gap-2">
                 <x-lucide-chef-hat class="w-4 h-4" /> Orders to make
