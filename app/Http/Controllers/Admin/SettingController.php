@@ -118,6 +118,33 @@ class SettingController extends Controller
         return response()->json($ai->testModel($provider, $validated['model']));
     }
 
+    public function scanAiModels(string $provider, AIService $ai)
+    {
+        abort_unless(isset(AIService::PROVIDERS[$provider]), 404);
+        $models = $ai->scanModels($provider);
+
+        return $models === null
+            ? response()->json(['message' => "Couldn't reach ".AIService::PROVIDERS[$provider]['label'].'. Check the key and the internet connection.'], 502)
+            : response()->json(['models' => $models]);
+    }
+
+    public function checkAiModel(Request $request, string $provider, AIService $ai)
+    {
+        abort_unless(isset(AIService::PROVIDERS[$provider]), 404);
+        $validated = $request->validate(['model' => ['required', 'string', Rule::in($ai->scannedModels($provider))]]);
+
+        return response()->json($ai->qualifyModel($provider, $validated['model']));
+    }
+
+    public function addAiModel(Request $request, string $provider, AIService $ai)
+    {
+        abort_unless(isset(AIService::PROVIDERS[$provider]), 404);
+        $validated = $request->validate(['model' => ['required', 'string', Rule::in($ai->scannedModels($provider))]]);
+        $ai->addModel($provider, $validated['model']);
+
+        return response()->json(['models' => $ai->activeModels($provider)]);
+    }
+
     /**
      * Swap a model in a provider's active list for a different model ID,
      * verifying the replacement immediately.

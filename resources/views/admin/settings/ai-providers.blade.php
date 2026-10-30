@@ -4,7 +4,7 @@
 @section('content')
 <div class="bg-[#FDF8F5] min-h-screen -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 text-[#4A3B32]" style="font-family: 'Montserrat', sans-serif;">
 
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-7xl mx-auto">
         <div class="lk-page-head mb-8 border-b border-[#E6D5C3] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
                 <h2 class="flex items-center gap-3 text-[#3E2723]">
@@ -21,7 +21,8 @@
             </div>
         </div>
 
-        <div class="max-w-3xl mx-auto space-y-6">
+        <div class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
             {{-- Read from OpenRouter (free to read), cached 5 minutes in AiBudget::account(). --}}
             <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
@@ -90,6 +91,7 @@
                     </button>
                 </form>
             </div>
+            </div>
 
             @php $testable = collect($providers)->filter(fn ($p) => $p['configured'])->map(fn ($p) => array_column($p['models'], 'name')); @endphp
             <div x-data="lkModelTests()" class="space-y-6">
@@ -103,9 +105,10 @@
                     </button>
                 </div>
             @endif
+            <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 items-start">
             @foreach ($providers as $key => $provider)
-            <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
+            <div class="min-w-0 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700">
                             <x-lucide-bot class="w-6 h-6" />
@@ -120,7 +123,7 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3">
                         @if (! $provider['configured'])
                             {{-- No key, no health to report. --}}
                         @elseif ($provider['circuit']['open'])
@@ -140,7 +143,7 @@
                         @endif
                         @if ($provider['configured'])
                         <button type="button" @click="test(@js($key), @js(array_column($provider['models'], 'name')))" :disabled="busy(@js($key))"
-                                class="min-h-[44px] px-4 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl text-xs font-bold uppercase tracking-wide text-[#3E2723] hover:bg-white transition disabled:opacity-60 flex items-center gap-2">
+                                class="min-h-[44px] px-4 bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl text-xs font-bold uppercase tracking-wide whitespace-nowrap text-[#3E2723] hover:bg-white transition disabled:opacity-60 flex items-center gap-2">
                             <svg x-show="busy(@js($key))" x-cloak class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -239,6 +242,41 @@
                     @endforeach
                 </div>
 
+                @if ($provider['configured'])
+                <div class="mt-4 pt-4 border-t border-[#F0E6D2]">
+                    <button type="button" @click="scan(@js($key))" :disabled="scans[@js($key)]?.state === 'scanning'"
+                            class="min-h-[44px] text-xs font-bold uppercase tracking-wide text-[#3E2723] hover:text-amber-700 transition disabled:opacity-60 flex items-center gap-2">
+                        <span class="inline-flex" x-bind:class="scans[@js($key)]?.state === 'scanning' ? 'animate-spin' : ''"><x-lucide-radar class="w-4 h-4" /></span>
+                        <span x-text="scans[@js($key)]?.state === 'scanning' ? 'Scanning…' : 'Scan for more models'">Scan for more models</span>
+                    </button>
+                    <template x-if="scans[@js($key)]?.state === 'done'">
+                        <div class="mt-2" x-data="{ showFailed: false }">
+                            <p class="text-xs text-[#6D4C41] font-medium" x-text="scans[@js($key)].message"></p>
+                            <div class="divide-y divide-[#F0E6D2]">
+                                <template x-for="m in scans[@js($key)].models.filter((m) => showFailed || result('check:' + @js($key) + '|' + m)?.state !== 'failed')" :key="m">
+                                    <div class="py-2 flex items-center justify-between gap-3">
+                                        <span class="text-xs font-mono font-bold text-[#3E2723] truncate min-w-0" x-text="m"></span>
+                                        <div class="shrink-0 flex items-center gap-2 text-xs font-bold uppercase tracking-wider"
+                                             x-bind:class="{ 'text-amber-700': result('check:' + @js($key) + '|' + m)?.state === 'testing', 'text-green-700': ['ok', 'added'].includes(result('check:' + @js($key) + '|' + m)?.state), 'text-red-600': result('check:' + @js($key) + '|' + m)?.state === 'failed' }">
+                                            <svg x-show="result('check:' + @js($key) + '|' + m)?.state === 'testing'" class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                            </svg>
+                                            <span x-text="label(result('check:' + @js($key) + '|' + m) || { state: 'queued' }, true)"></span>
+                                            <button type="button" x-show="result('check:' + @js($key) + '|' + m)?.state === 'ok'" @click="add(@js($key), m)"
+                                                    class="min-h-[36px] px-3 bg-[#3E2723] hover:bg-[#271815] text-white rounded-lg">Add</button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            <button type="button" x-show="failedCount(@js($key))" @click="showFailed = !showFailed"
+                                    class="min-h-[44px] text-xs font-bold uppercase tracking-wide text-[#6D4C41] hover:text-[#3E2723] underline underline-offset-2"
+                                    x-text="showFailed ? 'Hide the ones that failed' : 'Show ' + failedCount(@js($key)) + ' that failed'"></button>
+                        </div>
+                    </template>
+                </div>
+                @endif
+
                 @if (auth()->user()->isSuperAdmin())
                 <form action="{{ route('admin.settings.ai-providers.models.reset', $key) }}" method="POST" class="mt-4 pt-4 border-t border-[#F0E6D2]">
                     @csrf
@@ -250,6 +288,7 @@
             </div>
             @endforeach
             </div>
+            </div>
         </div>
     </div>
 </div>
@@ -258,8 +297,45 @@
     // Per-model tests, each its own short request, so the page (and the shop) stays usable.
     window.lkModelTests = () => ({
         results: {},
+        scans: {},
         queue: [],
         running: 0,
+        url(name, provider) {
+            return @js(route('admin.settings.ai-providers.models.test', '__P__')).replace('/__P__/models/test', '/' + provider + '/models/' + name);
+        },
+        post(name, provider, model) {
+            return fetch(this.url(name, provider), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': @js(csrf_token()) },
+                body: JSON.stringify({ model }),
+            });
+        },
+        // Ask the provider what else this key can use, then qualify each one.
+        async scan(provider) {
+            this.scans[provider] = { state: 'scanning' };
+            let res;
+            try {
+                const r = await fetch(this.url('scan', provider), { headers: { 'Accept': 'application/json' } });
+                res = await r.json();
+                if (!r.ok) throw new Error(res.message);
+            } catch (e) {
+                this.scans[provider] = { state: 'done', models: [], message: e.message || "Couldn't scan just now." };
+                return;
+            }
+            const n = res.models.length;
+            this.scans[provider] = { state: 'done', models: res.models, message: n
+                ? n + ' more model' + (n > 1 ? 's' : '') + ' found. Each must call a tool to pass; only passing models can be added.'
+                : 'No other models found for this key.' };
+            res.models.forEach((model) => {
+                this.results['check:' + provider + '|' + model] = { state: 'testing' };
+                this.queue.push(['check', provider, model]);
+            });
+            this.pump();
+        },
+        async add(provider, model) {
+            const r = await this.post('add', provider, model);
+            this.results['check:' + provider + '|' + model] = r.ok ? { state: 'added' } : { state: 'failed', reason: 'could_not_add' };
+        },
         testAll(byProvider) {
             Object.entries(byProvider).forEach(([provider, models]) => this.test(provider, models));
         },
@@ -268,24 +344,20 @@
                 const id = provider + '|' + model;
                 if (this.results[id]?.state === 'testing') return;
                 this.results[id] = { state: 'testing' };
-                this.queue.push([provider, model]);
+                this.queue.push(['test', provider, model]);
             });
             this.pump();
         },
         // Three at a time: each test can hold a server worker for up to 15 seconds.
         pump() {
             while (this.running < 3 && this.queue.length) {
-                const [provider, model] = this.queue.shift();
+                const [name, provider, model] = this.queue.shift();
                 this.running++;
-                fetch(@js(route('admin.settings.ai-providers.models.test', '__P__')).replace('__P__', provider), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': @js(csrf_token()) },
-                    body: JSON.stringify({ model }),
-                })
+                this.post(name, provider, model)
                     .then((r) => (r.ok ? r.json() : { ok: false, reason: 'http_' + r.status }))
                     .catch(() => ({ ok: false, reason: 'no_connection' }))
                     .then((res) => {
-                        this.results[provider + '|' + model] = { state: res.ok ? 'ok' : 'failed', ms: res.ms, reason: res.reason };
+                        this.results[(name === 'check' ? 'check:' : '') + provider + '|' + model] = { state: res.ok ? 'ok' : 'failed', ms: res.ms, reason: res.reason };
                         this.running--;
                         this.pump();
                     });
@@ -293,11 +365,16 @@
         },
         result(id) { return this.results[id] || null; },
         busy(provider) { return Object.entries(this.results).some(([id, r]) => id.startsWith(provider + '|') && r.state === 'testing'); },
-        anyBusy() { return Object.values(this.results).some((r) => r.state === 'testing'); },
-        label(r) {
+        anyBusy() { return Object.entries(this.results).some(([id, r]) => !id.startsWith('check:') && r.state === 'testing'); },
+        failedCount(provider) {
+            return Object.entries(this.results).filter(([id, r]) => id.startsWith('check:' + provider + '|') && r.state === 'failed').length;
+        },
+        label(r, candidate = false) {
             if (r.state === 'testing') return 'Testing…';
-            if (r.state === 'ok') return 'Healthy · ' + (r.ms / 1000).toFixed(1) + ' s';
-            return 'Failed — ' + String(r.reason || 'error').replaceAll('_', ' ');
+            if (r.state === 'added') return 'Added to the route';
+            if (r.state === 'ok') return (candidate ? 'Passed · ' : 'Healthy · ') + (r.ms / 1000).toFixed(1) + ' s';
+            const why = { no_tool_call: "didn't use the tool", timed_out: 'too slow', http_429: 'not on your plan or limit reached', http_404: 'not available' };
+            return 'Failed — ' + (why[r.reason] || String(r.reason || 'error').replaceAll('_', ' '));
         },
     });
 </script>

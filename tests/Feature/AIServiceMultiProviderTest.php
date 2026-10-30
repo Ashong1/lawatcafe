@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\AIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -170,5 +171,50 @@ class AIServiceMultiProviderTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'admin']))
             ->postJson(route('admin.settings.ai-providers.models.test', 'groq'), ['model' => 'openai/gpt-oss-120b'])
             ->assertOk()->assertJson(['ok' => false, 'reason' => 'http_404']);
+    }
+
+    /** Owner (Oct 30): scan a provider for more models, qualify each, add the good ones. */
+    public function test_scan_lists_chat_models_not_already_in_the_route(): void
+    {
+        $this->keys(['gemini']);
+        Http::fake(['generativelanguage.googleapis.com/v1beta/openai/models' => Http::response(['data' => [
+            ['id' => 'models/gemini-3.5-flash'], ['id' => 'models/gemini-3.6-flash'], ['id' => 'models/gemini-3.8-flash-tts'],
+            ['id' => 'models/gemini-3.1-flash-image'], ['id' => 'models/gemini-3.7-flash'],
+        ]])]);
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))->getJson(route('admin.settings.ai-providers.models.scan', 'gemini'))
+            ->assertOk()->assertExactJson(['models' => ['gemini-3.6-flash', 'gemini-3.7-flash']]);
+    }
+
+    public function test_a_candidate_qualifies_only_by_calling_the_tool(): void
+    {
+        $this->keys(['groq']);
+        Cache::put('ai_scan_groq', ['qwen/new-model', 'meta/chatty'], 3600);
+        Http::fake(function ($request) {
+            return $request->data()['model'] === 'qwen/new-model'
+                ? Http::response(['choices' => [['message' => ['content' => null, 'tool_calls' => [['id' => 'c1', 'type' => 'function', 'function' => ['name' => 'get_shop_time', 'arguments' => '{}']]]]]]])
+                : Http::response(['choices' => [['message' => ['content' => 'It is 3 PM.']]]]);
+        });
+        $owner = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($owner)->postJson(route('admin.settings.ai-providers.models.check', 'groq'), ['model' => 'qwen/new-model'])
+            ->assertOk()->assertJson(['ok' => true, 'reason' => null]);
+        $this->actingAs($owner)->postJson(route('admin.settings.ai-providers.models.check', 'groq'), ['model' => 'meta/chatty'])
+            ->assertOk()->assertJson(['ok' => false, 'reason' => 'no_tool_call']);
+        // Not from the scan: refused.
+        $this->actingAs($owner)->postJson(route('admin.settings.ai-providers.models.check', 'groq'), ['model' => 'x/unknown'])
+            ->assertUnprocessable();
+    }
+
+    public function test_adding_a_scanned_model_puts_it_in_the_route(): void
+    {
+        $this->keys(['groq']);
+        Cache::put('ai_scan_groq', ['qwen/new-model'], 3600);
+        $owner = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($owner)->postJson(route('admin.settings.ai-providers.models.add', 'groq'), ['model' => 'qwen/new-model'])->assertOk();
+
+        $this->assertContains('qwen/new-model', app(AIService::class)->activeModels('groq'));
+        $this->actingAs($owner)->get(route('admin.settings.ai-providers'))->assertSee('Scan for more models');
     }
 }

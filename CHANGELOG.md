@@ -9,6 +9,17 @@ the history was rewritten.
 
 ---
 
+## 1.47.0 — Scan for more AI models
+*build 266*
+
+- **Scan for more models** on each provider lists every chat model the key
+  can use that isn't in the route yet, then qualifies each one in the
+  background: it must call a tool when asked something only a tool can
+  answer. Passing models get an **Add** button; failures fold under
+  "Show N that failed".
+- Barista AI Settings uses the width: usage and keys side by side, provider
+  cards in two or three columns.
+
 ## 1.46.1 — Test models in the background
 *build 265*
 

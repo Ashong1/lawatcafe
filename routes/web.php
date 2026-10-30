@@ -376,6 +376,17 @@ Route::middleware(['auth'])->group(function () {
                 ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
                 ->middleware('throttle:60,1')
                 ->name('ai-providers.models.test');
+            Route::get('/ai-providers/{provider}/models/scan', [SettingController::class, 'scanAiModels'])
+                ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                ->middleware('throttle:10,1')
+                ->name('ai-providers.models.scan');
+            Route::post('/ai-providers/{provider}/models/check', [SettingController::class, 'checkAiModel'])
+                ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                ->middleware('throttle:60,1')
+                ->name('ai-providers.models.check');
+            Route::post('/ai-providers/{provider}/models/add', [SettingController::class, 'addAiModel'])
+                ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                ->name('ai-providers.models.add');
 
             Route::middleware([RoleMiddleware::class.':super_admin'])->group(function () {
                 Route::post('/ai-providers/{provider}/test', [SettingController::class, 'testAiProvider'])

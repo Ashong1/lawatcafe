@@ -226,6 +226,93 @@ class AIService
         return ['replaced' => true, 'new_model_ok' => $ok];
     }
 
+    /** Speech, image, audio, embedding and guard models can't hold a chat; never offered by a scan. */
+    private const NOT_CHAT = '/(tts|image|audio|whisper|guard|embed|live|orpheus|aqa|veo|imagen|lyria|robotics|computer-use|allam|antigravity|deep-research|transcribe|banana)/i';
+
+    /**
+     * Models the provider offers this key that could join the route: chat
+     * models not already in the list. The result is remembered an hour, and
+     * only those IDs may be checked or added.
+     *
+     * @return list<string>|null null when the provider can't be reached
+     */
+    public function scanModels(string $provider): ?array
+    {
+        if (! ($this->keys[$provider] ?? null)) {
+            return null;
+        }
+
+        if ($provider === 'openrouter') {
+            $ids = $this->freeModelIds();
+        } else {
+            $url = str_replace('/chat/completions', '/models', self::PROVIDERS[$provider]['url']);
+            try {
+                $response = Http::withHeaders($this->headersFor($provider))->timeout(15)->get($url);
+                $ids = $response->successful() ? array_column($response->json('data') ?? [], 'id') : null;
+            } catch (\Exception $e) {
+                $ids = null;
+            }
+        }
+        if ($ids === null) {
+            return null;
+        }
+
+        $ids = array_map(fn ($id) => preg_replace('#^models/#', '', $id), $ids);
+        $found = array_values(array_unique(array_filter($ids, fn ($id) => ! preg_match(self::NOT_CHAT, $id))));
+        $found = array_values(array_diff($found, $this->activeModels($provider)));
+        Cache::put("ai_scan_{$provider}", $found, 3600);
+
+        return $found;
+    }
+
+    /** @return list<string> the last scan's results */
+    public function scannedModels(string $provider): array
+    {
+        return Cache::get("ai_scan_{$provider}", []);
+    }
+
+    /**
+     * The bar a model must clear to join the route: asked something only a
+     * tool can answer, it has to call the tool. Replying "OK" isn't enough;
+     * a model that answers from guesswork would bypass the shop's data.
+     *
+     * @return array{ok: bool, ms: int, reason: ?string}
+     */
+    public function qualifyModel(string $provider, string $model): array
+    {
+        $started = microtime(true);
+        $tool = ['name' => 'get_shop_time', 'description' => "Returns the shop's current local time.", 'parameters' => ['type' => 'object', 'properties' => new \stdClass]];
+
+        try {
+            $response = Http::timeout(20)->withHeaders($this->headersFor($provider))->post(self::PROVIDERS[$provider]['url'], [
+                'model' => $model,
+                'messages' => [['role' => 'user', 'content' => 'What time is it at the shop right now? Use the tool.']],
+                'tools' => $this->toOpenAiTools([$tool]),
+            ]);
+            $calls = $response->successful() ? ($this->normalizeOpenAiResponse($response->json())['choices'][0]['message']['tool_calls'] ?? []) : [];
+            $called = collect($calls)->contains(fn ($c) => ($c['name'] ?? $c['function']['name'] ?? null) === 'get_shop_time');
+            $reason = match (true) {
+                ! $response->successful() => $response->status() === 401 ? 'unauthorized' : "http_{$response->status()}",
+                ! $called => 'no_tool_call',
+                default => null,
+            };
+        } catch (\Exception $e) {
+            $reason = str_contains($e->getMessage(), 'timed out') ? 'timed_out' : 'exception';
+        }
+
+        return ['ok' => $reason === null, 'ms' => (int) round((microtime(true) - $started) * 1000), 'reason' => $reason];
+    }
+
+    /** Append a model to the end of a provider's route. */
+    public function addModel(string $provider, string $model): void
+    {
+        $models = $this->activeModels($provider);
+        if (! in_array($model, $models, true)) {
+            $models[] = $model;
+            Setting::set("ai_models_{$provider}", json_encode($models));
+        }
+    }
+
     /** Clear a provider's model-list override, reverting to the hardcoded defaults. */
     public function resetModels(string $provider): void
     {
