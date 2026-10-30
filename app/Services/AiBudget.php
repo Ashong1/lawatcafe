@@ -2,13 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 /**
  * How much of OpenRouter's free-model daily allowance is left (50/day, 1,000
- * with $5 of credit), and whether a scheduled job may spend some. Background
+ * with $10 of credit bought), and whether a scheduled job may spend some. Background
  * work stops at a reserve so people chatting always have some left.
  *
  * Separate from AIService so jobs' AIService mocks stay untouched and the test
@@ -84,7 +83,7 @@ class AiBudget
     /** The same key AIService uses: .env first, then the one saved in Barista AI Settings. */
     private function key(): ?string
     {
-        return config('services.openrouter.key') ?: Setting::get('openrouter_api_key');
+        return AIService::providerKey('openrouter');
     }
 
     /**
@@ -95,7 +94,16 @@ class AiBudget
      */
     public function backgroundMaySpend(): bool
     {
-        if (AIService::quotaExhaustedUntil() || InternetStatus::isDown()) {
+        if (InternetStatus::isDown()) {
+            return false;
+        }
+
+        // Gemini and Groq answer before OpenRouter, so its daily reserve isn't at stake.
+        if (AIService::providerKey('gemini') || AIService::providerKey('groq')) {
+            return true;
+        }
+
+        if (AIService::quotaExhaustedUntil()) {
             return false;
         }
 

@@ -12,6 +12,7 @@ use App\Services\AiBudget;
 use App\Services\OpnSenseService;
 use App\Services\OrderWaitService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -71,26 +72,26 @@ class SettingController extends Controller
     {
         $providers = $ai->getProviderStatuses();
         $usage = $budget->account();
-        $settings = [
-            'openrouter_api_key' => Setting::get('openrouter_api_key', ''),
-        ];
-
-        return view('admin.settings.ai-providers', compact('providers', 'settings', 'usage'));
+        return view('admin.settings.ai-providers', compact('providers', 'usage'));
     }
 
     /**
-     * Save the AI provider API key (fallback used only when the matching env
-     * var isn't set — see AIService's constructor).
+     * Save provider API keys, encrypted. A blank field keeps the saved key, so
+     * the page never has to show one back. An .env key still wins (see
+     * AIService::providerKey()).
      */
     public function updateAiProviders(Request $request)
     {
-        $validated = $request->validate([
-            'openrouter_api_key' => 'nullable|string',
-        ]);
+        $fields = array_map(fn ($p) => "{$p}_api_key", array_keys(AIService::PROVIDERS));
+        $validated = $request->validate(array_fill_keys($fields, 'nullable|string|max:500'));
 
-        $this->applySettings($validated);
+        $saved = 0;
+        foreach (array_filter($validated) as $field => $key) {
+            Setting::set($field, Crypt::encryptString(trim($key)));
+            $saved++;
+        }
 
-        return redirect()->back()->with('success', 'API key updated successfully.');
+        return redirect()->back()->with('success', $saved ? "Saved {$saved} API key(s)." : 'No new keys entered; the saved ones are unchanged.');
     }
 
     /**
@@ -98,7 +99,7 @@ class SettingController extends Controller
      */
     public function testAiProvider(string $provider, AIService $ai)
     {
-        if ($provider !== 'openrouter') {
+        if (! isset(AIService::PROVIDERS[$provider])) {
             abort(404);
         }
 
@@ -113,7 +114,7 @@ class SettingController extends Controller
      */
     public function replaceProviderModel(Request $request, string $provider, AIService $ai)
     {
-        if ($provider !== 'openrouter') {
+        if (! isset(AIService::PROVIDERS[$provider])) {
             abort(404);
         }
 
@@ -139,7 +140,7 @@ class SettingController extends Controller
      */
     public function resetProviderModels(string $provider, AIService $ai)
     {
-        if ($provider !== 'openrouter') {
+        if (! isset(AIService::PROVIDERS[$provider])) {
             abort(404);
         }
 

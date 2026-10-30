@@ -49,7 +49,7 @@ class ConfirmBeforeSaveTest extends TestCase
             'network.site-blocking' => 'Block this site?', 'network.trusted-devices' => 'Trust this device?',
             'inventory.deliveries.index' => 'Record this delivery?', 'inventory.categories.index' => 'Save this category?',
             'inventory.suppliers.index' => 'Save this supplier?', 'admin.settings.store' => 'Save store settings?', 'network.plans' => 'Save Wi-Fi prices?',
-            'admin.settings.agent' => 'Save Barista AI permissions?', 'admin.settings.ai-providers' => 'Save the AI key?',
+            'admin.settings.agent' => 'Save Barista AI permissions?', 'admin.settings.ai-providers' => 'Save the AI keys?',
             'accounts.index' => 'Save this account?', 'staff.deliveries.index' => 'Record this delivery?',
         ];
         foreach ($checks as $route => $question) {

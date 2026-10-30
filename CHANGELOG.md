@@ -9,6 +9,21 @@ the history was rewritten.
 
 ---
 
+## 1.46.0 — Gemini, Groq and OpenRouter routing
+*build 264*
+
+- Barista AI routes across **Google Gemini → Groq → OpenRouter**: if one
+  provider fails or runs out, the next answers. Providers without a key are
+  skipped, so with only OpenRouter it works exactly as before.
+- **Settings → Barista AI Settings** takes a key for each provider. Keys are
+  stored encrypted and never shown back; a blank field keeps the saved key.
+  Providers without a key no longer show a green "Healthy".
+- With a Gemini or Groq key, background learning no longer waits on
+  OpenRouter's daily allowance (those providers are used first).
+- The POS "say to customer" line uses the first available provider.
+- Docs: OpenRouter's free limit rises to 1,000 a day after $10 of credit
+  (was noted as $5).
+
 ## 1.45.5 — Say when learning is paused
 *build 263*
 

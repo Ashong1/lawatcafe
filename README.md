@@ -162,8 +162,9 @@ A short tour. Every feature is described in full in
 - A **learning loop**: ratings, corrections and the owner's own
   conversations are turned into lessons that a person approves before the AI
   ever uses them.
-- Runs on [OpenRouter](https://openrouter.ai) with automatic fallback between
-  models and a daily budget, and says plainly when it can't help.
+- Routes across Google Gemini, Groq and [OpenRouter](https://openrouter.ai),
+  falling back between providers and models, with a daily budget, and says
+  plainly when it can't help.
 
 ## Who uses it
 
@@ -233,7 +234,7 @@ flowchart LR
 | Database | MariaDB 10.11 in production (SQLite in tests) |
 | Web server | nginx + PHP-FPM |
 | Queue / cache / sessions | Laravel database queue, file cache, file sessions |
-| AI | OpenRouter (free models by default, with model fallback) |
+| AI | Google Gemini → Groq → OpenRouter (free tiers by default, with provider and model fallback) |
 | Email | Resend |
 | Network | OPNsense 25.7 (REST API), Pi-hole v6 (REST API), Kea DHCP |
 | Hosting | Proxmox VE (OPNsense VM, LXC containers) |
@@ -468,7 +469,7 @@ which build is running. The version lives in one place, `composer.json`.
 | A page shows a 500 error after a deploy, mentioning permissions | Artisan was run as root and wrote cache files www-data can't overwrite | `sudo chown -R www-data:www-data storage bootstrap/cache`, then run Artisan as `www-data` from now on |
 | A new route gives "Route not defined" | Stale route cache | `sudo -u www-data php artisan route:clear` (then `route:cache` again in production) |
 | Tests refuse to run: "pointed at mysql" | Production config is cached | `sudo -u www-data php artisan config:clear` before testing |
-| Barista AI: "trouble connecting" | OpenRouter's free daily allowance is used up, or the internet is down | Check the yellow bar, and Settings → Barista AI Settings. $5 of OpenRouter credit raises the free limit from 50 to 1,000 requests a day |
+| Barista AI: "trouble connecting" | OpenRouter's free daily allowance is used up, or the internet is down | Check the yellow bar, and Settings → Barista AI Settings. $10 of OpenRouter credit raises its free limit from 50 to 1,000 requests a day; a Gemini or Groq key adds more room |
 | Network pages: "can't reach the firewall" | OPNsense API key, URL or zone is wrong, or OPNsense is down | Check `OPNSENSE_*` in `.env` and Wi-Fi & Network → Network Status |
 | Guests can't get online after a power cut | OPNsense waits for the ISP before starting DHCP | [docs/OWNER_NETWORK_STEPS.md §3](docs/OWNER_NETWORK_STEPS.md#3-start-the-shop-without-internet-after-a-power-cut-15-minutes) |
 | A staff device keeps getting the sign-in page | Trusted by MAC only, and its address changed, or the phone uses a private Wi-Fi address | Give it a fixed address, then trust it again on Wi-Fi & Network → Trusted Devices |

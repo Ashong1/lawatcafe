@@ -214,7 +214,7 @@ Commission and to the affected people within 72 hours of knowing about it.
 | A guest device is abusing the Wi-Fi | Network Status alerts, Who's Online, adult-site alerts | Block the device (Wi-Fi & Network → Who's Online → Block). Blocks are logged with a reason. |
 | Data lost or damaged | Missing sales or stock, errors on pages | Stop using the register, take a fresh `backup:database` of the current state, then restore the last good backup (above). Re-enter sales made after it from the paper record. |
 | Server or firewall down | Network Status, the yellow offline bar | See *Troubleshooting* below. The register keeps working offline. |
-| Secret leaked (`.env`, API keys) | Found in a public place | Rotate the key at the provider (OpenRouter, Resend, OPNsense, Pi-hole), update `.env`, `config:cache`. **Do not** change `APP_KEY` without re-encrypting. |
+| Secret leaked (`.env`, API keys) | Found in a public place | Rotate the key at the provider (Gemini, Groq, OpenRouter, Resend, OPNsense, Pi-hole), update `.env`, `config:cache`. **Do not** change `APP_KEY` without re-encrypting. |
 
 Afterwards: write down what happened, what fixed it, and what would stop it
 happening again.
@@ -257,7 +257,7 @@ The app controls the shop's real firewall. Lessons learned the hard way:
 | `.env` changes have no effect | Config is cached | `sudo -u www-data php artisan config:cache` |
 | Front-end change doesn't show | Assets not rebuilt, or wrong owner | `npm run build && chown -R www-data:www-data public/build`, then hard-refresh |
 | Tests: "pointed at mysql, not sqlite" | Cached production config | `sudo -u www-data php artisan config:clear`, run tests, then `config:cache` again |
-| Barista AI: "has used up today's free AI allowance" | OpenRouter's free daily cap (50 requests a day without credit) | Wait for the reset time it gives, or add $5 credit (raises it to 1,000 a day) |
+| Barista AI: "has used up today's free AI allowance" | OpenRouter's free daily cap (50 requests a day without credit) | Wait for the reset time it gives, or add $10 credit (raises it to 1,000 a day), or add a Gemini or Groq key so OpenRouter is only the last fallback |
 | Barista AI: "the internet is down" | The minute check can't reach the internet | Check the ISP router; everything else keeps working |
 | Emails not arriving | No internet, or Resend key wrong | `queue:failed`; check `MAIL_MAILER` and `RESEND_API_KEY`; queued mail retries for 3 days |
 | Network pages: "can't reach the firewall" | OPNsense down, or API credentials wrong | Wi-Fi & Network → Network Status; check `OPNSENSE_API_URL`/`KEY`/`SECRET` |

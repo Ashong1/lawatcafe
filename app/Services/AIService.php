@@ -14,6 +14,8 @@ use App\Models\Voucher;
 use App\Services\Agent\LessonLibrary;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -27,9 +29,22 @@ class AIService
 
     protected $openRouterKey;
 
-    // OpenRouter is the only provider (one provider, per the capstone
-    // adviser). The circuit breaker, per-model health and fast-path budget
-    // below all run over its model list.
+    /** @var array<string, ?string> API key per provider */
+    protected array $keys = [];
+
+    // Tried in this order, each falling back across its own models, then on to
+    // the next provider (owner, Oct 30). All three speak the OpenAI chat format.
+    // Gemini first: its free tier is the most generous; OpenRouter's 50 free
+    // requests a day are the last resort.
+    public const PROVIDERS = [
+        'gemini' => ['label' => 'Google Gemini', 'url' => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'],
+        'groq' => ['label' => 'Groq', 'url' => 'https://api.groq.com/openai/v1/chat/completions'],
+        'openrouter' => ['label' => 'OpenRouter', 'url' => 'https://openrouter.ai/api/v1/chat/completions'],
+    ];
+
+    protected $geminiModels = ['gemini-flash-latest', 'gemini-flash-lite-latest'];
+
+    protected $groqModels = ['llama-3.3-70b-versatile', 'openai/gpt-oss-120b'];
 
     // Curated free models, best first: the fast path only tries the first two
     // healthy ones, so the head of the list should be the models that pick the
@@ -59,12 +74,54 @@ class AIService
 
     public function __construct()
     {
-        $this->openRouterKey = config('services.openrouter.key') ?: Setting::get('openrouter_api_key');
+        foreach (array_keys(self::PROVIDERS) as $provider) {
+            $this->keys[$provider] = self::providerKey($provider);
+        }
+        $this->openRouterKey = $this->keys['openrouter'];
+    }
+
+    /** The server's .env key first, else the one saved (encrypted) in Barista AI Settings. */
+    public static function providerKey(string $provider): ?string
+    {
+        if ($key = config("services.{$provider}.key")) {
+            return $key;
+        }
+        $stored = Setting::get("{$provider}_api_key");
+        if (! $stored) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($stored);
+        } catch (DecryptException) {
+            return $stored;   // saved before keys were encrypted
+        }
+    }
+
+    private function headersFor(string $provider): array
+    {
+        $headers = ['Authorization' => 'Bearer '.$this->keys[$provider]];
+
+        return $provider === 'openrouter'
+            ? $headers + ['HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')]
+            : $headers;
+    }
+
+    /** Providers with a key whose circuit breaker isn't open, in routing order. */
+    private function usableProviders(): array
+    {
+        if (InternetStatus::isDown()) {
+            return [];
+        }
+
+        return array_values(array_filter(array_keys(self::PROVIDERS), fn ($p) => $this->keys[$p]
+            && ! $this->providerIsOpen($p)
+            && ! ($p === 'openrouter' && self::quotaExhaustedUntil())));
     }
 
     public function getModel()
     {
-        return 'OpenRouter Multi-Model Cascade';
+        return 'Gemini, Groq and OpenRouter, in that order';
     }
 
     /**
@@ -79,9 +136,9 @@ class AIService
      */
     private function callAI($messages, $useVision = false, array $tools = [], bool $fast = false)
     {
-        if ($this->openRouterKey && ! $this->providerIsOpen('openrouter')) {
-            $response = $this->callOpenRouterLoop($messages, $tools, $fast);
-            $this->recordProviderResult('openrouter', (bool) $response);
+        foreach ($this->usableProviders() as $provider) {
+            $response = $this->callProviderLoop($provider, $messages, $tools, $fast);
+            $this->recordProviderResult($provider, (bool) $response);
             if ($response) {
                 return $response;
             }
@@ -128,6 +185,8 @@ class AIService
     {
         return match ($provider) {
             'openrouter' => $this->openRouterModels,
+            'gemini' => $this->geminiModels,
+            'groq' => $this->groqModels,
             default => [],
         };
     }
@@ -160,16 +219,8 @@ class AIService
         Setting::set("ai_models_{$provider}", json_encode(array_values($models)));
 
         $messages = [['role' => 'user', 'content' => 'Reply with the single word: OK.']];
-        $ok = match ($provider) {
-            'openrouter' => $this->testOpenAiCompatibleModel(
-                $newModel,
-                'https://openrouter.ai/api/v1/chat/completions',
-                ['Authorization' => 'Bearer '.$this->openRouterKey, 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')],
-                $messages,
-                'openrouter',
-            ),
-            default => false,
-        };
+        $ok = isset(self::PROVIDERS[$provider]) && $this->keys[$provider]
+            && $this->testOpenAiCompatibleModel($newModel, self::PROVIDERS[$provider]['url'], $this->headersFor($provider), $messages, $provider);
 
         return ['replaced' => true, 'new_model_ok' => $ok];
     }
@@ -251,9 +302,10 @@ class AIService
      */
     public function getProviderStatuses(): array
     {
-        $providers = [
-            'openrouter' => ['label' => 'OpenRouter', 'key' => $this->openRouterKey, 'models' => $this->activeModels('openrouter')],
-        ];
+        $providers = [];
+        foreach (self::PROVIDERS as $provider => $info) {
+            $providers[$provider] = ['label' => $info['label'], 'key' => $this->keys[$provider], 'models' => $this->activeModels($provider)];
+        }
 
         $result = [];
         foreach ($providers as $provider => $info) {
@@ -307,7 +359,7 @@ class AIService
      * shuffled/limited subset the real cascade uses) with a trivial prompt,
      * recording per-model results and feeding the aggregate into the same
      * circuit-breaker bookkeeping real traffic uses. Self-contained — does
-     * not call or alter callOpenRouterLoop(), so it can't affect real
+     * not call or alter callProviderLoop(), so it can't affect real
      * chat/analysis traffic.
      *
      * @return array{ok: int, failed: int}
@@ -318,24 +370,13 @@ class AIService
         $ok = 0;
         $failed = 0;
 
-        $models = $provider === 'openrouter' ? $this->activeModels($provider) : [];
+        $models = isset(self::PROVIDERS[$provider]) && $this->keys[$provider] ? $this->activeModels($provider) : [];
 
         foreach ($models as $model) {
-            $success = match ($provider) {
-                'openrouter' => $this->testOpenAiCompatibleModel(
-                    $model,
-                    'https://openrouter.ai/api/v1/chat/completions',
-                    ['Authorization' => 'Bearer '.$this->openRouterKey, 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')],
-                    $messages,
-                    'openrouter',
-                ),
-                default => false,
-            };
-
-            $success ? $ok++ : $failed++;
+            $this->testOpenAiCompatibleModel($model, self::PROVIDERS[$provider]['url'], $this->headersFor($provider), $messages, $provider) ? $ok++ : $failed++;
         }
 
-        if ($provider === 'openrouter' && ! empty($models)) {
+        if (! empty($models)) {
             $this->recordProviderResult($provider, $ok > 0);
         }
 
@@ -415,32 +456,24 @@ class AIService
         // each attempt.
         $deadline = microtime(true) + self::STREAM_TIMEOUT;
 
-        // A photo sent to a text-only model either 400s or is silently
-        // ignored, so a turn carrying one only cascades through models that
-        // accept images.
-        $models = $this->cascadeModels();
-        if (self::hasImage($messages)) {
-            $models = $this->imageCapableModels($models);
-        }
-        // Guest portal: free models only, however the admin has edited the
-        // list — see freeModelsOnly(). max_price below is the second lock.
-        if ($freeOnly) {
-            $models = $this->freeModelsOnly($models);
-        }
+        foreach ($this->usableProviders() as $provider) {
+            $models = $this->streamModelsFor($provider, $messages, $freeOnly);
+            if ($models === []) {
+                continue;
+            }
 
-        if ($this->openRouterKey && ! $this->providerIsOpen('openrouter') && ! self::quotaExhaustedUntil() && ! InternetStatus::isDown()) {
             $response = $this->streamOpenAiCompatibleLoop(
                 $models,
-                'https://openrouter.ai/api/v1/chat/completions',
-                ['Authorization' => 'Bearer '.$this->openRouterKey, 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')],
+                self::PROVIDERS[$provider]['url'],
+                $this->headersFor($provider),
                 $messages,
                 $tools,
                 $onTextDelta,
-                'openrouter',
+                $provider,
                 $deadline,
                 $freeOnly,
             );
-            $this->recordProviderResult('openrouter', (bool) $response);
+            $this->recordProviderResult($provider, (bool) $response);
             if ($response) {
                 return $response;
             }
@@ -449,11 +482,31 @@ class AIService
         return null;
     }
 
+    private function streamModelsFor(string $provider, array $messages, bool $freeOnly): array
+    {
+        if ($provider !== 'openrouter') {
+            // Gemini reads photos; the Groq models here are text-only.
+            return self::hasImage($messages) && $provider === 'groq' ? [] : $this->activeModels($provider);
+        }
+
+        // A photo sent to a text-only model either 400s or is silently
+        // ignored, so a turn carrying one only cascades through models that
+        // accept images.
+        $models = $this->cascadeModels();
+        if (self::hasImage($messages)) {
+            $models = $this->imageCapableModels($models);
+        }
+
+        // Guest portal: free models only, however the admin has edited the
+        // list — see freeModelsOnly(). max_price is the second lock.
+        return $freeOnly ? $this->freeModelsOnly($models) : $models;
+    }
+
     public const QUOTA_CACHE_KEY = 'openrouter_daily_quota_exhausted_until';
 
     /**
      * OpenRouter caps free models per ACCOUNT per day (50 without credit,
-     * 1,000 with $5+). Once that cap is hit every model returns the same 429,
+     * 1,000 with $10+ of credit bought). Once that cap is hit every model returns the same 429,
      * so remember it until the reset time OpenRouter gives instead of letting
      * each chat try — and fail — every model.
      *
@@ -722,7 +775,7 @@ class AIService
                 // Second lock for free-only requests: OpenRouter itself refuses
                 // to route to any endpoint that would cost money, even if a
                 // paid model got past freeModelsOnly().
-                if ($freeOnly) {
+                if ($freeOnly && $provider === 'openrouter') {
                     $payload['provider'] = ['max_price' => ['prompt' => 0, 'completion' => 0]];
                 }
                 if (! empty($tools)) {
@@ -733,7 +786,7 @@ class AIService
 
                 if (! $response->successful()) {
                     $this->recordModelResult($provider, $model, false, $this->failureReason($response->status()));
-                    if ($response->status() === 401 || $this->noteDailyQuota($response)) {
+                    if ($response->status() === 401 || ($provider === 'openrouter' && $this->noteDailyQuota($response))) {
                         break;
                     }
 
@@ -755,7 +808,8 @@ class AIService
 
                     foreach ($delta['tool_calls'] ?? [] as $tc) {
                         $sawAny = true;
-                        $index = $tc['index'] ?? 0;
+                        // Gemini sends each call whole, with an id but no index.
+                        $index = $tc['index'] ?? (isset($tc['id']) ? count($toolCallsByIndex) : max(0, count($toolCallsByIndex) - 1));
                         $toolCallsByIndex[$index] ??= ['id' => null, 'name' => null, 'arguments' => ''];
                         if (isset($tc['id'])) {
                             $toolCallsByIndex[$index]['id'] = $tc['id'];
@@ -831,16 +885,12 @@ class AIService
         ];
     }
 
-    private function callOpenRouterLoop($messages, array $tools = [], bool $fast = false)
+    private function callProviderLoop(string $provider, $messages, array $tools = [], bool $fast = false)
     {
-        if (self::quotaExhaustedUntil() || InternetStatus::isDown()) {
-            return null;
-        }
-
-        $models = $this->cascadeModels();
+        $models = $provider === 'openrouter' ? $this->cascadeModels() : $this->activeModels($provider);
         $first = array_shift($models);
         shuffle($models);
-        $models = $this->healthyModelsFirst('openrouter', $models);
+        $models = $this->healthyModelsFirst($provider, $models);
         array_unshift($models, $first);
         $timeout = 15;
         if ($fast) {
@@ -854,21 +904,21 @@ class AIService
                 if (! empty($tools)) {
                     $payload['tools'] = $this->toOpenAiTools($tools);
                 }
-                $response = Http::timeout($timeout)->withHeaders(['Authorization' => 'Bearer '.$this->openRouterKey, 'HTTP-Referer' => config('app.url'), 'X-Title' => config('app.name')])->post('https://openrouter.ai/api/v1/chat/completions', $payload);
+                $response = Http::timeout($timeout)->withHeaders($this->headersFor($provider))->post(self::PROVIDERS[$provider]['url'], $payload);
                 if ($response->successful()) {
-                    $this->recordModelResult('openrouter', $model, true);
+                    $this->recordModelResult($provider, $model, true);
 
                     return $this->normalizeOpenAiResponse($response->json());
                 }
-                $this->recordModelResult('openrouter', $model, false, $this->failureReason($response->status()));
-                // 401, or the account's daily allowance is gone: every other
+                $this->recordModelResult($provider, $model, false, $this->failureReason($response->status()));
+                // 401, or OpenRouter's daily allowance is gone: every other
                 // model would fail the same way, and each try is wasted.
-                if ($response->status() === 401 || $this->noteDailyQuota($response)) {
+                if ($response->status() === 401 || ($provider === 'openrouter' && $this->noteDailyQuota($response))) {
                     break;
                 }
             } catch (\Exception $e) {
-                Log::error("OpenRouter Loop Exception ({$model}): ".$e->getMessage());
-                $this->recordModelResult('openrouter', $model, false, 'exception');
+                Log::error("{$provider} loop exception ({$model}): ".$e->getMessage());
+                $this->recordModelResult($provider, $model, false, 'exception');
             }
         }
 
@@ -1457,12 +1507,13 @@ Return ONLY a JSON array, at most 5 items:
      */
     public function phraseSuggestion(string $itemName, string $suggestedName, int $timeout = 3): ?array
     {
-        if (! $this->openRouterKey || $this->providerIsOpen('openrouter') || InternetStatus::isDown()) {
+        $provider = $this->usableProviders()[0] ?? null;
+        if (! $provider) {
             return null;
         }
 
         try {
-            $model = $this->activeModels('openrouter')[0] ?? null;
+            $model = $this->activeModels($provider)[0] ?? null;
             if (! $model) {
                 return null;
             }
@@ -1477,27 +1528,23 @@ Return ONLY a JSON array, at most 5 items:
                 .'Keep product names as they are. No emoji. '
                 .'Answer with ONLY this JSON: {"en": "...", "tl": "..."}';
 
-            $response = Http::timeout($timeout)->withHeaders([
-                'Authorization' => 'Bearer '.$this->openRouterKey,
-                'HTTP-Referer' => config('app.url'),
-                'X-Title' => config('app.name'),
-            ])->post('https://openrouter.ai/api/v1/chat/completions', [
+            $response = Http::timeout($timeout)->withHeaders($this->headersFor($provider))->post(self::PROVIDERS[$provider]['url'], [
                 'model' => $model,
                 'messages' => [['role' => 'user', 'content' => $prompt]],
             ]);
 
             if (! $response->successful()) {
-                $this->recordProviderResult('openrouter', false);
+                $this->recordProviderResult($provider, false);
 
                 return null;
             }
 
             $lines = self::parseBilingualLines((string) ($response->json('choices.0.message.content') ?? ''));
-            $this->recordProviderResult('openrouter', $lines !== null);
+            $this->recordProviderResult($provider, $lines !== null);
 
             return $lines;
         } catch (\Exception $e) {
-            $this->recordProviderResult('openrouter', false);
+            $this->recordProviderResult($provider, false);
 
             return null;
         }

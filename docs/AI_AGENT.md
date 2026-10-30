@@ -10,7 +10,7 @@ audit trail.
 - [Audiences and tools](#audiences-and-tools)
 - [Permission tiers](#permission-tiers)
 - [Confirming and rejecting](#confirming-and-rejecting)
-- [The model: OpenRouter, fallback and budget](#the-model-openrouter-fallback-and-budget)
+- [The model: providers, fallback and budget](#the-model-providers-fallback-and-budget)
 - [The scheduled analysis](#the-scheduled-analysis-agentanalyze)
 - [Learning](#learning)
 - [Other AI features](#other-ai-features)
@@ -23,7 +23,7 @@ audit trail.
 
 | Class | Job |
 |---|---|
-| `App\Services\AIService` | Transport only: sends a conversation to OpenRouter, gets text or tool calls back, streams replies. Owns model fallback, the circuit breaker, per-model health and the cached context used in prompts. Knows nothing about permissions. |
+| `App\Services\AIService` | Transport only: sends a conversation to Gemini, Groq or OpenRouter (first that answers), gets text or tool calls back, streams replies. Owns model fallback, the circuit breaker, per-model health and the cached context used in prompts. Knows nothing about permissions. |
 | `App\Services\Agent\ToolRegistry` | The fixed list of tool classes each audience may use. Not built from settings, so a misconfigured setting can never hand guests a tool. |
 | `App\Services\Agent\PermissionResolver` | Works out the effective tier (`auto` / `confirm` / `admin_only`) for one tool and one person. |
 | `App\Services\Agent\ToolCallOrchestrator` | The loop: the model asks for a tool → run it or queue it for approval → feed the result back → the model answers. Up to 5 rounds, within one overall time budget. |
@@ -132,11 +132,17 @@ someone else's action by guessing an ID.
 Audit rows record the tool, its input (encrypted at rest), the result, who
 asked and who approved.
 
-## The model: OpenRouter, fallback and budget
+## The model: providers, fallback and budget
 
-- **One provider, OpenRouter.** It replaced the earlier Gemini/Groq/OpenRouter
-  cascade in 1.10, at the adviser's request. The key comes from Settings →
-  AI Providers or `OPENROUTER_API_KEY`.
+- **Three providers, tried in order: Google Gemini → Groq → OpenRouter**
+  (`AIService::PROVIDERS`, since 1.46). A provider without a key is skipped;
+  one that fails or runs out hands over to the next. All three use the
+  OpenAI chat format. Keys come from Settings → Barista AI Settings (stored
+  encrypted, never shown again) or `GEMINI_API_KEY` / `GROQ_API_KEY` /
+  `OPENROUTER_API_KEY`.
+- **Why accuracy doesn't depend on the provider:** numbers come from tools
+  (database, OPNsense, Pi-hole), actions pass server-side checks and
+  approval, and every action is audited. The model only words the result.
 - **Model fallback**: a configurable list of models is tried in turn.
   Models that failed in the last few minutes go to the back of the line
   (`healthyModelsFirst()`), and the guest portal only ever uses free models.

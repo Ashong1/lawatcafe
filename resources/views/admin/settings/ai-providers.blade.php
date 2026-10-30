@@ -12,11 +12,10 @@
                     <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Barista AI Settings</span>
                 </h2>
                 <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">
-                    Barista AI runs on OpenRouter alone, falling back across its own model list if one fails.
+                    Barista AI tries Google Gemini first, then Groq, then OpenRouter, moving to the next one if a provider fails or runs out.
+                    Every answer still gets its numbers from the shop's own data, whichever provider writes it.
                     @if (auth()->user()->isSuperAdmin())
                         Each status comes from recent real use; tap Test Now to check again.
-                    @else
-                        Add your own OpenRouter API key below.
                     @endif
                 </p>
             </div>
@@ -31,7 +30,7 @@
                         <x-lucide-wallet class="w-6 h-6" />
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">AI Usage</h3>
+                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">OpenRouter Usage</h3>
                         <p class="text-xs text-[#6D4C41] font-medium italic">From your OpenRouter account, updated every 5 minutes.</p>
                     </div>
                 </div>
@@ -64,18 +63,19 @@
                         <x-lucide-key class="w-6 h-6" />
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">API Key</h3>
-                        <p class="text-xs text-[#6D4C41] font-medium italic">Only needed if the system administrator hasn't already set one up.</p>
+                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">API Keys</h3>
+                        <p class="text-xs text-[#6D4C41] font-medium italic">Stored encrypted and never shown again. Leave a field blank to keep its saved key.</p>
                     </div>
                 </div>
 
-                <form action="{{ route('admin.settings.ai-providers.update') }}" method="POST" class="space-y-6" data-confirm="Save the AI key?" data-confirm-text="Barista AI uses this key from now on.">
+                <form action="{{ route('admin.settings.ai-providers.update') }}" method="POST" class="space-y-6" data-confirm="Save the AI keys?" data-confirm-text="Barista AI uses these keys from now on.">
                     @csrf
-                    @foreach (['openrouter_api_key' => 'OpenRouter API Key'] as $field => $label)
+                    @foreach ($providers as $p => $provider)
+                        @php $field = "{$p}_api_key"; @endphp
                         <div>
-                            <label for="{{ $field }}" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">{{ $label }}</label>
+                            <label for="{{ $field }}" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">{{ $provider['label'] }} API Key</label>
                             <div x-data="{ show: false }" class="relative">
-                                <input id="{{ $field }}" :type="show ? 'text' : 'password'" name="{{ $field }}" value="{{ $settings[$field] }}" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl pl-4 pr-12 py-3 text-base sm:text-sm font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all" placeholder="sk-or-…" autocomplete="off">
+                                <input id="{{ $field }}" :type="show ? 'text' : 'password'" name="{{ $field }}" value="" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl pl-4 pr-12 py-3 text-base sm:text-sm font-mono font-bold focus:outline-none focus:border-[#3E2723] transition-all" placeholder="{{ $provider['configured'] ? 'Saved — leave blank to keep' : 'Paste the key' }}" autocomplete="off">
                                 <button type="button" @click="show = !show" :aria-label="show ? 'Hide API key' : 'Show API key'" class="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 inline-flex items-center justify-center text-[#6D4C41] hover:text-[#3E2723]">
                                     <x-lucide-eye x-show="!show" class="w-4 h-4" />
                                     <x-lucide-eye-off x-show="show" class="w-4 h-4" />
@@ -86,7 +86,7 @@
 
                     <button type="submit" class="w-full py-4 bg-[#3E2723] hover:bg-[#271815] text-white rounded-2xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-3">
                         <x-lucide-save class="w-5 h-5" />
-                        <span>Save API Key</span>
+                        <span>Save API Keys</span>
                     </button>
                 </form>
             </div>
@@ -109,7 +109,9 @@
                     </div>
 
                     <div class="flex items-center gap-3">
-                        @if ($provider['circuit']['open'])
+                        @if (! $provider['configured'])
+                            {{-- No key, no health to report. --}}
+                        @elseif ($provider['circuit']['open'])
                             <span class="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold uppercase tracking-wide">
                                 <span class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
                                 Cooling Down

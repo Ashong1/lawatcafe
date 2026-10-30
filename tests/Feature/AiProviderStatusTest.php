@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\AIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -17,9 +18,8 @@ class AiProviderStatusTest extends TestCase
     {
         $statuses = app(AIService::class)->getProviderStatuses();
 
-        $this->assertArrayHasKey('openrouter', $statuses);
-        $this->assertArrayNotHasKey('gemini', $statuses);
-        $this->assertArrayNotHasKey('groq', $statuses);
+        // Gemini first, then Groq, then OpenRouter (owner, Oct 30).
+        $this->assertSame(['gemini', 'groq', 'openrouter'], array_keys($statuses));
 
         $this->assertNotEmpty($statuses['openrouter']['models']);
         foreach ($statuses['openrouter']['models'] as $model) {
@@ -109,7 +109,7 @@ class AiProviderStatusTest extends TestCase
             'openrouter_api_key' => 'openrouter-test-key',
         ])->assertRedirect();
 
-        $this->assertSame('openrouter-test-key', Setting::get('openrouter_api_key'));
+        $this->assertSame('openrouter-test-key', Crypt::decryptString(Setting::get('openrouter_api_key')));
     }
 
     public function test_plain_admin_can_view_the_ai_providers_page(): void
@@ -130,7 +130,7 @@ class AiProviderStatusTest extends TestCase
             'openrouter_api_key' => 'owner-openrouter-key',
         ])->assertRedirect();
 
-        $this->assertSame('owner-openrouter-key', Setting::get('openrouter_api_key'));
+        $this->assertSame('owner-openrouter-key', Crypt::decryptString(Setting::get('openrouter_api_key')));
     }
 
     public function test_plain_admin_does_not_see_super_admin_only_actions(): void

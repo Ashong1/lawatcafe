@@ -39,6 +39,15 @@ return [
         'key' => env('OPENROUTER_API_KEY'),
     ],
 
+    // Optional; usually entered in Barista AI Settings instead (stored encrypted).
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+    ],
+
+    'groq' => [
+        'key' => env('GROQ_API_KEY'),
+    ],
+
     'opnsense' => [
         'ip' => env('OPNSENSE_IP', '192.168.2.251'),
         'url' => env('OPNSENSE_API_URL', 'https://192.168.2.251'),
