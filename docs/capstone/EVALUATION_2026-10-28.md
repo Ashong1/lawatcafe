@@ -17,8 +17,8 @@ Status legend: **Done** = already in the code · **Partial** · **To do** · **Q
 |---|---|---|---|
 | 1 | R1 00:00, 16:24; R2 15:15 | Confirmation pop-up before critical actions (orders, inventory changes, Wi-Fi settings) — "no one-click" | Done — orders/logout v1.28.0.217; inventory + network saves v1.29.0.219 |
 | 2 | R1 01:41 | Show the expected cash before staff type the count | Done (closing screen shows it) |
-| 3 | R2 00:00–01:55 | Owner can tell if the staff's cash count is honest; shortage notifies owner automatically | Partial — shortage email exists; "Use Expected Amount" button lets staff skip counting |
-| 4 | R1 40:23–43:18 | Opening cash must be verified by a second person (owner, or the next shift verifies the handover) — "you can't verify your own transaction" | To do |
+| 3 | R2 00:00–01:55 | Owner can tell if the staff's cash count is honest; shortage notifies owner automatically | Done v1.34.0.238 (shortcut removed; shortage email) |
+| 4 | R1 40:23–43:18 | Opening cash must be verified by a second person (owner, or the next shift verifies the handover) — "you can't verify your own transaction" | Done v1.34.0.238 (opening checked against last close) |
 | 5 | R1 18:20, 52:09 | X-Read (mid-shift) and Z-Read (end of day) reports, standard POS functions | Done v1.33.0.236 (X-Read), v1.33.0.237 (daily Z-Read) |
 | 6 | R1 25:10–27:19 | Void should be approved on the spot (owner/admin verifies at the register), not left pending until the owner arrives | To do — reverses the v1 void-approval queue |
 | 7 | R1 27:33–28:27 | Return / refund transaction | To do |

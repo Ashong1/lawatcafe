@@ -9,6 +9,15 @@ the history was rewritten.
 
 ---
 
+## 1.34.0 — Cash handover
+*build 238*
+
+- **Start Shift shows the last closing count** (amount, who, when). If the
+  drawer doesn't match it, the opener must say why and the owner is told,
+  so no one verifies their own cash count alone.
+- **Closing has no "Use Expected Amount" button**: the drawer has to be
+  counted. The expected amount is still shown.
+
 ## 1.33.0 — X-Read and Z-Read
 *builds 236–*
 

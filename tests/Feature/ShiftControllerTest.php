@@ -171,9 +171,9 @@ class ShiftControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertViewHas('expectedCash', 1239.5);
-        $response->assertSee("expected: '1239.50'", false);
-        $response->assertDontSee("expected: '1,239.50'", false);
-        $response->assertSee('Use Expected Amount', false);
+        $response->assertSee('₱1,239.50', false);
+        // The drawer has to be counted: no button fills in the expected figure (evaluators, Oct 28).
+        $response->assertDontSee('Use Expected Amount', false);
     }
 
     /**
@@ -195,7 +195,7 @@ class ShiftControllerTest extends TestCase
         $response->assertViewHas('expectedCash', 680.0); // 500 + 300 - 120
         $response->assertSee('Cash in (+)', false);
         $response->assertSee('Cash out (−)', false);
-        $response->assertSee("expected: '680.00'", false);
+        $response->assertSee('₱680.00', false);
     }
 
     public function test_closing_report_rejects_an_already_closed_shift(): void

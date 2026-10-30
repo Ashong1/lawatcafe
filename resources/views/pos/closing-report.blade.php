@@ -76,39 +76,17 @@
             </div>
 
             <form action="{{ route('shift.end', $shift->id) }}" method="POST" class="space-y-6"
-                  x-data="{
-                      submitting: false,
-                      expected: '{{ number_format($expectedCash, 2, '.', '') }}',
-                      filled: false,
-                      useExpected() {
-                          this.$refs.endingCash.value = this.expected;
-                          this.filled = true;
-                          this.$refs.endingCash.focus();
-                      },
-                  }"
+                  x-data="{ submitting: false }"
                   @submit="submitting = true">
                 @csrf
                 <div>
                     <label for="ending_cash" class="block text-xs font-bold text-amber-500/80 uppercase tracking-wide mb-2 ml-1">Cash you counted (₱)</label>
                     <input type="number" id="ending_cash" name="ending_cash" step="0.01" inputmode="decimal" required
-                           x-ref="endingCash" @input="filled = false"
+                          
                            class="w-full bg-white/5 border-2 border-white/10 rounded-2xl px-5 py-4 text-2xl font-bold text-white focus:outline-none focus:border-amber-500 transition-all text-center placeholder-white/40"
                            placeholder="0.00">
 
-                    {{-- Fills the drawer count with the expected figure shown
-                         above, for the common case where the count matches to
-                         the peso and retyping it is just friction. --}}
-                    <button type="button" @click="useExpected()"
-                            aria-describedby="use-expected-hint"
-                            class="w-full mt-3 py-3 px-4 rounded-2xl border-2 border-white/10 hover:border-amber-500/60 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white text-xs font-bold uppercase tracking-wide transition-all active:scale-95 flex items-center justify-center gap-2">
-                        <x-lucide-calculator class="w-3.5 h-3.5" />
-                        <span x-text="filled ? 'Filled — ₱' + expected : 'Use Expected Amount (₱' + expected + ')'"></span>
-                    </button>
-
-                    <p id="use-expected-hint" class="text-xs text-white/75 mt-3 text-center"
-                       x-text="filled
-                           ? 'Only use this if the drawer really holds this amount.'
-                           : 'Count the bills and coins in the drawer.'"></p>
+                    <p class="text-xs text-white/75 mt-3 text-center">Count the bills and coins in the drawer. The owner sees any difference.</p>
                 </div>
 
                 <button type="submit" :disabled="submitting" class="w-full py-4 bg-amber-500 hover:bg-amber-600 text-[#3E2723] rounded-2xl font-bold uppercase tracking-wide text-xs transition-all active:scale-95 shadow-xl shadow-amber-500/20 disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2">

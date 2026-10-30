@@ -118,6 +118,8 @@ class PosController extends Controller
             'categories' => $categories,
             'dbCategories' => $dbCategories,
             'activeShift' => $activeShift,
+            // The opener checks the drawer against this (cash handover, evaluators Oct 28).
+            'lastClose' => $activeShift ? null : Shift::with('user')->where('status', 'closed')->latest('closed_at')->first(),
             // Orders to make: one person takes and makes orders, so the waiting list lives on the register.
             'waitingOrders' => Sale::with('items')->whereIn('status', ['pending', 'preparing'])->oldest()->get(),
             'freeWifiMinAmount' => $freeWifiMinAmount,

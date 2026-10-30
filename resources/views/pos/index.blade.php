@@ -415,11 +415,25 @@
             <h2 class="text-2xl font-bold text-[#3E2723] mb-2 text-center">Start your shift</h2>
             <p class="text-sm text-[#795548] mb-8 text-center">Count the cash in the drawer and enter it to start selling.</p>
 
-            <form action="{{ route('shift.start') }}" method="POST" x-data="{ submitting: false }" @submit="submitting = true">
+            @php($lastCount = $lastClose ? number_format($lastClose->ending_cash, 2, '.', '') : null)
+            <form action="{{ route('shift.start') }}" method="POST" x-data="{ submitting: false, count: @js(old('starting_cash', '')), last: @js($lastCount) }" @submit="submitting = true">
                 @csrf
+                @if ($lastClose)
+                    <div class="mb-4 p-3 rounded-xl bg-[#FDF8F5] border border-[#F0E6D2] text-center">
+                        <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Last closing count</p>
+                        <p class="text-xl font-bold text-[#3E2723]">₱{{ number_format($lastClose->ending_cash, 2) }}</p>
+                        <p class="text-xs text-[#6D4C41]">by {{ $lastClose->user?->name ?? 'the last shift' }}, {{ $lastClose->closed_at->diffForHumans() }}</p>
+                    </div>
+                @endif
                 <div class="mb-6">
                     <label for="starting_cash" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 text-center">Cash in the drawer now (₱)</label>
-                    <input type="number" id="starting_cash" inputmode="decimal" name="starting_cash" required min="0" step="0.01" class="w-full p-4 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-amber-600 bg-[#FAFAFA] transition-all text-center text-2xl font-bold text-[#3E2723]" placeholder="0.00">
+                    <input type="number" id="starting_cash" inputmode="decimal" name="starting_cash" required min="0" step="0.01" x-model="count" class="w-full p-4 border-2 border-[#F0E6D2] rounded-xl focus:outline-none focus:border-amber-600 bg-[#FAFAFA] transition-all text-center text-2xl font-bold text-[#3E2723]" placeholder="0.00">
+                    <div x-show="last !== null && count !== '' && Number(count).toFixed(2) !== last" x-cloak class="mt-3">
+                        <label for="opening_note" class="block text-xs font-bold text-red-700 mb-1">This doesn't match the last closing count. Why?</label>
+                        <input type="text" id="opening_note" name="opening_note" value="{{ old('opening_note') }}" maxlength="255" :required="last !== null && count !== '' && Number(count).toFixed(2) !== last"
+                               class="w-full p-3 border-2 border-red-200 rounded-xl text-base sm:text-sm" placeholder="e.g. Owner took ₱200 for ice">
+                        <p class="text-xs text-[#6D4C41] mt-1">The owner will be told.</p>
+                    </div>
                 </div>
                 <button type="submit" :disabled="submitting" class="w-full py-4 bg-amber-600 text-white rounded-full hover:bg-amber-700 font-bold uppercase tracking-wide transition shadow-lg text-xs flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
                     <template x-if="!submitting">

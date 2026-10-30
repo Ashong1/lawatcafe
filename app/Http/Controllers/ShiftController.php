@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Shift;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\SystemAlert;
+use App\Models\User;
 use App\Models\ShiftTransaction;
 use App\Services\ShiftAuditService;
 use Illuminate\Http\Request;
@@ -20,12 +23,33 @@ class ShiftController extends Controller
             return redirect()->back()->with('error', 'You already have an open shift.');
         }
 
-        Shift::create([
+        // Handover: the opening count is checked against the last closing count.
+        // A difference needs a reason and goes to the owner (evaluators, Oct 28).
+        $lastClose = Shift::with('user')->where('status', 'closed')->latest('closed_at')->first();
+        $difference = $lastClose ? round((float) $request->starting_cash - (float) $lastClose->ending_cash, 2) : 0.0;
+        $notes = null;
+        if ($difference != 0) {
+            $request->validate(['opening_note' => 'required|string|max:255'], ['opening_note.required' => 'The drawer doesn\'t match the last closing count. Say why.']);
+            $notes = sprintf('Opening count ₱%s differs from %s\'s closing count ₱%s: %s',
+                number_format($request->starting_cash, 2), $lastClose->user?->name ?? 'the last shift', number_format($lastClose->ending_cash, 2), $request->opening_note);
+        }
+
+        $shift = Shift::create([
             'user_id' => auth()->id(),
             'starting_cash' => $request->starting_cash,
             'status' => 'open',
             'opened_at' => now(),
+            'notes' => $notes,
         ]);
+
+        if ($notes) {
+            Notification::send(User::active()->whereIn('role', ['admin', 'super_admin'])->where('id', '!=', auth()->id())->get(), new SystemAlert(
+                'Drawer differs from last closing',
+                auth()->user()->name.' started a shift with ₱'.number_format(abs($difference), 2).($difference < 0 ? ' less' : ' more').' than the last closing count. Reason: '.$request->opening_note,
+                'alert-triangle',
+                route('admin.finance.z-reads')
+            ));
+        }
 
         return redirect()->route('pos')->with('success', 'Shift started successfully.');
     }
