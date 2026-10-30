@@ -51,8 +51,11 @@ class BackupService
         return $path;
     }
 
-    /** Returns the new file's name. Logs success or failure to the Activity Log. */
-    public function create(?User $by = null): string
+    /**
+     * Returns the new file's name. Logs success or failure to the Activity Log.
+     * $keep is never pruned: the backup a restore is about to read.
+     */
+    public function create(?User $by = null, ?string $keep = null): string
     {
         $db = config('database.connections.mysql');
         File::ensureDirectoryExists($this->dir(), 0750);
@@ -67,7 +70,8 @@ class BackupService
             throw new RuntimeException('Backup failed: '.$error);
         }
 
-        $this->list()->slice(self::KEEP)->each(fn ($old) => File::delete($this->dir().'/'.$old['name']));
+        $this->list()->slice(self::KEEP)->reject(fn ($old) => $old['name'] === $keep)
+            ->each(fn ($old) => File::delete($this->dir().'/'.$old['name']));
         ActivityLog::record('backup_made', $by, basename($file).' ('.round(filesize($file) / 1048576, 1).' MB)');
 
         return basename($file);
@@ -81,7 +85,7 @@ class BackupService
     public function restore(string $name, User $by): string
     {
         $path = $this->path($name);
-        $safety = $this->create($by);
+        $safety = $this->create($by, keep: $name);
 
         $result = $this->mysql('gunzip -c '.escapeshellarg($path).' | mysql %s');
         if (! $result->successful()) {

@@ -69,4 +69,26 @@ class BackupPageTest extends TestCase
         Process::assertRanTimes(fn ($p) => str_contains(implode(' ', (array) $p->command), 'gunzip'), 0);
         $this->assertDatabaseHas('activity_logs', ['event' => 'backup_failed']);
     }
+
+    public function test_restoring_the_oldest_backup_does_not_delete_it_first(): void
+    {
+        config(['database.connections.mysql.database' => 'lawat_db']);
+        // A full week of hourly copies; the one restored is the oldest.
+        foreach (range(1, BackupService::KEEP - 1) as $h) {
+            File::put($this->dir.'/lawat_db_2026-10-21_'.sprintf('%02d', $h % 24).sprintf('%02d', intdiv($h, 24)).'00.sql.gz', gzencode('-- dump'));
+        }
+        // The safety dump really writes its file; the restore just succeeds.
+        Process::fake(function ($process) {
+            if (preg_match("/> '([^']+\\.sql\\.gz)'/", implode(" ", (array) $process->command), $m)) {
+                File::put($m[1], str_repeat('x', 200));
+            }
+
+            return Process::result();
+        });
+
+        app(BackupService::class)->restore('lawat_db_2026-10-20_233000.sql.gz', User::factory()->create(['role' => 'admin']));
+
+        Process::assertRan(fn ($process) => str_contains(implode(" ", (array) $process->command), 'gunzip -c') && str_contains(implode(" ", (array) $process->command), 'lawat_db_2026-10-20_233000.sql.gz'));
+        $this->assertFileExists($this->dir.'/lawat_db_2026-10-20_233000.sql.gz');
+    }
 }
