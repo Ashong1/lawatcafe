@@ -9,6 +9,9 @@ the history was rewritten.
 
 ---
 
+## 1.30.0 — Reports
+*builds 230–*
+
 ## 1.29.0 — Evaluation fixes (Oct 28 evaluation)
 *builds 218–*
 
