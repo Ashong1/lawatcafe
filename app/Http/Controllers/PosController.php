@@ -303,7 +303,7 @@ class PosController extends Controller
                             // Alert once, on the sale that takes it to the threshold —
                             // not again on every later sale while it stays low.
                             if ($wasAboveThreshold && $ingredient->current_stock <= $ingredient->low_stock_threshold) {
-                                $lowStockAdmins ??= User::whereIn('role', ['admin', 'super_admin'])->get();
+                                $lowStockAdmins ??= User::active()->whereIn('role', ['admin', 'super_admin'])->get();
                                 Notification::send($lowStockAdmins, new SystemAlert(
                                     'Inventory Warning',
                                     "{$ingredient->name} reached low stock during a sale.",
@@ -337,7 +337,7 @@ class PosController extends Controller
             }
 
             // Notify Staff of New Order
-            $staff = User::where('role', 'staff')->get();
+            $staff = User::active()->where('role', 'staff')->get();
             Notification::send($staff, new SystemAlert(
                 'New Order!',
                 "Transaction #{$sale->transaction_number} was just placed.",

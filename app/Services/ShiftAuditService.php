@@ -51,7 +51,7 @@ class ShiftAuditService
             Log::error('ShiftAuditService: AI summary failed for shift '.$shift->id.': '.$e->getMessage());
         }
 
-        $recipients = User::whereIn('role', ['admin', 'super_admin'])->get();
+        $recipients = User::active()->whereIn('role', ['admin', 'super_admin'])->get();
         if (! $recipients->contains('id', $shift->user_id)) {
             $recipients->push($shift->user);
         }

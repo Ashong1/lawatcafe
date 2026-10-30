@@ -80,7 +80,7 @@ class WatchAdultSites extends Command
                 continue;
             }
 
-            $admins ??= User::whereIn('role', ['admin', 'super_admin'])->get();
+            $admins ??= User::active()->whereIn('role', ['admin', 'super_admin'])->get();
             Notification::send($admins, $this->alertFor($hit));
             $this->line(sprintf('%s -> %s (%s)', $hit['client'], $hit['site'], $hit['allowed'] ? 'allowed' : 'blocked'));
         }

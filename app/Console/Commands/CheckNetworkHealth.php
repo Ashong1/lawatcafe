@@ -115,7 +115,7 @@ class CheckNetworkHealth extends Command
             return;
         }
 
-        $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+        $admins = User::active()->whereIn('role', ['admin', 'super_admin'])->get();
         foreach ($messages as [$title, $body, $icon]) {
             Notification::send($admins, new SystemAlert($title, $body, $icon, route('network.health')));
         }

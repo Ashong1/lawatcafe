@@ -54,6 +54,21 @@ class ShiftAuditServiceTest extends TestCase
         Notification::assertSentTo($admin, SystemAlert::class);
     }
 
+    public function test_an_archived_admin_gets_no_shortage_email(): void
+    {
+        Mail::fake();
+        Notification::fake();
+        $this->mock(AIService::class, fn ($mock) => $mock->shouldReceive('summarizeShiftAudit')->andReturn('Short.'));
+
+        $staff = User::factory()->create(['role' => 'staff']);
+        $former = User::factory()->create(['role' => 'admin', 'deactivated_at' => now()]);
+
+        app(ShiftAuditService::class)->auditShiftClose($this->makeClosedShift($staff, expected: 500, ending: 480));
+
+        Mail::assertNotQueued(ShiftAuditResult::class, fn ($mail) => $mail->hasTo($former->email));
+        Notification::assertNotSentTo($former, SystemAlert::class);
+    }
+
     public function test_a_balanced_shift_triggers_nothing(): void
     {
         Mail::fake();

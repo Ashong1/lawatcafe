@@ -117,7 +117,7 @@ class DeliveryReceivingService
 
     private function notifyAdminsOfPendingReview(IngredientDelivery $delivery): void
     {
-        $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+        $admins = User::active()->whereIn('role', ['admin', 'super_admin'])->get();
 
         Notification::send($admins, new SystemAlert(
             'Delivery Needs Review',

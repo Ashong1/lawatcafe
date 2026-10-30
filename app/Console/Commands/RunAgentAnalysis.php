@@ -94,7 +94,7 @@ class RunAgentAnalysis extends Command
         // admin_only action still lands as 'proposed', not auto-bypassed.
         $result = $orchestrator->run($messages, ToolRegistry::AUDIENCE_ADMIN, null);
 
-        $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+        $admins = User::active()->whereIn('role', ['admin', 'super_admin'])->get();
         if ($admins->isNotEmpty()) {
             Notification::send($admins, new SystemAlert(
                 'Barista AI: Operational Review',

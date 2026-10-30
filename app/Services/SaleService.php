@@ -56,7 +56,7 @@ class SaleService
             'status' => 'pending',
         ]);
 
-        $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+        $admins = User::active()->whereIn('role', ['admin', 'super_admin'])->get();
         Notification::send($admins, new SystemAlert(
             'Void Request Pending',
             "{$staff->name} requested to void order #".substr($sale->transaction_number, -4).': "'.$reason.'"',

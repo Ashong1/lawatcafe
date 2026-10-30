@@ -167,7 +167,7 @@ class ResolveCapabilityGaps extends Command
 
                 if ($this->save(ToolRegistry::AUDIENCE_SUPER_ADMIN, AiLesson::KIND_TOOL_REQUEST, Str::limit('Tool request: '.$spec['name'], 120, ''), $body, $trigger, $evidence, false)) {
                     if (! $this->option('dry-run')) {
-                        Notification::send(User::where('role', 'super_admin')->get(), new SystemAlert(
+                        Notification::send(User::active()->where('role', 'super_admin')->get(), new SystemAlert(
                             'Barista AI needs a new tool',
                             "It couldn't \"{$trigger}\" and drafted a tool for it: {$spec['name']}.",
                             'bot',

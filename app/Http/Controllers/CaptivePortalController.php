@@ -425,7 +425,7 @@ class CaptivePortalController extends Controller
 
         PortalEvent::record(PortalEvent::MORE_TIME, $ip, $voucher?->code);
 
-        $recipients = User::whereIn('role', ['staff', 'admin', 'super_admin'])->get();
+        $recipients = User::active()->whereIn('role', ['staff', 'admin', 'super_admin'])->get();
         Notification::send($recipients, new SystemAlert(
             'A guest wants more Wi-Fi time',
             "{$device} ".($voucher ? "(code {$voucher->code}, {$left} min left)" : '')." asked for more time. They'll come to the counter.",

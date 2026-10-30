@@ -32,6 +32,8 @@ Feedback list: [docs/capstone/EVALUATION_2026-10-28.md](docs/capstone/EVALUATION
 - **Backups every hour** while the server is on (was once at 11:30 PM,
   which never ran on nights the server was already off); the last 7 days
   are kept.
+- **Archived accounts get no alerts or emails** (shift shortages, low stock,
+  network, deliveries).
 
 ## 1.28.0 — Confirmations and sign-in lockout
 *build 217*

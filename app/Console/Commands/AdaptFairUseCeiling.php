@@ -254,7 +254,7 @@ class AdaptFairUseCeiling extends Command
 
     private function notifyAdmins(array $assessment, string $narrative): void
     {
-        $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+        $admins = User::active()->whereIn('role', ['admin', 'super_admin'])->get();
 
         if ($admins->isEmpty()) {
             return;

@@ -91,6 +91,12 @@ class User extends Authenticatable
         return $this->password_set_at === null;
     }
 
+    /** Accounts that aren't archived: the only ones that should get alerts and emails. */
+    public function scopeActive($query)
+    {
+        return $query->whereNull('deactivated_at');
+    }
+
     public function isDeactivated(): bool
     {
         return $this->deactivated_at !== null;
