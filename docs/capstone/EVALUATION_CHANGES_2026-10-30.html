@@ -4,143 +4,123 @@
 <meta charset="utf-8">
 <title>Lawa't Kape — Changes after the October 28 Evaluation</title>
 <style>
-  @page { size: A4; margin: 16mm 15mm 18mm; }
-  :root { --ink:#2b211d; --brown:#3E2723; --mid:#795548; --line:#E6D5C3; --soft:#FDF8F5; --ok:#2e7d32; --todo:#9a6700; }
+  @page { size: A4; margin: 15mm 14mm 16mm; }
+  :root { --ink:#2b211d; --brown:#3E2723; --mid:#795548; --line:#E6D5C3; --soft:#FDF8F5; --ok:#2e7d32; }
   * { box-sizing: border-box; }
-  body { font-family: "Liberation Sans", Arial, sans-serif; color: var(--ink); font-size: 10pt; line-height: 1.45; margin: 0; }
-  h1 { font-size: 20pt; color: var(--brown); margin: 0 0 2mm; }
-  h2 { font-size: 13pt; color: var(--brown); margin: 8mm 0 3mm; padding-bottom: 1.5mm; border-bottom: 1.5px solid var(--line); break-after: avoid; }
-  .sub { color: var(--mid); margin: 0 0 5mm; }
-  .meta { display: flex; gap: 6mm; flex-wrap: wrap; font-size: 9pt; color: var(--mid); margin-bottom: 4mm; }
-  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 4mm 0; }
+  body { font-family: "Liberation Sans", Arial, sans-serif; color: var(--ink); font-size: 9.5pt; line-height: 1.42; margin: 0; }
+  h1 { font-size: 19pt; color: var(--brown); margin: 0 0 1.5mm; }
+  h2 { font-size: 12.5pt; color: var(--brown); margin: 7mm 0 2.5mm; padding-bottom: 1.2mm; border-bottom: 1.5px solid var(--line); break-after: avoid; }
+  .sub { color: var(--mid); margin: 0 0 4mm; }
+  .meta { display: flex; gap: 6mm; flex-wrap: wrap; font-size: 8.5pt; color: var(--mid); margin-bottom: 3mm; }
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 3mm 0; }
   .card { background: var(--soft); border: 1px solid var(--line); border-radius: 3mm; padding: 3mm; }
-  .card b { display: block; font-size: 16pt; color: var(--brown); }
-  .card span { font-size: 8.5pt; color: var(--mid); }
-  table { width: 100%; border-collapse: collapse; font-size: 9pt; }
-  th { text-align: left; background: var(--brown); color: #fff; padding: 2mm; font-weight: bold; }
-  td { padding: 2mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .card b { display: block; font-size: 15pt; color: var(--brown); }
+  .card span { font-size: 8pt; color: var(--mid); }
+  table { width: 100%; border-collapse: collapse; font-size: 8.6pt; }
+  th { text-align: left; background: var(--brown); color: #fff; padding: 1.8mm 2mm; }
+  td { padding: 1.8mm 2mm; border-bottom: 1px solid var(--line); vertical-align: top; }
   tr { break-inside: avoid; }
   tbody tr:nth-child(even) td { background: #fffaf6; }
-  .who { color: var(--mid); font-size: 8pt; display: block; margin-top: 0.8mm; }
-  .tag { display: inline-block; padding: 0.4mm 2mm; border-radius: 10mm; font-size: 7.5pt; font-weight: bold; white-space: nowrap; }
-  .done { background: #e8f5e9; color: var(--ok); }
-  .todo { background: #fff4d6; color: var(--todo); }
-  .ver { font-family: "Liberation Mono", monospace; font-size: 8pt; color: var(--mid); white-space: nowrap; }
-  .note { background: #fff4d6; border-left: 3px solid #e0a800; padding: 3mm 4mm; margin: 4mm 0; break-inside: avoid; }
+  .who { color: var(--mid); font-size: 7.6pt; display: block; margin-top: 0.6mm; }
+  .ver { font-family: "Liberation Mono", monospace; font-size: 7.6pt; color: var(--mid); white-space: nowrap; }
+  .note { background: #fff4d6; border-left: 3px solid #e0a800; padding: 2.5mm 4mm; margin: 3mm 0; break-inside: avoid; }
   ul { margin: 1mm 0 0 5mm; padding: 0; }
   li { margin-bottom: 1mm; }
-  .foot { margin-top: 8mm; font-size: 8pt; color: var(--mid); border-top: 1px solid var(--line); padding-top: 2mm; }
+  .foot { margin-top: 7mm; font-size: 7.6pt; color: var(--mid); border-top: 1px solid var(--line); padding-top: 2mm; }
 </style>
 </head>
 <body>
 
 <h1>Lawa't Kape — Changes after the October 28 Evaluation</h1>
-<p class="sub">POS and captive-portal system · Capstone project · Prepared October 30, 2026</p>
+<p class="sub">POS and captive-portal system · Capstone project · Updated October 30, 2026</p>
 <div class="meta">
-  <span><b>Versions:</b> 1.28.0.217 → 1.30.0.232</span>
-  <span><b>Source:</b> both evaluation recordings (Oct 28), transcribed and reviewed point by point</span>
-  <span><b>Automated tests:</b> 1,173 passing</span>
+  <span><b>Versions:</b> 1.28.0.217 → 1.43.1.250 (34 releases)</span>
+  <span><b>Source:</b> both evaluation recordings, transcribed and reviewed point by point</span>
+  <span><b>Automated tests:</b> 1,227 passing</span>
 </div>
 
 <div class="cards">
-  <div class="card"><b>22</b><span>requests from the evaluators and owner</span></div>
-  <div class="card"><b>13</b><span>done and live</span></div>
-  <div class="card"><b>9</b><span>planned, with design decided</span></div>
-  <div class="card"><b>6</b><span>extra safety fixes found in review</span></div>
+  <div class="card"><b>22</b><span>evaluator requests reviewed</span></div>
+  <div class="card"><b>21</b><span>done and live; 1 kept by design</span></div>
+  <div class="card"><b>12</b><span>extra owner requests done</span></div>
+  <div class="card"><b>6</b><span>safety fixes found in code review</span></div>
 </div>
 
-<h2>1. Done — evaluator requests now in the system</h2>
+<h2>1. Evaluator requests — done</h2>
 <table>
-  <thead><tr><th style="width:33%">What the evaluators asked</th><th>What changed</th><th style="width:16%">Version</th></tr></thead>
+  <thead><tr><th style="width:31%">What the evaluators asked</th><th>What changed</th><th style="width:14%">Version</th></tr></thead>
   <tbody>
-    <tr><td>Sales report by day, week, month and year; best sellers per period<span class="who">Sir Manalo · R1 28:35</span></td>
-        <td><b>Reports → Sales</b>: choose Daily, Weekly, Monthly or Yearly and any date. Shows net sales and the change from the previous period, orders and average order, cash vs e-wallet, discounts, voided orders, a chart and table by hour/day/month, best sellers, slow movers and sales per category. Print or download as CSV.</td>
-        <td class="ver">1.30.0.231</td></tr>
+    <tr><td>X-Read and Z-Read, standard POS functions<span class="who">Sir Manalo · R1 18:20, 52:09</span></td>
+        <td><b>X-Read</b> button on the register: the shift's totals so far, printable, closes nothing. <b>Z-Read</b> on End of Day once every shift is closed: numbered Z #0001, #0002…, running grand total, first and last order, gross, Senior/PWD discounts, refunds, voids, cash and e-wallet. Non-VAT layout. After a Z-Read that day's orders can no longer be voided.</td><td class="ver">1.33.0.236–237</td></tr>
+    <tr><td>Sales report by day, week, month, year; best sellers<span class="who">Sir Manalo · R1 28:35</span></td>
+        <td><b>Reports → Sales</b>: Daily / Weekly / Monthly / Yearly for any date; net sales with change vs previous period, orders, average, cash vs e-wallet, discounts, refunds, voids, chart and table, best sellers, slow movers, by category. Print or CSV.</td><td class="ver">1.30.0.231</td></tr>
     <tr><td>Stock report; daily and weekly reports<span class="who">Ma'am Ella · R2 31:50</span></td>
-        <td><b>Reports → Stock</b>: for the same periods, every ingredient's start, received, used in sales, wasted, adjusted and end amount; delivery and wastage cost; most used, most wasted (with reasons) and what is running low. Print or CSV. Every stock movement is now recorded with its type.</td>
-        <td class="ver">1.30.0.232</td></tr>
-    <tr><td>Confirmation before critical actions, no one-click changes<span class="who">R1 00:00, 16:24 · R2 15:15</span></td>
-        <td>"Save this?" before saving ingredients, restocks, products, wastage, reserved network addresses and the automatic speed setting. Orders and logout already asked (1.28.0).</td>
-        <td class="ver">1.29.0.219</td></tr>
-    <tr><td>Lock sign-in after 3 wrong attempts, not 5<span class="who">R2 18:35</span></td>
-        <td>Sign-in locks after the 3rd wrong password, with a live countdown until it unlocks.</td>
-        <td class="ver">1.29.0.218</td></tr>
-    <tr><td>Wrong Wi-Fi code: block automatically after 3 tries<span class="who">R2 20:18</span></td>
-        <td>A device that types 3 wrong codes is blocked for 5 minutes without staff action. A code that exists resets the count.</td>
-        <td class="ver">1.29.0.220</td></tr>
-    <tr><td>Wastage can't be more than one opened package<span class="who">R1 06:47</span></td>
-        <td>Each wastage entry is capped at what one package holds (e.g. one 1,000 ml box) and at the stock on hand; the form shows each package size. Partial amounts (e.g. 50 ml) are entered in ml/g.</td>
-        <td class="ver">1.29.0.221</td></tr>
-    <tr><td>Archive user accounts instead of deleting them<span class="who">R2 10:05</span></td>
-        <td>"Remove" is now "Archive". No account is ever permanently deleted; archived accounts can be restored and keep their sales history. Self-delete on the Profile page was removed.</td>
-        <td class="ver">1.29.0.222, .226</td></tr>
-    <tr><td>AI pending-actions icon looks like the chatbot<span class="who">R2 24:07</span></td>
-        <td>The icon is now a robot with a cog and says "AI actions waiting for approval".</td>
-        <td class="ver">1.29.0.223</td></tr>
-    <tr><td>Backups more often than once a night<span class="who">Sir Manalo · R1 45:58</span></td>
-        <td>A backup is made every hour while the server is on; the last 7 days are kept. (The nightly 11:30 PM backup rarely ran because the server is usually off by then.)</td>
-        <td class="ver">1.29.0.224</td></tr>
-    <tr><td>Show expected cash before the count; partial wastage amounts<span class="who">R1 01:41, 44:00</span></td>
-        <td>Already in the system before the evaluation; confirmed and noted.</td>
-        <td class="ver">existing</td></tr>
-  </tbody>
-</table>
-
-<h2>2. Done — owner's requests</h2>
-<table>
-  <thead><tr><th style="width:33%">Request</th><th>What changed</th><th style="width:16%">Version</th></tr></thead>
-  <tbody>
-    <tr><td>See the AI account balance and daily limit</td>
-        <td><b>AI Usage</b> card on Barista AI Settings: OpenRouter credit balance and today's free AI requests (e.g. "13 of 50"), with a warning when the balance is below zero.</td>
-        <td class="ver">1.29.0.223, .227</td></tr>
-  </tbody>
-</table>
-<div class="note"><b>Action for the owner:</b> the OpenRouter balance is currently <b>−$0.20</b>, so the daily limit has dropped to 50 free AI requests. A small top-up on openrouter.ai should bring back the higher limit before the defense.</div>
-
-<h2>3. Extra fixes found during code review</h2>
-<p>Each batch was checked by an independent reviewer before release. These problems were found and fixed, each with an automated test:</p>
-<table>
-  <thead><tr><th style="width:33%">Problem</th><th>Fix</th><th style="width:16%">Version</th></tr></thead>
-  <tbody>
-    <tr><td>Archived accounts still received shortage, stock and network emails</td><td>Alerts and emails go only to active accounts.</td><td class="ver">1.29.0.225</td></tr>
-    <tr><td>Any device could fake its address to dodge the wrong-code and sign-in limits</td><td>Only the shop's own proxy may pass on a device's address.</td><td class="ver">1.29.0.229</td></tr>
-    <tr><td>Restoring the oldest backup deleted it first</td><td>The backup being restored is never pruned.</td><td class="ver">1.29.0.228</td></tr>
-    <tr><td>AI Usage card ignored a key saved on the page and stalled when offline</td><td>Uses the same key as the assistant; remembers a failed check for a minute.</td><td class="ver">1.29.0.227</td></tr>
-    <tr><td>The Sales page totals counted voided orders</td><td>Voided orders are left out, matching the new report.</td><td class="ver">1.30.0.231</td></tr>
-    <tr><td>Stock History could not be filtered by staff</td><td>The person filter lists everyone.</td><td class="ver">1.30.0.232</td></tr>
-  </tbody>
-</table>
-
-<h2>4. Planned next — design already decided</h2>
-<table>
-  <thead><tr><th style="width:33%">Request</th><th>Plan</th><th style="width:16%">Status</th></tr></thead>
-  <tbody>
-    <tr><td>X-Read and Z-Read<span class="who">Sir Manalo · R1 18:20, 52:09</span></td>
-        <td>X-Read button on the register (current shift totals, closes nothing). Z-Read once per business day with a Z number, running grand total, first/last order number, discounts, voids and refunds; locks the day; printable. Non-VAT layout.</td><td><span class="tag todo">Next</span></td></tr>
-    <tr><td>Show the actual internet speed from the ISP<span class="who">R1 02:54</span></td>
-        <td>Speed test through the shop's line (once a day + "Test now", small to save prepaid data), live usage, how many guests fit per plan, a reserve for the register and AI, and a warning when a plan is faster than the line.</td><td><span class="tag todo">Next</span></td></tr>
-    <tr><td>Stock received date, expiry date, first-in-first-out<span class="who">R1 10:07 · R2 29:15</span></td>
-        <td>Stock kept in dated lots with optional expiry; oldest used first; "Expiring soon" list (expired / this week / this month) with a Write off button.</td><td><span class="tag todo">Planned</span></td></tr>
-    <tr><td>Receive deliveries by purchase order number<span class="who">R1 11:17, 34:10</span></td>
-        <td>Each sent purchase order gets a PO number; staff pick it and get a checklist of expected items; the supplier's receipt / DR number is recorded.</td><td><span class="tag todo">Planned</span></td></tr>
-    <tr><td>Verify the opening cash; honest cash count<span class="who">R1 40:23 · R2 00:00</span></td>
-        <td>The next shift (or the owner) confirms the previous closing count; the "Use Expected Amount" shortcut is removed so the drawer is actually counted.</td><td><span class="tag todo">Planned</span></td></tr>
+        <td><b>Reports → Stock</b>: per ingredient start, received, used in sales, wasted, adjusted and end for the period; delivery and wastage cost; most used, most wasted, running low. Print or CSV.</td><td class="ver">1.30.0.232</td></tr>
+    <tr><td>Verify the opening cash; nobody verifies their own count<span class="who">Sir Manalo · R1 40:23 · R2 00:00</span></td>
+        <td>Start Shift shows the <b>last closing count</b> (who, when). A different count needs a reason and the owner is told. Closing no longer has "Use Expected Amount" — the drawer must be counted; shortages still email the owner.</td><td class="ver">1.34.0.238</td></tr>
     <tr><td>Return / refund<span class="who">Sir Manalo · R1 27:33</span></td>
-        <td>Staff choose the order, items and reason; the owner approves in the same queue as voids; refunds appear in the reports and readings.</td><td><span class="tag todo">Planned</span></td></tr>
-    <tr><td>One person runs the shift: POS and kitchen in one screen<span class="who">R1 21:54 · owner</span></td>
-        <td>"Orders to make" panel on the register with Start/Done buttons, so taking and preparing orders happen on one tablet.</td><td><span class="tag todo">Planned</span></td></tr>
-    <tr><td>One Wi-Fi code for a group<span class="who">R1 13:09</span></td>
-        <td>One code that works on a set number of devices instead of one code per person.</td><td><span class="tag todo">Planned</span></td></tr>
-    <tr><td>Activity Log grouped by category, with date filter</td>
-        <td>Security and inventory entries grouped, filter by date.</td><td><span class="tag todo">Planned</span></td></tr>
+        <td><b>Refund items</b> on Orders: pick items and quantities with a reason. Owner refunds at once; staff refunds wait in the same approval queue as voids. Cash refunds come out of the open shift so the expected drawer stays right. Shown in reports and readings.</td><td class="ver">1.35.0.239</td></tr>
+    <tr><td>Receive deliveries by the PO reference; checklist of expected items<span class="who">R1 11:17, 34:10</span></td>
+        <td>Every sent order has a <b>PO number</b> (PO-00044, also in the supplier's email). Staff and owner <b>search the PO number or supplier</b> and get a checklist: change "Received" if less came, tick "Missing" if it didn't. Short items go to the owner with a note; missing items stay on order. Supplier's DR no. recorded.</td><td class="ver">1.36.0.240, 1.39.0.243</td></tr>
+    <tr><td>Record date received and expiry; first-in-first-out<span class="who">R1 10:07 · R2 29:15</span></td>
+        <td>Restock asks for the <b>expiration date</b>. <b>Expiring soon</b> on Ingredients (already expired / this week / this month) with the date received; stock is used oldest first. <b>Write off</b> logs expired stock as wastage.</td><td class="ver">1.37.0.241</td></tr>
+    <tr><td>Show the real internet speed; how much to give each guest<span class="who">R1 02:54</span></td>
+        <td><b>Your internet line</b> on Wi-Fi Speed: measured download/upload (once a day after opening, ~13 MB for the prepaid plan, plus Test now), usage right now, recommended Mbps per guest after keeping some for the shop, guests per plan, and a warning when a plan is faster than the line.</td><td class="ver">1.31.0.234</td></tr>
+    <tr><td>One person runs the shift: POS and kitchen together<span class="who">R1 21:54</span></td>
+        <td>The Register shows <b>Menu | Orders to make | Current order</b> side by side with Start/Done. The separate Kitchen Display page was removed.</td><td class="ver">1.31.0.233, 1.40.0.244</td></tr>
+    <tr><td>Confirmation before critical actions<span class="who">R1 00:00, 16:24 · R2 15:15</span></td>
+        <td>"Are you sure?" before placing orders, logging out, inventory changes, Wi-Fi and network settings, deliveries, codes, blocking, accounts and settings — every form that changes data.</td><td class="ver">1.28.0 – 1.43.1.250</td></tr>
+    <tr><td>Lock sign-in after 3 tries; block wrong Wi-Fi codes after 3</td>
+        <td>Sign-in locks after 3 wrong passwords (live countdown). A device that types 3 wrong Wi-Fi codes waits 5 minutes.</td><td class="ver">1.29.0.218, .220</td></tr>
+    <tr><td>Wastage limited to one opened package<span class="who">R1 06:47</span></td>
+        <td>Each entry is capped at what one package holds and at the stock; "Spoiled (napanis)" added as a reason.</td><td class="ver">1.29.0.221</td></tr>
+    <tr><td>Archive accounts instead of deleting</td>
+        <td>"Archive" with Restore; no account is ever deleted (self-delete removed); archived accounts get no alerts.</td><td class="ver">1.29.0.222–226</td></tr>
+    <tr><td>Backups more often than nightly<span class="who">R1 45:58</span></td><td>Every hour while the server is on; last 7 days kept.</td><td class="ver">1.29.0.224</td></tr>
+    <tr><td>Activity Log by category and date<span class="who">R2 31:50</span></td><td>Filter by kind (Sign-ins, Accounts, Backups, System) and date range; stock changes are in Stock History.</td><td class="ver">1.38.0.242</td></tr>
+    <tr><td>AI pending-actions icon confused with the chatbot</td><td>Robot-with-cog icon, labelled "AI actions waiting for approval".</td><td class="ver">1.29.0.223</td></tr>
   </tbody>
 </table>
 
-<h2>5. Answered during the evaluation (no change needed)</h2>
+<h2>2. Kept by design</h2>
+<table>
+  <thead><tr><th style="width:31%">Request</th><th>Decision</th></tr></thead>
+  <tbody>
+    <tr><td>One shareable Wi-Fi code for a group<span class="who">R1 13:09</span></td>
+        <td>Kept <b>one code per device</b>: each phone has its own clock and can be traced or disconnected alone, and the captive portal stays stable. Instead the cashier chooses <b>how many codes per order</b> (paid codes by quantity; 1–10 free codes when the order qualifies), the order confirmation lists them, and over 20 codes or bad quantities are refused with a clear message (v1.43.0.249).</td></tr>
+    <tr><td>Voids approved on the spot<span class="who">R1 25:10</span></td>
+        <td>Kept the owner-approval queue: one staff member per shift, and the owner approves from their phone. Refunds use the same queue.</td></tr>
+  </tbody>
+</table>
+
+<h2>3. Owner's requests — done</h2>
+<table>
+  <thead><tr><th style="width:31%">Request</th><th>What changed</th><th style="width:14%">Version</th></tr></thead>
+  <tbody>
+    <tr><td>AI manages the Wi-Fi by default</td><td>Barista AI sets plan speeds itself (automatic speed on; plans lowered to fit the measured line) and blocks newly seen adult sites at once — each with a notification and an off switch. Device blocks, disconnects and codes still need approval.</td><td class="ver">1.32.0.235</td></tr>
+    <tr><td>See the AI balance and daily limit</td><td>AI Usage card: OpenRouter balance and today's free requests.</td><td class="ver">1.29.0.223</td></tr>
+    <tr><td>Orders by day / week / month / year, with export</td><td>"Show" choice on Orders, count for the period, <b>Export CSV</b> of what's listed.</td><td class="ver">1.42.0.248</td></tr>
+    <tr><td>Supplier dropdown</td><td>Pick a saved supplier on both delivery forms; "Someone else…" for new ones.</td><td class="ver">1.41.0.246</td></tr>
+    <tr><td>Cleaner register toolbar</td><td>One row: search, icon buttons (Orders, Cash, X-Read), End Shift. Menu cards size to the space.</td><td class="ver">1.41.1.247</td></tr>
+    <tr><td>Non-VAT shop</td><td>Cart and receipt say VAT-exempt; placeholder address and TIN removed.</td><td class="ver">1.40.1.245</td></tr>
+  </tbody>
+</table>
+<div class="note"><b>Action for the owner:</b> top up OpenRouter before the defense — the balance was −$0.20, which limits the AI to 50 requests a day.</div>
+
+<h2>4. Safety fixes found in code review</h2>
 <ul>
-  <li><b>Void approval:</b> kept as an owner-approval queue by design, since the shop has one staff member per shift and the owner may approve remotely.</li>
-  <li><b>Security of the server on the guest Wi-Fi:</b> guest devices are limited by firewall rules to internet access only; SSH and the admin pages of the server, firewall and DNS are blocked for them.</li>
-  <li><b>HTTPS, offline use, AI token limits, scheduled jobs, BIR receipts, Senior/PWD discounts and reprinting:</b> already in place and explained.</li>
+  <li>Archived accounts still received shortage, stock and network emails — now only active accounts.</li>
+  <li>Any device could fake its address to dodge the wrong-code and sign-in limits — only the shop's proxy is trusted.</li>
+  <li>Restoring the oldest backup deleted it first — the backup being restored is never pruned.</li>
+  <li>The AI Usage card ignored a saved key and stalled offline — fixed.</li>
+  <li>The Sales page counted voided orders in its totals — fixed.</li>
+  <li>Profile allowed staff to delete their own account — removed.</li>
+</ul>
+
+<h2>5. Answered during the evaluation</h2>
+<ul>
+  <li><b>Server security on guest Wi-Fi:</b> firewall rules give guests internet only; SSH and admin pages of the server, firewall and DNS are blocked for them.</li>
+  <li><b>HTTPS, offline use, AI token limits, scheduled jobs, BIR receipts, Senior/PWD discounts, reprinting:</b> already in place.</li>
 </ul>
 
 <p class="foot">Full list with recording timestamps: docs/capstone/EVALUATION_2026-10-28.md · Release notes: CHANGELOG.md · Times are [recording] mm:ss; R1 = first recording, R2 = second.</p>
