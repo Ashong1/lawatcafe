@@ -29,14 +29,14 @@ Schedule::command('agent:analyze')->everyFifteenMinutes();
 // withoutOverlapping: a slow AI cascade must not stack runs on top of itself.
 Schedule::command('ai:warm-forecast')->everyThreeHours()->withoutOverlapping();
 
-// The learning loop. Hourly rather than continuous on purpose: lessons are
-// generalisations, and generalising from the last four minutes of traffic
-// produces noise. It also self-limits — the command exits early when there is
-// not enough new evidence, so a quiet shop costs one cheap query per hour.
-Schedule::command('ai:learn')->hourly()->withoutOverlapping();
+// The learning loop. Every 30 minutes (owner's call) rather than continuous:
+// lessons are generalisations, and generalising from the last four minutes of
+// traffic produces noise. It also self-limits — the command exits early when
+// there is not enough new evidence, so a quiet shop costs one cheap query a run.
+Schedule::command('ai:learn')->everyThirtyMinutes()->withoutOverlapping();
 // Self-learning for "I can't do that": skills over existing tools, page
 // pointers, or drafted tool requests. See ResolveCapabilityGaps.
-Schedule::command('ai:resolve-gaps')->hourly()->withoutOverlapping();
+Schedule::command('ai:resolve-gaps')->everyThirtyMinutes()->withoutOverlapping();
 
 // Backstop for bandwidth-tier alias membership. Every five minutes rather than
 // every minute: EnforceSessionLimits already clears members on the normal path,

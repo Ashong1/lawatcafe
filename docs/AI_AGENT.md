@@ -180,7 +180,7 @@ Barista AI improves from use, without retraining a model:
 1. **Signals**: thumbs up/down and corrections on replies (`ai_feedback`),
    failures, and settled admin and super admin conversations
    (`ai_conversations.mined_at` marks them read). Guest chats are not mined.
-2. **`ai:learn`** (hourly) distils them into candidate **lessons**
+2. **`ai:learn`** (every 30 minutes) distils them into candidate **lessons**
    (`ai_lessons`): a title, the rule, when it applies, and the evidence.
 3. **The owner approves** each lesson on `/admin/ai/lessons`. Only approved
    lessons are added to prompts, for the audience they belong to. The super

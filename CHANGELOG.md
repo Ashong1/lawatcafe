@@ -9,6 +9,13 @@ the history was rewritten.
 
 ---
 
+## 1.45.3 — Learning every 30 minutes
+*build 261*
+
+- The AI looks for new lessons to propose for review every 30 minutes
+  (was hourly), both from conversations and from things it couldn't do.
+- The lessons page's "waiting to be studied" count now includes staff chats.
+
 ## 1.45.2 — The AI studies staff chats too
 *build 260*
 

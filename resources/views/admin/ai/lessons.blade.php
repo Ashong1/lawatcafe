@@ -57,8 +57,8 @@
                     <div class="text-xs text-amber-900 font-medium leading-relaxed">
                         <p class="font-bold uppercase tracking-wide text-xs mb-1">Waiting for its first rating</p>
                         <p>
-                            Nothing has been rated yet, so there is nothing to learn from and the hourly
-                            run has correctly had nothing to do. The thumbs sit under every reply in the
+                            Nothing has been rated yet, so there is nothing to learn from and the learning
+                            run (every 30 minutes) has correctly had nothing to do. The thumbs sit under every reply in the
                             chat window &mdash; on the guest portal, on staff chat and on this one. Rate
                             <span class="font-bold">{{ $pipeline['needed'] }}</span> replies and the next
                             run will have something to generalise from. A thumbs-down also offers

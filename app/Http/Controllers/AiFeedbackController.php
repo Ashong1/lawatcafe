@@ -106,12 +106,12 @@ class AiFeedbackController extends Controller
     {
         // Counted the same way DistilAiLessons counts it, so the page cannot
         // promise a run the command will not make — including the settled
-        // admin/owner conversations the loop now mines passively.
+        // staff and owner conversations the loop mines passively.
         $evidence = AiFeedback::undistilled()->count()
             + AiActionAudit::where('status', 'failed')
                 ->where('created_at', '>=', now()->subDay())
                 ->count()
-            + AiConversation::minable()->where('context', 'admin')->whereHas('user')->count();
+            + AiConversation::minable()->whereIn('context', ['admin', 'staff'])->whereHas('user')->count();
 
         $stamp = Cache::get('ai_learn_last_run');
 

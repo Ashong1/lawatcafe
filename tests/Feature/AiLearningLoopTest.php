@@ -428,6 +428,25 @@ class AiLearningLoopTest extends TestCase
         $this->assertNotNull($staff->fresh()->mined_at);
     }
 
+    /** Owner (Oct 30): look for new things to review every 30 minutes, not hourly. */
+    public function test_the_learning_steps_run_every_30_minutes(): void
+    {
+        $events = collect(app(\Illuminate\Console\Scheduling\Schedule::class)->events());
+
+        foreach (['ai:learn', 'ai:resolve-gaps'] as $command) {
+            $event = $events->first(fn ($e) => str_contains($e->command, $command));
+            $this->assertSame('*/30 * * * *', $event->expression, $command);
+        }
+    }
+
+    public function test_waiting_staff_chats_count_as_evidence_on_the_review_page(): void
+    {
+        $this->seedConversation('staff', context: 'staff');
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('admin.ai.lessons.index'))
+            ->assertViewHas('pipeline', fn ($p) => $p['evidence'] === 1);
+    }
+
     /** A settled transcript alone can trip a run — no explicit rating needed. */
     public function test_conversations_count_towards_the_evidence_threshold(): void
     {
