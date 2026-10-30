@@ -9,6 +9,15 @@ the history was rewritten.
 
 ---
 
+## 1.54.0 — Reports sent through the chat
+*build 286*
+
+- Ask Barista AI for a report ("send me a download of the daily report",
+  "the stock report for this month") and a **Download** button appears in
+  the chat. Sales, stock or orders, for a day, week, month or year; the same
+  CSV the Reports and Orders pages give. Owner and super admin chat; no
+  approval needed (read-only).
+
 ## 1.53.2 — "I can't" is always studied; report downloads are in scope
 *build 285*
 

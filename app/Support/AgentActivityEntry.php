@@ -49,6 +49,7 @@ class AgentActivityEntry
         'getRecentSystemErrors' => ['Checked recent system errors', null, 'alert-triangle'],
         'listUserAccounts' => ['Checked staff accounts', null, 'users'],
         'checkNetworkHealth' => ['Checked the network status', null, 'activity'],
+        'getReportDownload' => ['Prepared a report to download', null, 'activity'],
         'lookupDevice' => ['Looked up a device', null, 'search'],
         'getTopBandwidthUsers' => ['Checked who is using the most data', null, 'users'],
         'getDnsStats' => ['Checked the website filter', null, 'globe'],

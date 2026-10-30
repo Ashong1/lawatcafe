@@ -17,6 +17,7 @@ use App\Services\Agent\Tools\GetAnomalySignalsTool;
 use App\Services\Agent\Tools\GetDnsStatsTool;
 use App\Services\Agent\Tools\GetPortalPostureTool;
 use App\Services\Agent\Tools\GetRecentSystemErrorsTool;
+use App\Services\Agent\Tools\GetReportDownloadTool;
 use App\Services\Agent\Tools\GetSalesSummaryTool;
 use App\Services\Agent\Tools\GetScheduledJobHealthTool;
 use App\Services\Agent\Tools\GetSystemHealthTool;
@@ -121,6 +122,7 @@ class ToolRegistry
             GetAnomalySignalsTool::class,
             GenerateVoucherBatchTool::class,
             SuggestCategoryContentTool::class,
+            GetReportDownloadTool::class,
         ];
     }
 

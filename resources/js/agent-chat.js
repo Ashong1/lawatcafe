@@ -584,7 +584,7 @@ export default function registerAgentChat(Alpine) {
                             }
 
                             (event.executed || []).forEach(e => {
-                                this.history.push({ kind: 'executed', tool: e.tool, label: e.label, message: (e.result && e.result.message) || 'Done.' });
+                                this.history.push({ kind: 'executed', tool: e.tool, label: e.label, message: (e.result && e.result.message) || 'Done.', download: e.result && e.result.data && e.result.data.download });
                             });
 
                             (event.pending || []).forEach(p => {

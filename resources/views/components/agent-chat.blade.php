@@ -90,6 +90,7 @@
                                     <div class="min-w-0">
                                         <span x-text="a.label || a.tool"></span>
                                         <p x-show="open && a.message && a.message !== 'Done.'" class="mt-1 font-medium leading-relaxed" x-text="a.message"></p>
+                                        <a x-show="a.download" :href="a.download.url" download class="mt-2 inline-flex items-center gap-1.5 min-h-[40px] px-4 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold"><x-lucide-download class="w-4 h-4" /> <span x-text="'Download ' + (a.download ? a.download.label : '')"></span></a>
                                     </div>
                                 </div>
                             </template>
@@ -286,6 +287,7 @@
                                     <div class="min-w-0">
                                         <span x-text="a.label || a.tool"></span>
                                         <p x-show="open && a.message && a.message !== 'Done.'" class="mt-1 font-medium leading-relaxed" x-text="a.message"></p>
+                                        <a x-show="a.download" :href="a.download.url" download class="mt-2 inline-flex items-center gap-1.5 min-h-[40px] px-4 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold"><x-lucide-download class="w-4 h-4" /> <span x-text="'Download ' + (a.download ? a.download.label : '')"></span></a>
                                     </div>
                                 </div>
                             </template>
