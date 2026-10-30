@@ -28,6 +28,42 @@ class ServerSpecs
         return $specs + ['uptime' => $this->uptime()];
     }
 
+    /**
+     * The database's size and the backups' (owner, Oct 30). Backups sit on this
+     * server's own disk, inside the disk gauge's figure.
+     *
+     * @return array{free_gb: float, backups_that_fit: ?int, database_mb: ?float, tables: ?int, backups: array{count: int, mb: float, newest: ?int, folder: string}}
+     */
+    public function storage(): array
+    {
+        return Cache::remember('server_storage', 300, function () {
+            try {
+                $db = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'mysql'
+                    ? \Illuminate\Support\Facades\DB::selectOne('select sum(data_length + index_length) as bytes, count(*) as tables from information_schema.tables where table_schema = database()')
+                    : null;
+            } catch (\Throwable $e) {
+                $db = null;
+            }
+            $backups = app(BackupService::class)->list();
+            $free = (float) @disk_free_space(app(BackupService::class)->dir());
+            $average = $backups->count() ? $backups->avg('size') : 0;
+
+            return [
+                // Both share this disk, so its free space is what either can still use.
+                'free_gb' => round($free / 1024 ** 3, 1),
+                'backups_that_fit' => $average > 0 ? (int) floor($free / $average) : null,
+                'database_mb' => $db ? round($db->bytes / 1048576, 1) : null,
+                'tables' => $db ? (int) $db->tables : null,
+                'backups' => [
+                    'count' => $backups->count(),
+                    'mb' => round($backups->sum('size') / 1048576, 1),
+                    'newest' => $backups->first()['made_at'] ?? null,
+                    'folder' => 'storage/app/backups',
+                ],
+            ];
+        });
+    }
+
     private function processor(): string
     {
         preg_match('/^model name\s*:\s*(.+)$/m', (string) @file_get_contents('/proc/cpuinfo'), $m);

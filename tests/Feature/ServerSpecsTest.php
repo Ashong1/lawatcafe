@@ -37,4 +37,16 @@ class ServerSpecsTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'super_admin']))->getJson(route('admin.live-stats'))
             ->assertOk()->assertJsonStructure(['memoryUsedGb', 'memoryTotalGb']);
     }
+
+    /** Owner (Oct 30): the database's size and the backups', on the same card. */
+    public function test_database_and_backup_storage_are_shown(): void
+    {
+        $storage = app(ServerSpecs::class)->storage();
+        $this->assertArrayHasKey('database_mb', $storage);
+        $this->assertArrayHasKey('backups', $storage);
+        $this->assertGreaterThan(0, $storage['free_gb']);
+
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))->get(route('dashboard'))
+            ->assertSee('Database')->assertSee('Backups')->assertSee('GB free');
+    }
 }

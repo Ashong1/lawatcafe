@@ -9,6 +9,13 @@ the history was rewritten.
 
 ---
 
+## 1.54.6 — Database and backup storage
+*build 292*
+
+- Application Host shows the database's size (and table count) and the
+  backups' (total size, number of files, newest), both on this server's
+  disk, with the free space left and about how many more backups fit.
+
 ## 1.54.5 — Real amounts at the gauges
 *build 291*
 

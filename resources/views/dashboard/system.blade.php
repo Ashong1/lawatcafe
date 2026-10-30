@@ -126,9 +126,33 @@
                     </div>
                 </div>
 
+                {{-- Database and backups, both on this disk (ServerSpecs::storage). --}}
+                @isset($storage)
+                    <div class="mt-5 pt-4 border-t border-[#F0E6D2] grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="p-3 rounded-2xl bg-[#FDF8F5] border border-[#F0E6D2] flex items-center gap-3">
+                            <x-lucide-database class="w-5 h-5 text-[#795548] shrink-0" />
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold uppercase tracking-wide text-[#795548]">Database</p>
+                                <p class="text-sm font-bold text-[#3E2723]">{{ $storage['database_mb'] !== null ? number_format($storage['database_mb'], 1).' MB' : '—' }}
+                                    @if ($storage['tables'])<span class="font-medium text-[#6D4C41]"> · {{ $storage['tables'] }} tables</span>@endif</p>
+                                <p class="text-xs text-[#6D4C41]">{{ number_format($storage['free_gb'], 1) }} GB free to grow on this disk</p>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-2xl bg-[#FDF8F5] border border-[#F0E6D2] flex items-center gap-3">
+                            <x-lucide-archive class="w-5 h-5 text-[#795548] shrink-0" />
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold uppercase tracking-wide text-[#795548]">Backups</p>
+                                <p class="text-sm font-bold text-[#3E2723]">{{ number_format($storage['backups']['mb'], 1) }} MB <span class="font-medium text-[#6D4C41]">· {{ $storage['backups']['count'] }} {{ Str::plural('file', $storage['backups']['count']) }}</span></p>
+                                <p class="text-xs text-[#6D4C41]" title="Folder: {{ $storage['backups']['folder'] }}">On this disk{{ $storage['backups']['newest'] ? ' · newest '.\Illuminate\Support\Carbon::createFromTimestamp($storage['backups']['newest'])->diffForHumans() : '' }}</p>
+                                <p class="text-xs text-[#6D4C41]">{{ number_format($storage['free_gb'], 1) }} GB free{{ $storage['backups_that_fit'] ? ' · room for about '.number_format($storage['backups_that_fit']).' more' : '' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endisset
+
                 {{-- The real machine, read live (ServerSpecs). --}}
                 @isset($specs)
-                    <p class="mt-5 pt-4 border-t border-[#F0E6D2] text-sm text-[#6D4C41] leading-relaxed">
+                    <p class="mt-4 text-sm text-[#6D4C41] leading-relaxed">
                         <span class="font-bold text-[#3E2723]">{{ $specs['processor'] }}</span>
                         · {{ $specs['system'] }} · {{ $specs['runs_on'] }} · up {{ $specs['uptime'] }}
                     </p>
