@@ -9,6 +9,15 @@ the history was rewritten.
 
 ---
 
+## 1.45.5 — Say when learning is paused
+*build 263*
+
+- Barista AI → What It Learned now says when learning is waiting on the
+  daily free AI allowance ("Paused: 14 free AI requests left today …
+  resumes after the 8:00 AM reset") instead of promising the next run will
+  study it. Learning holds off below 15 left so chats keep working.
+- "Once an hour" wording updated to every 30 minutes.
+
 ## 1.45.4 — The AI knows how it learns
 *build 262*
 

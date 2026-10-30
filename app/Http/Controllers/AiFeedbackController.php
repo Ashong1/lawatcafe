@@ -6,6 +6,7 @@ use App\Console\Commands\DistilAiLessons;
 use App\Models\AiActionAudit;
 use App\Models\AiConversation;
 use App\Models\AiFeedback;
+use App\Services\AiBudget;
 use App\Models\AiLesson;
 use App\Models\Setting;
 use App\Services\Agent\LessonLibrary;
@@ -120,6 +121,9 @@ class AiFeedbackController extends Controller
             'needed' => DistilAiLessons::MIN_EVIDENCE_FOR_A_RUN,
             'lastRun' => $stamp ? Carbon::createFromTimestamp($stamp)->diffForHumans() : null,
             'everRated' => AiFeedback::exists(),
+            // Learning waits when the free daily allowance is nearly used up; say so.
+            'paused' => ! app(AiBudget::class)->backgroundMaySpend(),
+            'remaining' => app(AiBudget::class)->dailyRequestsRemaining(),
         ];
     }
 

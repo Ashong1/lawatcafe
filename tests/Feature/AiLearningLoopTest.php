@@ -459,6 +459,24 @@ class AiLearningLoopTest extends TestCase
         }
     }
 
+    /** Owner (Oct 30): plenty to learn from, nothing appeared — the daily AI allowance had paused learning, silently. */
+    public function test_the_review_page_says_when_learning_is_paused_for_the_daily_allowance(): void
+    {
+        $this->seedConversation('admin');
+        $this->seedConversation('staff', context: 'staff');
+        AiFeedback::create(['audience' => 'admin', 'signal' => 'rating', 'sentiment' => 1, 'user_message' => 'hi', 'assistant_reply' => 'hello']);
+        $this->mock(\App\Services\AiBudget::class, function ($m) {
+            $m->shouldReceive('backgroundMaySpend')->andReturn(false);
+            $m->shouldReceive('dailyRequestsRemaining')->andReturn(14);
+        });
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('admin.ai.lessons.index'))
+            ->assertSee('Paused: 14 free AI requests left today')
+            ->assertSee('resumes after the 8:00 AM reset')
+            ->assertDontSee('next run will distil it')
+            ->assertDontSee('once an hour');
+    }
+
     /** A settled transcript alone can trip a run — no explicit rating needed. */
     public function test_conversations_count_towards_the_evidence_threshold(): void
     {

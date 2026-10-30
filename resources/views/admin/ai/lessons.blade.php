@@ -75,8 +75,10 @@
                             {{ $pipeline['evidence'] }}<span class="text-sm text-[#795548]"> / {{ $pipeline['needed'] }}</span>
                         </p>
                         <p class="text-xs font-bold uppercase tracking-wide text-[#795548] mt-1">
-                            @if($pipeline['evidence'] >= $pipeline['needed'])
-                                Enough &mdash; next run will distil it
+                            @if($pipeline['evidence'] >= $pipeline['needed'] && $pipeline['paused'])
+                                <span class="text-amber-700">Paused: {{ $pipeline['remaining'] ?? 'few' }} free AI requests left today. Learning waits below {{ \App\Services\AiBudget::BACKGROUND_RESERVE }} so chats keep working, and resumes after the 8:00 AM reset.</span>
+                            @elseif($pipeline['evidence'] >= $pipeline['needed'])
+                                Enough &mdash; the next run (every 30 minutes) will study it
                             @else
                                 {{ $pipeline['needed'] - $pipeline['evidence'] }} more before it can generalise
                             @endif
@@ -167,7 +169,7 @@
                     </div>
                 @empty
                     <p class="text-center text-[#6D4C41] text-sm font-medium py-8 max-w-md mx-auto">
-                        Nothing to review. Barista AI suggests lessons once an hour, when there is enough new feedback to learn from.
+                        Nothing to review. Barista AI looks for lessons every 30 minutes, when there is enough new feedback to learn from.
                     </p>
                 @endforelse
             </div>
