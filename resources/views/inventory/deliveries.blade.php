@@ -13,6 +13,9 @@
             </h2>
             <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Record supplies when they arrive. Ingredient stock goes up on its own.</p>
         </div>
+        <a href="{{ route('staff.deliveries.index') }}" class="min-h-[44px] px-5 rounded-full bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide inline-flex items-center gap-2 shrink-0 hover:bg-[#271815]">
+            <x-lucide-search class="w-4 h-4" /> Check a delivery by PO no.
+        </a>
     </div>
 
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">

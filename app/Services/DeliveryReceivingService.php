@@ -126,7 +126,7 @@ class DeliveryReceivingService
 
         Notification::send($admins, new SystemAlert(
             'Delivery Needs Review',
-            "A delivery from {$delivery->supplier_name} didn't match any pending purchase order and needs review before stock is updated.",
+            "A delivery from {$delivery->supplier_name} didn't match any pending purchase order and needs review before stock is updated.".($delivery->note ? ' '.$delivery->note : ''),
             'truck',
             route('inventory.deliveries.index')
         ));

@@ -9,6 +9,16 @@ the history was rewritten.
 
 ---
 
+## 1.39.0 — Check a delivery by PO number
+*build 243*
+
+- **Check a delivery** on Receive Delivery (owner and staff): type the PO
+  number from the supplier's receipt, or the supplier's name, to get that
+  supplier's open orders as a checklist. Change "Received" when less came,
+  tick "Missing" when an item didn't come. Short items hold the delivery for
+  the owner with a note ("Short: Milk 800 of 1,000 ml"); missing items stay
+  on order and the owner is told. The owner reaches it from Deliveries.
+
 ## 1.38.0 — Activity Log by kind and date
 *build 242*
 

@@ -1,4 +1,4 @@
-@extends('layouts.staff')
+@extends(auth()->user()->isAdminOrAbove() ? 'layouts.admin' : 'layouts.staff')
 @section('title', 'Receive Delivery')
 
 @section('content')
@@ -18,6 +18,62 @@
             <x-lucide-truck class="w-4 h-4" />
             <span>Receive Delivery</span>
         </button>
+    </div>
+
+    {{-- Check a delivery: search a PO number or supplier, then tick off what came (owner, Oct 30). --}}
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border-2 border-[#3E2723]/10 mb-8">
+        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide mb-1">Check a delivery</h3>
+        <p class="text-xs text-[#6D4C41] mb-4 font-medium">Type the PO number on the supplier's receipt (e.g. PO-00044) or the supplier's name.</p>
+        <form method="GET" action="{{ route('staff.deliveries.index') }}" class="flex gap-2">
+            <label for="dlv-search" class="sr-only">PO number or supplier</label>
+            <input id="dlv-search" name="ref" value="{{ $ref }}" placeholder="PO-00044 or supplier" autocomplete="off"
+                   class="flex-1 min-w-0 min-h-[44px] bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 text-base sm:text-sm font-bold focus:outline-none focus:border-[#3E2723]">
+            <button type="submit" class="min-h-[44px] px-5 rounded-xl bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide inline-flex items-center gap-2"><x-lucide-search class="w-4 h-4" /> Find</button>
+        </form>
+
+        @if ($found !== null && $found->isEmpty())
+            <p class="mt-4 text-sm font-bold text-red-700">No open order matches "{{ $ref }}". Check the number, or record it below with Receive Delivery.</p>
+        @elseif ($found)
+            @php($supplierName = $found->first()->supplier->name ?? '')
+            <form action="{{ route('staff.deliveries.store') }}" method="POST" class="mt-6" x-data="{ rows: @js($found->map(fn ($po) => ['ordered' => (float) $po->suggested_quantity, 'got' => (float) $po->suggested_quantity, 'missing' => false])->values()) }"
+                  data-confirm="Record this delivery?" data-confirm-text="What arrived goes into stock if it matches the order; anything short or missing goes to the owner.">
+                @csrf
+                <h4 class="text-sm font-bold text-[#3E2723] mb-1">Check this delivery{{ $supplierName ? ' from '.$supplierName : '' }}</h4>
+                <p class="text-xs text-[#6D4C41] mb-3">Change "Received" if less came. Tick "Missing" if it didn't come at all.</p>
+                <input type="hidden" name="supplier_name" value="{{ $supplierName ?: 'Unknown supplier' }}">
+                <input type="hidden" name="delivery_date" value="{{ now()->toDateString() }}">
+                <div class="space-y-2">
+                    @foreach ($found as $i => $po)
+                        <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-2 sm:gap-4 items-center p-3 rounded-xl bg-[#FDF8F5] border border-[#F0E6D2]">
+                            <input type="hidden" name="items[{{ $i }}][ingredient_id]" value="{{ $po->ingredient_id }}">
+                            <input type="hidden" name="items[{{ $i }}][purchase_order_draft_id]" value="{{ $po->id }}">
+                            <input type="hidden" name="items[{{ $i }}][cost_per_unit]" value="{{ (float) $po->estimated_unit_cost }}">
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-[#3E2723]">{{ $po->ingredient->name }}</p>
+                                <p class="text-xs font-mono text-[#795548]">{{ $po->po_number }} — ordered {{ rtrim(rtrim(number_format($po->suggested_quantity, 2), '0'), '.') }} {{ $po->ingredient->unit }}</p>
+                            </div>
+                            <label class="flex items-center gap-2 text-xs font-bold text-[#795548]">Received
+                                <input type="number" step="0.01" min="0.01" name="items[{{ $i }}][quantity]" x-model.number="rows[{{ $i }}].got" :disabled="rows[{{ $i }}].missing"
+                                       class="w-28 min-h-[44px] border-2 border-[#F0E6D2] rounded-xl text-center text-base font-bold disabled:opacity-40">
+                            </label>
+                            <label class="flex items-center gap-2 min-h-[44px] text-xs font-bold text-red-700 cursor-pointer">
+                                <input type="checkbox" name="items[{{ $i }}][missing]" value="1" x-model="rows[{{ $i }}].missing" class="w-5 h-5 rounded"> Missing
+                            </label>
+                            <span class="text-xs font-bold whitespace-nowrap"
+                                  :class="rows[{{ $i }}].missing ? 'text-red-700' : (rows[{{ $i }}].got < rows[{{ $i }}].ordered ? 'text-amber-700' : 'text-green-700')"
+                                  x-text="rows[{{ $i }}].missing ? 'Missing' : (rows[{{ $i }}].got < rows[{{ $i }}].ordered ? 'Short by ' + +(rows[{{ $i }}].ordered - rows[{{ $i }}].got).toFixed(2) : '✓ Complete')"></span>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="mt-4 flex flex-col sm:flex-row gap-3 sm:items-end">
+                    <div class="flex-1">
+                        <label for="chk-ref" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Supplier's receipt / DR no.</label>
+                        <input id="chk-ref" name="reference_number" class="w-full min-h-[44px] bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 text-base sm:text-sm font-bold">
+                    </div>
+                    <button type="submit" class="min-h-[44px] px-6 rounded-full bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide">Record delivery</button>
+                </div>
+            </form>
+        @endif
     </div>
 
     {{-- Pending Purchase Orders --}}
