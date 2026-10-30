@@ -23,4 +23,14 @@ class SidebarRailTest extends TestCase
         $this->assertStringContainsString('whitespace-nowrap uppercase">Lawa\'t Kape v', $html);
         $this->assertSame(0, substr_count(explode('<nav x-ref="sidebarNav"', $html)[1] ?? '', 'x-transition:leave="transition ease-in-out duration-300"'));
     }
+
+    /** Owner's 2nd video: labels flashed in the collapsed rail for a frame while a page loaded, before Alpine ran. */
+    public function test_the_rail_hides_labels_before_any_script_runs(): void
+    {
+        $css = file_get_contents(resource_path('css/base.css'));
+
+        $this->assertStringContainsString('.lk-sidebar-rail [x-show="navLabelsVisible"]', $css);
+        $this->assertStringContainsString('.lk-sidebar-rail .lk-brand-mark + div', $css);
+        $this->assertStringContainsString('aside:not(.lk-sidebar-rail) [x-show="!navLabelsVisible"]', $css);
+    }
 }

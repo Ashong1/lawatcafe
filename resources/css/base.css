@@ -348,6 +348,18 @@ html {
         margin-right: 0;
         transform: translateX(-50%);
     }
+
+    /* x-show only applies once Alpine starts, after the first paint; the server
+       already rendered the rail class from the cookie, so CSS gets that frame right. */
+    .lk-sidebar-rail [x-show="navLabelsVisible"],
+    .lk-sidebar-rail .lk-brand-mark + div {
+        display: none !important;
+    }
+}
+
+/* The rail-only "v1" is also x-show'd, so it would flash under an open sidebar. */
+aside:not(.lk-sidebar-rail) [x-show="!navLabelsVisible"] {
+    display: none;
 }
 
 /* The iOS home-indicator inset, exposed as a plain custom property so JavaScript
