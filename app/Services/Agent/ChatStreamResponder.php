@@ -57,7 +57,20 @@ class ChatStreamResponder
                 $this->emit(['type' => 'tool_start', 'tool' => $toolName]);
             };
 
-            $result = $this->orchestrator->run($messages, $audience, $actor, $context, $onTextDelta, $onToolStart);
+            // Staff and owner chat stays on the system, enforced here and not only in the prompt.
+            $guarded = $audience !== ToolRegistry::AUDIENCE_GUEST;
+            $earlier = array_values(array_map(fn ($m) => (string) ($m['content'] ?? ''),
+                array_filter(array_slice($messages, 0, -1), fn ($m) => ($m['role'] ?? null) === 'user' && is_string($m['content'] ?? null))));
+
+            if ($guarded && ScopeGuard::declineBefore($userMessage, $earlier)) {
+                $onTextDelta(ScopeGuard::DECLINE);
+                $result = ['reply' => ScopeGuard::DECLINE, 'executed' => [], 'pending' => []];
+            } else {
+                $result = $this->orchestrator->run($messages, $audience, $actor, $context, $onTextDelta, $onToolStart);
+                if ($guarded && ScopeGuard::replaceAfter($userMessage, $earlier, $result)) {
+                    $result['reply'] = ScopeGuard::DECLINE;
+                }
+            }
 
             $reply = $result['reply'] ?? $this->quotaReply($audience) ?? $this->offlineReply($audience) ?? $fallbackReply;
 
@@ -108,7 +121,7 @@ class ChatStreamResponder
         return $audience === ToolRegistry::AUDIENCE_GUEST
             ? "Our AI helper is taking a break until {$when}. Our staff at the counter are happy to help in the meantime!"
             : "Barista AI has used up today's free AI allowance, so it can't answer right now. It comes back at {$when}. "
-                .'To stop this happening, add $5 of credit to the shop\'s OpenRouter account — that raises the daily limit from 50 to 1,000 requests.';
+                .'To stop this happening, add $10 of credit to the shop\'s OpenRouter account (raises its daily limit from 50 to 1,000 requests), or add another AI service in Barista AI Settings.';
     }
 
     /**

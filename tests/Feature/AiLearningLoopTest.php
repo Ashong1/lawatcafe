@@ -485,6 +485,8 @@ class AiLearningLoopTest extends TestCase
         foreach ([$ai->buildAdminSystemPrompt(), $ai->buildStaffSystemPrompt(), $ai->buildSuperAdminSystemPrompt()] as $prompt) {
             $this->assertStringContainsString('STAY ON THE SYSTEM:', $prompt);
             $this->assertStringContainsString("That's outside what I help with here", $prompt);
+            // Owner (Oct 30): every task answers from the shop's database, never from memory.
+            $this->assertStringContainsString("THE SHOP'S DATA IS YOUR ONLY SOURCE:", $prompt);
         }
         // The decline must not read as a capability gap, or the learning step would try to "learn" trivia.
         $this->assertFalse(\App\Services\Agent\CapabilityGap::looksLikeGap("That's outside what I help with here. I can check sales, stock or the Wi-Fi for you."));

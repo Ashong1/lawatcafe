@@ -9,6 +9,21 @@ the history was rewritten.
 
 ---
 
+## 1.52.3 — Off-topic guard in code; answers from the shop's data
+*build 282*
+
+- Staff and owner chat is kept on the system by the server, not only by the
+  AI's instructions: clearly off-topic messages (bare math, trivia, poems,
+  translation, code…) that mention nothing about the shop are declined
+  before the AI is asked, and an off-topic answer given without any shop
+  tool is replaced. English and Tagalog shop words, greetings and follow-ups
+  in a shop conversation pass.
+- Barista AI's instructions: every fact about the shop comes from its tools
+  (the database and the network) or the live figures it is given; for each
+  task it reads the data first and never guesses.
+- The "used up today's AI allowance" message gives the right figure ($10)
+  and mentions adding another AI service.
+
 ## 1.52.2 — Barista AI stays on the system
 *build 281*
 
