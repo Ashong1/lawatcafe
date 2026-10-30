@@ -179,7 +179,7 @@ class WriteToolsGlueTest extends TestCase
         ]);
 
         $result = app(RestockIngredientTool::class)->execute([
-            'ingredient_id' => $ingredient->id, 'added_amount' => 1000,
+            'ingredient_id' => $ingredient->id, 'added_amount' => 1000, 'expires_at' => now()->addMonth()->toDateString(),
         ], null);
 
         $this->assertTrue($result->success);
@@ -193,7 +193,7 @@ class WriteToolsGlueTest extends TestCase
         ]);
 
         $result = app(RestockIngredientTool::class)->execute([
-            'ingredient_name' => 'milk', 'added_amount' => 200,
+            'ingredient_name' => 'milk', 'added_amount' => 200, 'expires_at' => now()->addMonth()->toDateString(),
         ], null);
 
         $this->assertTrue($result->success);

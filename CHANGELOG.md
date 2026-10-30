@@ -9,6 +9,14 @@ the history was rewritten.
 
 ---
 
+## 1.54.3 — Restocking needs the expiry date
+*build 289*
+
+- Adding stock on the Ingredients page needs the batch's expiry date, or
+  tick **Doesn't expire** (cups, straws, lids). Barista AI follows the same
+  rule: it asks for the expiry date (or whether it doesn't expire) before it
+  proposes a restock, and a restock without one is refused.
+
 ## 1.54.2 — The page shows Barista AI's changes
 *build 288*
 

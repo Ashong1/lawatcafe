@@ -125,7 +125,7 @@ class ToolCallOrchestratorTest extends TestCase
 
         Http::fake([
             'openrouter.ai/*' => Http::sequence()
-                ->push($this->openAiFunctionCallResponse('restockIngredient', ['ingredient_id' => 1, 'added_amount' => 5]), 200),
+                ->push($this->openAiFunctionCallResponse('restockIngredient', ['ingredient_id' => 1, 'added_amount' => 5, 'no_expiry' => true]), 200),
         ]);
 
         $started = [];
@@ -181,7 +181,7 @@ class ToolCallOrchestratorTest extends TestCase
 
         Http::fake([
             'openrouter.ai/*' => Http::response(
-                $this->openAiFunctionCallResponse('restockIngredient', ['ingredient_id' => $ingredient->id, 'added_amount' => 10]),
+                $this->openAiFunctionCallResponse('restockIngredient', ['ingredient_id' => $ingredient->id, 'added_amount' => 10, 'no_expiry' => true]),
                 200
             ),
         ]);
@@ -213,7 +213,7 @@ class ToolCallOrchestratorTest extends TestCase
             // script the chat endpoint only.
             'openrouter.ai/api/v1/models' => Http::response(['data' => []]),
             'openrouter.ai/api/v1/chat/completions' => Http::sequence()
-                ->push($this->openAiFunctionCallResponse('restockIngredient', ['ingredient_id' => $ingredient->id, 'added_amount' => 999]), 200)
+                ->push($this->openAiFunctionCallResponse('restockIngredient', ['ingredient_id' => $ingredient->id, 'added_amount' => 999, 'no_expiry' => true]), 200)
                 ->push($this->openAiTextResponse("I can't do that here."), 200),
         ]);
 
@@ -244,7 +244,7 @@ class ToolCallOrchestratorTest extends TestCase
 
         $audit = AiActionAudit::create([
             'tool_name' => 'restockIngredient',
-            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10],
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10, 'no_expiry' => true],
             'result' => [],
             'actor_type' => 'ai',
             'status' => 'proposed',
@@ -315,7 +315,7 @@ class ToolCallOrchestratorTest extends TestCase
 
         $audit = AiActionAudit::create([
             'tool_name' => 'restockIngredient',
-            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10],
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10, 'no_expiry' => true],
             'result' => [],
             'actor_type' => 'ai',
             'status' => 'proposed',
@@ -341,7 +341,7 @@ class ToolCallOrchestratorTest extends TestCase
 
         $audit = AiActionAudit::create([
             'tool_name' => 'restockIngredient',
-            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10],
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10, 'no_expiry' => true],
             'result' => [],
             'actor_type' => 'ai',
             'actor_user_id' => $owner->id,
@@ -372,7 +372,7 @@ class ToolCallOrchestratorTest extends TestCase
 
         $ownedAudit = AiActionAudit::create([
             'tool_name' => 'restockIngredient',
-            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10],
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10, 'no_expiry' => true],
             'result' => [],
             'actor_type' => 'ai',
             'actor_user_id' => $owner->id,
@@ -385,7 +385,7 @@ class ToolCallOrchestratorTest extends TestCase
 
         $anotherOwnedAudit = AiActionAudit::create([
             'tool_name' => 'restockIngredient',
-            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 5],
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 5, 'no_expiry' => true],
             'result' => [],
             'actor_type' => 'ai',
             'actor_user_id' => $owner->id,

@@ -21,7 +21,8 @@ class RestockIngredientTool implements AgentTool
     {
         return 'Add stock to an existing ingredient by its name or ID. If the ingredient has a packaging unit '
             .'(e.g. box, sack), added_amount is a count of those packs and is converted to the stock unit '
-            .'automatically: "add 10 boxes of milk" is added_amount 10. Never ask the owner how big a pack is.';
+            .'automatically: "add 10 boxes of milk" is added_amount 10. Never ask the owner how big a pack is. '
+            .'Before calling it, ask for the expiry date printed on the package (expires_at), or whether it doesn\'t expire (no_expiry), unless they already said.';
     }
 
     public function parametersSchema(): array
@@ -32,6 +33,8 @@ class RestockIngredientTool implements AgentTool
                 'ingredient_id' => ['type' => 'integer', 'description' => 'Ingredient ID (preferred if known)'],
                 'ingredient_name' => ['type' => 'string', 'description' => 'Ingredient name, used if ID is not known'],
                 'added_amount' => ['type' => 'number', 'description' => 'Quantity to add: number of packs if the ingredient has a packaging unit, otherwise its stock unit'],
+                'expires_at' => ['type' => 'string', 'description' => 'Expiry date of this batch, YYYY-MM-DD, from the package. Required unless no_expiry.'],
+                'no_expiry' => ['type' => 'boolean', 'description' => "True only when the owner says this item doesn't expire (cups, straws, lids)."],
             ],
             'required' => ['added_amount'],
         ];
@@ -60,7 +63,20 @@ class RestockIngredientTool implements AgentTool
             return ToolResult::fail('Could not find a matching ingredient.');
         }
 
-        $result = $this->ingredients->addStock($ingredient, $addedAmount, $actor?->id, 'ai');
+        // Same rule as the Ingredients page: an expiry date, or "doesn't expire".
+        $noExpiry = filter_var($arguments['no_expiry'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $expires = null;
+        if (! $noExpiry) {
+            $expires = ! empty($arguments['expires_at']) ? \Carbon\CarbonImmutable::createFromFormat('!Y-m-d', (string) $arguments['expires_at']) : null;
+            if (! $expires) {
+                return ToolResult::fail("Ask the owner for this batch's expiry date (from the package), or whether it doesn't expire, then try again.");
+            }
+            if ($expires->lt(today())) {
+                return ToolResult::fail('That expiry date has already passed. Check the date on the package.');
+            }
+        }
+
+        $result = $this->ingredients->addStock($ingredient, $addedAmount, $actor?->id, 'ai', $expires?->toDateString());
 
         return ToolResult::ok($result['message'], $result);
     }

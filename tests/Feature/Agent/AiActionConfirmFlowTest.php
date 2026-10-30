@@ -19,7 +19,7 @@ class AiActionConfirmFlowTest extends TestCase
 
         $audit = AiActionAudit::create([
             'tool_name' => 'restockIngredient',
-            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10],
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10, 'no_expiry' => true],
             'result' => [],
             'actor_type' => 'ai',
             'status' => 'proposed',
@@ -60,7 +60,7 @@ class AiActionConfirmFlowTest extends TestCase
 
         $audit = AiActionAudit::create([
             'tool_name' => 'restockIngredient',
-            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10],
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10, 'no_expiry' => true],
             'result' => [],
             'actor_type' => 'ai',
             'status' => 'proposed',
@@ -83,7 +83,7 @@ class AiActionConfirmFlowTest extends TestCase
 
         $audit = AiActionAudit::create([
             'tool_name' => 'restockIngredient',
-            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10],
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10, 'no_expiry' => true],
             'result' => [],
             'actor_type' => 'ai',
             'actor_user_id' => $owner->id,
@@ -109,7 +109,7 @@ class AiActionConfirmFlowTest extends TestCase
         $ingredient = Ingredient::create(['name' => 'Milk', 'current_stock' => 50, 'unit' => 'ml', 'low_stock_threshold' => 500, 'status' => 'Low Stock']);
         $audit = AiActionAudit::create([
             'tool_name' => 'restockIngredient',
-            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10],
+            'input_params' => ['ingredient_id' => $ingredient->id, 'added_amount' => 10, 'no_expiry' => true],
             'result' => [],
             'actor_type' => 'ai',
             'status' => 'proposed',

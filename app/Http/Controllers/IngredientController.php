@@ -105,12 +105,14 @@ class IngredientController extends Controller
 
     public function addStock(Request $request, Ingredient $ingredient)
     {
+        // Owner (Oct 30): the batch's expiry date is required, unless it doesn't expire.
         $request->validate([
             'added_amount' => 'required|numeric|min:0.01',
-            'expires_at' => 'nullable|date|after_or_equal:today',
-        ]);
+            'no_expiry' => 'nullable|boolean',
+            'expires_at' => 'required_unless:no_expiry,1|nullable|date|after_or_equal:today',
+        ], ['expires_at.required_unless' => "Enter the expiry date from the package, or tick \"Doesn't expire\"."]);
 
-        $result = $this->ingredients->addStock($ingredient, (float) $request->added_amount, auth()->id(), 'human', $request->expires_at);
+        $result = $this->ingredients->addStock($ingredient, (float) $request->added_amount, auth()->id(), 'human', $request->boolean('no_expiry') ? null : $request->expires_at);
 
         return redirect()->route('inventory.ingredients.index')->with('success', $result['message']);
     }

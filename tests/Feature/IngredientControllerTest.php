@@ -81,6 +81,7 @@ class IngredientControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('inventory.ingredients.add-stock', $ingredient), [
             'added_amount' => 1000,
+            'expires_at' => now()->addMonths(3)->toDateString(),
         ]);
 
         $response->assertRedirect(route('inventory.ingredients.index'));

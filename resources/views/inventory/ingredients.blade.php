@@ -292,9 +292,14 @@
                             <span class="shrink-0 text-xs font-bold text-[#6D4C41]" x-text="selectedIngredient?.packaging_unit || selectedIngredient?.unit"></span>
                         </div>
                     </div>
-                    <div class="mt-4">
-                        <label for="ingredient-expires-at" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Expiration date (optional)</label>
-                        <input type="date" id="ingredient-expires-at" name="expires_at" min="{{ now()->toDateString() }}" class="w-full min-h-[44px] px-4 border-2 border-[#F0E6D2] rounded-xl bg-[#FAFAFA] text-base sm:text-sm font-bold">
+                    <div class="mt-4" x-data="{ noExpiry: false }">
+                        <label for="ingredient-expires-at" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Expiration date</label>
+                        <input type="date" id="ingredient-expires-at" name="expires_at" min="{{ now()->toDateString() }}" :required="!noExpiry" :disabled="noExpiry"
+                               class="w-full min-h-[44px] px-4 border-2 border-[#F0E6D2] rounded-xl bg-[#FAFAFA] text-base sm:text-sm font-bold disabled:opacity-50">
+                        <label class="mt-2 flex items-center gap-2 min-h-[44px] cursor-pointer text-sm text-[#3E2723]">
+                            <input type="checkbox" name="no_expiry" value="1" x-model="noExpiry" class="w-5 h-5 rounded border-[#D7CCC8] text-[#3E2723] focus:ring-[#3E2723]">
+                            Doesn't expire (cups, straws, lids)
+                        </label>
                         <p class="text-xs text-[#6D4C41] mt-1">From the package. The oldest stock is used first, and you're warned before it expires.</p>
                     </div>
                 </div>
