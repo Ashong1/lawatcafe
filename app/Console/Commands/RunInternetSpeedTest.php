@@ -17,8 +17,6 @@ class RunInternetSpeedTest extends Command
     protected $signature = 'network:speed-test';
 
     /** The slowest a plan is ever lowered to by itself. */
-    private const MIN_PLAN_MBPS = 2.0;
-
     protected $description = 'Measure the internet line once a day, at the first chance after opening time (prepaid data: ~13 MB a test).';
 
     public function handle(InternetSpeedTest $speed, TrafficShapingService $shaper, OpnSenseService $opnsense): int
@@ -49,18 +47,7 @@ class RunInternetSpeedTest extends Command
     {
         $plans = ['bw_free_down' => 'Free', 'bw_premium_down' => 'Premium'];
         $current = array_map(fn ($key) => (float) Setting::get($key, TrafficShapingService::PLAN_DEFAULTS[$key]), array_combine(array_keys($plans), array_keys($plans)));
-        $advice = InternetSpeedTest::recommend($down, (float) Setting::get('bw_shop_reserve_mbps', 5), (int) Setting::get('bw_busy_guests', 10), $current);
-        // Act only on two slow days in a row (one bad reading is often the test, not the line),
-        // never below MIN_PLAN_MBPS, and Premium stays faster than Free.
-        $previous = $speed->history()[1]['down'] ?? null;
-        if ($previous === null || $previous - (float) Setting::get('bw_shop_reserve_mbps', 5) >= max($current)) {
-            return;
-        }
-        $target = max(self::MIN_PLAN_MBPS, (float) floor($advice['usable']));
-        $lower = array_filter(array_map(fn ($speedNow) => $target < $speedNow ? $target : null, $current));
-        if (isset($lower['bw_premium_down']) && $lower['bw_premium_down'] <= ($lower['bw_free_down'] ?? $current['bw_free_down'])) {
-            unset($lower['bw_premium_down']);
-        }
+        $lower = InternetSpeedTest::suggestPlans($speed->history(), (float) Setting::get('bw_shop_reserve_mbps', 5), (int) Setting::get('bw_busy_guests', 10), $current);
 
         if ($lower === [] || ! $shaper->savePlanSpeeds($lower, $opnsense)) {
             return;

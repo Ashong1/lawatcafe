@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'System Dashboard')
+@section('title', 'Dashboard')
 
 @section('content')
 @vite('resources/js/charts.js')

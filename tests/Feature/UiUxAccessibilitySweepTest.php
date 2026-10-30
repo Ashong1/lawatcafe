@@ -77,7 +77,7 @@ class UiUxAccessibilitySweepTest extends TestCase
 
     public function test_network_blocklist_page_labels_its_form_and_unban_button(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
 
         $response = $this->actingAs($admin)->get(route('network.blocklist'));
 

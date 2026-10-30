@@ -68,6 +68,7 @@
                                         <a href="{{ route('backups.download', $b['name']) }}" class="min-h-[44px] px-4 rounded-xl border border-[#F0E6D2] bg-[#FDF8F5] hover:bg-[#F0E6D2] text-[#3E2723] text-sm font-bold inline-flex items-center gap-2">
                                             <x-lucide-download class="w-4 h-4" /> Download
                                         </a>
+                                        @if (auth()->user()->isSuperAdmin())
                                         <form method="POST" action="{{ route('backups.restore', $b['name']) }}" id="restore-{{ $loop->index }}">
                                             @csrf
                                             <input type="hidden" name="password">
@@ -76,6 +77,7 @@
                                                 <x-lucide-history class="w-4 h-4" /> Restore
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -87,10 +89,12 @@
             </div>
         </div>
 
+        @if (auth()->user()->isSuperAdmin())
         <div class="mt-6 bg-white p-6 rounded-2xl border border-[#F0E6D2] text-sm text-[#4A3B32]">
             <h3 class="font-bold text-[#3E2723]">What Restore does</h3>
             <p class="mt-2">Everything goes back to how it was when that backup was made: sales, shifts, stock, menu, accounts and settings. Anything recorded after it is replaced. A fresh backup is made first, so you can undo a restore by restoring that one. Do it when the shop is closed; staff may need to sign in again.</p>
         </div>
+        @endif
 
         {{-- Remote access (RemoteAccessService): a Cloudflare Tunnel to this server. Off by default. --}}
         @php($remoteOn = $remote->isOn())
@@ -175,8 +179,13 @@
                                     @if($log->detail)<span class="block text-xs text-[#6D4C41] break-all">{{ $log->detail }}</span>@endif
                                 </td>
                                 <td data-label="Device" class="py-3 px-4 text-xs text-[#6D4C41]">
-                                    {{ $log->ip_address ?? 'Server' }}
-                                    @if($log->user_agent)<span class="block truncate max-w-[16rem]" title="{{ $log->user_agent }}">{{ $log->user_agent }}</span>@endif
+                                    @if(auth()->user()->isSuperAdmin())
+                                        {{ $log->ip_address ?? 'Server' }}
+                                        @if($log->user_agent)<span class="block truncate max-w-[16rem]" title="{{ $log->user_agent }}">{{ $log->user_agent }}</span>@endif
+                                    @else
+                                        {{-- The owner gets the kind of device, not its address and browser string. --}}
+                                        {{ ! $log->user_agent ? 'The system' : (preg_match('/LawatKape|Android|iPhone|Mobile/i', $log->user_agent) ? 'Phone' : 'Computer') }}
+                                    @endif
                                 </td>
                             </tr>
                         @empty

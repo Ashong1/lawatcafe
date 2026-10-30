@@ -196,7 +196,7 @@ class FairUseCapTest extends TestCase
         Setting::set('bw_fair_use_mbps', '20');
         Cache::forget('setting.bw_fair_use_mbps');
 
-        $response = $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $response = $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->get(route('network.traffic'));
 
         $response->assertOk();
@@ -215,7 +215,7 @@ class FairUseCapTest extends TestCase
      */
     public function test_the_page_says_the_ceiling_covers_the_shops_own_equipment(): void
     {
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->get(route('network.traffic'))
             ->assertSee("It also limits the shop's own devices.", false);
     }
@@ -225,7 +225,7 @@ class FairUseCapTest extends TestCase
     {
         $this->fakeOpnsense();
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->post(route('network.traffic.update'), ['bw_fair_use_mbps' => 35])
             ->assertSessionHasNoErrors()
             ->assertSessionHas('success');
@@ -257,7 +257,7 @@ class FairUseCapTest extends TestCase
             '*' => Http::response(['result' => 'saved', 'uuid' => 'obj-1'], 200),
         ]);
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->post(route('network.traffic.update'), ['bw_fair_use_mbps' => 35])
             ->assertSessionHas('error');
 
@@ -274,7 +274,7 @@ class FairUseCapTest extends TestCase
     {
         Http::fake();
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->post(route('network.traffic.update'), ['bw_fair_use_mbps' => 2])
             ->assertSessionHasErrors('bw_fair_use_mbps');
 
@@ -286,7 +286,7 @@ class FairUseCapTest extends TestCase
     {
         Http::fake();
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->post(route('network.traffic.update'), [])
             ->assertSessionHasErrors('bw_fair_use_mbps');
 
@@ -299,7 +299,7 @@ class FairUseCapTest extends TestCase
         $this->fakeOpnsense();
         Setting::set('bw_premium_down', '12');
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->post(route('network.traffic.update'), ['bw_fair_use_mbps' => 35])
             ->assertSessionHas('success');
 

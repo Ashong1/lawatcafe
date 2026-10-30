@@ -79,6 +79,35 @@ class InternetSpeedTest
         ];
     }
 
+    /** Barista AI never sets a plan slower than this. */
+    public const MIN_PLAN_MBPS = 2.0;
+
+    /**
+     * Plan download speeds to lower so they fit the line — the daily test's
+     * auto-fit and the owner's Confirm button both use this. Only after two
+     * slow tests in a row (one bad reading is often the test, not the line),
+     * never below MIN_PLAN_MBPS, and Premium stays faster than Free.
+     *
+     * @param  array<string, float>  $current  bw_free_down / bw_premium_down
+     * @return array<string, float> the plans to lower, empty when they fit
+     */
+    public static function suggestPlans(array $history, float $reserve, int $busyGuests, array $current): array
+    {
+        $latest = $history[0]['down'] ?? null;
+        $previous = $history[1]['down'] ?? null;
+        if ($latest === null || $previous === null || $previous - $reserve >= max($current)) {
+            return [];
+        }
+
+        $target = max(self::MIN_PLAN_MBPS, (float) floor(self::recommend($latest, $reserve, $busyGuests, $current)['usable']));
+        $lower = array_filter(array_map(fn ($now) => $target < $now ? $target : null, $current));
+        if (isset($lower['bw_premium_down']) && $lower['bw_premium_down'] <= ($lower['bw_free_down'] ?? $current['bw_free_down'])) {
+            unset($lower['bw_premium_down']);
+        }
+
+        return $lower;
+    }
+
     /** @return array{value: mixed, seconds: float} */
     private function timed(callable $request): array
     {

@@ -283,18 +283,22 @@ Route::middleware(['auth'])->group(function () {
             // Applies the fair-use ceiling. This one DOES write the live
             // firewall, and only records the figure once OPNsense accepts it —
             // see TrafficController::update().
-            Route::post('/traffic', [TrafficController::class, 'update'])->name('traffic.update');
-            Route::post('/traffic/fair-use/off', [TrafficController::class, 'disableFairUse'])->name('traffic.fair-use.off');
+            // Speed tuning is technical (owner, Oct 30): super admin only. The owner
+            // runs a speed test and confirms what Barista AI suggests.
+            Route::post('/traffic', [TrafficController::class, 'update'])->name('traffic.update')->middleware(RoleMiddleware::class.':super_admin');
+            Route::post('/traffic/fair-use/off', [TrafficController::class, 'disableFairUse'])->name('traffic.fair-use.off')->middleware(RoleMiddleware::class.':super_admin');
             // Per-plan caps; applied to OPNsense before they are recorded.
-            Route::post('/traffic/plans', [TrafficController::class, 'updatePlans'])->name('traffic.plans');
+            Route::post('/traffic/plans', [TrafficController::class, 'updatePlans'])->name('traffic.plans')->middleware(RoleMiddleware::class.':super_admin');
+            Route::post('/traffic/plans/accept', [TrafficController::class, 'acceptSuggestedPlans'])->name('traffic.plans.accept');
             Route::post('/traffic/speed-test', [TrafficController::class, 'speedTest'])->name('traffic.speed-test')->middleware('throttle:3,60');
-            Route::post('/traffic/line', [TrafficController::class, 'updateLine'])->name('traffic.line');
+            Route::post('/traffic/line', [TrafficController::class, 'updateLine'])->name('traffic.line')->middleware(RoleMiddleware::class.':super_admin');
             // The adaptive loop's envelope — writes settings only. The firewall
             // write happens later, from shaper:adapt via the agent tool.
-            Route::post('/traffic/adaptive', [TrafficController::class, 'updateAdaptive'])->name('traffic.adaptive');
+            Route::post('/traffic/adaptive', [TrafficController::class, 'updateAdaptive'])->name('traffic.adaptive')->middleware(RoleMiddleware::class.':super_admin');
 
             Route::get('/blocklist', [BlocklistController::class, 'index'])->name('blocklist');
-            Route::post('/blocklist', [BlocklistController::class, 'store'])->name('blocklist.store');
+            // Typing a MAC is technical; the owner blocks from a device row instead.
+            Route::post('/blocklist', [BlocklistController::class, 'store'])->name('blocklist.store')->middleware(RoleMiddleware::class.':super_admin');
             // One-click actions from device rows / Find a device (no MAC typing).
             Route::post('/devices/block', [NetworkDeviceController::class, 'block'])->name('devices.block');
             Route::post('/devices/trust', [NetworkDeviceController::class, 'trust'])->name('devices.trust');
@@ -323,10 +327,10 @@ Route::middleware(['auth'])->group(function () {
             // Captive portal allow-list — OPNsense's own "Allowed IP/MAC
             // addresses" passthrough, distinct from static-ips above: these
             // devices skip the portal entirely, no voucher ever required.
-            Route::post('/allowed-addresses/ips', [AllowedAddressController::class, 'storeIp'])->name('allowed-addresses.ips.store');
-            Route::delete('/allowed-addresses/ips', [AllowedAddressController::class, 'destroyIp'])->name('allowed-addresses.ips.destroy');
-            Route::post('/allowed-addresses/macs', [AllowedAddressController::class, 'storeMac'])->name('allowed-addresses.macs.store');
-            Route::delete('/allowed-addresses/macs', [AllowedAddressController::class, 'destroyMac'])->name('allowed-addresses.macs.destroy');
+            Route::post('/allowed-addresses/ips', [AllowedAddressController::class, 'storeIp'])->name('allowed-addresses.ips.store')->middleware(RoleMiddleware::class.':super_admin');
+            Route::delete('/allowed-addresses/ips', [AllowedAddressController::class, 'destroyIp'])->name('allowed-addresses.ips.destroy')->middleware(RoleMiddleware::class.':super_admin');
+            Route::post('/allowed-addresses/macs', [AllowedAddressController::class, 'storeMac'])->name('allowed-addresses.macs.store')->middleware(RoleMiddleware::class.':super_admin');
+            Route::delete('/allowed-addresses/macs', [AllowedAddressController::class, 'destroyMac'])->name('allowed-addresses.macs.destroy')->middleware(RoleMiddleware::class.':super_admin');
         });
 
         // Finance / Sales Reports
@@ -358,13 +362,11 @@ Route::middleware(['auth'])->group(function () {
             ->middleware('throttle:5,1')->name('system-power.act');
         Route::post('backups', [BackupController::class, 'store'])->middleware('throttle:6,1')->name('backups.store');
         Route::get('backups/{backup}', [BackupController::class, 'download'])->name('backups.download');
-        Route::post('backups/{backup}/restore', [BackupController::class, 'restore'])->middleware('throttle:3,1')->name('backups.restore');
+        Route::post('backups/{backup}/restore', [BackupController::class, 'restore'])->middleware(['throttle:3,1', RoleMiddleware::class.':super_admin'])->name('backups.restore');
 
-        // System Settings (Consolidated) — Store Preferences and the AI Providers
-        // API-key form are business-facing and stay reachable by admin-or-above
-        // (the shop owner should be able to plug in their own AI provider
-        // account); the AI status/testing/model-swap actions and Network/Agent
-        // are technical and reserved for super_admin only (see nested group below).
+        // System Settings — Store Preferences and the AI key form are for the
+        // owner; AI model testing/scanning/swapping and Network/Agent are
+        // technical and reserved for super_admin (nested group below).
         Route::prefix('settings')->name('admin.settings.')->group(function () {
             Route::get('/store', [SettingController::class, 'store'])->name('store');
             Route::post('/store', [SettingController::class, 'updateStore'])->name('store.update');
@@ -372,23 +374,22 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/payment-qr/{wallet}', [PaymentQrController::class, 'destroy'])->name('payment-qr.destroy');
             Route::get('/ai-providers', [SettingController::class, 'aiProviders'])->name('ai-providers');
             Route::post('/ai-providers', [SettingController::class, 'updateAiProviders'])->name('ai-providers.update');
-            Route::post('/ai-providers/{provider}/models/test', [SettingController::class, 'testAiModel'])
-                ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
-                ->middleware('throttle:60,1')
-                ->name('ai-providers.models.test');
-            Route::get('/ai-providers/{provider}/models/scan', [SettingController::class, 'scanAiModels'])
-                ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
-                ->middleware('throttle:10,1')
-                ->name('ai-providers.models.scan');
-            Route::post('/ai-providers/{provider}/models/check', [SettingController::class, 'checkAiModel'])
-                ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
-                ->middleware('throttle:60,1')
-                ->name('ai-providers.models.check');
-            Route::post('/ai-providers/{provider}/models/add', [SettingController::class, 'addAiModel'])
-                ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
-                ->name('ai-providers.models.add');
-
             Route::middleware([RoleMiddleware::class.':super_admin'])->group(function () {
+                Route::post('/ai-providers/{provider}/models/test', [SettingController::class, 'testAiModel'])
+                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->middleware('throttle:60,1')
+                    ->name('ai-providers.models.test');
+                Route::get('/ai-providers/{provider}/models/scan', [SettingController::class, 'scanAiModels'])
+                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->middleware('throttle:10,1')
+                    ->name('ai-providers.models.scan');
+                Route::post('/ai-providers/{provider}/models/check', [SettingController::class, 'checkAiModel'])
+                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->middleware('throttle:60,1')
+                    ->name('ai-providers.models.check');
+                Route::post('/ai-providers/{provider}/models/add', [SettingController::class, 'addAiModel'])
+                    ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
+                    ->name('ai-providers.models.add');
                 Route::post('/ai-providers/{provider}/test', [SettingController::class, 'testAiProvider'])
                     ->whereIn('provider', ['gemini', 'groq', 'openrouter'])
                     ->name('ai-providers.test');

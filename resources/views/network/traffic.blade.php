@@ -53,7 +53,7 @@
                     <form action="{{ route('network.traffic.speed-test') }}" method="POST" x-data="{ testing: false }" @submit="testing = true">
                         @csrf
                         <button type="submit" :disabled="testing" class="min-h-[44px] px-5 rounded-full bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide inline-flex items-center gap-2 hover:bg-[#271815] disabled:opacity-60 whitespace-nowrap">
-                            <x-lucide-gauge class="w-4 h-4" /><span x-text="testing ? 'Testing… (about 15 s)' : 'Test now'">Test now</span>
+                            <x-lucide-gauge class="w-4 h-4" /><span x-text="testing ? 'Testing… (about 15 s)' : @js($line['latest'] ? 'Check again' : 'Test now')">{{ $line['latest'] ? 'Check again' : 'Test now' }}</span>
                         </button>
                     </form>
                 </div>
@@ -102,6 +102,7 @@
                     <p class="text-sm text-[#6D4C41]">No speed test yet. Tap <strong>Test now</strong>, or wait for the daily test after opening.</p>
                 @endif
 
+                @if (auth()->user()->isSuperAdmin())
                 <form action="{{ route('network.traffic.line') }}" method="POST" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end pt-2 border-t border-[#F0E6D2]">
                     @csrf
                     <div>
@@ -118,8 +119,10 @@
                         <span class="text-sm text-[#3E2723]"><strong>Let Barista AI lower a plan</strong> when the daily test shows it's faster than your internet can give guests. You're told every time.</span>
                     </label>
                 </form>
+                @endif
             </div>
 
+            @if (auth()->user()->isSuperAdmin())
             {{-- Each plan's cap as OPNsense is running it (liveStatus()), so this
                  matches what a guest's speed test shows. Saving applies to the
                  gateway first and records only on success. --}}
@@ -422,6 +425,41 @@
                     Save Automatic Settings
                 </button>
             </form>
+            @else
+                {{-- The owner's view (Oct 30): what the plans are, and Barista AI's suggestion to confirm. --}}
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] space-y-5">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-[#FDF8F5] rounded-xl flex items-center justify-center text-[#3E2723] shrink-0"><x-lucide-wifi class="w-6 h-6" /></div>
+                        <div>
+                            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Wi-Fi plan speeds</h3>
+                            <p class="text-xs text-[#6D4C41] font-medium">Barista AI checks these against the daily internet test and suggests a change when they don't fit.</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        @foreach (['bw_free_down' => 'Free', 'bw_premium_down' => 'Premium'] as $planKey => $planName)
+                            <div class="p-4 rounded-xl bg-[#FDF8F5] border border-[#F0E6D2]">
+                                <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">{{ $planName }}</p>
+                                <p class="text-2xl font-bold text-[#3E2723]">{{ rtrim(rtrim(number_format($line['plans'][$planKey], 1), '0'), '.') }} <span class="text-xs">Mbps per device</span></p>
+                            </div>
+                        @endforeach
+                    </div>
+                    @if ($line['suggestion'])
+                        <div class="rounded-xl border-2 border-amber-300 bg-amber-50 p-4 space-y-3">
+                            <p class="text-sm font-bold text-[#3E2723]">
+                                Barista AI suggests:
+                                {{ collect($line['suggestion'])->map(fn ($mbps, $planKey) => (['bw_free_down' => 'Free', 'bw_premium_down' => 'Premium'][$planKey]).' to '.rtrim(rtrim(number_format($mbps, 1), '0'), '.').' Mbps')->join(', ') }}
+                            </p>
+                            <p class="text-xs text-[#6D4C41]">The last two internet tests were slower than these plans, so guests can't get the full speed. Not sure? Tap <strong>Check again</strong> above first.</p>
+                            <form action="{{ route('network.traffic.plans.accept') }}" method="POST" data-confirm="Use the suggested speeds?" data-confirm-text="Guests get the new speeds right away.">
+                                @csrf
+                                <button type="submit" class="min-h-[44px] px-6 rounded-full bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide hover:bg-[#271815]">Confirm</button>
+                            </form>
+                        </div>
+                    @else
+                        <p class="text-sm font-medium text-green-800 bg-green-50 border border-green-200 rounded-xl p-3">These fit your internet. Nothing to change.</p>
+                    @endif
+                </div>
+            @endif
 
             <div class="bg-white p-6 rounded-2xl border border-[#F0E6D2] shadow-sm">
                 <h4 class="text-xs font-bold text-[#3E2723] uppercase tracking-wide mb-4">Right now</h4>

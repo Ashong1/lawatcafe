@@ -25,7 +25,7 @@
             </div>
             <div class="text-xs text-blue-900 font-medium leading-relaxed">
                 <p class="font-bold uppercase tracking-wide text-xs mb-1">How this learns</p>
-                <p>Every thumbs up, thumbs down and correction is kept. Once an hour Barista AI reads what's new and suggests lessons below. Only the lessons you approve change how it answers, and you can withdraw one at any time.</p>
+                <p>Every thumbs up, thumbs down and correction is kept. Every 30 minutes Barista AI reads what's new and suggests lessons below. Only the lessons you approve change how it answers, and you can withdraw one at any time.</p>
                 <p class="mt-2">When it tells someone it <em>can't</em> do something, it works out how it could: steps using what it can already do, or which page to point people to. Those are used straight away (withdraw any that are wrong). Anything it genuinely can't do is passed to the system administrator. It never writes or runs code itself.
             </div>
         </div>
@@ -46,7 +46,7 @@
                     @else
                         {{-- The heartbeat outlives the run by two hours, so its
                              absence means the scheduler is not reaching this. --}}
-                        <span class="text-red-700">No run recorded &mdash; check the scheduler</span>
+                        <span class="text-red-700">{{ auth()->user()->isSuperAdmin() ? 'No run recorded — check the scheduler' : "Learning hasn't run lately — tell your system administrator" }}</span>
                     @endif
                 </span>
             </div>
@@ -61,9 +61,8 @@
                             run (every 30 minutes) has correctly had nothing to do. The thumbs sit under every reply in the
                             chat window &mdash; on the guest portal, on staff chat and on this one. Rate
                             <span class="font-bold">{{ $pipeline['needed'] }}</span> replies and the next
-                            run will have something to generalise from. A thumbs-down also offers
-                            &ldquo;Teach it&rdquo;, where a correction you type becomes the strongest
-                            signal the loop takes.
+                            run will have something to learn from. A thumbs-down also offers
+                            &ldquo;Teach it&rdquo;: a correction you type counts the most.
                         </p>
                     </div>
                 </div>
@@ -137,9 +136,9 @@
                 @forelse($proposed as $lesson)
                     <div class="border-2 border-amber-200 bg-amber-50/40 rounded-2xl p-5">
                         <div class="flex flex-wrap items-center gap-2 mb-2">
-                            <span class="px-2 py-0.5 rounded-lg bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide">{{ $lesson->audience }}</span>
-                            <span class="px-2 py-0.5 rounded-lg bg-white border border-[#E6D5C3] text-[#6D4C41] text-xs font-bold uppercase tracking-wide">{{ $lesson->kind }}</span>
-                            <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">from {{ $lesson->evidence_count }} signals &middot; {{ $lesson->created_at->diffForHumans() }}</span>
+                            <span class="px-2 py-0.5 rounded-lg bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide">{{ ['guest' => 'Guests', 'staff' => 'Staff', 'admin' => 'Owner', 'super_admin' => 'System admin', 'all' => 'Everyone'][$lesson->audience] ?? $lesson->audience }}</span>
+                            <span class="px-2 py-0.5 rounded-lg bg-white border border-[#E6D5C3] text-[#6D4C41] text-xs font-bold uppercase tracking-wide">{{ ['lesson' => 'Rule', 'skill' => 'How-to', 'exemplar' => 'Example answer'][$lesson->kind] ?? $lesson->kind }}</span>
+                            <span class="text-xs font-bold uppercase tracking-wide text-[#795548]">from {{ $lesson->evidence_count }} {{ Str::plural('chat', $lesson->evidence_count) }} &middot; {{ $lesson->created_at->diffForHumans() }}</span>
                         </div>
 
                         <p class="text-sm font-bold text-[#3E2723] mb-1">{{ $lesson->title }}</p>
@@ -183,8 +182,8 @@
                 @forelse($approved as $lesson)
                     <div class="border border-[#F0E6D2] bg-[#FDF8F5] rounded-2xl p-4">
                         <div class="flex flex-wrap items-center gap-2 mb-1">
-                            <span class="px-2 py-0.5 rounded-lg bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide">{{ $lesson->audience }}</span>
-                            <span class="px-2 py-0.5 rounded-lg bg-white border border-[#E6D5C3] text-[#6D4C41] text-xs font-bold uppercase tracking-wide">{{ $lesson->kind }}</span>
+                            <span class="px-2 py-0.5 rounded-lg bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide">{{ ['guest' => 'Guests', 'staff' => 'Staff', 'admin' => 'Owner', 'super_admin' => 'System admin', 'all' => 'Everyone'][$lesson->audience] ?? $lesson->audience }}</span>
+                            <span class="px-2 py-0.5 rounded-lg bg-white border border-[#E6D5C3] text-[#6D4C41] text-xs font-bold uppercase tracking-wide">{{ ['lesson' => 'Rule', 'skill' => 'How-to', 'exemplar' => 'Example answer'][$lesson->kind] ?? $lesson->kind }}</span>
                             {{-- times_applied is what separates "approved" from
                                  "earning its token budget" — a lesson approved
                                  weeks ago and never retrieved is prunable. --}}

@@ -121,7 +121,7 @@
             <ul class="divide-y divide-[#F0E6D2]">
                 @forelse($checks['infrastructure']['details']['devices'] ?? [] as $ip => $label)
                     <li class="py-2 flex items-center justify-between gap-3 text-sm">
-                        <span class="min-w-0"><span class="font-bold text-[#3E2723] block truncate">{{ $label }}</span><span class="text-xs text-[#6D4C41] font-mono">{{ $ip }}</span></span>
+                        <span class="min-w-0"><span class="font-bold text-[#3E2723] block truncate">{{ $label }}</span>@if(auth()->user()->isSuperAdmin())<span class="text-xs text-[#6D4C41] font-mono">{{ $ip }}</span>@endif</span>
                         @if(in_array($ip, $down, true))
                             <span class="text-xs font-bold text-red-700 shrink-0">Not responding</span>
                         @else
@@ -139,7 +139,7 @@
             <ul class="divide-y divide-[#F0E6D2]">
                 @forelse($checks['bandwidth']['details']['top_users'] ?? [] as $user)
                     <li class="py-2 flex items-center justify-between text-sm">
-                        <span class="text-[#3E2723] min-w-0 truncate">@if(! empty($user['name']))<span class="font-bold">{{ $user['name'] }}</span> @endif<span class="font-mono text-xs text-[#6D4C41]">{{ $user['ip'] }}</span></span>
+                        <span class="text-[#3E2723] min-w-0 truncate">@if(auth()->user()->isSuperAdmin())@if(! empty($user['name']))<span class="font-bold">{{ $user['name'] }}</span> @endif<span class="font-mono text-xs text-[#6D4C41]">{{ $user['ip'] }}</span>@else<span class="font-bold">{{ $user['name'] ?: 'Unnamed device' }}</span>@endif</span>
                         <span class="font-bold text-[#3E2723]">{{ $user['mb'] }} MB</span>
                     </li>
                 @empty
@@ -148,6 +148,8 @@
             </ul>
         </section>
 
+        {{-- Website-filter internals (blocked domains) are for the system administrator. --}}
+        @if(auth()->user()->isSuperAdmin())
         <section class="bg-white rounded-2xl border border-[#F0E6D2] shadow-sm p-5">
             <h3 class="text-sm font-bold text-[#3E2723] mb-3">Most blocked today</h3>
             @php($dns = $checks['dns']['details']['stats'] ?? null)
@@ -167,6 +169,7 @@
                 <p class="text-sm text-[#6D4C41]">The website filter's numbers aren't available right now.</p>
             @endif
         </section>
+        @endif
     </div>
 
     </div>

@@ -22,8 +22,11 @@ class SystemPowerTest extends TestCase
     {
         Process::fake(['*' => Process::result(output: '')]);
 
+        // Owner (Oct 30): the owner restarts the web app; the whole server is the super admin's.
         $this->actingAs($this->owner())->get(route('profile.edit'))->assertOk()
-            ->assertSee('aria-label="Restart or shut down"', false)->assertSee('Shut down server')->assertSee('Needs a one-time setup');
+            ->assertSee('aria-label="Restart or shut down"', false)->assertSee('id="power-restart-app"', false)->assertDontSee('id="power-shutdown-server"', false);
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))->get(route('profile.edit'))->assertOk()
+            ->assertSee('id="power-shutdown-server"', false)->assertSee('Needs a one-time setup');
         $this->actingAs(User::factory()->create(['role' => 'staff']))->get(route('profile.edit'))
             ->assertDontSee('aria-label="Restart or shut down"', false);
     }
@@ -43,7 +46,7 @@ class SystemPowerTest extends TestCase
         $power->shouldReceive('serverControlReady')->andReturn(true);
         $power->shouldNotReceive('shutDownServer');
 
-        $this->actingAs($this->owner())->post(route('system-power.act', 'shutdown-server'), ['password' => 'password', 'confirm' => 'shut down'])
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))->post(route('system-power.act', 'shutdown-server'), ['password' => 'password', 'confirm' => 'shut down'])
             ->assertSessionHasErrors('confirm');
     }
 
@@ -51,7 +54,7 @@ class SystemPowerTest extends TestCase
     {
         Process::fake(['*' => Process::result(output: 'User www-data may run: (ALL) ALL')]);
 
-        $this->actingAs($this->owner())->post(route('system-power.act', 'restart-server'), ['password' => 'password'])
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))->post(route('system-power.act', 'restart-server'), ['password' => 'password'])
             ->assertSessionHas('error');
         Process::assertDidntRun(fn ($p) => str_contains(is_array($p->command) ? implode(' ', $p->command) : $p->command, 'reboot'));
     }
@@ -59,7 +62,7 @@ class SystemPowerTest extends TestCase
     public function test_restarting_the_server_is_logged_then_runs_only_the_allowed_command(): void
     {
         Process::fake(['*' => Process::result(output: '(root) NOPASSWD: /usr/bin/systemctl reload php8.2-fpm, /usr/bin/systemctl reboot, /usr/bin/systemctl poweroff')]);
-        $owner = $this->owner();
+        $owner = User::factory()->create(['role' => 'super_admin']);
 
         $this->actingAs($owner)->post(route('system-power.act', 'restart-server'), ['password' => 'password'])->assertSessionHas('success');
 

@@ -51,7 +51,7 @@ class BackupPageTest extends TestCase
     {
         Process::fake();
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->post(route('backups.restore', 'lawat_db_2026-10-20_233000.sql.gz'), ['password' => 'nope'])
             ->assertSessionHasErrors('password');
 
@@ -62,7 +62,7 @@ class BackupPageTest extends TestCase
     {
         Process::fake(['*' => Process::result(errorOutput: 'Access denied', exitCode: 2)]);
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->post(route('backups.restore', 'lawat_db_2026-10-20_233000.sql.gz'), ['password' => 'password'])
             ->assertSessionHas('error');
 

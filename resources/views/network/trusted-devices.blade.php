@@ -10,7 +10,7 @@
             <span class="lk-brand text-3xl md:text-4xl tracking-wide font-bold pr-1" style="font-family: 'Dancing Script', cursive;">Lawa't</span>
             <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Trusted Devices</span>
         </h2>
-        <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Trusted devices use the Wi-Fi without a Wi-Fi code. Find your device in the list below, check that its name, IP and MAC match the device in your hand, then tap Allow.</p>
+        <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Trusted devices use the Wi-Fi without a Wi-Fi code. Find your device by its name in the list below, then tap Allow.</p>
     </div>
 
     {{-- Trusted now --}}
@@ -40,8 +40,10 @@
                             @endif
                         </div>
                         <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#795548]">
+                            @if(auth()->user()->isSuperAdmin())
                             <span>IP <span class="font-mono font-bold text-[#3E2723]">{{ $row['ip'] ?? '—' }}</span></span>
                             <span>MAC <span class="font-mono font-bold text-[#3E2723]">{{ $row['mac'] ?? '—' }}</span></span>
+                            @endif
                         </div>
                     </div>
                     @if(! $row['system'] || auth()->user()->isSuperAdmin())
@@ -86,7 +88,7 @@
             </div>
             <div class="relative md:w-72">
                 <x-lucide-search class="w-4 h-4 text-[#795548] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input type="search" x-model="q" placeholder="Search name, IP or MAC" aria-label="Search devices"
+                <input type="search" x-model="q" placeholder="{{ auth()->user()->isSuperAdmin() ? 'Search name, IP or MAC' : 'Search by name' }}" aria-label="Search devices"
                        class="w-full text-base sm:text-sm bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl pl-9 pr-3 py-2.5 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none transition-all">
             </div>
         </div>
@@ -108,13 +110,15 @@
                             @else
                                 <span class="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Off</span>
                             @endif
-                            @if($device['fixed'])
+                            @if($device['fixed'] && auth()->user()->isSuperAdmin())
                                 <span class="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-blue-50 text-blue-700" title="This device always gets the same IP address.">Fixed address</span>
                             @endif
                         </div>
                         <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#795548]">
+                            @if(auth()->user()->isSuperAdmin())
                             <span>IP <span class="font-mono font-bold text-[#3E2723]">{{ $device['ip'] ?? '—' }}</span></span>
                             <span>MAC <span class="font-mono font-bold text-[#3E2723]">{{ $device['mac'] }}</span></span>
+                            @endif
                             @if($device['name'] && $device['maker'])
                                 <span>Made by {{ $device['maker'] }}</span>
                             @endif
@@ -132,7 +136,9 @@
                                 <button type="button"
                                         onclick="window.confirmAction({
                                             title: @js('Trust '.$label.'?'),
-                                            html: @js('<div style="text-align:left;font-size:14px;line-height:1.7">Check these match the device in your hand:<br><b>IP:</b> <code>'.e($device['ip'] ?? '—').'</code><br><b>MAC:</b> <code>'.e($device['mac']).'</code><br><br>It will use the Wi-Fi without a Wi-Fi code from now on.</div>'),
+                                            html: @js(auth()->user()->isSuperAdmin()
+                                                ? '<div style="text-align:left;font-size:14px;line-height:1.7">Check these match the device in your hand:<br><b>IP:</b> <code>'.e($device['ip'] ?? '—').'</code><br><b>MAC:</b> <code>'.e($device['mac']).'</code><br><br>It will use the Wi-Fi without a Wi-Fi code from now on.</div>'
+                                                : 'It will use the Wi-Fi without a Wi-Fi code from now on.'),
                                             icon: 'question',
                                             confirmText: 'Yes, trust it',
                                             callback: () => document.getElementById(@js($formId)).submit()
@@ -151,6 +157,12 @@
     </div>
 
     {{-- How to find a device's details --}}
+    @if (! auth()->user()->isSuperAdmin())
+        <div class="bg-white p-5 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2] flex items-start gap-3">
+            <x-lucide-lightbulb class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <p class="text-sm text-[#4A3B32] leading-relaxed">Before trusting a phone, set it to keep the same identity on this Wi-Fi: turn off <span class="font-bold">"Private Wi-Fi address"</span> (iPhone) or set <span class="font-bold">"MAC address type" to "Phone MAC"</span> (Android) for this network. Otherwise it looks like a new device next time.</p>
+        </div>
+    @else
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div class="bg-white p-5 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
             <div class="flex items-center gap-3 mb-4">
@@ -195,6 +207,7 @@
             </form>
         </details>
     </div>
+    @endif
 
     </div>
 </div>

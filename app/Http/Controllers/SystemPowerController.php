@@ -11,6 +11,9 @@ class SystemPowerController extends Controller
 
     public function act(Request $request, string $action)
     {
+        // The whole server is the system administrator's; the owner can restart the web app.
+        abort_if(str_ends_with($action, '-server') && ! $request->user()->isSuperAdmin(), 403);
+
         $rules = ['password' => ['required', 'current_password']];
         // Turning the server off can't be undone from here, so it takes a typed word as well.
         if ($action === 'shutdown-server') {

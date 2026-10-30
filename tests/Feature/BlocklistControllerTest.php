@@ -14,7 +14,7 @@ class BlocklistControllerTest extends TestCase
 
     public function test_admin_can_view_the_blocklist(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
         BannedDevice::create(['mac_address' => 'AA:BB:CC:DD:EE:FF', 'reason' => 'Abuse']);
 
         $this->actingAs($admin)->get(route('network.blocklist'))
@@ -24,7 +24,7 @@ class BlocklistControllerTest extends TestCase
 
     public function test_admin_can_ban_a_device(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('addMacToBlockAlias')->once()->with('AA:BB:CC:DD:EE:FF');
@@ -44,7 +44,7 @@ class BlocklistControllerTest extends TestCase
 
     public function test_ban_rejects_a_malformed_mac_address(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
 
         $this->actingAs($admin)->post(route('network.blocklist.store'), [
             'mac_address' => 'not-a-mac',
@@ -55,7 +55,7 @@ class BlocklistControllerTest extends TestCase
 
     public function test_ban_rejects_a_duplicate_mac_address(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
         BannedDevice::create(['mac_address' => 'AA:BB:CC:DD:EE:FF']);
 
         $this->actingAs($admin)->post(route('network.blocklist.store'), [
@@ -65,7 +65,7 @@ class BlocklistControllerTest extends TestCase
 
     public function test_admin_can_unban_a_device(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
         $device = BannedDevice::create(['mac_address' => 'AA:BB:CC:DD:EE:FF']);
 
         $this->mock(OpnSenseService::class, function ($mock) {

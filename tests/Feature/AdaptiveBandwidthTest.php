@@ -451,7 +451,7 @@ class AdaptiveBandwidthTest extends TestCase
     {
         $this->seedSamples(array_fill(0, 20, ['down' => 60.0, 'guests' => 3, 'ceiling' => null]));
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->get(route('network.traffic'))
             ->assertOk()
             ->assertSee('Automatic speed limit', false)
@@ -462,7 +462,7 @@ class AdaptiveBandwidthTest extends TestCase
 
     public function test_the_page_says_it_is_still_measuring_before_it_knows(): void
     {
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->get(route('network.traffic'))
             ->assertOk()
             ->assertSee('Still measuring', false);
@@ -473,7 +473,7 @@ class AdaptiveBandwidthTest extends TestCase
     {
         Http::fake();
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->post(route('network.traffic.adaptive'), [
                 'bw_adaptive_enabled' => '1',
                 'bw_adaptive_min' => 6,
@@ -492,7 +492,7 @@ class AdaptiveBandwidthTest extends TestCase
     /** An inverted envelope would let the clamp push the ceiling the wrong way. */
     public function test_a_maximum_below_the_minimum_is_rejected(): void
     {
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->post(route('network.traffic.adaptive'), [
                 'bw_adaptive_min' => 15,
                 'bw_adaptive_max' => 8,
@@ -506,7 +506,7 @@ class AdaptiveBandwidthTest extends TestCase
         Setting::set('bw_adaptive_enabled', '1');
         $this->forgetSettings();
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->post(route('network.traffic.adaptive'), [
                 'bw_adaptive_min' => 5,
                 'bw_adaptive_max' => 20,

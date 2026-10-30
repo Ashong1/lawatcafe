@@ -9,6 +9,25 @@ the history was rewritten.
 
 ---
 
+## 1.48.0 — Owner sees the simple version
+*build 267*
+
+- The owner (admin) no longer sees technical configuration; the super admin
+  does. Blocked on the server too, not just hidden:
+  - **Barista AI Settings**: owner sees "Barista AI is connected", the usage
+    and the key fields. Model lists, health, Test and Scan are super admin.
+  - **Wi-Fi Speed**: owner sees the internet test (**Check again**) and the
+    plan speeds, with Barista AI's suggestion to **Confirm** when the plans
+    don't fit. Shop reserve, plan Mbps, per-device limit and the automatic
+    limit's tuning are super admin.
+  - Backup **Restore**, **server** restart/shut down, adding a device by
+    address and blocking one by MAC: super admin. The owner keeps Download,
+    Restart web app, and one-tap Trust/Block from device rows.
+- Raw IP and MAC addresses are hidden from the owner (Who's Online, Trusted
+  Devices, Blocked Devices, Network Status, Security log). Devices go by name.
+- Plainer words on What It Learned (Rule / How-to / Example answer; who it's
+  for), and the dashboard title.
+
 ## 1.47.0 — Scan for more AI models
 *build 266*
 

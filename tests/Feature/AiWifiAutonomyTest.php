@@ -86,7 +86,7 @@ class AiWifiAutonomyTest extends TestCase
     public function test_both_automatic_jobs_have_an_off_switch(): void
     {
         \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::response([], 500)]);
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
 
         $this->actingAs($admin)->post(route('network.site-blocking.auto-adult'), ['enabled' => '0'])->assertRedirect();
         $this->assertSame('0', Setting::get('ai_auto_block_adult_sites'));

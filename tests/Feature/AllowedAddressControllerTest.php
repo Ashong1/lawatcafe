@@ -13,7 +13,7 @@ class AllowedAddressControllerTest extends TestCase
 
     public function test_admin_can_add_an_allowed_ip(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('dhcpPoolContaining')->with('192.168.2.60')->andReturn(null);
@@ -30,7 +30,7 @@ class AllowedAddressControllerTest extends TestCase
 
     public function test_store_ip_rejects_a_malformed_address(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
 
         $this->actingAs($admin)->post(route('network.allowed-addresses.ips.store'), [
             'address' => 'not-an-ip',
@@ -39,7 +39,7 @@ class AllowedAddressControllerTest extends TestCase
 
     public function test_admin_can_remove_an_allowed_ip(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('removeAllowedIp')
@@ -55,7 +55,7 @@ class AllowedAddressControllerTest extends TestCase
 
     public function test_admin_can_add_an_allowed_mac(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('addAllowedMac')
@@ -71,7 +71,7 @@ class AllowedAddressControllerTest extends TestCase
 
     public function test_store_mac_rejects_a_malformed_address(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
 
         $this->actingAs($admin)->post(route('network.allowed-addresses.macs.store'), [
             'mac_address' => 'not-a-mac',
@@ -80,7 +80,7 @@ class AllowedAddressControllerTest extends TestCase
 
     public function test_admin_can_remove_an_allowed_mac(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('removeAllowedMac')

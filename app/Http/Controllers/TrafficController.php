@@ -62,9 +62,41 @@ class TrafficController extends Controller
                 'Free' => (float) Setting::get('bw_free_down', TrafficShapingService::PLAN_DEFAULTS['bw_free_down']),
                 'Premium' => (float) Setting::get('bw_premium_down', TrafficShapingService::PLAN_DEFAULTS['bw_premium_down']),
             ]) : null,
+            'plans' => $this->currentPlans(),
+            'suggestion' => $this->suggestedPlans(),
         ];
 
         return view('network.traffic', compact('settings', 'learned', 'live', 'line'));
+    }
+
+    /** @return array<string, float> download speed per plan */
+    private function currentPlans(): array
+    {
+        return collect(['bw_free_down', 'bw_premium_down'])->mapWithKeys(fn ($k) => [$k => (float) Setting::get($k, TrafficShapingService::PLAN_DEFAULTS[$k])])->all();
+    }
+
+    private function suggestedPlans(): array
+    {
+        return InternetSpeedTest::suggestPlans(app(InternetSpeedTest::class)->history(),
+            (float) Setting::get('bw_shop_reserve_mbps', self::DEFAULT_RESERVE),
+            (int) Setting::get('bw_busy_guests', self::DEFAULT_BUSY_GUESTS),
+            $this->currentPlans());
+    }
+
+    /** The owner's one decision about speeds: take what Barista AI suggests. */
+    public function acceptSuggestedPlans(TrafficShapingService $shaper, OpnSenseService $opnsense)
+    {
+        $lower = $this->suggestedPlans();
+        if ($lower === []) {
+            return back()->with('success', 'Your Wi-Fi plans already fit your internet. Nothing to change.');
+        }
+        if (! $shaper->savePlanSpeeds($lower, $opnsense)) {
+            return back()->with('error', "The router didn't accept the new speeds, so nothing changed. Try again in a minute.");
+        }
+
+        $names = ['bw_free_down' => 'Free', 'bw_premium_down' => 'Premium'];
+
+        return back()->with('success', 'Done. '.implode(', ', array_map(fn ($k) => "{$names[$k]} is now {$lower[$k]} Mbps", array_keys($lower))).'.');
     }
 
     public function speedTest(InternetSpeedTest $speed)

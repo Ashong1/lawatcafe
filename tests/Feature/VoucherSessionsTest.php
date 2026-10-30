@@ -20,7 +20,7 @@ class VoucherSessionsTest extends TestCase
      */
     public function test_sessions_page_resolves_ip_and_mac_for_passthrough_entries_instead_of_blank(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        $admin = User::factory()->create(['role' => 'super_admin']);
 
         $this->mock(OpnSenseService::class, function ($mock) {
             $mock->shouldReceive('listSessions')->andReturn([

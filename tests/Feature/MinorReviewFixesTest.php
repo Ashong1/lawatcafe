@@ -73,7 +73,7 @@ class MinorReviewFixesTest extends TestCase
         }
         $this->mock(BackupService::class)->makePartial()->shouldReceive('dir')->andReturn($dir);
 
-        $page = $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('security'))->assertOk();
+        $page = $this->actingAs(User::factory()->create(['role' => 'super_admin']))->get(route('security'))->assertOk();
         $page->assertDontSee('every night')->assertDontSee("tonight's")->assertSee('Oct 11, 2026 5:00 AM');
         $this->assertSame(24, substr_count($page->getContent(), 'id="restore-'));
         File::deleteDirectory($dir);

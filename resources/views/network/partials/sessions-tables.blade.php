@@ -1,3 +1,5 @@
+{{-- Raw IP/MAC addresses are for the system administrator; the owner goes by name (Oct 30). --}}
+@php($showAddresses = auth()->user()?->isSuperAdmin())
 {{-- Active Customer Sessions Table --}}
 <div class="mb-12">
     <div class="flex items-center gap-2 mb-4">
@@ -30,9 +32,9 @@
                                     </span>
                                 @endif
                             </span>
-                            <span class="text-xs text-[#6D4C41] font-mono tracking-tighter mt-0.5">{{ $session->ip_address }}</span>
+                            @if($showAddresses)<span class="text-xs text-[#6D4C41] font-mono tracking-tighter mt-0.5">{{ $session->ip_address }}</span>@endif
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-xs text-[#6D4C41] font-mono tracking-tighter">{{ \App\Support\Mac::format($session->mac_address) }}</span>
+                                @if($showAddresses)<span class="text-xs text-[#6D4C41] font-mono tracking-tighter">{{ \App\Support\Mac::format($session->mac_address) }}</span>@endif
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
                                     <span class="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
@@ -191,9 +193,9 @@
                                     <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0"></span>
                                 @endif
                             </span>
-                            <span class="text-xs text-slate-500 font-mono mt-0.5">{{ $session->ip_address && $session->ip_address !== 'N/A' ? $session->ip_address : 'No address' }}</span>
+                            @if($showAddresses)<span class="text-xs text-slate-500 font-mono mt-0.5">{{ $session->ip_address && $session->ip_address !== 'N/A' ? $session->ip_address : 'No address' }}</span>@endif
                             <div class="hidden sm:flex items-center gap-2 mt-0.5">
-                                <span class="text-xs text-slate-500 font-mono">{{ \App\Support\Mac::format($session->mac_address) }}</span>
+                                @if($showAddresses)<span class="text-xs text-slate-500 font-mono">{{ \App\Support\Mac::format($session->mac_address) }}</span>@endif
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
                                     <span class="text-xs px-1.5 py-0.5 bg-white border border-slate-200 text-slate-600 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
@@ -266,9 +268,9 @@
                     <td class="py-3">
                         <div class="flex flex-col">
                             <span class="font-bold text-[#4A3B32]">{{ ($session->hostname && $session->hostname !== 'Unknown' && $session->hostname !== '') ? $session->hostname : 'Unnamed device' }}</span>
-                            <span class="text-xs text-[#6D4C41] font-mono mt-0.5">{{ $session->ip_address }}</span>
+                            @if($showAddresses)<span class="text-xs text-[#6D4C41] font-mono mt-0.5">{{ $session->ip_address }}</span>@endif
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-xs text-[#6D4C41] font-mono">{{ \App\Support\Mac::format($session->mac_address) }}</span>
+                                @if($showAddresses)<span class="text-xs text-[#6D4C41] font-mono">{{ \App\Support\Mac::format($session->mac_address) }}</span>@endif
                                 @if($session->manufacturer && $session->manufacturer !== 'Generic')
                                     <span class="text-xs px-1 py-0.5 bg-gray-200 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $session->manufacturer }}</span>
                                 @endif
@@ -325,9 +327,9 @@
                     <td class="py-3">
                         <div class="flex flex-col">
                             <span class="font-bold text-[#4A3B32]">{{ $ghost['hostname'] ?: 'Unnamed device' }}</span>
-                            <span class="text-xs text-[#6D4C41] font-mono mt-0.5">{{ $ghost['ip_address'] ?: 'No address yet' }}</span>
+                            @if($showAddresses)<span class="text-xs text-[#6D4C41] font-mono mt-0.5">{{ $ghost['ip_address'] ?: 'No address yet' }}</span>@endif
                             <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-xs text-[#6D4C41] font-mono">{{ \App\Support\Mac::format($ghost['mac_address']) }}</span>
+                                @if($showAddresses)<span class="text-xs text-[#6D4C41] font-mono">{{ \App\Support\Mac::format($ghost['mac_address']) }}</span>@endif
                                 @if($ghost['manufacturer'])
                                     <span class="text-xs px-1 py-0.5 bg-gray-200 text-gray-500 rounded font-bold uppercase tracking-tighter">{{ $ghost['manufacturer'] }}</span>
                                 @endif

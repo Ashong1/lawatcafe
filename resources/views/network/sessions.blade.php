@@ -21,7 +21,7 @@
             <label for="find-device" class="sr-only">Find a device</label>
             <div class="relative flex-1">
                 <x-lucide-search class="w-4 h-4 text-[#795548] absolute left-4 top-1/2 -translate-y-1/2" />
-                <input id="find-device" type="text" name="find" value="{{ $find }}" placeholder="Find a device" title="Name, Wi-Fi code, IP or MAC"
+                <input id="find-device" type="text" name="find" value="{{ $find }}" placeholder="Find a device" title="{{ auth()->user()->isSuperAdmin() ? 'Name, Wi-Fi code, IP or MAC' : 'Device name or Wi-Fi code' }}"
                        class="w-full min-h-[44px] bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl pl-11 pr-4 text-base sm:text-sm focus:outline-none focus:border-[#3E2723]">
             </div>
             <button type="submit" class="min-h-[44px] px-4 sm:px-6 shrink-0 bg-[#3E2723] hover:bg-[#271815] text-white rounded-xl text-sm font-bold transition">Find</button>
@@ -33,7 +33,7 @@
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <div class="min-w-0">
                             <p class="text-sm font-bold text-[#3E2723]">{{ $found['name'] ?: ($found['maker'] ?: 'Unnamed device') }}
-                                <span class="font-mono font-normal text-[#6D4C41]">· {{ $found['ip'] }} · {{ $found['mac'] }}</span></p>
+                                @if(auth()->user()->isSuperAdmin())<span class="font-mono font-normal text-[#6D4C41]">· {{ $found['ip'] }} · {{ $found['mac'] }}</span>@endif</p>
                             <p class="text-sm text-[#4A3B32] mt-1">{{ $found['summary'] }}</p>
                         </div>
                         @unless($found['infrastructure'] || $found['banned'])

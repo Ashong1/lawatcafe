@@ -14,6 +14,8 @@
             <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">Devices that can't use the Wi-Fi. Easiest way to block one: the Block button on Wi-Fi &amp; Network → Who's Online.</p>
         </div>
 
+        {{-- Typing a MAC is the system administrator's job; the owner blocks from a device row. --}}
+        @if (auth()->user()->isSuperAdmin())
         <div x-data="{ showModal: false, submitting: false }">
             <button @click="submitting = false; showModal = true" class="min-h-[44px] bg-[#3E2723] hover:bg-[#271815] text-white px-6 py-3 rounded-full font-bold transition shadow-lg flex items-center gap-2 text-xs uppercase tracking-wide">
                 <x-lucide-user-x class="w-4 h-4" />
@@ -46,6 +48,7 @@
                     </form>
             </x-modal-shell>
         </div>
+        @endif
     </div>
 
     <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#F0E6D2]">
@@ -64,7 +67,7 @@
             <table class="lk-stack w-full text-left border-collapse">
                 <thead>
                     <tr class="text-[#795548] text-xs uppercase tracking-wide border-b border-[#F0E6D2]">
-                        <th class="pb-4 font-bold">MAC address</th>
+                        @if(auth()->user()->isSuperAdmin())<th class="pb-4 font-bold">MAC address</th>@endif
                         <th class="pb-4 font-bold">Name</th>
                         <th class="pb-4 font-bold hidden md:table-cell">Reason</th>
                         <th class="pb-4 font-bold hidden md:table-cell">Blocked on</th>
@@ -74,11 +77,13 @@
                 <tbody class="text-sm">
                     @forelse($devices as $device)
                     <tr class="border-b border-[#FAFAFA] group hover:bg-red-50/30 transition-colors">
+                        @if(auth()->user()->isSuperAdmin())
                         <td class="py-4">
                             <span class="font-bold text-red-700 text-sm tracking-widest font-mono uppercase">
                                 {{ \App\Support\Mac::format($device->mac_address) }}
                             </span>
                         </td>
+                        @endif
                         <td class="py-4">
                             <span class="text-xs font-bold text-[#3E2723] block">{{ $device->hostname ?: 'Unnamed device' }}</span>
                             <span class="text-xs text-[#6D4C41] font-medium md:hidden">{{ $device->created_at->format('M d, Y') }}</span>

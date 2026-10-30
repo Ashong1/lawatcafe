@@ -8,6 +8,10 @@
         'restart-server' => ['Restart server', 'refresh-ccw', 'Everything is down for about a minute, then comes back by itself.', true],
         'shutdown-server' => ['Shut down server', 'power', 'Everything stops, guest Wi-Fi too. Only Proxmox can start it again.', true],
     ];
+    // The owner restarts the web app; the whole server is the system administrator's.
+    if (! auth()->user()->isSuperAdmin()) {
+        unset($items['restart-server'], $items['shutdown-server']);
+    }
 @endphp
 <div x-data="{ open: false }" class="relative">
     <button type="button" @click="open = !open" aria-label="Restart or shut down" title="Restart or shut down" :aria-expanded="open ? 'true' : 'false'"

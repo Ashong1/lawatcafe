@@ -79,7 +79,7 @@ class TrafficPlanSpeedsTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['role' => 'admin']);
+        return User::factory()->create(['role' => 'super_admin']);
     }
 
     /** The reported bug: the page showed none of the speeds a speed test measured. */

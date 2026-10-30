@@ -150,7 +150,7 @@ class AIServiceMultiProviderTest extends TestCase
     {
         $this->keys(['groq']);
         Http::fake(['api.groq.com/*' => Http::response(['choices' => [['message' => ['content' => 'OK']]]])]);
-        $owner = User::factory()->create(['role' => 'admin']);
+        $owner = User::factory()->create(['role' => 'super_admin']);
 
         $this->actingAs($owner)->postJson(route('admin.settings.ai-providers.models.test', 'groq'), ['model' => 'openai/gpt-oss-120b'])
             ->assertOk()->assertJson(['ok' => true, 'reason' => null])->assertJsonStructure(['ok', 'ms', 'reason']);
@@ -168,7 +168,7 @@ class AIServiceMultiProviderTest extends TestCase
         $this->keys(['groq']);
         Http::fake(['api.groq.com/*' => Http::response(['error' => 'gone'], 404)]);
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))
             ->postJson(route('admin.settings.ai-providers.models.test', 'groq'), ['model' => 'openai/gpt-oss-120b'])
             ->assertOk()->assertJson(['ok' => false, 'reason' => 'http_404']);
     }
@@ -182,7 +182,7 @@ class AIServiceMultiProviderTest extends TestCase
             ['id' => 'models/gemini-3.1-flash-image'], ['id' => 'models/gemini-3.7-flash'],
         ]])]);
 
-        $this->actingAs(User::factory()->create(['role' => 'admin']))->getJson(route('admin.settings.ai-providers.models.scan', 'gemini'))
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']))->getJson(route('admin.settings.ai-providers.models.scan', 'gemini'))
             ->assertOk()->assertExactJson(['models' => ['gemini-3.6-flash', 'gemini-3.7-flash']]);
     }
 
@@ -195,7 +195,7 @@ class AIServiceMultiProviderTest extends TestCase
                 ? Http::response(['choices' => [['message' => ['content' => null, 'tool_calls' => [['id' => 'c1', 'type' => 'function', 'function' => ['name' => 'get_shop_time', 'arguments' => '{}']]]]]]])
                 : Http::response(['choices' => [['message' => ['content' => 'It is 3 PM.']]]]);
         });
-        $owner = User::factory()->create(['role' => 'admin']);
+        $owner = User::factory()->create(['role' => 'super_admin']);
 
         $this->actingAs($owner)->postJson(route('admin.settings.ai-providers.models.check', 'groq'), ['model' => 'qwen/new-model'])
             ->assertOk()->assertJson(['ok' => true, 'reason' => null]);
@@ -210,7 +210,7 @@ class AIServiceMultiProviderTest extends TestCase
     {
         $this->keys(['groq']);
         Cache::put('ai_scan_groq', ['qwen/new-model'], 3600);
-        $owner = User::factory()->create(['role' => 'admin']);
+        $owner = User::factory()->create(['role' => 'super_admin']);
 
         $this->actingAs($owner)->postJson(route('admin.settings.ai-providers.models.add', 'groq'), ['model' => 'qwen/new-model'])->assertOk();
 

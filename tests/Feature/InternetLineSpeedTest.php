@@ -64,7 +64,7 @@ class InternetLineSpeedTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('network.traffic'))->assertOk()
             ->assertSee('Your internet line')
             ->assertSee('48.2')->assertSee('19.6')
-            ->assertSee('Test now')
+            ->assertSee('Check again')
             ->assertSee('per guest at the busiest time')
             ->assertSee('faster than your internet');
     }

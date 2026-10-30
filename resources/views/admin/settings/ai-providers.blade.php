@@ -12,10 +12,11 @@
                     <span class="text-lg md:text-xl font-bold tracking-wide uppercase mt-2">Barista AI Settings</span>
                 </h2>
                 <p class="lk-page-desc text-sm text-[#795548] mt-2 font-medium tracking-wide">
-                    Barista AI tries Google Gemini first, then Groq, then OpenRouter, moving to the next one if a provider fails or runs out.
-                    Every answer still gets its numbers from the shop's own data, whichever provider writes it.
                     @if (auth()->user()->isSuperAdmin())
-                        Each status comes from recent real use; tap Test Now to check again.
+                        Barista AI tries Google Gemini first, then Groq, then OpenRouter, moving to the next one if a provider fails or runs out.
+                        Every answer still gets its numbers from the shop's own data, whichever provider writes it.
+                    @else
+                        Barista AI uses a few online AI services and switches between them by itself. All you need here is the keys.
                     @endif
                 </p>
             </div>
@@ -93,6 +94,7 @@
             </div>
             </div>
 
+            @if (auth()->user()->isSuperAdmin())
             @php $testable = collect($providers)->filter(fn ($p) => $p['configured'])->map(fn ($p) => array_column($p['models'], 'name')); @endphp
             <div x-data="lkModelTests()" class="space-y-6">
             @if ($testable->isNotEmpty())
@@ -289,6 +291,23 @@
             @endforeach
             </div>
             </div>
+            @else
+                @php $connected = collect($providers)->filter(fn ($p) => $p['configured']); @endphp
+                <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2] flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 {{ $connected->isNotEmpty() ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                        <x-lucide-bot class="w-6 h-6" />
+                    </div>
+                    <div>
+                        @if ($connected->isNotEmpty())
+                            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">Barista AI is connected</h3>
+                            <p class="text-sm text-[#6D4C41] mt-1">Using {{ $connected->pluck('label')->join(', ', ' and ') }}. If one stops working, it moves to the next by itself.</p>
+                        @else
+                            <h3 class="text-sm font-bold text-red-700 uppercase tracking-wide">Barista AI isn't connected</h3>
+                            <p class="text-sm text-[#6D4C41] mt-1">Add at least one key above.</p>
+                        @endif
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>
