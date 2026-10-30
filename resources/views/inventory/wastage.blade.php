@@ -100,14 +100,15 @@
                         <select id="wastage-ingredient" name="ingredient_id" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all">
                             <option value="">Select...</option>
                             @foreach($ingredients as $ingredient)
-                                <option value="{{ $ingredient->id }}">{{ $ingredient->name }} ({{ $ingredient->unit }})</option>
+                                <option value="{{ $ingredient->id }}">{{ $ingredient->name }} ({{ $ingredient->unit }}){{ $ingredient->packaging_unit ? ' — 1 '.$ingredient->packaging_unit.' = '.rtrim(rtrim(number_format($ingredient->capacity_per_pack, 2), '0'), '.').' '.$ingredient->unit : '' }}</option>
                             @endforeach
                         </select>
                     </div>
 
                     <div>
                         <label for="wastage-quantity" class="block text-xs font-bold text-[#3E2723] uppercase mb-2 tracking-wide">Quantity to Deduct</label>
-                        <input type="number" step="0.01" id="wastage-quantity" name="quantity" required class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all">
+                        <input type="number" step="0.01" id="wastage-quantity" name="quantity" required aria-describedby="wastage-quantity-hint" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-red-500 transition-all">
+                        <p id="wastage-quantity-hint" class="text-xs text-[#795548] mt-2">At most one opened package per entry.</p>
                     </div>
 
                     <div>

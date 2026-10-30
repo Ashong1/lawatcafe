@@ -20,6 +20,8 @@ Feedback list: [docs/capstone/EVALUATION_2026-10-28.md](docs/capstone/EVALUATION
   setting now ask first (plan speeds and fair use already did).
 - **Wi-Fi code typed wrong 3 times** from one device blocks that device for
   5 minutes; a code that exists resets the count.
+- **Wastage entry capped** at one opened package (e.g. one 1,000 ml box)
+  and at the stock on hand; the ingredient list shows each package size.
 
 ## 1.28.0 — Confirmations and sign-in lockout
 *build 217*

@@ -27,6 +27,17 @@ class WastageController extends Controller
             'note' => 'nullable|string',
         ]);
 
+        // One entry is at most one opened package (evaluators, Oct 28), and never more than the stock.
+        $ingredient = Ingredient::find($validated['ingredient_id']);
+        $stock = (float) $ingredient->current_stock;
+        $pack = $ingredient->packaging_unit ? (float) $ingredient->capacity_per_pack : INF;
+        $amount = fn (float $n) => rtrim(rtrim(number_format($n, 2), '0'), '.');
+        if ($validated['quantity'] > min($stock, $pack)) {
+            return back()->withInput()->withErrors(['quantity' => $pack < $stock
+                ? "One opened {$ingredient->packaging_unit} holds {$amount($pack)} {$ingredient->unit}. Log each package separately."
+                : "Only {$amount($stock)} {$ingredient->unit} in stock."]);
+        }
+
         return DB::transaction(function () use ($request) {
             $wastage = Wastage::create([
                 'ingredient_id' => $request->ingredient_id,
