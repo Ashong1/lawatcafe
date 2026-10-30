@@ -101,10 +101,42 @@ class ProxmoxShutdownTest extends TestCase
 
     public function test_without_a_connection_the_machine_is_not_touched(): void
     {
+        config(['services.proxmox' => []]);
         Http::fake();
 
         $this->actingAs($this->superAdmin())->post(route('system-power.act', 'shutdown-host'), ['password' => 'password', 'confirm' => 'SHUT DOWN'])
             ->assertSessionHas('error');
         Http::assertNothingSent();
+    }
+
+    public function test_the_env_connection_is_used_and_the_node_found_by_itself(): void
+    {
+        config(['services.proxmox' => ['host' => '192.168.2.250', 'user' => 'root@pam', 'token_id' => 'laravel-monitor', 'token_secret' => 'env-secret']]);
+        Http::fake([
+            '*/api2/json/nodes' => Http::response(['data' => [['node' => 'pve02', 'status' => 'online']]]),
+            '*/api2/json/nodes/pve02/status' => Http::response(['data' => ['uptime' => 7200]]),
+        ]);
+
+        $this->actingAs($this->superAdmin())->post(route('proxmox.test'))->assertSessionHas('success', 'Connected to pve02, up for 2 hours.');
+
+        Http::assertSent(fn ($r) => str_starts_with($r->url(), 'https://192.168.2.250:8006/') && $r->header('Authorization')[0] === 'PVEAPIToken=root@pam!laravel-monitor=env-secret');
+    }
+
+    public function test_with_its_certificate_an_ip_address_is_reached_by_the_node_name_it_was_issued_for(): void
+    {
+        config(['services.proxmox' => ['host' => '192.168.2.250', 'user' => 'root@pam', 'token_id' => 'laravel-monitor', 'token_secret' => 's']]);
+        Setting::set('proxmox_node', 'pve02');
+        $ca = app(\App\Services\ProxmoxService::class)->caFile();
+        $this->assertFileDoesNotExist($ca, 'a real certificate is saved; this test would remove it');
+        file_put_contents($ca, "-----BEGIN CERTIFICATE-----\n");
+        Http::fake(['*' => Http::response(['data' => ['uptime' => 3600]])]);
+
+        try {
+            $this->actingAs($this->superAdmin())->post(route('proxmox.test'))->assertSessionHas('success');
+        } finally {
+            unlink($ca);
+        }
+
+        Http::assertSent(fn ($r) => str_starts_with($r->url(), 'https://pve02:8006/api2/json/nodes/pve02/status'));
     }
 }

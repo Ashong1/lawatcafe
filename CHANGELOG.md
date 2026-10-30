@@ -9,6 +9,16 @@ the history was rewritten.
 
 ---
 
+## 1.55.1 — Proxmox connection from .env
+*build 295*
+
+- The Proxmox connection uses `PVE_HOST`, `PVE_USER`, `PVE_TOKEN_ID` and
+  `PVE_TOKEN_SECRET` from `.env` when nothing is saved on the Security page,
+  and finds the node name by itself.
+- Proxmox's certificate names the node, not every address the machine has.
+  With its root certificate saved and a node name set, an IP address is
+  reached under that name, so HTTPS is still fully checked.
+
 ## 1.55.0 — Shut down the whole Proxmox machine
 *build 294*
 

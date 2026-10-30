@@ -134,4 +134,12 @@ return [
         'url' => env('REMOTE_ACCESS_URL', 'https://lawatkape-remote.aserotech.com'),
     ],
 
+    // The Proxmox host this container runs on; see ProxmoxService. The Security page's settings win over these.
+    'proxmox' => [
+        'host' => env('PVE_HOST'),
+        'user' => env('PVE_USER'),
+        'token_id' => env('PVE_TOKEN_ID'),
+        'token_secret' => env('PVE_TOKEN_SECRET'),
+    ],
+
 ];
