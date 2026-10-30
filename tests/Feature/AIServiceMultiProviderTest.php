@@ -215,6 +215,8 @@ class AIServiceMultiProviderTest extends TestCase
         $this->actingAs($owner)->postJson(route('admin.settings.ai-providers.models.add', 'groq'), ['model' => 'qwen/new-model'])->assertOk();
 
         $this->assertContains('qwen/new-model', app(AIService::class)->activeModels('groq'));
+        // Owner (Oct 30): an added model shows in the provider's list at once, no refresh.
+        $this->actingAs($owner)->get(route('admin.settings.ai-providers'))->assertSee('x-for="m in (added[', false);
         $this->actingAs($owner)->get(route('admin.settings.ai-providers'))->assertSee('Scan for more models');
     }
 

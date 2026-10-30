@@ -249,6 +249,16 @@
                             @endif
                         </div>
                     @endforeach
+                    {{-- Models added from a scan, shown at once (no refresh). --}}
+                    <template x-for="m in (added[@js($key)] || [])" :key="m">
+                        <div class="py-3 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="w-2 h-2 rounded-full shrink-0 bg-green-500"></span>
+                                <span class="text-xs font-mono font-bold text-[#3E2723] truncate" x-text="m"></span>
+                            </div>
+                            <span class="text-xs font-bold text-green-700 uppercase tracking-wider shrink-0" x-text="label(result('check:' + @js($key) + '|' + m) || { state: 'added' }, true)"></span>
+                        </div>
+                    </template>
                 </div>
 
                 @if ($provider['configured'])
@@ -324,6 +334,7 @@
     window.lkModelTests = () => ({
         results: {},
         scans: {},
+        added: {},
         queue: [],
         running: 0,
         url(name, provider) {
@@ -358,9 +369,15 @@
             });
             this.pump();
         },
+        // Added models move up into the provider's list; the scan list drops them.
         async add(provider, model) {
             const r = await this.post('add', provider, model);
-            this.results['check:' + provider + '|' + model] = r.ok ? { state: 'added' } : { state: 'failed', reason: 'could_not_add' };
+            if (!r.ok) {
+                this.results['check:' + provider + '|' + model] = { state: 'failed', reason: 'could_not_add' };
+                return;
+            }
+            this.added[provider] = [...(this.added[provider] || []), model];
+            this.scans[provider].models = this.scans[provider].models.filter((m) => m !== model);
         },
         testAll(byProvider) {
             Object.entries(byProvider).forEach(([provider, models]) => this.test(provider, models));

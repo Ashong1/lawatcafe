@@ -9,6 +9,12 @@ the history was rewritten.
 
 ---
 
+## 1.50.1 — Added models show at once
+*build 276*
+
+- Scan for more models: pressing **Add** moves the model straight into the
+  provider's list with its test result; no page refresh needed.
+
 ## 1.50.0 — Cloudflare Workers AI
 *build 275*
 
