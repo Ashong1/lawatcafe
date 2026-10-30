@@ -105,4 +105,18 @@ class MinorReviewFixesTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'admin']))->get(route('inventory.wastage.index'))
             ->assertSee("document.querySelector('.swal2-container')", false);
     }
+
+    /** Owner (Oct 30): a 4th "Check again" in an hour showed an error page instead of saying when. */
+    public function test_too_many_speed_tests_stay_on_the_page_with_a_plain_message(): void
+    {
+        $this->mock(InternetSpeedTest::class, fn ($m) => $m->shouldReceive('run')->andReturn(null));
+        $owner = User::factory()->create(['role' => 'admin']);
+
+        foreach (range(1, 3) as $i) {
+            $this->actingAs($owner)->from(route('network.traffic'))->post(route('network.traffic.speed-test'))->assertRedirect(route('network.traffic'));
+        }
+        $this->actingAs($owner)->from(route('network.traffic'))->post(route('network.traffic.speed-test'))
+            ->assertRedirect(route('network.traffic'))
+            ->assertSessionHas('error', fn ($m) => str_contains($m, 'up to 3 times an hour') && str_contains($m, 'minute'));
+    }
 }

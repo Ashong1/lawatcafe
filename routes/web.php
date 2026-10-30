@@ -290,7 +290,7 @@ Route::middleware(['auth'])->group(function () {
             // Per-plan caps; applied to OPNsense before they are recorded.
             Route::post('/traffic/plans', [TrafficController::class, 'updatePlans'])->name('traffic.plans')->middleware(RoleMiddleware::class.':super_admin');
             Route::post('/traffic/plans/accept', [TrafficController::class, 'acceptSuggestedPlans'])->name('traffic.plans.accept');
-            Route::post('/traffic/speed-test', [TrafficController::class, 'speedTest'])->name('traffic.speed-test')->middleware('throttle:3,60');
+            Route::post('/traffic/speed-test', [TrafficController::class, 'speedTest'])->name('traffic.speed-test');
             Route::post('/traffic/line', [TrafficController::class, 'updateLine'])->name('traffic.line')->middleware(RoleMiddleware::class.':super_admin');
             // The adaptive loop's envelope — writes settings only. The firewall
             // write happens later, from shaper:adapt via the agent tool.
@@ -406,6 +406,8 @@ Route::middleware(['auth'])->group(function () {
                 // whether this POS may issue printed customer receipts is a
                 // compliance decision, not a shop-floor one.
                 Route::post('/receipt-printing', [SettingController::class, 'updateReceiptPrinting'])->name('receipt-printing.update');
+                Route::get('/ai-routing', [\App\Http\Controllers\AiRoutingController::class, 'index'])->name('ai-routing');
+                Route::get('/ai-routing/feed', [\App\Http\Controllers\AiRoutingController::class, 'feed'])->name('ai-routing.feed');
                 Route::get('/agent', [SettingController::class, 'agent'])->name('agent');
                 Route::post('/agent', [SettingController::class, 'updateAgentPermissions'])->name('agent.update');
             });

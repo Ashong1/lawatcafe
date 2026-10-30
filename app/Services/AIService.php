@@ -156,6 +156,16 @@ class AIService
      */
     private function callAI($messages, $useVision = false, array $tools = [], bool $fast = false)
     {
+        AiRouteLog::begin('background');
+        try {
+            return $this->routeCall($messages, $tools, $fast);
+        } finally {
+            AiRouteLog::end();
+        }
+    }
+
+    private function routeCall($messages, array $tools, bool $fast)
+    {
         foreach ($this->usableProviders() as $provider) {
             $response = $this->callProviderLoop($provider, $messages, $tools, $fast);
             $this->recordProviderResult($provider, (bool) $response);
@@ -366,6 +376,7 @@ class AIService
      */
     private function recordModelResult(string $provider, string $model, bool $success, ?string $reason = null): void
     {
+        AiRouteLog::attempt($provider, $model, $success, $reason);
         Cache::put($this->modelStatusCacheKey($provider, $model), [
             'status' => $success ? 'ok' : 'failed',
             'reason' => $reason,
@@ -575,6 +586,16 @@ class AIService
      * rounds show the caller nothing but a static "thinking" state).
      */
     public function chatWithToolsStreaming(array $messages, array $tools, callable $onTextDelta, bool $freeOnly = false): ?array
+    {
+        AiRouteLog::begin('chat');
+        try {
+            return $this->routeStreaming($messages, $tools, $onTextDelta, $freeOnly);
+        } finally {
+            AiRouteLog::end();
+        }
+    }
+
+    private function routeStreaming(array $messages, array $tools, callable $onTextDelta, bool $freeOnly): ?array
     {
         // One deadline shared across the *entire* cascade (every candidate
         // model), not a fresh budget per attempt. Each per-model
@@ -915,6 +936,7 @@ class AIService
                     $payload['tools'] = $this->toOpenAiTools($tools);
                 }
 
+                AiRouteLog::attemptStarting();
                 $response = Http::timeout((int) ceil($timeout))->withOptions(['stream' => true])->withHeaders($headers)->post($url, $payload);
 
                 if (! $response->successful()) {
@@ -1040,6 +1062,7 @@ class AIService
                 if (! empty($tools)) {
                     $payload['tools'] = $this->toOpenAiTools($tools);
                 }
+                AiRouteLog::attemptStarting();
                 $response = Http::timeout($timeout)->withHeaders($this->headersFor($provider))->post($this->urlFor($provider), $payload);
                 if ($response->successful()) {
                     $this->recordModelResult($provider, $model, true);

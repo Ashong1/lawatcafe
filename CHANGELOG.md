@@ -9,6 +9,19 @@ the history was rewritten.
 
 ---
 
+## 1.51.0 — AI Routing, live
+*build 278*
+
+- **System Administration → AI Routing (live)**: the orchestration as it
+  happens, refreshed every 2 seconds. The latest request's route (Chat →
+  Gemini → Groq → Cloudflare → OpenRouter: answered, tried and passed on, or
+  not needed), a card per service for the last 15 minutes (answered, passed
+  on, average time, resting), and a feed of each request as a chain, e.g.
+  "Gemini · gemini-3.5-flash ✗ limit reached → Gemini · flash-lite ✓ 1.4 s".
+  Super admin only; kept in the cache (last 200 attempts).
+- Wi-Fi Speed: a 4th test within an hour stays on the page and says when the
+  next one is possible, instead of an error page (3 an hour saves data).
+
 ## 1.50.2 — Tidier Barista AI Settings
 *build 277*
 

@@ -9,6 +9,8 @@ use App\Services\LinkCapacityLearner;
 use App\Services\OpnSenseService;
 use App\Services\TrafficShapingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\RateLimiter;
 
 /**
  * The guest network's traffic page: each plan's speed cap (Shaper rules that
@@ -101,6 +103,14 @@ class TrafficController extends Controller
 
     public function speedTest(InternetSpeedTest $speed)
     {
+        // About 13 MB each on a prepaid line: 3 an hour, and say when the next one is possible.
+        if (RateLimiter::tooManyAttempts('speed-test', 3)) {
+            $minutes = max(1, (int) ceil(RateLimiter::availableIn('speed-test') / 60));
+
+            return back()->with('error', "The internet can be tested up to 3 times an hour to save data. Try again in {$minutes} ".Str::plural('minute', $minutes).'.');
+        }
+        RateLimiter::hit('speed-test', 3600);
+
         // Measured after the page answers: on a slow line the test outlasts the proxy's timeout.
         dispatch(fn () => app(InternetSpeedTest::class)->run())->afterResponse();
 

@@ -13,7 +13,7 @@
         'ai'        => $aiActive,
         'finance'   => request()->is('sales*') || request()->routeIs('admin.finance.*') || request()->routeIs('reports.*'),
         'settings'  => request()->is('accounts*') || request()->routeIs('admin.settings.store') || request()->routeIs('admin.settings.ai-providers*'),
-        'system'    => request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent'),
+        'system'    => request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') || request()->routeIs('admin.settings.ai-routing'),
     ];
     $cookieMenus = json_decode(request()->cookie('lk_admin_menus', '{}'), true);
     $menus = is_array($cookieMenus) && !empty($cookieMenus) ? array_merge($routeDefaults, $cookieMenus) : $routeDefaults;
@@ -397,7 +397,7 @@
             @if(auth()->user()->isSuperAdmin())
             <div class="space-y-1">
                 <button @click="toggleMenu('system')"
-                        class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') ? 'text-amber-400' : 'text-[#A1887F]' }}"
+                        class="w-full flex items-center justify-between px-3 py-2.5 rounded group hover:bg-[#4E342E] transition {{ request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent') || request()->routeIs('admin.settings.ai-routing') ? 'text-amber-400' : 'text-[#A1887F]' }}"
                         title="System Administration — super_admin only">
                     <div class="flex items-center">
                         <x-lucide-shield-check class="w-5 h-5 shrink-0 group-hover:text-amber-100 transition" />
@@ -420,6 +420,7 @@
                         <div class="pl-11 space-y-1 pt-1">
                             <a href="{{ route('admin.settings.network') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.network') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Network Config</a>
                             <a href="{{ route('admin.settings.agent') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.agent') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">Agent Permissions</a>
+                            <a href="{{ route('admin.settings.ai-routing') }}" class="block py-2 text-xs {{ request()->routeIs('admin.settings.ai-routing') ? 'text-white font-bold' : 'text-[#A1887F] hover:text-white transition' }}">AI Routing (live)</a>
                         </div>
                     </div>
                 </div>
