@@ -9,6 +9,21 @@ the history was rewritten.
 
 ---
 
+## 1.55.0 — Shut down the whole Proxmox machine
+*build 294*
+
+- New power-menu item for the super admin: **Shut down the whole machine**.
+  It asks the Proxmox API to power off the host, not only this container.
+  It needs the password and a typed SHUT DOWN, and is recorded in the
+  Activity Log.
+- A Proxmox connection card on the Security page (super admin only) holds
+  the address, node, API token ID and secret. The secret is stored encrypted.
+  An optional Proxmox root certificate keeps HTTPS verified against
+  Proxmox's built-in certificate. **Test connection** only reads the
+  machine's status.
+- The existing server items are relabelled "Restart / Shut down LawatKape
+  server (this container only)".
+
 ## 1.54.7 — Backups kept for a week
 *build 293*
 

@@ -122,6 +122,44 @@
             </div>
         </div>
 
+        @if (auth()->user()->isSuperAdmin())
+        {{-- Proxmox connection (ProxmoxService): lets the power menu shut down the whole machine, not just this container. --}}
+        @php($proxmoxReady = app(\App\Services\ProxmoxService::class)->configured())
+        <div class="mt-6 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
+            <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide flex items-center gap-2">
+                <x-lucide-server class="w-4 h-4" /> Proxmox connection
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold {{ $proxmoxReady ? 'bg-green-100 text-green-800' : 'bg-[#F0E6D2] text-[#795548]' }}">{{ $proxmoxReady ? 'Saved' : 'Not set up' }}</span>
+            </h3>
+            <p class="text-sm text-[#6D4C41] mt-2">Lets <span class="font-bold">Shut down the whole machine</span> in the power menu turn off the Proxmox server itself. In Proxmox: Datacenter → Permissions → API Tokens → Add (untick Privilege Separation, or give the token Sys.Audit and Sys.PowerMgmt on /nodes). The secret is shown once; paste it here. It's stored encrypted.</p>
+            <form method="POST" action="{{ route('proxmox.save') }}" class="mt-4 grid gap-3 sm:grid-cols-2">
+                @csrf
+                <label class="text-xs font-bold text-[#795548]">Address
+                    <input name="url" value="{{ old('url', \App\Models\Setting::get('proxmox_url')) }}" placeholder="https://192.168.2.2:8006" required class="mt-1 w-full min-h-[44px] rounded-xl border-[#F0E6D2] text-base sm:text-sm placeholder:font-normal placeholder:text-[#A1887F]">
+                </label>
+                <label class="text-xs font-bold text-[#795548]">Machine name (node)
+                    <input name="node" value="{{ old('node', \App\Models\Setting::get('proxmox_node')) }}" placeholder="pve02" required class="mt-1 w-full min-h-[44px] rounded-xl border-[#F0E6D2] text-base sm:text-sm placeholder:font-normal placeholder:text-[#A1887F]">
+                </label>
+                <label class="text-xs font-bold text-[#795548]">Token ID
+                    <input name="token_id" value="{{ old('token_id', \App\Models\Setting::get('proxmox_token_id')) }}" placeholder="root@pam!lawatkape" required class="mt-1 w-full min-h-[44px] rounded-xl border-[#F0E6D2] text-base sm:text-sm placeholder:font-normal placeholder:text-[#A1887F]">
+                </label>
+                <label class="text-xs font-bold text-[#795548]">Token secret
+                    <input name="token" type="password" autocomplete="off" placeholder="{{ \App\Models\Setting::get('proxmox_token') ? 'Saved. Leave blank to keep it' : 'Paste the secret' }}" class="mt-1 w-full min-h-[44px] rounded-xl border-[#F0E6D2] text-base sm:text-sm placeholder:font-normal placeholder:text-[#A1887F]">
+                </label>
+                <label class="text-xs font-bold text-[#795548] sm:col-span-2">Proxmox's certificate (optional)
+                    <textarea name="certificate" rows="3" placeholder="{{ is_file(app(\App\Services\ProxmoxService::class)->caFile()) ? 'Saved. Leave blank to keep it' : 'Contents of /etc/pve/pve-root-ca.pem on the Proxmox server' }}" class="mt-1 w-full rounded-xl border-[#F0E6D2] text-base sm:text-sm font-mono placeholder:font-normal placeholder:text-[#A1887F]"></textarea>
+                    <span class="font-normal text-[#6D4C41]">Needed when Proxmox uses its own built-in certificate, so the connection can still be checked as safe.</span>
+                </label>
+                <div class="sm:col-span-2 flex flex-wrap gap-2">
+                    <button type="submit" class="min-h-[44px] px-5 rounded-full bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide hover:bg-[#271815]">Save</button>
+                    @if ($proxmoxReady)
+                        <button type="submit" form="proxmox-test" class="min-h-[44px] px-5 rounded-full border border-[#F0E6D2] bg-[#FDF8F5] text-[#3E2723] text-xs font-bold uppercase tracking-wide hover:bg-[#F0E6D2]">Test connection</button>
+                    @endif
+                </div>
+            </form>
+            <form method="POST" action="{{ route('proxmox.test') }}" id="proxmox-test">@csrf</form>
+        </div>
+        @endif
+
         {{-- Who opened the system, and from where (owner, Oct 30). One row per visit; the guest Wi-Fi portal isn't counted. --}}
         <div class="mt-6 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
             <div class="flex flex-wrap items-start justify-between gap-3 mb-4">

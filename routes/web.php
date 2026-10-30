@@ -358,8 +358,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('remote-access/off', [RemoteAccessController::class, 'off'])->name('remote-access.off');
         Route::post('system-power/start', [SystemPowerController::class, 'start'])->name('system-power.start');
         Route::post('system-power/{action}', [SystemPowerController::class, 'act'])
-            ->whereIn('action', ['restart-app', 'shutdown-app', 'restart-server', 'shutdown-server'])
+            ->whereIn('action', ['restart-app', 'shutdown-app', 'restart-server', 'shutdown-server', 'shutdown-host'])
             ->middleware('throttle:5,1')->name('system-power.act');
+        Route::post('proxmox', [SystemPowerController::class, 'saveProxmox'])->middleware(RoleMiddleware::class.':super_admin')->name('proxmox.save');
+        Route::post('proxmox/test', [SystemPowerController::class, 'testProxmox'])->middleware(['throttle:6,1', RoleMiddleware::class.':super_admin'])->name('proxmox.test');
         Route::post('backups', [BackupController::class, 'store'])->middleware('throttle:6,1')->name('backups.store');
         Route::get('backups/{backup}', [BackupController::class, 'download'])->name('backups.download');
         Route::post('backups/{backup}/restore', [BackupController::class, 'restore'])->middleware(['throttle:3,1', RoleMiddleware::class.':super_admin'])->name('backups.restore');

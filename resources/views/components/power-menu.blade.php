@@ -5,13 +5,15 @@
     $items = [
         'restart-app' => ['Restart web app', 'rotate-cw', 'Reloads the system. Pages pause for a few seconds.', false],
         'shutdown-app' => ['Shut down web app', 'pause', 'Staff see a "back soon" page until you turn it back on. Guest Wi-Fi keeps working.', false],
-        'restart-server' => ['Restart server', 'refresh-ccw', 'Everything is down for about a minute, then comes back by itself.', true],
-        'shutdown-server' => ['Shut down server', 'power', 'Everything stops, guest Wi-Fi too. Only Proxmox can start it again.', true],
+        'restart-server' => ['Restart LawatKape server', 'refresh-ccw', 'This container only. Down for about a minute, then comes back by itself.', true],
+        'shutdown-server' => ['Shut down LawatKape server', 'power', 'This container only. The system stops; start it again from Proxmox.', true],
+        'shutdown-host' => ['Shut down the whole machine', 'power-off', 'The Proxmox server and everything on it: Wi-Fi and internet go off. Only its power button turns it back on.', false],
     ];
     // The owner restarts the web app; the whole server is the system administrator's.
     if (! auth()->user()->isSuperAdmin()) {
-        unset($items['restart-server'], $items['shutdown-server']);
+        unset($items['restart-server'], $items['shutdown-server'], $items['shutdown-host']);
     }
+    $proxmoxReady = isset($items['shutdown-host']) && app(\App\Services\ProxmoxService::class)->configured();
 @endphp
 <div x-data="{ open: false }" class="relative">
     <button type="button" @click="open = !open" aria-label="Restart or shut down" title="Restart or shut down" :aria-expanded="open ? 'true' : 'false'"
@@ -29,13 +31,13 @@
                 @csrf
                 <input type="hidden" name="password">
                 <input type="hidden" name="confirm">
-                <button type="button" @if($needsSetup && ! $serverReady) disabled @endif
+                <button type="button" @if(($needsSetup && ! $serverReady) || ($key === 'shutdown-host' && ! $proxmoxReady)) disabled @endif
                         @click="open = false; powerAction({{ Js::from($key) }}, {{ Js::from($label) }}, {{ Js::from($text) }})"
                         class="w-full text-left px-4 py-3 flex gap-3 items-start hover:bg-[#FDF8F5] disabled:opacity-60 disabled:hover:bg-transparent disabled:cursor-not-allowed">
                     <x-dynamic-component :component="'lucide-'.$icon" class="w-5 h-5 mt-0.5 shrink-0 {{ str_starts_with($key, 'restart-app') ? 'text-[#3E2723]' : 'text-red-700' }}" />
                     <span class="min-w-0">
                         <span class="block text-sm font-bold text-[#3E2723]">{{ $label }}</span>
-                        <span class="block text-xs text-[#6D4C41]">{{ $needsSetup && ! $serverReady ? 'Needs a one-time setup on the server (see docs/OPERATIONS.md).' : $text }}</span>
+                        <span class="block text-xs text-[#6D4C41]">{{ $needsSetup && ! $serverReady ? 'Needs a one-time setup on the server (see docs/OPERATIONS.md).' : ($key === 'shutdown-host' && ! $proxmoxReady ? 'Connect to Proxmox first on the Security page.' : $text) }}</span>
                     </span>
                 </button>
             </form>
@@ -47,7 +49,7 @@
 @once
 <script>
     function powerAction(key, label, text) {
-        const offForGood = key === 'shutdown-server';
+        const offForGood = key === 'shutdown-server' || key === 'shutdown-host';
         Swal.fire({
             title: label + '?',
             html: text + '<br><br>Type your password' + (offForGood ? ', then <b>SHUT DOWN</b> in the next box.' : '.'),
@@ -67,12 +69,12 @@
             form.password.value = r.value;
             if (!offForGood) return form.submit();
             Swal.fire({
-                title: 'Turn the server off?',
-                text: 'Type SHUT DOWN. Only Proxmox can start it again.',
+                title: key === 'shutdown-host' ? 'Turn the whole machine off?' : 'Turn the server off?',
+                text: key === 'shutdown-host' ? 'Type SHUT DOWN. Wi-Fi and internet go off; only the machine\'s power button turns it back on.' : 'Type SHUT DOWN. Only Proxmox can start it again.',
                 input: 'text',
                 inputValidator: v => v === 'SHUT DOWN' ? null : 'Type SHUT DOWN in capitals.',
                 showCancelButton: true,
-                confirmButtonText: 'Shut down server',
+                confirmButtonText: label,
                 confirmButtonColor: '#b91c1c',
                 background: '#FDF8F5',
                 color: '#3E2723',
