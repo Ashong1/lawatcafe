@@ -9,6 +9,13 @@ the history was rewritten.
 
 ---
 
+## 1.29.0 — Evaluation fixes (Oct 28 evaluation)
+*builds 218–*
+
+Feedback list: [docs/capstone/EVALUATION_2026-10-28.md](docs/capstone/EVALUATION_2026-10-28.md).
+
+- **Sign-in locks after 3 wrong passwords** (was 5), as the evaluators asked.
+
 ## 1.28.0 — Confirmations and sign-in lockout
 *build 217*
 

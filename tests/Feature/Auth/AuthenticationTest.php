@@ -62,9 +62,9 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
 
         $this->post('/login', ['email' => $user->email, 'password' => 'wrong'])
-            ->assertSessionHasErrors(['email' => trans('auth.failed').' 4 attempts left.']);
+            ->assertSessionHasErrors(['email' => trans('auth.failed').' 2 attempts left.']);
 
-        foreach (range(1, 3) as $_) {
+        foreach (range(1, 1) as $_) {
             $this->post('/login', ['email' => $user->email, 'password' => 'wrong']);
         }
         $this->assertStringEndsWith('1 attempt left.', session('errors')->first('email'));
@@ -74,7 +74,7 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        foreach (range(1, 5) as $_) {
+        foreach (range(1, 3) as $_) {
             $this->post('/login', ['email' => $user->email, 'password' => 'wrong']);
         }
 

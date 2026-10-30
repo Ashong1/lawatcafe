@@ -13,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
-    public const MAX_ATTEMPTS = 5;
+    public const MAX_ATTEMPTS = 3;
 
     /**
      * Determine if the user is authorized to make this request.
