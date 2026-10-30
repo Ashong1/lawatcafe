@@ -12,6 +12,12 @@ the history was rewritten.
 ## 1.30.0 — Reports
 *builds 230–*
 
+- **Reports → Sales** (owner): pick Daily, Weekly, Monthly or Yearly and
+  any date. Net sales with the change from the previous period, orders and
+  average, cash vs e-wallet, discounts, voided orders, a chart and table by
+  hour/day/month, best sellers, slow movers and sales by category. Print or
+  download as CSV.
+- The Sales page totals no longer count voided orders.
 ## 1.29.0 — Evaluation fixes (Oct 28 evaluation)
 *builds 218–*
 

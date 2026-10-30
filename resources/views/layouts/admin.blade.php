@@ -11,7 +11,7 @@
         'inventory' => request()->is('inventory*'),
         'network'   => request()->is('network*'),
         'ai'        => $aiActive,
-        'finance'   => request()->is('sales*') || request()->routeIs('admin.finance.*'),
+        'finance'   => request()->is('sales*') || request()->routeIs('admin.finance.*') || request()->routeIs('reports.*'),
         'settings'  => request()->is('accounts*') || request()->routeIs('admin.settings.store') || request()->routeIs('admin.settings.ai-providers*'),
         'system'    => request()->routeIs('admin.settings.network') || request()->routeIs('admin.settings.agent'),
     ];
@@ -266,6 +266,17 @@
                       x-transition:leave-start="opacity-100"
                       x-transition:leave-end="opacity-0"
                       class="ml-3 whitespace-nowrap text-sm">End of Day</span>
+            </a>
+            <a href="{{ route('reports.sales') }}" class="flex items-center px-3 py-2.5 rounded group {{ request()->routeIs('reports.*') ? 'bg-[#5D4037] font-semibold shadow-inner' : 'hover:bg-[#4E342E] transition' }}" title="Reports">
+                <x-lucide-bar-chart-3 class="w-5 h-5 shrink-0 {{ request()->routeIs('reports.*') ? 'text-amber-400' : 'text-[#A1887F] group-hover:text-amber-100 transition' }}" />
+                <span x-show="navLabelsVisible"
+                      x-transition:enter="transition ease-in-out duration-300"
+                      x-transition:enter-start="opacity-0"
+                      x-transition:enter-end="opacity-100"
+                      x-transition:leave="transition ease-in-out duration-300"
+                      x-transition:leave-start="opacity-100"
+                      x-transition:leave-end="opacity-0"
+                      class="ml-3 whitespace-nowrap text-sm">Reports</span>
             </a>
 
             <!-- Inventory Dropdown -->

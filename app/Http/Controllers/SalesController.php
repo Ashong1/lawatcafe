@@ -32,11 +32,11 @@ class SalesController extends Controller
                 ? "strftime('%Y-%m', created_at)"
                 : 'DATE_FORMAT(created_at, "%Y-%m")';
 
-            $totalRevenue = Sale::sum('total_amount');
-            $todaysRevenue = Sale::whereDate('created_at', today())->sum('total_amount');
+            $totalRevenue = Sale::revenue()->sum('total_amount');
+            $todaysRevenue = Sale::revenue()->whereDate('created_at', today())->sum('total_amount');
 
             // Main Weekly Graph Data
-            $weeklySales = Sale::selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
+            $weeklySales = Sale::revenue()->selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
                 ->where('created_at', '>=', now()->subDays(6))
                 ->groupBy('date')->orderBy('date', 'ASC')->get();
 
@@ -46,7 +46,7 @@ class SalesController extends Controller
             // --- Sparkline Data for Cards ---
 
             // 1. Today's Hourly Trend (Green Chart)
-            $hourlySales = Sale::selectRaw("{$hourExpr} as hour, SUM(total_amount) as total")
+            $hourlySales = Sale::revenue()->selectRaw("{$hourExpr} as hour, SUM(total_amount) as total")
                 ->whereDate('created_at', today())
                 ->groupBy('hour')->pluck('total', 'hour')->toArray();
 
@@ -56,7 +56,7 @@ class SalesController extends Controller
             }
 
             // 2. Lifetime Trend (Brown Chart - Grouped by Month)
-            $lifetimeSparkline = Sale::selectRaw("{$monthExpr} as month, SUM(total_amount) as total")
+            $lifetimeSparkline = Sale::revenue()->selectRaw("{$monthExpr} as month, SUM(total_amount) as total")
                 ->groupBy('month')->orderBy('month', 'ASC')
                 ->pluck('total')->toArray();
 

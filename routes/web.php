@@ -32,6 +32,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\RootRedirectController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SiteBlockingController;
@@ -323,6 +324,10 @@ Route::middleware(['auth'])->group(function () {
         // Finance / Sales Reports
         Route::get('/sales/export', [SalesController::class, 'export'])->name('sales.export');
         Route::get('/sales', [SalesController::class, 'index'])->name('sales.index');
+
+        // Reports: sales and stock for a day, week, month or year
+        Route::get('/reports/sales', [ReportController::class, 'sales'])->name('reports.sales');
+        Route::get('/reports/sales.csv', [ReportController::class, 'salesCsv'])->name('reports.sales.csv');
 
         // Z-Reads / End of Day Audits
         Route::get('/finance/z-reads', [EndOfDayController::class, 'index'])->name('admin.finance.z-reads');
