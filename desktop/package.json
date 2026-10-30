@@ -1,7 +1,7 @@
 {
   "name": "lawatkape-desktop",
   "productName": "Lawa't Kape",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Lawa't Kape POS and Wi-Fi system for Windows and Linux",
   "author": "Lawa't Kape",
   "homepage": "https://lawatkape.aserotech.com",
@@ -37,6 +37,10 @@
       "target": "dir",
       "icon": "icon.ico",
       "signAndEditExecutable": false
+    },
+    "deb": {
+      "afterInstall": "linux-after-install.sh",
+      "afterRemove": "linux-after-remove.sh"
     }
   }
 }

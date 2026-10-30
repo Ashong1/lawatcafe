@@ -9,6 +9,13 @@ the history was rewritten.
 
 ---
 
+## 1.49.4 — Linux app opens on Ubuntu 24
+*build 274*
+
+- Linux app 1.1.1: the .deb installs an AppArmor rule so the app may use its
+  sandbox on Ubuntu 24.04+ (as Chrome and VS Code do). 1.1.0 closed straight
+  away there.
+
 ## 1.49.3 — Desktop app 1.1, Linux .deb, fresh app downloads
 *build 273*
 
