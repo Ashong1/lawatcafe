@@ -54,4 +54,27 @@ class OpenRouterUsageCardTest extends TestCase
 
         $this->page()->assertOk()->assertSee("Couldn't reach OpenRouter", false);
     }
+
+    public function test_a_key_saved_on_the_settings_page_is_used(): void
+    {
+        config(['services.openrouter.key' => null]);
+        \App\Models\Setting::set('openrouter_api_key', 'sk-saved');
+        Http::fake([
+            'openrouter.ai/api/v1/credits' => Http::response(['data' => ['total_credits' => 10, 'total_usage' => 2.5]]),
+            'openrouter.ai/api/v1/key' => Http::response(['data' => ['free_model_daily_requests' => ['used' => 3, 'limit' => 1000, 'remaining' => 997]]]),
+        ]);
+
+        $this->page()->assertSee('$7.50');
+        Http::assertSent(fn ($r) => $r->hasHeader('Authorization', 'Bearer sk-saved'));
+    }
+
+    public function test_a_failure_is_remembered_so_the_page_does_not_wait_again(): void
+    {
+        Http::fake(['openrouter.ai/*' => Http::response('down', 500)]);
+
+        $this->page();
+        $this->page();
+
+        Http::assertSentCount(1);
+    }
 }

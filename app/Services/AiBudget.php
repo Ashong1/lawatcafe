@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -25,7 +26,7 @@ class AiBudget
      */
     public function dailyRequestsRemaining(): ?int
     {
-        $key = config('services.openrouter.key');
+        $key = $this->key();
         if (! $key) {
             return null;
         }
@@ -50,25 +51,40 @@ class AiBudget
      */
     public function account(): ?array
     {
-        $key = config('services.openrouter.key');
-        if (! $key) {
+        $key = $this->key();
+        if (! $key || InternetStatus::isDown()) {
             return null;
         }
 
-        return Cache::remember('openrouter_account', 300, function () use ($key) {
-            try {
-                $credits = Http::withToken($key)->timeout(8)->get('https://openrouter.ai/api/v1/credits')->throw()->json('data');
-                $free = Http::withToken($key)->timeout(8)->get('https://openrouter.ai/api/v1/key')->throw()->json('data.free_model_daily_requests');
+        // A failure is remembered as false for a minute, so an offline shop
+        // doesn't wait out two timeouts on every visit to the settings page.
+        $cached = Cache::get('openrouter_account');
+        if ($cached !== null) {
+            return $cached ?: null;
+        }
 
-                return [
-                    'balance' => round($credits['total_credits'] - $credits['total_usage'], 2),
-                    'free_used' => (int) $free['used'],
-                    'free_limit' => (int) $free['limit'],
-                ];
-            } catch (\Throwable $e) {
-                return null;
-            }
-        });
+        try {
+            $credits = Http::withToken($key)->timeout(8)->get('https://openrouter.ai/api/v1/credits')->throw()->json('data');
+            $free = Http::withToken($key)->timeout(8)->get('https://openrouter.ai/api/v1/key')->throw()->json('data.free_model_daily_requests');
+            $account = [
+                'balance' => round($credits['total_credits'] - $credits['total_usage'], 2),
+                'free_used' => (int) $free['used'],
+                'free_limit' => (int) $free['limit'],
+            ];
+            Cache::put('openrouter_account', $account, 300);
+
+            return $account;
+        } catch (\Throwable $e) {
+            Cache::put('openrouter_account', false, 60);
+
+            return null;
+        }
+    }
+
+    /** The same key AIService uses: .env first, then the one saved in Barista AI Settings. */
+    private function key(): ?string
+    {
+        return config('services.openrouter.key') ?: Setting::get('openrouter_api_key');
     }
 
     /**
