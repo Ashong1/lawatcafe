@@ -9,6 +9,14 @@ the history was rewritten.
 
 ---
 
+## 1.45.2 — The AI studies staff chats too
+*build 260*
+
+- The hourly learning step already read every owner/admin conversation,
+  rated or not. Staff conversations were saved but never read; now they are
+  studied the same way, and any lesson from them applies to staff. Guest
+  Wi-Fi chats stay out: they're anonymous and never saved.
+
 ## 1.45.1 — One results card, bigger chat on PCs
 *build 259*
 

@@ -22,10 +22,10 @@ use Illuminate\Support\Str;
  * gate someone feeding the bot nonsense could write a persistent prompt
  * injection into its instructions.
  *
- * Besides ratings, corrections and tool failures, it mines admin and
- * super_admin conversations (owners rarely rate their own assistant). That's
- * safe because they are authenticated users, and every conclusion still passes
- * the same review gate.
+ * Besides ratings, corrections and tool failures, it mines every staff, admin
+ * and super_admin conversation, rated or not (people rarely rate). That's safe
+ * because they are signed-in users, and every conclusion still passes the same
+ * review gate.
  */
 class DistilAiLessons extends Command
 {
@@ -85,7 +85,9 @@ class DistilAiLessons extends Command
         // skipped rather than crashing on a null role.
         $conversations = AiConversation::query()
             ->minable()
-            ->where('context', 'admin')
+            // Staff and owners are signed in, so their chats are safe to study;
+            // guest Wi-Fi chat is anonymous and never stored.
+            ->whereIn('context', ['admin', 'staff'])
             ->with('user:id,role')
             ->whereHas('user')
             ->orderBy('last_message_at')
@@ -186,7 +188,11 @@ class DistilAiLessons extends Command
      */
     private function transcriptFor(AiConversation $conversation): ?array
     {
-        $audience = $conversation->user->isSuperAdmin() ? 'super_admin' : 'admin';
+        $audience = match (true) {
+            $conversation->user->isSuperAdmin() => 'super_admin',
+            $conversation->user->isAdminOrAbove() => 'admin',
+            default => 'staff',
+        };
 
         $turns = collect($conversation->messages ?? [])
             ->filter(fn ($m) => in_array($m['role'] ?? null, ['user', 'assistant'], true)

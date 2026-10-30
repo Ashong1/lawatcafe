@@ -347,14 +347,14 @@ class AiLearningLoopTest extends TestCase
 
     // --- Conversation mining -----------------------------------------------
 
-    private function seedConversation(string $role = 'admin', ?array $messages = null, ?Carbon $lastMessageAt = null): AiConversation
+    private function seedConversation(string $role = 'admin', ?array $messages = null, ?Carbon $lastMessageAt = null, string $context = 'admin'): AiConversation
     {
         return AiConversation::create([
             'user_id' => User::factory()->create(['role' => $role])->id,
             // super_admin chat is stored under the 'admin' context; only the
             // owner's role tells the two apart, which is exactly what the
             // mining split relies on.
-            'context' => 'admin',
+            'context' => $context,
             'messages' => $messages ?? [
                 ['kind' => 'text', 'role' => 'user', 'content' => 'Are the background jobs healthy?'],
                 ['kind' => 'text', 'role' => 'assistant', 'content' => 'Yes — the scheduler ran four minutes ago and every job is green.'],
@@ -409,6 +409,23 @@ class AiLearningLoopTest extends TestCase
         $this->assertSame(['admin', 'admin', 'super_admin'], $audiences);
         // And each carries the actual dialogue, not just a label.
         $this->assertStringContainsString('background jobs', json_encode($spy->conversations));
+    }
+
+    /** Owner (Oct 30): staff chats are studied too, even when nobody rates them. */
+    public function test_staff_conversations_are_studied_without_a_rating(): void
+    {
+        $staff = $this->seedConversation('staff', context: 'staff');
+        $this->seedConversation('admin');
+        $this->seedConversation('admin');
+
+        $spy = $this->spyOnDistiller([]);
+
+        $this->artisan('ai:learn')->assertSuccessful();
+
+        $audiences = array_column($spy->conversations, 'audience');
+        sort($audiences);
+        $this->assertSame(['admin', 'admin', 'staff'], $audiences);
+        $this->assertNotNull($staff->fresh()->mined_at);
     }
 
     /** A settled transcript alone can trip a run — no explicit rating needed. */
