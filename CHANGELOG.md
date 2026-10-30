@@ -9,6 +9,17 @@ the history was rewritten.
 
 ---
 
+## 1.48.1 — Error pages in the shop's style
+*build 269*
+
+- Plain error pages instead of a bare "500 | SERVER ERROR": not found,
+  no access, page expired, too many tries, and something went wrong, each
+  with Go back and Home. They load nothing from outside (guests may see them
+  before they're online) and need no database, so they still show when it fails.
+- Fixed: the Security page showed a server error for a few minutes because it
+  read the new visit log before its table existed. The visit log returns once
+  the table is created.
+
 ## 1.48.0 — Owner sees the simple version
 *build 267*
 
