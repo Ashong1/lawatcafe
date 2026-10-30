@@ -9,6 +9,18 @@ the history was rewritten.
 
 ---
 
+## 1.52.1 — AI Routing, redesigned
+*build 280*
+
+- AI Routing (live) now has a **live map**: Chat → the Barista AI router →
+  each service, with the latest request's route drawn in (green answered,
+  red dashed passed on) and a dot running along it when a request arrives.
+- A summary panel for the last 15 minutes (requests, answered first try,
+  moved to another service, average time) with a status light per service.
+- A **Recent requests** table (model, service, tries, time, when) with
+  All / Fell back / No answer tabs; click a row for its full chain. Phones
+  get a list in place of the map.
+
 ## 1.52.0 — Mistral AI
 *build 279*
 
