@@ -81,12 +81,13 @@
 
                 {{-- Phones: one button instead of a row of five, so the menu starts on the first screen. --}}
                 <div class="md:hidden relative shrink-0" x-data="{ more: false }" @click.outside="more = false" @keydown.escape.window="more = false">
-                    <button type="button" @click="more = !more" :aria-expanded="more ? 'true' : 'false'" aria-label="More: orders, cash, end shift"
+                    <button type="button" @click="more = !more" :aria-expanded="more ? 'true' : 'false'" aria-label="More: orders to make, orders, cash, end shift"
                             class="w-11 h-11 rounded-full bg-[#FAFAFA] border border-[#F0E6D2] text-[#3E2723] flex items-center justify-center">
                         <x-lucide-ellipsis-vertical class="w-5 h-5" />
                     </button>
                     <div x-show="more" x-cloak x-transition.origin.top.right
                          class="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#F0E6D2] py-2 z-20 overflow-hidden">
+                        <button type="button" @click="more = false; ordersOpen = true" class="flex items-center gap-3 w-full min-h-[48px] px-4 text-sm font-bold text-[#3E2723] hover:bg-[#FDF8F5] text-left"><x-lucide-chef-hat class="w-4 h-4 text-[#795548]" /> Orders to make <span x-show="ordersCount > 0" x-text="ordersCount" class="ml-auto min-w-[1.5rem] h-6 px-1.5 rounded-full bg-amber-500 text-[#3E2723] text-xs font-bold inline-flex items-center justify-center"></span></button>
                         <a href="{{ route('pos.history') }}" class="flex items-center gap-3 w-full min-h-[48px] px-4 text-sm font-bold text-[#3E2723] hover:bg-[#FDF8F5] text-left"><x-lucide-history class="w-4 h-4 text-[#795548]" /> Orders</a>
                         @if(auth()->user()->isAdminOrAbove())
                         <a href="{{ route('network.sessions') }}" class="flex items-center gap-3 w-full min-h-[48px] px-4 text-sm font-bold text-[#3E2723] hover:bg-[#FDF8F5] text-left"><x-lucide-wifi class="w-4 h-4 text-[#795548]" /> Who's Online</a>
@@ -101,6 +102,14 @@
                 </div>
                 
                 <div class="hidden md:flex md:w-auto flex-wrap justify-end gap-2 sm:gap-3 items-center">
+                    {{-- Orders to make: the kitchen list, on the register --}}
+                    <button type="button" @click="ordersOpen = true" data-orders-count="{{ $waitingOrders->count() }}"
+                            class="relative min-h-[44px] bg-[#3E2723] hover:bg-[#271815] text-white px-3 sm:px-5 rounded-full font-bold transition shadow-md shadow-[#3E2723]/20 text-xs tracking-wider inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                        <x-lucide-chef-hat class="w-4 h-4" />
+                        <span class="hidden xl:inline">Orders to make</span><span class="xl:hidden">To make</span>
+                        <span x-show="ordersCount > 0" x-text="ordersCount" class="min-w-[1.5rem] h-6 px-1.5 rounded-full bg-amber-500 text-[#3E2723] text-xs font-bold inline-flex items-center justify-center">{{ $waitingOrders->count() }}</span>
+                    </button>
+
                     {{-- History Access --}}
                     <a href="{{ route('pos.history') }}" class="min-h-[44px] bg-[#FAFAFA] hover:bg-[#F0E6D2] text-[#795548] hover:text-[#3E2723] px-3 sm:px-5 rounded-full font-bold transition text-xs tracking-wider inline-flex items-center justify-center border border-[#F0E6D2] gap-2 whitespace-nowrap" title="Orders">
                         <x-lucide-history class="w-4 h-4" />
@@ -229,6 +238,29 @@
     </div>
 
     <!-- Variant Selection Modal -->
+    {{-- Orders to make: a side panel over the register; Esc or the backdrop closes it. --}}
+    <div x-show="ordersOpen" x-cloak class="fixed inset-0 z-40" role="dialog" aria-modal="true" aria-labelledby="orders-panel-title"
+         @keydown.escape.window="ordersOpen = false">
+        <div class="absolute inset-0 bg-[#3E2723]/40" @click="ordersOpen = false"
+             x-transition:enter="transition-opacity duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
+        <aside x-show="ordersOpen"
+               x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+               x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
+               class="absolute inset-y-0 right-0 w-full sm:w-[26rem] bg-[#FDF8F5] shadow-2xl flex flex-col">
+            <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-[#F0E6D2] bg-white">
+                <h2 id="orders-panel-title" class="text-lg font-bold text-[#3E2723] flex items-center gap-2">
+                    <x-lucide-chef-hat class="w-5 h-5" /> Orders to make
+                    <span class="text-sm font-bold text-[#795548]" x-text="'(' + ordersCount + ')'"></span>
+                </h2>
+                <button type="button" @click="ordersOpen = false" class="w-11 h-11 rounded-full hover:bg-[#FDF8F5] inline-flex items-center justify-center" aria-label="Close orders to make">
+                    <x-lucide-x class="w-5 h-5" />
+                </button>
+            </div>
+            <div class="flex-1 min-h-0 overflow-y-auto p-4" x-html="ordersHtml"></div>
+        </aside>
+    </div>
+
     <x-modal-shell show="showVariantModal" max-width="sm" panel-class="p-5 sm:p-8 border-t-8 border-[#3E2723]" labelled-by="variant-modal-title">
             <h2 id="variant-modal-title" class="text-2xl font-bold text-[#3E2723] mb-1" x-text="pendingItem?.name"></h2>
             <p class="text-sm font-medium text-[#795548] mb-6">Hot or iced?</p>
@@ -429,6 +461,9 @@
             wallets: @js($wallets),
             showQrModal: false,
             showModal: false,
+            ordersOpen: false,
+            ordersCount: {{ $waitingOrders->count() }},
+            ordersHtml: @js(view('pos.partials.orders-panel', ['orders' => $waitingOrders])->render()),
             showVariantModal: false,
             showMobileCart: false,
             // The bottom-sheet cart is only built while open (see the x-if);
@@ -446,6 +481,8 @@
             flashKey: null,
 
             init() {
+                // The waiting-orders list stays current while the page is open.
+                setInterval(() => { if (!document.hidden) this.refreshOrders(); }, 15000);
                 this.$watch('showMobileCart', (open) => {
                     if (open) {
                         this.mobileCartMounted = true;
@@ -460,6 +497,31 @@
                 this.$watch('grandTotal', (total) => {
                     if (this.suggestion?.reason === 'free_wifi' && total >= this.freeWifiMinAmount) this.suggestion = null;
                 });
+            },
+
+            async refreshOrders() {
+                try {
+                    const res = await fetch(@js(route('kds.data', ['view' => 'panel'])), { headers: { Accept: 'application/json' } });
+                    if (res.ok) this.applyOrders(await res.json());
+                } catch (e) { /* offline for a moment: keep the last list */ }
+            },
+
+            async updateOrder(url, status) {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ status, view: 'panel' }),
+                });
+                if (res.ok) {
+                    this.applyOrders(await res.json());
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Not updated', text: res.status === 419 ? 'Your session has expired. Reload the page.' : 'The order could not be updated. Please try again.', confirmButtonColor: '#3E2723' });
+                }
+            },
+
+            applyOrders(data) {
+                this.ordersHtml = data.html;
+                this.ordersCount = data.count;
             },
 
             // The floating Barista AI button moves off the cart and the View
@@ -785,6 +847,7 @@
 
                     if (result.success) {
                         this.deductSoldStock(this.cart);
+                        this.refreshOrders();
                         this.saleId = result.sale_id;
                         this.generatedCodes = result.generatedCodes || [];
                         this.checkoutHasWifi = result.hasWifi || false;

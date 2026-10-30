@@ -23,7 +23,7 @@ Status legend: **Done** = already in the code · **Partial** · **To do** · **Q
 | 6 | R1 25:10–27:19 | Void should be approved on the spot (owner/admin verifies at the register), not left pending until the owner arrives | To do — reverses the v1 void-approval queue |
 | 7 | R1 27:33–28:27 | Return / refund transaction | To do |
 | 8 | R1 28:35–31:13 | Sales report by day, date range and month; best sellers per month/season | Done v1.30.0.231 (Reports → Sales) |
-| 9 | R1 21:54–25:06 + owner | One person runs the shift: POS and kitchen display in one screen | To do |
+| 9 | R1 21:54–25:06 + owner | One person runs the shift: POS and kitchen display in one screen | Done v1.31.0.233 (Orders to make panel on the register) |
 | — | R1 31:36–33:59 | Receipts / BIR, Senior & PWD discount, reprint | Question — all present |
 
 ## Inventory

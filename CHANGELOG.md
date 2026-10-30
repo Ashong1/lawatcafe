@@ -9,6 +9,15 @@ the history was rewritten.
 
 ---
 
+## 1.31.0 — Orders to make, on the register
+*build 233*
+
+- **Orders to make** button on the register (with a count) opens a side
+  panel of waiting orders with **Start** and **Done**. One person takes and
+  makes orders on the same screen; no switching to the Kitchen Display. The
+  list refreshes every 15 seconds and right after each order. The Kitchen
+  Display page stays for shops with a second screen.
+
 ## 1.30.0 — Reports
 *builds 230–*
 

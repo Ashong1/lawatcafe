@@ -27,14 +27,9 @@ class KdsController extends Controller
      * JSON endpoint for the AJAX poll — returns the order-grid partial pre-rendered
      * server-side, so the polled markup and the first-paint markup are byte-identical.
      */
-    public function data()
+    public function data(Request $request)
     {
-        $orders = $this->pendingAndPreparingOrders();
-
-        return response()->json([
-            'html' => view('kds.partials.order-grid', compact('orders'))->render(),
-            'count' => $orders->count(),
-        ]);
+        return response()->json($this->board($request));
     }
 
     public function updateStatus(Request $request, Sale $sale)
@@ -51,12 +46,7 @@ class KdsController extends Controller
         }
 
         if ($request->wantsJson()) {
-            $orders = $this->pendingAndPreparingOrders();
-
-            return response()->json([
-                'html' => view('kds.partials.order-grid', compact('orders'))->render(),
-                'count' => $orders->count(),
-            ]);
+            return response()->json($this->board($request));
         }
 
         return redirect()->back()->with('success', 'Order status updated.');
@@ -86,6 +76,21 @@ class KdsController extends Controller
         }
 
         return redirect()->back()->with('success', 'Item status updated.');
+    }
+
+    /**
+     * The waiting orders as rendered markup plus a count. view=panel is the
+     * compact list on the register (one person takes and makes orders);
+     * otherwise the full Kitchen Display grid.
+     *
+     * @return array{html: string, count: int}
+     */
+    private function board(Request $request): array
+    {
+        $orders = $this->pendingAndPreparingOrders();
+        $view = $request->input('view') === 'panel' ? 'pos.partials.orders-panel' : 'kds.partials.order-grid';
+
+        return ['html' => view($view, compact('orders'))->render(), 'count' => $orders->count()];
     }
 
     private function pendingAndPreparingOrders()

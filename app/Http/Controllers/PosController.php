@@ -118,6 +118,8 @@ class PosController extends Controller
             'categories' => $categories,
             'dbCategories' => $dbCategories,
             'activeShift' => $activeShift,
+            // Orders to make: one person takes and makes orders, so the waiting list lives on the register.
+            'waitingOrders' => Sale::with('items')->whereIn('status', ['pending', 'preparing'])->oldest()->get(),
             'freeWifiMinAmount' => $freeWifiMinAmount,
             'freeWifiDuration' => $freeWifiDuration,
             'receiptPrintingEnabled' => Setting::receiptPrintingEnabled(),
