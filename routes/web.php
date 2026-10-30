@@ -328,6 +328,8 @@ Route::middleware(['auth'])->group(function () {
         // Reports: sales and stock for a day, week, month or year
         Route::get('/reports/sales', [ReportController::class, 'sales'])->name('reports.sales');
         Route::get('/reports/sales.csv', [ReportController::class, 'salesCsv'])->name('reports.sales.csv');
+        Route::get('/reports/stock', [ReportController::class, 'stock'])->name('reports.stock');
+        Route::get('/reports/stock.csv', [ReportController::class, 'stockCsv'])->name('reports.stock.csv');
 
         // Z-Reads / End of Day Audits
         Route::get('/finance/z-reads', [EndOfDayController::class, 'index'])->name('admin.finance.z-reads');

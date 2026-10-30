@@ -43,6 +43,7 @@ class IngredientService
         Cache::forget('dashboard_stats_today');
 
         InventoryLog::create([
+            'type' => 'delivery',
             'ingredient_id' => $ingredient->id,
             'change_amount' => $baseAddedAmount,
             'after_amount' => $newStock,

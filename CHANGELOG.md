@@ -18,6 +18,11 @@ the history was rewritten.
   hour/day/month, best sellers, slow movers and sales by category. Print or
   download as CSV.
 - The Sales page totals no longer count voided orders.
+- **Reports → Stock**: for the same periods, each ingredient's start,
+  received, used in sales, wasted, adjusted and end amounts; delivery and
+  wastage cost; most used, most wasted (with reasons) and what's running
+  low. Print or download as CSV.
+- Stock History's person filter now lists staff too.
 ## 1.29.0 — Evaluation fixes (Oct 28 evaluation)
 *builds 218–*
 
