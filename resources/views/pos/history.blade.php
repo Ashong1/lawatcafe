@@ -60,10 +60,18 @@
 
     {{-- FILTERS --}}
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-[#F0E6D2] mb-8">
-        <form action="{{ route('pos.history') }}" method="GET" class="grid grid-cols-2 md:grid-cols-4 gap-4" @submit="formSubmitting = true">
+        <form action="{{ route('pos.history') }}" method="GET" class="grid grid-cols-2 md:grid-cols-5 gap-4" @submit="formSubmitting = true">
             <div class="col-span-2 md:col-span-1">
                 <label for="search" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Order no.</label>
                 <input type="search" id="search" name="search" value="{{ request('search') }}" placeholder="e.g. last 4 digits" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 min-h-[44px] text-base sm:text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+            </div>
+            <div>
+                <label for="period" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Show</label>
+                <select id="period" name="period" class="w-full bg-[#FDF8F5] border-2 border-[#F0E6D2] rounded-xl px-4 py-2.5 min-h-[44px] text-base sm:text-xs font-bold focus:outline-none focus:border-[#3E2723] transition-all">
+                    @foreach (\App\Support\ReportPeriod::PERIODS as $key => $label)
+                        <option value="{{ $key }}" @selected($period->period === $key)>{{ $label }}</option>
+                    @endforeach
+                </select>
             </div>
             <div>
                 <label for="date" class="block text-xs font-bold text-[#795548] uppercase tracking-wide mb-2 ml-1">Date</label>
@@ -88,6 +96,12 @@
     </div>
 
     <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <p class="text-sm font-bold text-[#3E2723]">{{ \App\Support\ReportPeriod::PERIODS[$period->period] }} · {{ $period->label() }} · {{ number_format($sales->total()) }} {{ Str::plural('order', $sales->total()) }}</p>
+            <a href="{{ route('pos.history.csv', request()->query()) }}" class="min-h-[44px] px-5 rounded-full bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide inline-flex items-center justify-center gap-2 hover:bg-[#271815]">
+                <x-lucide-download class="w-4 h-4" /> Export CSV
+            </a>
+        </div>
         <div class="overflow-x-auto">
             <table class="lk-stack w-full text-left border-collapse">
                 <thead>
@@ -106,7 +120,7 @@
                         <td class="py-4">
                             <span class="font-extrabold text-[#3E2723] block text-base font-mono tracking-tight">#{{ substr($sale->transaction_number, -8) }}</span>
                             <span class="text-xs text-[#6D4C41] font-bold uppercase tracking-wide">
-                                {{ $sale->created_at->format('h:i A') }} • {{ $sale->user->name ?? 'System' }}
+                                {{ $sale->created_at->format($period->period === 'day' ? 'h:i A' : 'M j, h:i A') }} • {{ $sale->user->name ?? 'System' }}
                             </span>
                         </td>
                         <td class="py-4">

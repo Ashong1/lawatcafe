@@ -9,6 +9,14 @@ the history was rewritten.
 
 ---
 
+## 1.42.0 — Orders by day, week, month or year; export
+*build 248*
+
+- **Orders** has a "Show" choice (Daily, Weekly, Monthly, Yearly) next to the
+  date, a count for the period, and **Export CSV** of exactly what's listed
+  (order no., date and time, type, items, payment, discount, total, refunded,
+  status, cashier). Rows show the date when more than one day is listed.
+
 ## 1.41.0 — Pick suppliers from a list; a tidier register
 *builds 246–247*
 

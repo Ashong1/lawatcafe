@@ -139,6 +139,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Order History
     Route::get('/pos/history', [OrderHistoryController::class, 'index'])->name('pos.history');
+    Route::get('/pos/history.csv', [OrderHistoryController::class, 'export'])->name('pos.history.csv');
     Route::post('/pos/history/void/{sale}', [OrderHistoryController::class, 'void'])->name('pos.history.void');
     Route::post('/pos/history/refund/{sale}', [OrderHistoryController::class, 'refund'])->name('pos.history.refund');
 
