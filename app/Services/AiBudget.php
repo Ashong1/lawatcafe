@@ -42,6 +42,36 @@ class AiBudget
     }
 
     /**
+     * Credit balance (dollars) and today's free-model requests for the owner's
+     * settings page. Both endpoints are free to read. Cached 5 minutes; null
+     * when there's no key or OpenRouter can't be reached.
+     *
+     * @return array{balance: float, free_used: int, free_limit: int}|null
+     */
+    public function account(): ?array
+    {
+        $key = config('services.openrouter.key');
+        if (! $key) {
+            return null;
+        }
+
+        return Cache::remember('openrouter_account', 300, function () use ($key) {
+            try {
+                $credits = Http::withToken($key)->timeout(8)->get('https://openrouter.ai/api/v1/credits')->throw()->json('data');
+                $free = Http::withToken($key)->timeout(8)->get('https://openrouter.ai/api/v1/key')->throw()->json('data.free_model_daily_requests');
+
+                return [
+                    'balance' => round($credits['total_credits'] - $credits['total_usage'], 2),
+                    'free_used' => (int) $free['used'],
+                    'free_limit' => (int) $free['limit'],
+                ];
+            } catch (\Throwable $e) {
+                return null;
+            }
+        });
+    }
+
+    /**
      * Whether a scheduled job may spend AI calls right now: not once the
      * allowance is used up, and not when it's down to the reserve kept for
      * people, and not while the internet is down. An unknown count (endpoint

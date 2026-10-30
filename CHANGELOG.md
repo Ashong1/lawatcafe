@@ -24,6 +24,11 @@ Feedback list: [docs/capstone/EVALUATION_2026-10-28.md](docs/capstone/EVALUATION
   and at the stock on hand; the ingredient list shows each package size.
 - **Accounts are archived, never deleted.** "Remove" is now "Archive",
   and an account with no sales is archived too, so it can always be restored.
+- **AI Usage card** on Barista AI Settings: OpenRouter credit balance and
+  today's free AI requests (e.g. "13 of 50"), with a warning when the
+  balance is below zero.
+- **Pending AI actions** icon is a robot with a cog, so it isn't mistaken
+  for the chat button.
 
 ## 1.28.0 — Confirmations and sign-in lockout
 *build 217*

@@ -8,6 +8,7 @@ use App\Models\StaticIpAssignment;
 use App\Services\Agent\PermissionResolver;
 use App\Services\Agent\ToolRegistry;
 use App\Services\AIService;
+use App\Services\AiBudget;
 use App\Services\OpnSenseService;
 use App\Services\OrderWaitService;
 use Illuminate\Http\Request;
@@ -66,14 +67,15 @@ class SettingController extends Controller
      * AI provider key configuration alongside real per-provider and
      * per-model status.
      */
-    public function aiProviders(AIService $ai)
+    public function aiProviders(AIService $ai, AiBudget $budget)
     {
         $providers = $ai->getProviderStatuses();
+        $usage = $budget->account();
         $settings = [
             'openrouter_api_key' => Setting::get('openrouter_api_key', ''),
         ];
 
-        return view('admin.settings.ai-providers', compact('providers', 'settings'));
+        return view('admin.settings.ai-providers', compact('providers', 'settings', 'usage'));
     }
 
     /**

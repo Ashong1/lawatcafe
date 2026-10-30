@@ -24,6 +24,39 @@
 
         <div class="max-w-3xl mx-auto space-y-6">
 
+            {{-- Read from OpenRouter (free to read), cached 5 minutes in AiBudget::account(). --}}
+            <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700">
+                        <x-lucide-wallet class="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-[#3E2723] uppercase tracking-wide">AI Usage</h3>
+                        <p class="text-xs text-[#6D4C41] font-medium italic">From your OpenRouter account, updated every 5 minutes.</p>
+                    </div>
+                </div>
+                @if ($usage)
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-2xl bg-[#FDF8F5] border border-[#F0E6D2]">
+                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">AI credit balance</p>
+                            <p class="text-2xl font-bold mt-1 {{ $usage['balance'] < 0 ? 'text-red-700' : 'text-[#3E2723]' }}">{{ $usage['balance'] < 0 ? '-' : '' }}${{ number_format(abs($usage['balance']), 2) }}</p>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-[#FDF8F5] border border-[#F0E6D2]">
+                            <p class="text-xs font-bold text-[#795548] uppercase tracking-wide">Free AI requests today</p>
+                            <p class="text-2xl font-bold mt-1 text-[#3E2723]">{{ number_format($usage['free_used']) }} of {{ number_format($usage['free_limit']) }}</p>
+                            <p class="text-xs text-[#6D4C41] mt-1">Resets 8:00 AM.</p>
+                        </div>
+                    </div>
+                    @if ($usage['balance'] < 0)
+                        <p class="mt-4 text-sm font-medium text-red-800 bg-red-50 border border-red-200 rounded-xl p-3">
+                            The balance is below zero, so the daily limit drops to {{ number_format($usage['free_limit']) }} free requests. Add credit on openrouter.ai to raise it.
+                        </p>
+                    @endif
+                @else
+                    <p class="text-sm text-[#6D4C41]">Couldn't reach OpenRouter just now. Check the internet connection or the API key below.</p>
+                @endif
+            </div>
+
             {{-- API Keys — env vars always take priority; these are only used as a fallback. --}}
             <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-[#F0E6D2]">
                 <div class="flex items-center gap-3 mb-6">

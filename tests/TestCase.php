@@ -42,6 +42,11 @@ abstract class TestCase extends BaseTestCase
             {
                 return null;
             }
+
+            public function account(): ?array
+            {
+                return null;
+            }
         });
 
         $connection = config('database.default');
