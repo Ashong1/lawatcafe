@@ -65,7 +65,8 @@ class StockExpiryService
         $unaccounted = (float) $ingredient->current_stock;
         $held = [];
         $receipts = InventoryLog::where('ingredient_id', $ingredient->id)->where('change_amount', '>', 0)
-            ->whereIn('type', ['delivery', 'adjustment'])->orderByDesc('created_at')->orderByDesc('id')->get();
+            // Deliveries, restocks and the opening count; a recount correction isn't a new batch.
+            ->where(fn ($q) => $q->where('type', 'delivery')->orWhere('reason', 'Initial Stock'))->orderByDesc('created_at')->orderByDesc('id')->get();
 
         foreach ($receipts as $receipt) {
             if ($unaccounted <= 0) {

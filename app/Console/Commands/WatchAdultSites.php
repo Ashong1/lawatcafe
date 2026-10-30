@@ -82,6 +82,7 @@ class WatchAdultSites extends Command
 
             // Not on the block list yet: blocked on the spot (owner, Oct 30), unless switched off on Site Blocking.
             $autoBlocked = $hit['allowed'] && Setting::get('ai_auto_block_adult_sites', '1') === '1'
+                && $detector->safeToAutoBlock($hit['site'])
                 && $pihole->blockDomain($hit['site'], 'Blocked automatically by Barista AI');
 
             $admins ??= User::active()->whereIn('role', ['admin', 'super_admin'])->get();

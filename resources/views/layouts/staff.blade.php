@@ -384,7 +384,7 @@
                 text: form.dataset.confirmText || 'Please check the details before saving.',
                 icon: 'question',
                 confirmText: 'Yes, save',
-                callback: () => { form.dataset.confirmed = '1'; form.requestSubmit(); },
+                callback: () => { form.dataset.confirmed = '1'; form.requestSubmit(e.submitter || undefined); delete form.dataset.confirmed; },
             });
         }, true);
 

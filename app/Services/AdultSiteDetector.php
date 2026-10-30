@@ -28,6 +28,13 @@ class AdultSiteDetector
     /** Second-level labels under a country TLD that aren't the site's own name (e.g. .com.ph). */
     private const GENERIC_SLDS = ['com', 'net', 'org', 'gov', 'edu', 'co', 'ac'];
 
+    /** Hosting and CDN domains that many unrelated sites live under. */
+    private const SHARED_HOSTS = [
+        'github.io', 'blogspot.com', 'wordpress.com', 'tumblr.com', 'cloudfront.net', 'amazonaws.com', 'googleusercontent.com',
+        'googleapis.com', 'akamaized.net', 'akamaihd.net', 'fastly.net', 'azureedge.net', 'netlify.app', 'vercel.app',
+        'herokuapp.com', 'firebaseapp.com', 'web.app', 'pages.dev', 'workers.dev', 'cdninstagram.com', 'fbcdn.net', 'gstatic.com',
+    ];
+
     public function isAdult(string $domain): bool
     {
         $domain = strtolower(trim($domain, '.'));
@@ -46,6 +53,18 @@ class AdultSiteDetector
         }
 
         return false;
+    }
+
+    /**
+     * Whether a lookup may be blocked without asking: only when the site's own
+     * name is adult, never a shared host or CDN where one guest page would take
+     * the whole service down for everyone (github.io, blogspot.com, ...).
+     */
+    public function safeToAutoBlock(string $domain): bool
+    {
+        $site = $this->siteFor($domain);
+
+        return ! in_array($site, self::SHARED_HOSTS, true) && $this->isAdult($site);
     }
 
     /**

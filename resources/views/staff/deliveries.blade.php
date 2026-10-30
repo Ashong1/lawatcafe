@@ -31,7 +31,14 @@
             <button type="submit" class="min-h-[44px] px-5 rounded-xl bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide inline-flex items-center gap-2"><x-lucide-search class="w-4 h-4" /> Find</button>
         </form>
 
-        @if ($found !== null && $found->isEmpty())
+        @if ($choices->isNotEmpty())
+            <p class="mt-4 text-sm font-bold text-[#3E2723]">Which supplier?</p>
+            <div class="mt-2 flex flex-wrap gap-2">
+                @foreach ($choices as $name)
+                    <a href="{{ route('staff.deliveries.index', ['ref' => $name]) }}" class="min-h-[44px] inline-flex items-center px-4 rounded-full bg-[#FDF8F5] border border-[#F0E6D2] text-sm font-bold text-[#3E2723] hover:bg-[#F0E6D2]">{{ $name }}</a>
+                @endforeach
+            </div>
+        @elseif ($found !== null && $found->isEmpty())
             <p class="mt-4 text-sm font-bold text-red-700">No open order matches "{{ $ref }}". Check the number, or record it below with Receive Delivery.</p>
         @elseif ($found)
             @php($supplierName = $found->first()->supplier->name ?? '')
@@ -53,8 +60,8 @@
                                 <p class="text-xs font-mono text-[#795548]">{{ $po->po_number }} — ordered {{ rtrim(rtrim(number_format($po->suggested_quantity, 2), '0'), '.') }} {{ $po->ingredient->unit }}</p>
                             </div>
                             <label class="flex items-center gap-2 text-xs font-bold text-[#795548]">Received
-                                <input type="number" step="0.01" min="0.01" name="items[{{ $i }}][quantity]" x-model.number="rows[{{ $i }}].got" :disabled="rows[{{ $i }}].missing"
-                                       class="w-28 min-h-[44px] border-2 border-[#F0E6D2] rounded-xl text-center text-base font-bold disabled:opacity-40">
+                                <input type="number" step="0.01" min="0.01" name="items[{{ $i }}][quantity]" x-model.number="rows[{{ $i }}].got" :readonly="rows[{{ $i }}].missing"
+                                       class="w-28 min-h-[44px] border-2 border-[#F0E6D2] rounded-xl text-center text-base font-bold read-only:opacity-40">
                             </label>
                             <label class="flex items-center gap-2 min-h-[44px] text-xs font-bold text-red-700 cursor-pointer">
                                 <input type="checkbox" name="items[{{ $i }}][missing]" value="1" x-model="rows[{{ $i }}].missing" class="w-5 h-5 rounded"> Missing

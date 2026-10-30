@@ -38,6 +38,8 @@ class AiWifiAutonomyTest extends TestCase
         $this->mock(InternetSpeedTest::class, function ($m) use ($down) {
             $m->shouldReceive('testedToday')->andReturn(false);
             $m->shouldReceive('run')->andReturn(['down' => $down, 'up' => 5.0, 'at' => now()->toIso8601String()]);
+            // Two slow days in a row: the plans are only lowered on a repeat.
+            $m->shouldReceive('history')->andReturn([['down' => $down, 'up' => 5.0, 'at' => now()->toIso8601String()], ['down' => $down, 'up' => 5.0, 'at' => now()->subDay()->toIso8601String()]]);
         });
     }
 

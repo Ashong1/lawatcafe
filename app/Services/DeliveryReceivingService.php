@@ -38,6 +38,7 @@ class DeliveryReceivingService
             ]);
 
             $allMatched = true;
+            $claimed = [];   // one order matches one line, so stock can't go up twice for it
 
             foreach ($data['items'] as $itemData) {
                 // Received against a PO: match that order exactly; otherwise look for one.
@@ -45,7 +46,13 @@ class DeliveryReceivingService
                     ? PurchaseOrderDraft::where('id', $itemData['purchase_order_draft_id'])->where('status', 'sent')
                         ->where('ingredient_id', $itemData['ingredient_id'])->get()
                         ->first(fn ($d) => abs((float) $d->suggested_quantity - (float) $itemData['quantity']) < 0.01)
-                    : $this->findMatchingDraft($itemData['ingredient_id'], $itemData['quantity'], $data['supplier_name']);
+                    : $this->findMatchingDraft($itemData['ingredient_id'], $itemData['quantity'], $data['supplier_name'], $claimed);
+                if ($draft && in_array($draft->id, $claimed, true)) {
+                    $draft = null;
+                }
+                if ($draft) {
+                    $claimed[] = $draft->id;
+                }
 
                 IngredientDeliveryItem::create([
                     'ingredient_delivery_id' => $delivery->id,
@@ -101,9 +108,9 @@ class DeliveryReceivingService
         ]);
     }
 
-    private function findMatchingDraft(int $ingredientId, float $quantity, string $supplierName): ?PurchaseOrderDraft
+    private function findMatchingDraft(int $ingredientId, float $quantity, string $supplierName, array $exclude = []): ?PurchaseOrderDraft
     {
-        return PurchaseOrderDraft::where('ingredient_id', $ingredientId)
+        return PurchaseOrderDraft::where('ingredient_id', $ingredientId)->whereNotIn('id', $exclude)
             ->where('status', 'sent')
             ->where('suggested_quantity', $quantity)
             ->oldest()

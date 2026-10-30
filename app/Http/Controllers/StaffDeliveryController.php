@@ -19,12 +19,18 @@ class StaffDeliveryController extends Controller
         // brings up that supplier's open orders as a checklist (owner, Oct 30).
         $ref = trim((string) $request->query('ref'));
         $found = null;
+        $choices = collect();
         if ($ref !== '') {
             $digits = (int) preg_replace('/\D/', '', $ref);
             $found = PurchaseOrderDraft::with(['ingredient', 'supplier'])->where('status', 'sent')
                 ->where(fn ($q) => $q->when($digits && preg_match('/^(po-?)?\d+$/i', $ref), fn ($q) => $q->where('id', $digits))
-                    ->orWhereHas('supplier', fn ($s) => $s->where('name', 'like', '%'.$ref.'%')))
+                    ->orWhereHas('supplier', fn ($s) => $s->where('name', 'like', '%'.addcslashes($ref, '%_\\').'%')))
                 ->orderBy('id')->get();
+            // One delivery is from one supplier: when several match, ask which.
+            if ($found->pluck('supplier_id')->unique()->count() > 1) {
+                $choices = $found->map(fn ($po) => $po->supplier->name ?? 'No supplier')->unique()->values();
+                $found = collect();
+            }
         }
 
         $pendingOrders = PurchaseOrderDraft::with(['ingredient', 'supplier'])
@@ -40,7 +46,7 @@ class StaffDeliveryController extends Controller
             ->latest()
             ->paginate(10);
 
-        return view('staff.deliveries', compact('pendingOrders', 'ingredients', 'myDeliveries', 'suppliers', 'ref', 'found'));
+        return view('staff.deliveries', compact('pendingOrders', 'ingredients', 'myDeliveries', 'suppliers', 'ref', 'found', 'choices'));
     }
 
     public function store(Request $request, DeliveryReceivingService $service)
@@ -52,7 +58,7 @@ class StaffDeliveryController extends Controller
             'note' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.ingredient_id' => 'required|exists:ingredients,id',
-            'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.quantity' => 'required_without:items.*.missing|nullable|numeric|min:0.01',
             'items.*.cost_per_unit' => 'required|numeric|min:0',
             'items.*.purchase_order_draft_id' => 'nullable|integer|exists:purchase_order_drafts,id',
             'items.*.missing' => 'nullable|boolean',

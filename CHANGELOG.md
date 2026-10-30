@@ -9,6 +9,23 @@ the history was rewritten.
 
 ---
 
+## 1.43.3 — Fixes from the pre-defense review (network, inventory)
+*build 252*
+
+- The daily speed test tries **once a day**, even if it fails (a failure was
+  retried every 15 minutes — hundreds of MB of prepaid data).
+- Barista AI lowers a plan only after **two slow days in a row**, never below
+  2 Mbps, and Premium always stays faster than Free.
+- Automatic adult-site blocking only blocks a site whose **own name** is
+  adult — never a shared host like github.io, blogspot.com or a CDN (those
+  only alert).
+- "Missing" in Check a delivery now saves (the greyed-out amount wasn't sent).
+- One purchase order can't be matched by two lines of one delivery.
+- A supplier search that matches several suppliers asks which one.
+- Expired write-off only works on stock that is actually past its date; a
+  recount isn't treated as a new batch.
+- "Are you sure?" keeps which button was pressed and asks again next time.
+
 ## 1.43.2 — Fixes from the pre-defense review (money)
 *build 251*
 

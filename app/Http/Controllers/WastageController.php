@@ -73,6 +73,10 @@ class WastageController extends Controller
     /** Writes off what's left of an expired delivery or restock (the Expiring soon list). */
     public function writeOffExpired(InventoryLog $inventoryLog, StockExpiryService $expiry)
     {
+        if (! $inventoryLog->expires_at || ! $inventoryLog->expires_at->isPast()) {
+            return back()->with('error', 'Only stock past its expiration date can be written off here. Use Wastage for anything else.');
+        }
+
         $left = $expiry->leftOf($inventoryLog);
         if ($left <= 0) {
             return back()->with('error', 'Nothing from that delivery is left in stock.');

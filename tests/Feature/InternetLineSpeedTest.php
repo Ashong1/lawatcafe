@@ -87,6 +87,7 @@ class InternetLineSpeedTest extends TestCase
         $this->mock(InternetSpeedTest::class, function ($m) {
             $m->shouldReceive('testedToday')->andReturn(false, true);
             $m->shouldReceive('run')->once()->andReturn(['down' => 30.0, 'up' => 10.0, 'at' => now()->toIso8601String()]);
+            $m->shouldReceive('history')->andReturn([]);
         });
 
         $this->artisan('network:speed-test')->assertSuccessful();   // before opening: skipped
