@@ -81,8 +81,20 @@
 
                     @include('components.partials.agent-chat-rating')
 
-                    <template x-if="msg.kind === 'executed'">
-                        <div x-data="{ open: false }" class="max-w-[90%] p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 mx-1">                            <div class="flex items-start gap-2">                                <x-lucide-check-circle-2 class="w-4 h-4 shrink-0 mt-0.5" />                                <span x-text="msg.label || msg.tool"></span>                            </div>                            <p x-show="open" class="mt-2 pl-6 font-medium leading-relaxed" x-text="msg.message"></p>                            <button type="button" x-show="msg.message && msg.message !== 'Done.'" @click="open = !open" class="pl-6 -mb-2 min-h-[44px] underline underline-offset-2 text-emerald-700" x-text="open ? 'View less' : 'View more'"></button>                        </div>
+                    {{-- One card per run of finished actions: a reply that ran three checks gets one "View more". --}}
+                    <template x-if="msg.kind === 'executed' && history[index - 1]?.kind !== 'executed'">
+                        <div x-data="{ open: false }" class="max-w-[90%] p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800 mx-1">
+                            <template x-for="(a, n) in actionRun(index)" :key="n">
+                                <div class="flex items-start gap-2" :class="n ? 'mt-2' : ''">
+                                    <x-lucide-check-circle-2 class="w-4 h-4 shrink-0 mt-0.5" />
+                                    <div class="min-w-0">
+                                        <span x-text="a.label || a.tool"></span>
+                                        <p x-show="open && a.message && a.message !== 'Done.'" class="mt-1 font-medium leading-relaxed" x-text="a.message"></p>
+                                    </div>
+                                </div>
+                            </template>
+                            <button type="button" x-show="actionRun(index).some(a => a.message && a.message !== 'Done.')" @click="open = !open" class="pl-6 -mb-2 min-h-[44px] underline underline-offset-2 text-emerald-700" x-text="open ? 'View less' : 'View more'"></button>
+                        </div>
                     </template>
 
                     <template x-if="msg.kind === 'pending'">
@@ -265,8 +277,20 @@
                     @include('components.partials.agent-chat-rating')
 
                     <!-- Executed tool action -->
-                    <template x-if="msg.kind === 'executed'">
-                        <div x-data="{ open: false }" class="max-w-[90%] p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800">                            <div class="flex items-start gap-2">                                <x-lucide-check-circle-2 class="w-4 h-4 shrink-0 mt-0.5" />                                <span x-text="msg.label || msg.tool"></span>                            </div>                            <p x-show="open" class="mt-2 pl-6 font-medium leading-relaxed" x-text="msg.message"></p>                            <button type="button" x-show="msg.message && msg.message !== 'Done.'" @click="open = !open" class="pl-6 -mb-2 min-h-[44px] underline underline-offset-2 text-emerald-700" x-text="open ? 'View less' : 'View more'"></button>                        </div>
+                    {{-- One card per run of finished actions: a reply that ran three checks gets one "View more". --}}
+                    <template x-if="msg.kind === 'executed' && history[index - 1]?.kind !== 'executed'">
+                        <div x-data="{ open: false }" class="max-w-[90%] p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800">
+                            <template x-for="(a, n) in actionRun(index)" :key="n">
+                                <div class="flex items-start gap-2" :class="n ? 'mt-2' : ''">
+                                    <x-lucide-check-circle-2 class="w-4 h-4 shrink-0 mt-0.5" />
+                                    <div class="min-w-0">
+                                        <span x-text="a.label || a.tool"></span>
+                                        <p x-show="open && a.message && a.message !== 'Done.'" class="mt-1 font-medium leading-relaxed" x-text="a.message"></p>
+                                    </div>
+                                </div>
+                            </template>
+                            <button type="button" x-show="actionRun(index).some(a => a.message && a.message !== 'Done.')" @click="open = !open" class="pl-6 -mb-2 min-h-[44px] underline underline-offset-2 text-emerald-700" x-text="open ? 'View less' : 'View more'"></button>
+                        </div>
                     </template>
 
                     <!-- Pending confirmation -->

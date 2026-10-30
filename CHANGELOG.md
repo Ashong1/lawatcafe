@@ -9,6 +9,14 @@ the history was rewritten.
 
 ---
 
+## 1.45.1 — One results card, bigger chat on PCs
+*build 259*
+
+- When the AI runs several checks for one answer, they now share **one**
+  green card with a single **View more**, instead of a card and link each.
+- On a laptop or PC the chat window is taller (up to the screen's height,
+  max 820 px) and a little wider (440 px). Phones keep the compact size.
+
 ## 1.45.0 — Smoother Barista AI replies
 *build 258*
 

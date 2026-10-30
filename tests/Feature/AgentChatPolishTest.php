@@ -12,7 +12,9 @@ class AgentChatPolishTest extends TestCase
         $blade = file_get_contents(resource_path('views/components/agent-chat.blade.php'));
 
         $this->assertSame(2, substr_count($blade, "x-text=\"open ? 'View less' : 'View more'\""));
-        $this->assertSame(2, substr_count($blade, '<p x-show="open"'));
+        // Owner's 3rd video: three checks meant three "View more" links. One card per run now.
+        $this->assertSame(2, substr_count($blade, "x-if=\"msg.kind === 'executed' && history[index - 1]?.kind !== 'executed'\""));
+        $this->assertSame(2, substr_count($blade, 'x-for="(a, n) in actionRun(index)"'));
     }
 
     public function test_streamed_text_is_revealed_at_a_steady_pace(): void
@@ -21,5 +23,6 @@ class AgentChatPolishTest extends TestCase
 
         $this->assertStringContainsString('const typeOut = ', $js);
         $this->assertStringNotContainsString('assistantEntry.content += event.text;', $js);
+        $this->assertStringContainsString('window.innerWidth >= 1024 ? 820 : 550', $js);
     }
 }

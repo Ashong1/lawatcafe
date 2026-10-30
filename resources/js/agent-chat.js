@@ -182,8 +182,9 @@ export default function registerAgentChat(Alpine) {
         // 380x550 (see the :style bindings above) — position math below always
         // reads these rather than the raw 380/550 numbers, or the widget would
         // be positioned as if still full-size and spill off-screen on a phone.
+        // A laptop or PC screen has room for a taller, wider window; phones keep the compact one.
         chatWidth() {
-            return Math.min(380, window.innerWidth - 32);
+            return Math.min(window.innerWidth >= 1024 ? 440 : 380, window.innerWidth - 32);
         },
 
         chatHeight() {
@@ -192,7 +193,7 @@ export default function registerAgentChat(Alpine) {
             // control) — reserve its ~80px (button + margin) here too, or a
             // window sized against the full viewport height would push that
             // button off the bottom of a short screen with nowhere to clamp it.
-            return Math.min(550, window.innerHeight - 32 - 80 - this.safeBottom());
+            return Math.min(window.innerWidth >= 1024 ? 820 : 550, window.innerHeight - 32 - 80 - this.safeBottom());
         },
 
         // With viewport-fit=cover the layout viewport now runs underneath the iOS
@@ -626,6 +627,13 @@ export default function registerAgentChat(Alpine) {
                 this.scrollToBottom();
                 this.save();
             }
+        },
+
+        // The finished actions in a row starting at `index` (the card's first entry).
+        actionRun(index) {
+            const run = [];
+            for (let i = index; this.history[i]?.kind === 'executed'; i++) run.push(this.history[i]);
+            return run;
         },
 
         actionNote(m) {
