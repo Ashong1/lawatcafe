@@ -9,6 +9,14 @@ the history was rewritten.
 
 ---
 
+## 1.55.2 — Staff through remote access
+*build 296*
+
+- Remote access stays limited to admins and the super admin by default. A new
+  switch on the Security page (super admin only) lets staff accounts sign in
+  through the remote link too. Turning it off signs remote staff out on their
+  next click. Both switches are recorded in the activity log.
+
 ## 1.55.1 — Proxmox connection from .env
 *build 295*
 
