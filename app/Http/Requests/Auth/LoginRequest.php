@@ -75,7 +75,7 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        if (! Auth::user()->isAdminOrAbove() && \App\Services\RemoteAccessService::isRemoteRequest($this)) {
+        if (! \App\Services\RemoteAccessService::allows(Auth::user(), $this)) {
             Auth::guard('web')->logout();
 
             throw ValidationException::withMessages(['email' => \App\Services\RemoteAccessService::STAFF_MESSAGE]);

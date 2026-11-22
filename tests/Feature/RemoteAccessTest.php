@@ -87,4 +87,42 @@ class RemoteAccessTest extends TestCase
 
         $this->actingAs($this->owner())->get('https://lawatkape-remote.aserotech.com/dashboard')->assertOk();
     }
+
+    /** The super admin can let staff in through the remote link; off by default. */
+    public function test_the_super_admin_lets_staff_use_the_remote_link(): void
+    {
+        $super = User::factory()->create(['role' => 'super_admin']);
+        $staff = User::factory()->create(['role' => 'staff', 'username' => 'ben', 'password' => 'kape-2026']);
+
+        $this->actingAs($super)->get(route('security'))->assertOk()->assertSee('Staff can use remote access');
+        $this->actingAs($super)->post(route('remote-access.staff'), ['allowed' => '1'])->assertSessionHas('success');
+        $this->assertSame(1, ActivityLog::where('event', 'remote_access_staff_on')->count());
+        auth()->logout();
+
+        $this->post('https://lawatkape-remote.aserotech.com/login', ['email' => 'ben', 'password' => 'kape-2026']);
+        $this->assertAuthenticatedAs($staff);
+        $this->get('https://lawatkape-remote.aserotech.com/staff-dashboard')->assertOk();
+    }
+
+    public function test_turning_it_back_off_signs_staff_out_of_the_remote_link(): void
+    {
+        $super = User::factory()->create(['role' => 'super_admin']);
+        $this->actingAs($super)->post(route('remote-access.staff'), ['allowed' => '1']);
+        $this->actingAs($super)->post(route('remote-access.staff'), ['allowed' => '0'])->assertSessionHas('success');
+        $this->assertSame(1, ActivityLog::where('event', 'remote_access_staff_off')->count());
+
+        $this->actingAs(User::factory()->create(['role' => 'staff']))->get('https://lawatkape-remote.aserotech.com/staff-dashboard')
+            ->assertRedirect(route('login'));
+        $this->assertGuest();
+    }
+
+    public function test_only_the_super_admin_can_let_staff_in(): void
+    {
+        $owner = $this->owner();
+        $this->actingAs($owner)->get(route('security'))->assertOk()->assertDontSee('Staff can use remote access');
+        $this->actingAs($owner)->post(route('remote-access.staff'), ['allowed' => '1'])->assertRedirect(route('dashboard'));
+        $this->actingAs(User::factory()->create(['role' => 'staff']))->post(route('remote-access.staff'), ['allowed' => '1']);
+
+        $this->assertFalse(\App\Services\RemoteAccessService::staffAllowed());
+    }
 }

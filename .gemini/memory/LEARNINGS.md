@@ -120,9 +120,6 @@
 - **Outcome**: `client()` now takes optional `$connectTimeout`/`$timeoutSeconds` params (still defaulting to 1s/2s for every existing render-path caller). `authorizeDevice()` explicitly requests `client(4, 8)` instead.
 - **Rule**: A shared low-timeout HTTP client tuned for a cached/fallback read path is wrong for a write with no fallback. Before applying a render-path timeout rule to a new OPNsense call, check whether that call has a cached value to fall back to — if not (auth, disconnect, any mutation), it needs its own longer, explicit budget rather than inheriting the render-path default.
 
-
-
-
-
-
-
+## Remote access: who may sign in through the remote link (Nov 2026)
+- **Rule**: The "may this account use the remote link?" check lives in one place, `RemoteAccessService::allows($user, $request)`, used by both `LoginRequest` and the `RemoteAccessAdminsOnly` middleware. Admins and up always pass; staff pass only inside the shop unless the super admin turned on the `remote_access_staff` setting (Security page toggle, route `remote-access.staff`, super_admin only). Change the rule there, never in one caller only.
+- **Note**: `RoleMiddleware` redirects an under-privileged admin to `dashboard` (staff to `staff.dashboard`) instead of a 403, so tests for super_admin-only routes assert the redirect.

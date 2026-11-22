@@ -356,6 +356,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('security', [ActivityLogController::class, 'index'])->name('security');
         Route::post('remote-access/on', [RemoteAccessController::class, 'on'])->middleware('throttle:6,1')->name('remote-access.on');
         Route::post('remote-access/off', [RemoteAccessController::class, 'off'])->name('remote-access.off');
+        Route::post('remote-access/staff', [RemoteAccessController::class, 'staff'])->middleware(RoleMiddleware::class.':super_admin')->name('remote-access.staff');
         Route::post('system-power/start', [SystemPowerController::class, 'start'])->name('system-power.start');
         Route::post('system-power/{action}', [SystemPowerController::class, 'act'])
             ->whereIn('action', ['restart-app', 'shutdown-app', 'restart-server', 'shutdown-server', 'shutdown-host'])

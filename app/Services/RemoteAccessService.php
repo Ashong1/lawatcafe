@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ActivityLog;
+use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\SystemAlert;
 use Illuminate\Support\Facades\Notification;
@@ -20,6 +21,26 @@ class RemoteAccessService
     public const SERVICE = 'lawatkape-remote';
 
     public const STAFF_MESSAGE = 'From outside the shop only the owner and admins can sign in. Staff can sign in at the shop.';
+
+    /** Setting that lets staff accounts in through the remote link too. Off by default; only the super admin changes it. */
+    public const STAFF_SETTING = 'remote_access_staff';
+
+    public static function staffAllowed(): bool
+    {
+        return Setting::get(self::STAFF_SETTING, '0') === '1';
+    }
+
+    /** Whether this account may use the app on this request: always inside the shop; through the remote link, admins and up, plus staff when allowed. */
+    public static function allows(User $user, \Illuminate\Http\Request $request): bool
+    {
+        return $user->isAdminOrAbove() || self::staffAllowed() || ! self::isRemoteRequest($request);
+    }
+
+    public function setStaffAllowed(bool $allowed, User $by): void
+    {
+        Setting::set(self::STAFF_SETTING, $allowed ? '1' : '0');
+        ActivityLog::record($allowed ? 'remote_access_staff_on' : 'remote_access_staff_off', $by);
+    }
 
     /** Whether this request came in through the remote link (the tunnel only serves that name). */
     public static function isRemoteRequest(\Illuminate\Http\Request $request): bool

@@ -98,6 +98,7 @@
 
         {{-- Remote access (RemoteAccessService): a Cloudflare Tunnel to this server. Off by default. --}}
         @php($remoteOn = $remote->isOn())
+        @php($staffRemote = \App\Services\RemoteAccessService::staffAllowed())
         <div class="mt-6 bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-[#F0E6D2]">
             <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div class="min-w-0">
@@ -105,7 +106,7 @@
                         <x-lucide-globe class="w-4 h-4" /> Remote access
                         <span class="px-2.5 py-0.5 rounded-full text-xs font-bold {{ $remoteOn ? 'bg-green-100 text-green-800' : 'bg-[#F0E6D2] text-[#795548]' }}">{{ $remoteOn ? 'On' : 'Off' }}</span>
                     </h3>
-                    <p class="text-sm text-[#6D4C41] mt-2">Open the system from anywhere — your phone at home, or someone helping you test — through a secure Cloudflare link. No router changes. It stays on until you turn it off; anyone with an account can sign in from outside while it's on.</p>
+                    <p class="text-sm text-[#6D4C41] mt-2">Open the system from anywhere — your phone at home, or someone helping you test — through a secure Cloudflare link. No router changes. It stays on until you turn it off. From outside the shop {{ $staffRemote ? 'every account, staff included,' : 'only the owner and admins' }} can sign in.</p>
                     <p class="mt-2 text-sm font-bold break-all"><a href="{{ $remote->url() }}" target="_blank" rel="noopener" class="text-[#3E2723] underline">{{ $remote->url() }}</a>{{ $remoteOn ? '' : ' (works once turned on)' }}</p>
                 </div>
                 @if ($remoteOn)
@@ -114,12 +115,31 @@
                         <button type="submit" class="min-h-[44px] px-5 rounded-full bg-red-600 text-white text-xs font-bold uppercase tracking-wide hover:bg-red-700 whitespace-nowrap">Turn off</button>
                     </form>
                 @else
-                    <form method="POST" action="{{ route('remote-access.on') }}" class="shrink-0" data-confirm="Turn on remote access?" data-confirm-text="Anyone with an account can sign in from outside the shop until you turn it off.">
+                    <form method="POST" action="{{ route('remote-access.on') }}" class="shrink-0" data-confirm="Turn on remote access?" data-confirm-text="{{ $staffRemote ? 'Anyone with an account' : 'The owner and admins' }} can sign in from outside the shop until you turn it off.">
                         @csrf
                         <button type="submit" class="min-h-[44px] px-5 rounded-full bg-[#3E2723] text-white text-xs font-bold uppercase tracking-wide hover:bg-[#271815] whitespace-nowrap">Turn on</button>
                     </form>
                 @endif
             </div>
+            @if (auth()->user()->isSuperAdmin())
+                {{-- Staff through the remote link: off by default (owner, Oct 30); only the super admin can allow it. --}}
+                <form method="POST" action="{{ route('remote-access.staff') }}" class="mt-5 pt-5 border-t border-[#F0E6D2] flex items-center justify-between gap-4"
+                      data-confirm="{{ $staffRemote ? 'Stop staff signing in from outside?' : 'Let staff sign in from outside?' }}"
+                      data-confirm-text="{{ $staffRemote ? 'Staff signed in through the remote link are signed out on their next click.' : 'Staff accounts can sign in through the remote link while remote access is on.' }}">
+                    @csrf
+                    <input type="hidden" name="allowed" value="{{ $staffRemote ? '0' : '1' }}">
+                    <div class="min-w-0">
+                        <p id="staff-remote-label" class="text-sm font-bold text-[#3E2723]">Staff can use remote access</p>
+                        <p class="text-xs text-[#6D4C41] mt-1">{{ $staffRemote ? 'Staff accounts can sign in through the remote link.' : 'Staff accounts can only sign in at the shop.' }}</p>
+                    </div>
+                    <button type="submit" role="switch" aria-checked="{{ $staffRemote ? 'true' : 'false' }}" aria-labelledby="staff-remote-label"
+                            class="shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center">
+                        <span class="relative inline-flex h-7 w-12 rounded-full transition-colors {{ $staffRemote ? 'bg-green-600' : 'bg-[#D7CCC8]' }}">
+                            <span class="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all {{ $staffRemote ? 'left-6' : 'left-1' }}"></span>
+                        </span>
+                    </button>
+                </form>
+            @endif
         </div>
 
         @if (auth()->user()->isSuperAdmin())
